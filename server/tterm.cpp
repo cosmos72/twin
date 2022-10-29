@@ -26,7 +26,7 @@
 #define COD_QUIT (udat)1
 #define COD_SPAWN (udat)3
 
-static menu Term_Menu;
+static Tmenu Term_Menu;
 
 static char *default_args[3];
 

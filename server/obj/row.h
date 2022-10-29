@@ -15,27 +15,27 @@
 
 #include "obj/obj.h"
 
-/* row */
+/* Trow */
 
 struct SrowFn {
   uldat Magic;
-  void (*Insert)(row, Twindow, row prev, row next);
-  void (*Remove)(row);
-  void (*Delete)(row);
-  void (*ChangeField)(row, udat field, uldat clearmask, uldat xormask);
-  /* row */
+  void (*Insert)(Trow, Twindow, Trow prev, Trow next);
+  void (*Remove)(Trow);
+  void (*Delete)(Trow);
+  void (*ChangeField)(Trow, udat field, uldat clearmask, uldat xormask);
+  /* Trow */
   TobjFn Fn_Obj;
-  byte (*SetText)(row, uldat len, const char *text, byte defaultcol);
-  byte (*SetTRune)(row, uldat len, const trune *runes, byte defaultcol);
-  void (*Raise)(row);
-  void (*Lower)(row);
+  byte (*SetText)(Trow, uldat len, const char *text, byte defaultcol);
+  byte (*SetTRune)(Trow, uldat len, const trune *runes, byte defaultcol);
+  void (*Raise)(Trow);
+  void (*Lower)(Trow);
 };
 
 struct Srow : public Sobj {
   TrowFn Fn;
-  row Prev, Next;
+  Trow Prev, Next;
   Twindow Window;
-  /* row */
+  /* Trow */
   udat Code;
   byte Flags;
   uldat Len, MaxLen;
@@ -43,14 +43,14 @@ struct Srow : public Sobj {
   trune *Text;
   tcolor *ColText;
 
-  static row Create(udat code, byte flags);
-  row Init(udat code, byte flags);
+  static Trow Create(udat code, byte flags);
+  Trow Init(udat code, byte flags);
 
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(Twindow w, row prev, row next) {
+  void Insert(Twindow w, Trow prev, Trow next) {
     Fn->Insert(this, w, prev, next);
   }
   void Remove() {
@@ -59,7 +59,7 @@ struct Srow : public Sobj {
   void Delete() {
     Fn->Delete(this);
   }
-  /* row */
+  /* Trow */
   byte SetText(uldat len, const char *text, byte defaultcol) {
     return Fn->SetText(this, len, text, defaultcol);
   }

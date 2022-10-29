@@ -11,6 +11,6 @@
 
 byte InitTerm(void);
 
-extern menu Term_Menu;
+extern Tmenu Term_Menu;
 
 #endif /* TWIN_TTERM_H */

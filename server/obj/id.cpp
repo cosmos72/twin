@@ -192,7 +192,7 @@ obj Id2Obj(e_magic_byte expected_magic_byte, uldat id) {
   if (expected_magic_byte < magic_n && magic_byte < magic_n) {
     /* everything is a valid (obj) */
     /* gadgets, windows, screens are valid (widget) */
-    /* menuitems are valid (row) */
+    /* menuitems are valid (Trow) */
     if (expected_magic_byte == magic_byte || expected_magic_byte == Tobj_magic_byte ||
         (expected_magic_byte == Twidget_magic_byte &&
          (magic_byte == Tgadget_magic_byte || magic_byte == Twindow_magic_byte ||

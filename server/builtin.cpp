@@ -90,7 +90,7 @@
 
 Tmsgport Builtin_MsgPort;
 
-static menu Builtin_Menu;
+static Tmenu Builtin_Menu;
 static Tmenuitem Builtin_File;
 static Tmenuitem Builtin_Modules;
 
@@ -119,7 +119,7 @@ static void Clock_Update(void) {
 
 static void TweakMenuRows(Tmenuitem Item, udat code, byte flag) {
   Twindow Win;
-  row Row;
+  Trow Row;
 
   if ((Win = Item->Window) && (Row = Win->FindRowByCode(code, (ldat *)0)))
     Row->Flags = flag;
@@ -177,7 +177,7 @@ static void ExecuteGadgetH(event_gadget *EventG) {
 
 static void ExecuteWinRun(void) {
   char **argv, *arg0;
-  row Row;
+  Trow Row;
   Tgadget G;
 
   ExecuteWin->UnMap();
@@ -488,7 +488,7 @@ static void BuiltinH(Tmsgport MsgPort) {
   event_any *Event;
   screen Screen;
   Twindow NewWindow, tempWin;
-  row Row;
+  Trow Row;
   udat Code;
 
   Screen = All->FirstScreen;

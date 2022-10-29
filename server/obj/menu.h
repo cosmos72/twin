@@ -17,41 +17,41 @@
 
 struct SmenuFn {
   uldat Magic;
-  void (*Insert)(menu, Tmsgport, menu Prev, menu Next);
-  void (*Remove)(menu);
-  void (*Delete)(menu);
-  void (*ChangeField)(menu, udat field, uldat CLEARMask, uldat XORMask);
-  /* menu */
+  void (*Insert)(Tmenu, Tmsgport, Tmenu Prev, Tmenu Next);
+  void (*Remove)(Tmenu);
+  void (*Delete)(Tmenu);
+  void (*ChangeField)(Tmenu, udat field, uldat CLEARMask, uldat XORMask);
+  /* Tmenu */
   TobjFn Fn_Obj;
-  row (*SetInfo)(menu, byte Flags, ldat Len, const char *Text, const tcolor *ColText);
-  Tmenuitem (*FindItem)(menu, dat i);
-  Tmenuitem (*GetSelectedItem)(menu);
-  Tmenuitem (*RecursiveGetSelectedItem)(menu, dat *depth);
-  void (*SetSelectedItem)(menu, Tmenuitem);
+  Trow (*SetInfo)(Tmenu, byte Flags, ldat Len, const char *Text, const tcolor *ColText);
+  Tmenuitem (*FindItem)(Tmenu, dat i);
+  Tmenuitem (*GetSelectedItem)(Tmenu);
+  Tmenuitem (*RecursiveGetSelectedItem)(Tmenu, dat *depth);
+  void (*SetSelectedItem)(Tmenu, Tmenuitem);
 };
 
 struct Smenu : public Sobj {
   TmenuFn Fn;
-  menu Prev, Next; /* in the same Tmsgport */
+  Tmenu Prev, Next; /* in the same Tmsgport */
   Tmsgport MsgPort;
-  /* menu */
+  /* Tmenu */
   tcolor ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut, ColSelShtCut;
   byte CommonItems;
   byte FlagDefColInfo;
-  row Info;
+  Trow Info;
   Tmenuitem FirstI, LastI, SelectI;
 
-  static menu Create(Tmsgport port, tcolor colitem, tcolor colselect, tcolor coldisabled,
-                     tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
-                     byte flagdefcolinfo);
-  menu Init(Tmsgport port, tcolor colitem, tcolor colselect, tcolor coldisabled,
-            tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut, byte flagdefcolinfo);
+  static Tmenu Create(Tmsgport port, tcolor colitem, tcolor colselect, tcolor coldisabled,
+                      tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
+                      byte flagdefcolinfo);
+  Tmenu Init(Tmsgport port, tcolor colitem, tcolor colselect, tcolor coldisabled,
+             tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut, byte flagdefcolinfo);
 
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(Tmsgport owner, menu prev, menu next) {
+  void Insert(Tmsgport owner, Tmenu prev, Tmenu next) {
     Fn->Insert(this, owner, prev, next);
   }
   void Remove() {
@@ -60,8 +60,8 @@ struct Smenu : public Sobj {
   void Delete() {
     Fn->Delete(this);
   }
-  /* menu */
-  row SetInfo(byte flags, ldat len, const char *text, const tcolor *coltext) {
+  /* Tmenu */
+  Trow SetInfo(byte flags, ldat len, const char *text, const tcolor *coltext) {
     return Fn->SetInfo(this, flags, len, text, coltext);
   }
   Tmenuitem FindItem(dat i) {

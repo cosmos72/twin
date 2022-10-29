@@ -18,10 +18,10 @@
 
 #include <new>
 
-menu Smenu::Create(Tmsgport owner, tcolor colitem, tcolor colselect, tcolor coldisabled,
-                   tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
-                   byte flagdefcolinfo) {
-  menu m = NULL;
+Tmenu Smenu::Create(Tmsgport owner, tcolor colitem, tcolor colselect, tcolor coldisabled,
+                    tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
+                    byte flagdefcolinfo) {
+  Tmenu m = NULL;
   if (owner) {
     void *addr = AllocMem0(sizeof(Smenu));
     if (addr) {
@@ -37,9 +37,9 @@ menu Smenu::Create(Tmsgport owner, tcolor colitem, tcolor colselect, tcolor cold
   return m;
 }
 
-menu Smenu::Init(Tmsgport owner, tcolor colitem, tcolor colselect, tcolor coldisabled,
-                 tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
-                 byte flagdefcolinfo) {
+Tmenu Smenu::Init(Tmsgport owner, tcolor colitem, tcolor colselect, tcolor coldisabled,
+                  tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
+                  byte flagdefcolinfo) {
   if (!owner || !((obj)this)->Init()) {
     return NULL;
   }

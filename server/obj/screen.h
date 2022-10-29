@@ -49,7 +49,7 @@ struct SscreenFn {
   void (*RemoveHook)(screen, HookFn, HookFn *Where);
   /* screen */
   TwidgetFn Fn_Widget;
-  menu (*FindMenu)(screen);
+  Tmenu (*FindMenu)(screen);
   screen (*Find)(dat j);
   screen (*CreateSimple)(dat NameLen, const char *Name, tcell Bg);
   void (*BgImage)(screen, dat BgWidth, dat BgHeight, const tcell *Bg);
@@ -161,7 +161,7 @@ struct Sscreen : public Sobj {
     Fn->RemoveHook(this, hook, where);
   }
   /* screen */
-  menu FindMenu() {
+  Tmenu FindMenu() {
     return Fn->FindMenu(this);
   }
   screen Find(dat j) {

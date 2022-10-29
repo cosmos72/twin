@@ -864,9 +864,9 @@ static void ContinueMenu(wm_ctx *C) {
 static void ReleaseMenu(wm_ctx *C) {
   Twindow MW = All->FirstScreen->MenuWindow;
   Twindow FW = (Twindow)All->FirstScreen->FocusW;
-  menu Menu;
+  Tmenu Menu;
   Tmenuitem Item;
-  row Row;
+  Trow Row;
   msg Msg;
   event_menu *Event;
   udat Code;
@@ -1418,7 +1418,7 @@ static void ContinueReleaseMouseState(wm_ctx *C, byte State) {
   }
 }
 
-static Tmenuitem PrevItem(Tmenuitem Item, menu Menu) {
+static Tmenuitem PrevItem(Tmenuitem Item, Tmenu Menu) {
   Tmenuitem Prev;
 
   if (!(Prev = Item->Prev)) {
@@ -1434,7 +1434,7 @@ static Tmenuitem PrevItem(Tmenuitem Item, menu Menu) {
   return Item;
 }
 
-static Tmenuitem NextItem(Tmenuitem Item, menu Menu) {
+static Tmenuitem NextItem(Tmenuitem Item, Tmenu Menu) {
   Tmenuitem Next;
 
   if (!(Next = Item->Next)) {

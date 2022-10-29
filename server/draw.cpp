@@ -39,7 +39,7 @@ inline tcolor DoShadowColor(tcolor Color, bool Fg, bool Bg) NOTHROW {
  * warning: DrawMenu() can cheat and give us a user Menu
  * while MenuItem is from All->CommonMenu
  */
-static void FindFontMenuItem(menu Menu, Tmenuitem MenuItem, dat i, bool select,
+static void FindFontMenuItem(Tmenu Menu, Tmenuitem MenuItem, dat i, bool select,
                              tcell *PtrAttr) NOTHROW {
   tcolor Color;
   byte ShortCutFound;
@@ -65,8 +65,8 @@ static void FindFontMenuItem(menu Menu, Tmenuitem MenuItem, dat i, bool select,
   }
 }
 
-static void FindFontInfo(menu Menu, dat i, bool select, tcell *PtrAttr) NOTHROW {
-  row Info;
+static void FindFontInfo(Tmenu Menu, dat i, bool select, tcell *PtrAttr) NOTHROW {
+  Trow Info;
   tcolor Color;
 
   if (Menu && (Info = Menu->Info) && i >= 0 && (uldat)i < Info->Len) {
@@ -330,7 +330,7 @@ Twidget FindWidgetAt(Twidget Parent, dat X, dat Y) {
   if (IS_WINDOW(Parent) && !(((Twindow)Parent)->Flags & WINDOWFL_BORDERLESS))
     X--, Y--;
   else if (IS_SCREEN(Parent) && Y <= 0) {
-    /* got nothing, or the menu... */
+    /* got nothing, or the Tmenu... */
     return (Twidget)0;
   }
 
@@ -682,7 +682,7 @@ void DrawSelfWindow(draw_ctx *d) {
     ldat dwidth, i, j, u, v; /* (ldat) to avoid multiplication overflows */
     ldat Row, PosInRow;
     trune Font;
-    row CurrRow;
+    Trow CurrRow;
     dat X1, Y1, X2, Y2;
     bool shaded, absent, select, rowDisabled;
     tcolor Color;
@@ -790,7 +790,7 @@ void DrawSelfWindow(draw_ctx *d) {
       Row = Y1 - up;
 
       if (Row >= w->HLogic)
-        CurrRow = (row)0;
+        CurrRow = (Trow)0;
       else if (w->USE.R.NumRowSplit && w->USE.R.RowSplit && Row == w->USE.R.NumRowSplit)
         CurrRow = w->USE.R.RowSplit;
       else if (w->USE.R.NumRowSplit && w->USE.R.RowSplit && w->USE.R.RowSplit->Next &&
@@ -1761,7 +1761,7 @@ void ReDrawRolledUpAreaWindow(Twindow w, bool shaded) {
 
 void DrawMenuScreen(screen scr, dat Xstart, dat Xend) {
   screen fScreen;
-  menu Menu;
+  Tmenu Menu;
   Tmenuitem Item;
   dat dwidth, dheight, i, j, x;
   tcell Attr;
@@ -1823,13 +1823,13 @@ void DrawMenuScreen(screen scr, dat Xstart, dat Xend) {
 
         if (Item) {
           /* check if Item is from All->CommonMenu */
-          if ((menu)Item->Parent == All->CommonMenu && Menu->LastI)
+          if ((Tmenu)Item->Parent == All->CommonMenu && Menu->LastI)
             x = Menu->LastI->Left + Menu->LastI->Len;
           else
             x = 0;
 
           select = State == state_screen ||
-                   (State == state_menu && ((menu)Item->Parent)->SelectI == Item);
+                   (State == state_menu && ((Tmenu)Item->Parent)->SelectI == Item);
           /*
            * CHEAT: Item may be in CommonMenu, not in Menu...
            * steal Item color from Menu.

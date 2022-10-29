@@ -44,7 +44,7 @@ Tmenuitem Smenuitem::Init(obj parent, Twindow w, udat code, byte flags, dat left
 
   if (parent && (IS_MENU(parent) || (IS_WINDOW(parent) && W_USE((Twindow)parent, USEROWS))) &&
       (!w || IS_WINDOW(w)) && name && (this->Text = CloneStr2TRune(name, len)) &&
-      ((row)this)->Init(code, flags)) {
+      ((Trow)this)->Init(code, flags)) {
 
     this->Len = len;
     this->Window = w;
@@ -66,8 +66,8 @@ Tmenuitem Smenuitem::Init(obj parent, Twindow w, udat code, byte flags, dat left
 
       this->Insert((obj)w, (Tmenuitem)w->USE.R.LastRow, NULL);
     } else {
-      this->Insert(parent, ((menu)parent)->LastI, NULL);
-      SyncMenu((menu)parent);
+      this->Insert(parent, ((Tmenu)parent)->LastI, NULL);
+      SyncMenu((Tmenu)parent);
     }
     return this;
   }

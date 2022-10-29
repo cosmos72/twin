@@ -21,17 +21,17 @@ struct SmenuitemFn {
   void (*Remove)(Tmenuitem);
   void (*Delete)(Tmenuitem);
   void (*ChangeField)(Tmenuitem, udat field, uldat CLEARMask, uldat XORMask);
-  /* row */
+  /* Trow */
   TobjFn Fn_Obj;
-  byte (*SetText)(row, uldat Len, const char *Text, byte DefaultCol);
-  byte (*SetTRune)(row, uldat Len, const trune *TRune, byte DefaultCol);
+  byte (*SetText)(Trow, uldat Len, const char *Text, byte DefaultCol);
+  byte (*SetTRune)(Trow, uldat Len, const trune *TRune, byte DefaultCol);
   /* Tmenuitem */
   void (*Raise)(Tmenuitem);
   void (*Lower)(Tmenuitem);
   TrowFn Fn_Row;
   Tmenuitem (*Create4Menu)(obj Parent, Twindow Window, udat Code, byte Flags, ldat Len,
                            const char *Name);
-  uldat (*Create4MenuCommon)(menu);
+  uldat (*Create4MenuCommon)(Tmenu);
   /* for compatibility this must return a non-zero value. */
 };
 
@@ -39,7 +39,7 @@ struct Smenuitem : public Sobj {
   TmenuitemFn Fn;
   Tmenuitem Prev, Next;
   obj Parent;
-  /* row */
+  /* Trow */
   udat Code;
   byte Flags;
   uldat Len, MaxLen;

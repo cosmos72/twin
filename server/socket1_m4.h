@@ -240,12 +240,12 @@ case order_WriteTRunesGadget:
 
 case order_CreateWindow:
     if (a.size() >= 11)
-        a[0]_obj = (obj)sockCreateWindow((dat)a[1]_any, (const char *)a[2]_vec, (const tcolor *)a[3]_vec, (menu)a[4]_obj, (tcolor)a[5]_any, (uldat)a[6]_any, (uldat)a[7]_any, (uldat)a[8]_any, (dat)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
+        a[0]_obj = (obj)sockCreateWindow((dat)a[1]_any, (const char *)a[2]_vec, (const tcolor *)a[3]_vec, (Tmenu)a[4]_obj, (tcolor)a[5]_any, (uldat)a[6]_any, (uldat)a[7]_any, (uldat)a[8]_any, (dat)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
     break;
 
 case order_Create4MenuWindow:
     if (a.size() >= 1)
-        a[0]_obj = (obj)Do(Create4Menu,window)((menu)a[1]_obj);
+        a[0]_obj = (obj)Do(Create4Menu,window)((Tmenu)a[1]_obj);
     break;
 
 
@@ -330,17 +330,17 @@ case order_SetSelectedGadgetGroup:
 
 case order_RaiseRow:
     if (a.size() >= 1)
-        Act(Raise,(row)a[1]_obj)((row)a[1]_obj);
+        Act(Raise,(Trow)a[1]_obj)((Trow)a[1]_obj);
     break;
 
 case order_LowerRow:
     if (a.size() >= 1)
-        Act(Lower,(row)a[1]_obj)((row)a[1]_obj);
+        Act(Lower,(Trow)a[1]_obj)((Trow)a[1]_obj);
     break;
 
 case order_RestackChildrenRow:
     if (a.size() >= 3)
-        sockRestackChildrenRow((obj)a[1]_obj, (uldat)a[2]_any, (const row *)a[3]_vec);
+        sockRestackChildrenRow((obj)a[1]_obj, (uldat)a[2]_any, (const Trow *)a[3]_vec);
     break;
 
 case order_CirculateChildrenRow:
@@ -357,7 +357,7 @@ case order_Create4MenuAny:
 
 case order_Create4MenuCommonMenuItem:
     if (a.size() >= 1)
-        a[0]_any = (tany)Do(Create4MenuCommon,menuitem)((menu)a[1]_obj);
+        a[0]_any = (tany)Do(Create4MenuCommon,menuitem)((Tmenu)a[1]_obj);
     break;
 
 
@@ -368,7 +368,7 @@ case order_CreateMenu:
 
 case order_SetInfoMenu:
     if (a.size() >= 5)
-        Act(SetInfo,(menu)a[1]_obj)((menu)a[1]_obj, (byte)a[2]_any, (ldat)a[3]_any, (const char *)a[4]_vec, (const tcolor *)a[5]_vec);
+        Act(SetInfo,(Tmenu)a[1]_obj)((Tmenu)a[1]_obj, (byte)a[2]_any, (ldat)a[3]_any, (const char *)a[4]_vec, (const tcolor *)a[5]_vec);
     break;
 
 
@@ -442,7 +442,7 @@ case order_FirstMutex:
 
 case order_FirstMenuItem:
     if (a.size() >= 1)
-        a[0]_obj = (obj)sockFirstMenuItem((menu   )a[1]_obj);
+        a[0]_obj = (obj)sockFirstMenuItem((Tmenu   )a[1]_obj);
     break;
 
 case order_FirstGadget:

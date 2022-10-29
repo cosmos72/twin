@@ -113,8 +113,8 @@ struct Sall : public Sobj {
   setup *SetUp;
   void (*AtQuit)(void);
 
-  menu BuiltinMenu, CommonMenu;
-  row BuiltinRow;
+  Tmenu BuiltinMenu, CommonMenu;
+  Trow BuiltinRow;
   uldat MouseMotionN; /* number of mapped windows wanting mouse motion events */
 
   button_vec ButtonVec[BUTTON_MAX + 1]; /* +1 for window corner */

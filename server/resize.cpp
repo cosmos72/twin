@@ -217,8 +217,8 @@ byte ResizeWindowContents(Twindow Window) {
   return ttrue;
 }
 
-static row InsertRowsWindow(Twindow Window, ldat NumRows) {
-  row CurrRow;
+static Trow InsertRowsWindow(Twindow Window, ldat NumRows) {
+  Trow CurrRow;
 
   while (NumRows--) {
     if ((CurrRow = New(row)(0, ROW_ACTIVE))) {
@@ -230,7 +230,7 @@ static row InsertRowsWindow(Twindow Window, ldat NumRows) {
   return CurrRow;
 }
 
-byte EnsureLenRow(row Row, uldat Len, byte DefaultCol) {
+byte EnsureLenRow(Trow Row, uldat Len, byte DefaultCol) {
   trune *tempText;
   tcolor *tempColText;
   uldat NewLen;
@@ -253,7 +253,7 @@ byte EnsureLenRow(row Row, uldat Len, byte DefaultCol) {
 }
 
 byte RowWriteCharset(Twindow Window, uldat Len, const char *charset_bytes) {
-  row CurrRow;
+  Trow CurrRow;
   const char *_Text;
   byte ModeInsert;
   trune const *to_UTF_32;
@@ -359,7 +359,7 @@ byte RowWriteUtf8(Twindow w, uldat len, const char *utf8_bytes) {
 }
 
 byte RowWriteTRune(Twindow Window, uldat Len, const trune *runes) {
-  row CurrRow;
+  Trow CurrRow;
   const trune *_Text;
   byte ModeInsert;
   ldat x, y, max;
@@ -1487,7 +1487,7 @@ byte ExecScrollFocusWindow(void) {
   return ttrue;
 }
 
-/* menu traversing functions */
+/* Tmenu traversing functions */
 
 void HideMenu(byte on_off) {
   screen Screen = All->FirstScreen;
@@ -1515,7 +1515,7 @@ void HideMenu(byte on_off) {
   }
 }
 
-static void OpenSubMenuItem(menu M, Tmenuitem Item, byte ByMouse) {
+static void OpenSubMenuItem(Tmenu M, Tmenuitem Item, byte ByMouse) {
   Twindow P = (Twindow)Item->Parent;
   Twindow w = Item->Window;
   screen S = All->FirstScreen;
@@ -1544,8 +1544,8 @@ static void OpenSubMenuItem(menu M, Tmenuitem Item, byte ByMouse) {
     Act(Focus, P)(P);
 }
 
-static void OpenTopMenuItem(menu M, Tmenuitem Item, byte ByMouse) {
-  menu _M = (menu)Item->Parent; /* may either be M or All->CommonMenu */
+static void OpenTopMenuItem(Tmenu M, Tmenuitem Item, byte ByMouse) {
+  Tmenu _M = (Tmenu)Item->Parent; /* may either be M or All->CommonMenu */
   Twindow w = Item->Window;
 
   if (!w->Parent) {
@@ -1553,7 +1553,7 @@ static void OpenTopMenuItem(menu M, Tmenuitem Item, byte ByMouse) {
     w->Left = Item->Left;
 
     if (M != _M && M->LastI)
-      /* adjust common menu w->Left to the Item position in this menu */
+      /* adjust common Tmenu w->Left to the Item position in this Tmenu */
       w->Left += M->LastI->Left + M->LastI->Len;
   }
 
@@ -1575,7 +1575,7 @@ static void OpenTopMenuItem(menu M, Tmenuitem Item, byte ByMouse) {
     OpenSubMenuItem(M, Item, ByMouse);
 }
 
-static void OpenMenuItem(menu M, Tmenuitem Item, byte ByMouse) {
+static void OpenMenuItem(Tmenu M, Tmenuitem Item, byte ByMouse) {
   if (Item) {
     obj O = Item->Parent;
     if (O && IS_WINDOW(O))
@@ -1586,11 +1586,11 @@ static void OpenMenuItem(menu M, Tmenuitem Item, byte ByMouse) {
     Act(SetSelectedItem, M)(M, (Tmenuitem)0);
 }
 
-/* this activates the menu bar */
+/* this activates the Tmenu bar */
 static void OpenMenu(Tmenuitem Item, byte ByMouse) {
   screen S = All->FirstScreen;
   Twidget w = S->FocusW;
-  menu M = Act(FindMenu, S)(S);
+  Tmenu M = Act(FindMenu, S)(S);
 
   if ((All->State & state_any) == state_default) {
 
@@ -1609,9 +1609,9 @@ static void OpenMenu(Tmenuitem Item, byte ByMouse) {
 
 /*
  * up one level; return new selected item;
- * do NOT use to close the menu, CloseMenu() does that
+ * do NOT use to close the Tmenu, CloseMenu() does that
  */
-static Tmenuitem CloseMenuItem(menu M, Tmenuitem Item, byte ByMouse) {
+static Tmenuitem CloseMenuItem(Tmenu M, Tmenuitem Item, byte ByMouse) {
   Twindow P = (Twindow)Item->Parent, w = Item->Window;
 
   if (w)
@@ -1652,8 +1652,8 @@ static dat DepthOfMenuItem(Tmenuitem I) {
   return d;
 }
 
-/* this traverses the menu bar as needed */
-static void TraverseMenu(menu M, Tmenuitem OldItem, dat Odepth, Tmenuitem NewItem, dat Ndepth,
+/* this traverses the Tmenu bar as needed */
+static void TraverseMenu(Tmenu M, Tmenuitem OldItem, dat Odepth, Tmenuitem NewItem, dat Ndepth,
                          byte ByMouse) {
   while (Odepth > Ndepth && OldItem) {
     Odepth--;
@@ -1669,13 +1669,13 @@ static void TraverseMenu(menu M, Tmenuitem OldItem, dat Odepth, Tmenuitem NewIte
   } else if (Ndepth == Odepth + 1) {
     OpenMenuItem(M, NewItem, ByMouse);
   } else
-    log(ERROR) << "twin: internal error: unsupported menu traversing.\n";
+    log(ERROR) << "twin: internal error: unsupported Tmenu traversing.\n";
 }
 
-/* close the menu bar */
+/* close the Tmenu bar */
 void CloseMenu(void) {
   screen S = All->FirstScreen;
-  menu M = Act(FindMenu, S)(S);
+  Tmenu M = Act(FindMenu, S)(S);
   Tmenuitem Item;
   Twindow w;
 
@@ -1686,7 +1686,7 @@ void CloseMenu(void) {
     } else
       Do(KbdFocus, window)(NULL);
 
-    /* close whole currently open menu tree */
+    /* close whole currently open Tmenu tree */
     Item = Act(GetSelectedItem, M)(M);
     while (Item && IS_MENUITEM(Item) && (w = (Twindow)Item->Window) && IS_WINDOW(w)) {
       Item = (Tmenuitem)Act(FindRow, w)(w, w->CurY);
@@ -1701,12 +1701,12 @@ void CloseMenu(void) {
 }
 
 /*
- * exported interface to open and interact with the menu.
- * do NOT use to close the menu, CloseMenu() does that
+ * exported interface to open and interact with the Tmenu.
+ * do NOT use to close the Tmenu, CloseMenu() does that
  */
 void SetMenuState(Tmenuitem Item, byte ByMouse) {
   screen S = All->FirstScreen;
-  menu M = Act(FindMenu, S)(S);
+  Tmenu M = Act(FindMenu, S)(S);
   Tmenuitem OldItem = (Tmenuitem)0;
   dat Odepth = 0;
 
@@ -1852,12 +1852,12 @@ void RestackWidgets(Twidget w, uldat N, const Twidget *arrayW) {
 
 /* ---------------- */
 
-void RestackRows(obj O, uldat N, const row *arrayR) {
-  row FR, CR;
+void RestackRows(obj O, uldat N, const Trow *arrayR) {
+  Trow FR, CR;
   byte need_redraw = tfalse;
 
   if (O && (IS_MENU(O) || IS_WINDOW(O)) && N && arrayR) {
-    for (FR = (row)0; N; N--, arrayR++) {
+    for (FR = (Trow)0; N; N--, arrayR++) {
       /*
        * Allow only children that really have the given parent.
        */
@@ -1874,7 +1874,7 @@ void RestackRows(obj O, uldat N, const row *arrayR) {
     /* FIXME: this is gross */
     if (need_redraw) {
       if (IS_MENU(O))
-        SyncMenu((menu)O);
+        SyncMenu((Tmenu)O);
       else
         DrawAreaWidget((Twidget)O);
     }
@@ -2078,7 +2078,7 @@ void WriteTRunesGadget(Tgadget G, byte bitmap, dat TW, dat TH, const trune *TRun
   }
 }
 
-void SyncMenu(menu Menu) {
+void SyncMenu(Tmenu Menu) {
   Tmenuitem I, PrevI = (Tmenuitem)0;
   screen Screen;
 

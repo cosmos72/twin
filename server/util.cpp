@@ -486,7 +486,7 @@ bool SetSelectionFromWindow(Twindow w) {
   }
 
   ok = SelectionStore(SEL_UTF8MAGIC, NULL, Chars());
-  row r;
+  Trow r;
 
   /* Gap not supported! */
   y = w->YstSel;

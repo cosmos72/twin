@@ -40,7 +40,7 @@ struct Smsgport : public Sobj {
   timevalue CallTime, PauseDuration;
   remotedata RemoteData;
   msg FirstMsg, LastMsg;
-  menu FirstMenu, LastMenu;     /* menus created by this MsgPort */
+  Tmenu FirstMenu, LastMenu;    /* menus created by this MsgPort */
   Twidget FirstW, LastW;        /* widgets owned by this MsgPort */
   Tgroup FirstGroup, LastGroup; /* groups owned by this MsgPort */
   Tmutex FirstMutex, LastMutex; /* mutexes owned by this MsgPort */

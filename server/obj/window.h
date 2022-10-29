@@ -52,8 +52,8 @@ struct s_remotedata {
 };
 
 struct s_WR { /* for WINDOWFL_USEROWS windows */
-  row FirstRow, LastRow;
-  row RowOne, RowSplit;        /*RESERVED: used to optimize the drawing on screen */
+  Trow FirstRow, LastRow;
+  Trow RowOne, RowSplit;       /*RESERVED: used to optimize the drawing on screen */
   ldat NumRowOne, NumRowSplit; /*RESERVED: updated automatically by WriteRow. To insert */
                                /*or remove manually rows, you must zero out NumRowOne */
                                /*and NumRowSplit forcing twin to recalculate them */
@@ -112,10 +112,10 @@ struct SwindowFn {
                     tcolor ColDisabled, tcolor ColSelectDisabled);
   void (*Configure)(Twindow, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
                     dat MaxXWidth, dat MaxYWidth);
-  Twindow (*Create4Menu)(menu);
+  Twindow (*Create4Menu)(Tmenu);
   tpos (*FindBorder)(Twindow, dat u, dat v, byte Border, tcell *PtrAttr);
-  row (*FindRow)(Twindow, ldat RowN);
-  row (*FindRowByCode)(Twindow, udat Code, ldat *NumRow);
+  Trow (*FindRow)(Twindow, ldat RowN);
+  Trow (*FindRowByCode)(Twindow, udat Code, ldat *NumRow);
 };
 
 struct Swindow : public Sobj {
@@ -142,7 +142,7 @@ struct Swindow : public Sobj {
     struct s_wE E;
   } USE;
   /* Twindow */
-  menu Menu;
+  Tmenu Menu;
   Tmenuitem MenuItem; /* from which the Twindow depends */
   dat NameLen;
   char *Name;
@@ -162,10 +162,10 @@ struct Swindow : public Sobj {
 
   /* obj */
   static Twindow Create(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle,
-                        menu menu, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
+                        Tmenu menu, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
                         dat xwidth, dat ywidth, dat scrollbacklines);
-  static Twindow Create4Menu(menu);
-  Twindow Init(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle, menu menu,
+  static Twindow Create4Menu(Tmenu);
+  Twindow Init(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle, Tmenu menu,
                tcolor coltext, uldat cursortype, uldat attr, uldat flags, dat xwidth, dat ywidth,
                dat scrollbacklines);
   uldat Magic() const {
@@ -288,10 +288,10 @@ struct Swindow : public Sobj {
   tpos FindBorder(dat u, dat v, byte border, tcell *ptrattr) {
     return Fn->FindBorder(this, u, v, border, ptrattr);
   }
-  row FindRow(ldat rown) {
+  Trow FindRow(ldat rown) {
     return Fn->FindRow(this, rown);
   }
-  row FindRowByCode(udat code, ldat *numrow) {
+  Trow FindRowByCode(udat code, ldat *numrow) {
     return Fn->FindRowByCode(this, code, numrow);
   }
 };

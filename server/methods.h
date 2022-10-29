@@ -12,7 +12,7 @@
 #include "obj/fn.h"
 #include "obj/window.h" // tpos
 
-byte FindInfo(menu Menu, dat i);
+byte FindInfo(Tmenu Menu, dat i);
 Twindow FakeOpenTerm(const char *arg0, const char *const *argv);
 Twidget FakeKbdFocus(Twidget W);
 byte FakeWriteCharset(Twindow Window, uldat Len, const char *charset_bytes);
@@ -55,7 +55,7 @@ tpos FakeFindBorderWindow(Twindow W, dat u, dat v, byte Border, tcell *PtrAttr);
 #define Win4Menu(Menu) Do(Create4Menu, window)(Menu)
 
 #define Row4Menu(w, code, flags, len, name)                                                        \
-  (row) Do(Create4Menu, menuitem)((obj)(w), (Twindow)0, (code), (flags), (len), (name))
+  (Trow) Do(Create4Menu, menuitem)((obj)(w), (Twindow)0, (code), (flags), (len), (name))
 
 #define Item4Menu(menu, w, flags, len, name)                                                       \
   Do(Create4Menu, menuitem)((obj)(menu), (w), (udat)0, (flags), (len), (name))

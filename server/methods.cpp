@@ -331,8 +331,8 @@ static void UnMapWidget(Twidget W) {
       if ((Screen = (screen)Parent) == All->FirstScreen && W == (Twidget)Screen->MenuWindow) {
         /*
          * ! DANGER !
-         * Trying to UnMap() the menu owner.
-         * shutdown the menu first!
+         * Trying to UnMap() the Tmenu owner.
+         * shutdown the Tmenu first!
          */
         CloseMenu();
       }
@@ -989,7 +989,7 @@ static void GotoXYWindow(Twindow Window, ldat X, ldat Y) {
     UpdateCursor();
 }
 
-Twindow Create4MenuWindow(menu Menu) {
+Twindow Create4MenuWindow(Tmenu Menu) {
   Twindow Window = (Twindow)0;
   if (Menu && (Window = New(window)(Menu->MsgPort, 0, NULL, (tcolor *)0, Menu, TCOL(tblack, twhite),
                                     NOCURSOR, WINDOW_AUTO_KEYS,
@@ -1047,8 +1047,8 @@ tpos FakeFindBorderWindow(Twindow W, dat u, dat v, byte Border, tcell *PtrAttr) 
   return v ? POS_ROOT : POS_TITLE;
 }
 
-static row FindRow(Twindow Window, ldat Row) {
-  row CurrRow, ElPossib[4];
+static Trow FindRow(Twindow Window, ldat Row) {
+  Trow CurrRow, ElPossib[4];
   byte Index;
   ldat k, ElNumRows[4], ElDist[4];
 
@@ -1082,8 +1082,8 @@ static row FindRow(Twindow Window, ldat Row) {
   return CurrRow;
 }
 
-static row FindRowByCode(Twindow Window, udat Code, ldat *NumRow) {
-  row Row;
+static Trow FindRowByCode(Twindow Window, udat Code, ldat *NumRow) {
+  Trow Row;
   ldat Num = (ldat)0;
 
   if ((Row = Window->USE.R.FirstRow))
@@ -1211,24 +1211,24 @@ static void SetXYScreen(screen Screen, dat X, dat Y) {
   }
 }
 
-static menu FindMenuScreen(screen Screen) {
+static Tmenu FindMenuScreen(screen Screen) {
   if (Screen) {
     if (Screen->MenuWindow && IS_WINDOW(Screen->MenuWindow))
-      /* menu activated from Screen->MenuWindow, return its menu */
+      /* Tmenu activated from Screen->MenuWindow, return its Tmenu */
       return Screen->MenuWindow->Menu;
 
-    /* no Twindow activated the menu... either the menu is inactive
-     * or it is activated from the builtin menu */
+    /* no Twindow activated the Tmenu... either the Tmenu is inactive
+     * or it is activated from the builtin Tmenu */
 
     if (Screen->FocusW && IS_WINDOW(Screen->FocusW) &&
         ((Twindow)Screen->FocusW)->Menu != All->CommonMenu)
-      /* menu inactive... return the focus Twindow's one */
+      /* Tmenu inactive... return the focus Twindow's one */
       return ((Twindow)Screen->FocusW)->Menu;
 
-    /* last case: menu activated from builtin menu */
+    /* last case: Tmenu activated from builtin Tmenu */
     return All->BuiltinMenu;
   }
-  return (menu)0;
+  return (Tmenu)0;
 }
 
 static screen FindScreen(dat j) {
@@ -1390,9 +1390,9 @@ static struct SgroupFn _FnGroup = {
     SetSelectedGadget,
 };
 
-/* row */
+/* Trow */
 
-static void InsertRow(row Row, Twindow Parent, row Prev, row Next) {
+static void InsertRow(Trow Row, Twindow Parent, Trow Prev, Trow Next) {
   if (!Row->Window && Parent && W_USE(Parent, USEROWS)) {
     InsertGeneric((obj_entry)Row, (obj_list)&Parent->USE.R.FirstRow, (obj_entry)Prev,
                   (obj_entry)Next, &Parent->HLogic);
@@ -1401,7 +1401,7 @@ static void InsertRow(row Row, Twindow Parent, row Prev, row Next) {
   }
 }
 
-static void RemoveRow(row Row) {
+static void RemoveRow(Trow Row) {
   if (Row->Window && W_USE(Row->Window, USEROWS)) {
     Row->Window->USE.R.NumRowOne = Row->Window->USE.R.NumRowSplit = (ldat)0;
     RemoveGeneric((obj_entry)Row, (obj_list)&Row->Window->USE.R.FirstRow, &Row->Window->HLogic);
@@ -1409,7 +1409,7 @@ static void RemoveRow(row Row) {
   }
 }
 
-static void DeleteRow(row Row) {
+static void DeleteRow(Trow Row) {
   if (Row) {
     Twindow W = Row->Window;
 
@@ -1426,7 +1426,7 @@ static void DeleteRow(row Row) {
   }
 }
 
-static byte SetTextRow(row Row, uldat Len, const char *Text, byte DefaultCol) {
+static byte SetTextRow(Trow Row, uldat Len, const char *Text, byte DefaultCol) {
   if (EnsureLenRow(Row, Len, DefaultCol)) {
     if (Len) {
 
@@ -1446,7 +1446,7 @@ static byte SetTextRow(row Row, uldat Len, const char *Text, byte DefaultCol) {
   return tfalse;
 }
 
-static byte SetTRuneRow(row Row, uldat Len, const trune *TRune, byte DefaultCol) {
+static byte SetTRuneRow(Trow Row, uldat Len, const trune *TRune, byte DefaultCol) {
   if (EnsureLenRow(Row, Len, DefaultCol)) {
     if (Len) {
       CopyMem(TRune, Row->Text, Len * sizeof(trune));
@@ -1471,7 +1471,7 @@ static void RaiseMenuItem(Tmenuitem M) {
 
   if (M && (Parent = (obj)M->Parent)) {
     if (IS_MENU(Parent))
-      Next = ((menu)Parent)->FirstI;
+      Next = ((Tmenu)Parent)->FirstI;
     else if (IS_WINDOW(Parent) && W_USE((Twindow)Parent, USEROWS))
       Next = (Tmenuitem)((Twindow)Parent)->USE.R.FirstRow;
     else
@@ -1481,7 +1481,7 @@ static void RaiseMenuItem(Tmenuitem M) {
     M->Insert(Parent, (Tmenuitem)0, Next);
 
     if (IS_MENU(Parent))
-      SyncMenu((menu)Parent);
+      SyncMenu((Tmenu)Parent);
     else
       DrawAreaWidget((Twidget)Parent);
   }
@@ -1497,7 +1497,7 @@ static void LowerMenuItem(Tmenuitem M) {
 
   if (M && (Parent = (obj)M->Parent)) {
     if (IS_MENU(Parent))
-      Prev = ((menu)Parent)->LastI;
+      Prev = ((Tmenu)Parent)->LastI;
     else if (IS_WINDOW(Parent) && W_USE((Twindow)Parent, USEROWS))
       Prev = (Tmenuitem)((Twindow)Parent)->USE.R.LastRow;
     else
@@ -1507,7 +1507,7 @@ static void LowerMenuItem(Tmenuitem M) {
     M->Insert(Parent, Prev, NULL);
 
     if (IS_MENU(Parent))
-      SyncMenu((menu)Parent);
+      SyncMenu((Tmenu)Parent);
     else if (((obj_entry)Parent)->Parent)
       DrawAreaWidget((Twidget)Parent);
   }
@@ -1518,17 +1518,17 @@ static struct SrowFn _FnRow = {
     InsertRow,
     RemoveRow,
     DeleteRow,
-    (void (*)(row, udat, uldat, uldat))NoOp,
-    /* row */
+    (void (*)(Trow, udat, uldat, uldat))NoOp,
+    /* Trow */
     &_FnObj,
     SetTextRow,
     SetTRuneRow,
-    (void (*)(row))RaiseMenuItem,
-    (void (*)(row))LowerMenuItem,
+    (void (*)(Trow))RaiseMenuItem,
+    (void (*)(Trow))LowerMenuItem,
 };
 
-byte FindInfo(menu Menu, dat i) {
-  row Info;
+byte FindInfo(Tmenu Menu, dat i) {
+  Trow Info;
 
   if (Menu && (Info = Menu->Info) && Info->Len > (udat)i)
     return ttrue;
@@ -1540,11 +1540,11 @@ byte FindInfo(menu Menu, dat i) {
 static void InsertMenuItem(Tmenuitem MenuItem, obj Parent, Tmenuitem Prev, Tmenuitem Next) {
   if (!MenuItem->Parent && Parent) {
     if (IS_MENU(Parent)) {
-      InsertGeneric((obj_entry)MenuItem, (obj_list) & ((menu)Parent)->FirstI, (obj_entry)Prev,
+      InsertGeneric((obj_entry)MenuItem, (obj_list) & ((Tmenu)Parent)->FirstI, (obj_entry)Prev,
                     (obj_entry)Next, NULL);
       MenuItem->Parent = Parent;
     } else if (IS_WINDOW(Parent)) {
-      InsertRow((row)MenuItem, (Twindow)Parent, (row)Prev, (row)Next);
+      InsertRow((Trow)MenuItem, (Twindow)Parent, (Trow)Prev, (Trow)Next);
     }
   }
 }
@@ -1552,10 +1552,10 @@ static void InsertMenuItem(Tmenuitem MenuItem, obj Parent, Tmenuitem Prev, Tmenu
 static void RemoveMenuItem(Tmenuitem MenuItem) {
   if (MenuItem->Parent) {
     if (IS_MENU(MenuItem->Parent)) {
-      RemoveGeneric((obj_entry)MenuItem, (obj_list) & ((menu)MenuItem->Parent)->FirstI, NULL);
+      RemoveGeneric((obj_entry)MenuItem, (obj_list) & ((Tmenu)MenuItem->Parent)->FirstI, NULL);
       MenuItem->Parent = (obj)0;
     } else {
-      RemoveRow((row)MenuItem);
+      RemoveRow((Trow)MenuItem);
     }
   }
 }
@@ -1566,12 +1566,12 @@ static void DeleteMenuItem(Tmenuitem MenuItem) {
 
     MenuItem->Remove();
     if (IS_MENU(Parent))
-      SyncMenu((menu)Parent);
+      SyncMenu((Tmenu)Parent);
 
     if (MenuItem->Window)
       MenuItem->Window->Delete();
 
-    DeleteRow((row)MenuItem);
+    DeleteRow((Trow)MenuItem);
   }
 }
 
@@ -1582,8 +1582,8 @@ Tmenuitem Create4MenuMenuItem(obj Parent, Twindow Window, udat Code, byte Flags,
   if (!Parent)
     return (Tmenuitem)0;
 
-  if (IS_MENU(Parent) && ((menu)Parent)->LastI)
-    Left = ((menu)Parent)->LastI->Left + ((menu)Parent)->LastI->Len;
+  if (IS_MENU(Parent) && ((Tmenu)Parent)->LastI)
+    Left = ((Tmenu)Parent)->LastI->Left + ((Tmenu)Parent)->LastI->Len;
   else
     Left = (dat)1;
 
@@ -1598,7 +1598,7 @@ Tmenuitem Create4MenuMenuItem(obj Parent, Twindow Window, udat Code, byte Flags,
 }
 
 /* this returns non-zero for compatibility */
-static uldat Create4MenuCommonMenuItem(menu Menu) {
+static uldat Create4MenuCommonMenuItem(Tmenu Menu) {
   if (Menu) {
     Menu->CommonItems = ttrue;
     SyncMenu(Menu);
@@ -1623,9 +1623,9 @@ static struct SmenuitemFn _FnMenuItem = {
     Create4MenuCommonMenuItem,
 };
 
-/* menu */
+/* Tmenu */
 
-static void InsertMenu(menu Menu, Tmsgport MsgPort, menu Prev, menu Next) {
+static void InsertMenu(Tmenu Menu, Tmsgport MsgPort, Tmenu Prev, Tmenu Next) {
   if (!Menu->MsgPort && MsgPort) {
     InsertGeneric((obj_entry)Menu, (obj_list)&MsgPort->FirstMenu, (obj_entry)Prev, (obj_entry)Next,
                   NULL);
@@ -1633,14 +1633,14 @@ static void InsertMenu(menu Menu, Tmsgport MsgPort, menu Prev, menu Next) {
   }
 }
 
-static void RemoveMenu(menu Menu) {
+static void RemoveMenu(Tmenu Menu) {
   if (Menu->MsgPort) {
     RemoveGeneric((obj_entry)Menu, (obj_list)&Menu->MsgPort->FirstMenu, NULL);
     Menu->MsgPort = (Tmsgport)0;
   }
 }
 
-static void DeleteMenu(menu Menu) {
+static void DeleteMenu(Tmenu Menu) {
   uldat count = 30;
 
   if (Menu) {
@@ -1650,9 +1650,9 @@ static void DeleteMenu(menu Menu) {
     /*
      * warning:
      * the only way to get the list of windows that
-     * are using this menu is to scan the whole MsgPort.
+     * are using this Tmenu is to scan the whole MsgPort.
      * We must UnMap() all those windows
-     * as a Twindow without menu cannot be displayed.
+     * as a Twindow without Tmenu cannot be displayed.
      *
      * optimization: if we are going to UnMap() a lot of windows,
      * we set QueuedDrawArea2FullScreen = ttrue, so that the UnMap()
@@ -1688,8 +1688,8 @@ static void DeleteMenu(menu Menu) {
   }
 }
 
-static row SetInfoMenu(menu Menu, byte Flags, ldat Len, const char *Text, const tcolor *ColText) {
-  row Row;
+static Trow SetInfoMenu(Tmenu Menu, byte Flags, ldat Len, const char *Text, const tcolor *ColText) {
+  Trow Row;
   if ((Row = New(row)(0, Flags))) {
     if ((!Text || (Row->Text = CloneStr2TRune(Text, Len))) &&
         (!ColText || (Row->ColText = (tcolor *)CloneMem(ColText, Len * sizeof(tcolor))))) {
@@ -1699,12 +1699,12 @@ static row SetInfoMenu(menu Menu, byte Flags, ldat Len, const char *Text, const 
       return Menu->Info = Row;
     }
     Row->Delete();
-    Row = (row)0;
+    Row = (Trow)0;
   }
   return Row;
 }
 
-static Tmenuitem FindItem(menu Menu, dat i) {
+static Tmenuitem FindItem(Tmenu Menu, dat i) {
   Tmenuitem Item = (Tmenuitem)0;
 
   if (Menu) {
@@ -1732,7 +1732,7 @@ static Tmenuitem FindItem(menu Menu, dat i) {
   return Item;
 }
 
-static Tmenuitem GetSelectedItem(menu Menu) {
+static Tmenuitem GetSelectedItem(Tmenu Menu) {
   if (Menu) {
     if (Menu->SelectI)
       return Menu->SelectI;
@@ -1742,7 +1742,7 @@ static Tmenuitem GetSelectedItem(menu Menu) {
   return (Tmenuitem)0;
 }
 
-static Tmenuitem RecursiveGetSelectedItem(menu Menu, dat *depth) {
+static Tmenuitem RecursiveGetSelectedItem(Tmenu Menu, dat *depth) {
   Tmenuitem I = NULL, _I = Menu->GetSelectedItem();
   Twindow W = (Twindow)0, FW = (Twindow)All->FirstScreen->FocusW;
   dat d = -1;
@@ -1762,7 +1762,7 @@ static Tmenuitem RecursiveGetSelectedItem(menu Menu, dat *depth) {
   return I;
 }
 
-static void SetSelectedItem(menu Menu, Tmenuitem Item) {
+static void SetSelectedItem(Tmenu Menu, Tmenuitem Item) {
   if (Menu) {
     if (Item) {
       if (Item->Parent == (obj)Menu) {
@@ -1789,8 +1789,8 @@ static struct SmenuFn _FnMenu = {
     InsertMenu,
     RemoveMenu,
     DeleteMenu,
-    (void (*)(menu, udat, uldat, uldat))NoOp,
-    /* menu */
+    (void (*)(Tmenu, udat, uldat, uldat))NoOp,
+    /* Tmenu */
     &_FnObj,
     SetInfoMenu,
     FindItem,

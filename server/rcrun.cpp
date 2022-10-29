@@ -1037,10 +1037,10 @@ void QuitRC(void) {
 #define COD_COMMON_LAST COD_COMMON_CLOSE
 
 static byte USEDefaultCommonMenu(void) {
-  menu Menu;
+  Tmenu Menu;
   Tmenuitem Item;
   Twindow W;
-  row Row;
+  Trow Row;
 
   if (!(Menu = New(menu)(Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0,
                          (tcolor)0, ttrue)))

@@ -378,7 +378,7 @@ static Tgadget sockCreateGadget(Twidget Parent, dat XWidth, dat YWidth, const ch
                                 tcolor ColTextSelect, tcolor ColTextDisabled,
                                 tcolor ColTextSelectDisabled, dat Left, dat Up);
 
-static Twindow sockCreateWindow(dat TitleLen, const char *Title, const tcolor *ColTitle, menu Menu,
+static Twindow sockCreateWindow(dat TitleLen, const char *Title, const tcolor *ColTitle, Tmenu Menu,
                                 tcolor ColText, uldat CursorType, uldat Attr, uldat Flags,
                                 dat XWidth, dat YWidth, dat ScrollBackLines);
 static void sockWriteCharsetWindow(Twindow Window, uldat Len, const char *charset_bytes);
@@ -387,7 +387,7 @@ static void sockWriteTRuneWindow(Twindow Window, uldat Len, const trune *runes);
 static void sockWriteTCellWindow(Twindow Window, dat x, dat y, uldat Len, const tcell *cells);
 static void sockSetTitleWindow(Twindow Window, dat titlelen, const char *title);
 
-static row sockFindRowByCodeWindow(Twindow Window, dat Code);
+static Trow sockFindRowByCodeWindow(Twindow Window, dat Code);
 
 static Tmenuitem sockCreate4MenuAny(obj Parent, Twindow Window, udat Code, byte Flags, ldat Len,
                                     const char *Name);
@@ -397,9 +397,9 @@ static void sockCirculateChildrenRow(obj O, byte up_or_down);
 #define TW_CIRCULATE_RAISE_LAST 0
 #define TW_CIRCULATE_LOWER_FIRST 1
 
-static menu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
-                           tcolor ColSelectDisabled, tcolor ColShtCut, tcolor ColSelShtCut,
-                           byte FlagDefColInfo);
+static Tmenu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
+                            tcolor ColSelectDisabled, tcolor ColShtCut, tcolor ColSelShtCut,
+                            byte FlagDefColInfo);
 
 static Tmsgport sockCreateMsgPort(byte NameLen, const char *Name);
 static Tmsgport sockFindMsgPort(Tmsgport Prev, byte NameLen, const char *Name);
@@ -413,11 +413,11 @@ static obj sockParentObj(obj o);
 static screen sockFirstScreen(void);
 static Twidget sockFirstWidget(Twidget W);
 static Tmsgport sockFirstMsgPort(void);
-static menu sockFirstMenu(Tmsgport MsgPort);
+static Tmenu sockFirstMenu(Tmsgport MsgPort);
 static Twidget sockFirstW(Tmsgport MsgPort);
 static Tgroup sockFirstGroup(Tmsgport MsgPort);
 static Tmutex sockFirstMutex(Tmsgport MsgPort);
-static Tmenuitem sockFirstMenuItem(menu Menu);
+static Tmenuitem sockFirstMenuItem(Tmenu Menu);
 static Tgadget sockFirstGadget(Tgroup group);
 
 static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data);
@@ -1104,7 +1104,7 @@ static void sockCirculateChildrenWidget(Twidget W, byte up_or_down) {
 }
 
 static void sockCirculateChildrenRow(obj O, byte up_or_down) {
-  row R = (row)0;
+  Trow R = (Trow)0;
   if (O) {
     if (IS_WINDOW(O) && W_USE((Twindow)O, USEROWS)) {
 
@@ -1116,9 +1116,9 @@ static void sockCirculateChildrenRow(obj O, byte up_or_down) {
     } else if (IS_MENU(O)) {
 
       if (up_or_down == TW_CIRCULATE_RAISE_LAST)
-        R = (row)((menu)O)->LastI;
+        R = (Trow)((Tmenu)O)->LastI;
       else if (up_or_down == TW_CIRCULATE_LOWER_FIRST)
-        R = (row)((menu)O)->FirstI;
+        R = (Trow)((Tmenu)O)->FirstI;
     }
 
     if (R) {
@@ -1141,7 +1141,7 @@ static Tgadget sockCreateGadget(Twidget Parent, dat XWidth, dat YWidth, const ch
   return (Tgadget)0;
 }
 
-static Twindow sockCreateWindow(dat TitleLen, const char *Title, const tcolor *ColTitle, menu Menu,
+static Twindow sockCreateWindow(dat TitleLen, const char *Title, const tcolor *ColTitle, Tmenu Menu,
                                 tcolor ColText, uldat CursorType, uldat Attr, uldat Flags,
                                 dat XWidth, dat YWidth, dat ScrollBackLines) {
   Tmsgport Owner;
@@ -1196,11 +1196,11 @@ static void sockSetTitleWindow(Twindow Window, dat titlelen, const char *title) 
   }
 }
 
-static row sockFindRowByCodeWindow(Twindow Window, dat Code) {
+static Trow sockFindRowByCodeWindow(Twindow Window, dat Code) {
   if (Window) {
     return Act(FindRowByCode, Window)(Window, Code, NULL);
   }
-  return (row)0;
+  return (Trow)0;
 }
 
 static Tmenuitem sockCreate4MenuAny(obj Parent, Twindow Window, udat Code, byte Flags, ldat Len,
@@ -1208,14 +1208,14 @@ static Tmenuitem sockCreate4MenuAny(obj Parent, Twindow Window, udat Code, byte 
   return Do(Create4Menu, menuitem)(Parent, Window, Code, Flags, Len, Name);
 }
 
-static menu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
-                           tcolor ColSelectDisabled, tcolor ColShtCut, tcolor ColSelShtCut,
-                           byte FlagDefColInfo) {
+static Tmenu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
+                            tcolor ColSelectDisabled, tcolor ColShtCut, tcolor ColSelShtCut,
+                            byte FlagDefColInfo) {
   Tmsgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
     return New(menu)(Owner, ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut,
                      ColSelShtCut, FlagDefColInfo);
-  return (menu)0;
+  return (Tmenu)0;
 }
 
 /* last 3 args are currently useless for remote clients */
@@ -1269,8 +1269,8 @@ static Twidget sockFirstWidget(Twidget W) {
 static Tmsgport sockFirstMsgPort(void) {
   return All->FirstMsgPort;
 }
-static menu sockFirstMenu(Tmsgport MsgPort) {
-  return MsgPort ? MsgPort->FirstMenu : (menu)0;
+static Tmenu sockFirstMenu(Tmsgport MsgPort) {
+  return MsgPort ? MsgPort->FirstMenu : (Tmenu)0;
 }
 static Twidget sockFirstW(Tmsgport MsgPort) {
   return MsgPort ? MsgPort->FirstW : (Twidget)0;
@@ -1281,7 +1281,7 @@ static Tgroup sockFirstGroup(Tmsgport MsgPort) {
 static Tmutex sockFirstMutex(Tmsgport MsgPort) {
   return MsgPort ? MsgPort->FirstMutex : (Tmutex)0;
 }
-static Tmenuitem sockFirstMenuItem(menu Menu) {
+static Tmenuitem sockFirstMenuItem(Tmenu Menu) {
   return Menu ? Menu->FirstI : (Tmenuitem)0;
 }
 static Tgadget sockFirstGadget(Tgroup group) {
@@ -1385,7 +1385,7 @@ static void sockSendMsg(Tmsgport MsgPort, msg Msg) {
     }
     break;
   case msg_menu_row:
-    sockReply(Msg->Type, Len = sizeof(twindow) + 2 * sizeof(dat) + sizeof(tmenu) + sizeof(row),
+    sockReply(Msg->Type, Len = sizeof(twindow) + 2 * sizeof(dat) + sizeof(tmenu) + sizeof(trow),
               NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;

@@ -24,7 +24,7 @@
 static byte InitTtyDataWindow(Twindow w, dat scrollbacklines);
 
 Twindow Swindow::Create(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle,
-                        menu m, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
+                        Tmenu m, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
                         dat xwidth, dat ywidth, dat scrollbacklines) {
 
   Twindow w = NULL;
@@ -44,8 +44,8 @@ Twindow Swindow::Create(Tmsgport owner, dat titlelen, const char *title, const t
 }
 
 Twindow Swindow::Init(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle,
-                      menu m, tcolor coltext, uldat cursortype, uldat attr, uldat flags, dat xwidth,
-                      dat ywidth, dat scrollbacklines) {
+                      Tmenu m, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
+                      dat xwidth, dat ywidth, dat scrollbacklines) {
 
   byte hasborder = 2 * !(flags & WINDOWFL_BORDERLESS);
   /* overflow safety */

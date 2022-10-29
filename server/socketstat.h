@@ -334,7 +334,7 @@ static byte sockStatGroup(Tgroup x, tsfield TSF) {
   return ttrue;
 }
 
-static byte sockStatRow(row x, tsfield TSF) {
+static byte sockStatRow(Trow x, tsfield TSF) {
   switch (TSF->label) {
     TWScase(row, Code, udat);
     TWScase(row, Flags, byte);
@@ -364,7 +364,7 @@ static byte sockStatMenuItem(Tmenuitem x, tsfield TSF) {
   return ttrue;
 }
 
-static byte sockStatMenu(menu x, tsfield TSF) {
+static byte sockStatMenu(Tmenu x, tsfield TSF) {
   switch (TSF->label) {
     TWScase(menu, ColItem, tcolor);
     TWScase(menu, ColSelect, tcolor);
@@ -509,11 +509,11 @@ static void sockStat(obj x, udat n, const byte *in) {
         ok = sockStatGroup((Tgroup)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
       case Tmenuitem_magic_byte:
-        ok = sockStatMenuItem((Tmenuitem)x, TSF + i) || sockStatRow((row)x, TSF + i) ||
+        ok = sockStatMenuItem((Tmenuitem)x, TSF + i) || sockStatRow((Trow)x, TSF + i) ||
              sockStatObj(x, TSF + i);
         break;
       case Tmenu_magic_byte:
-        ok = sockStatMenu((menu)x, TSF + i) || sockStatObj(x, TSF + i);
+        ok = sockStatMenu((Tmenu)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
       case Tmsgport_magic_byte:
         ok = sockStatMsgPort((Tmsgport)x, TSF + i) || sockStatObj(x, TSF + i);

@@ -9,7 +9,7 @@
 #ifndef TWIN_RESIZE_H
 #define TWIN_RESIZE_H
 
-byte EnsureLenRow(row r, uldat len, byte default_color);
+byte EnsureLenRow(Trow r, uldat len, byte default_color);
 byte RowWriteCharset(Twindow w, uldat Len, const char *charset_bytes);
 byte RowWriteUtf8(Twindow w, uldat len, const char *utf8_bytes);
 byte RowWriteTRune(Twindow w, uldat len, const trune *runes);
@@ -64,7 +64,7 @@ void RaiseWidget(Twidget W, byte alsoFocus);
 void LowerWidget(Twidget W, byte alsoDeFocus);
 void RestackWidgets(Twidget P, uldat N, const Twidget *arrayW);
 
-void RestackRows(obj O, uldat N, const row *arrayR);
+void RestackRows(obj O, uldat N, const Trow *arrayR);
 
 void PressGadget(Tgadget G);
 void UnPressGadget(Tgadget G, byte maySendMsgIfNotToggle);
@@ -74,6 +74,6 @@ void WriteTextsGadget(Tgadget G, byte bitmap, dat XWidth, dat YWidth, const char
 void WriteTRunesGadget(Tgadget G, byte bitmap, dat XWidth, dat YWidth, const trune *Text, dat Left,
                        dat Up);
 
-void SyncMenu(menu Menu);
+void SyncMenu(Tmenu Menu);
 
 #endif /* TWIN_RESIZE_H */

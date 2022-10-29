@@ -17,8 +17,8 @@
 
 #include <new>
 
-row Srow::Create(udat code, byte flags) {
-  row r = NULL;
+Trow Srow::Create(udat code, byte flags) {
+  Trow r = NULL;
   if (code < COD_RESERVED) {
     void *addr = AllocMem0(sizeof(Srow));
     if (addr) {
@@ -33,7 +33,7 @@ row Srow::Create(udat code, byte flags) {
   return r;
 }
 
-row Srow::Init(udat code, byte flags) {
+Trow Srow::Init(udat code, byte flags) {
   if (code < COD_RESERVED && ((obj)this)->Init()) {
     this->Code = code;
     this->Flags = flags;

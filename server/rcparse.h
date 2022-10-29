@@ -1251,16 +1251,16 @@ static void NewCommonMenu_Overflow(void) {
  * create new CommonMenu and MenuBinds from MenuList
  * or fail with no side effects
  */
-static byte NewCommonMenu(void *const *shm_M, menu *res_CommonMenu, node **res_MenuBinds,
+static byte NewCommonMenu(void *const *shm_M, Tmenu *res_CommonMenu, node **res_MenuBinds,
                           uldat *res_MenuBindsMax) {
   node new_MenuList;
   node *new_MenuBinds = (node *)0;
   uldat new_MenuBindsMax;
 
-  menu Menu = (menu)0;
+  Tmenu Menu = (Tmenu)0;
   Tmenuitem Item;
   Twindow W;
-  row Row;
+  Trow Row;
   node N, M;
   uldat maxlen, l;
   str Line;
@@ -1354,7 +1354,7 @@ static byte NewCommonMenu(void *const *shm_M, menu *res_CommonMenu, node **res_M
 static byte ReadGlobals(void) {
   node *g;
   void *const *M = (void *const *)shm_getbase();
-  menu new_CommonMenu;
+  Tmenu new_CommonMenu;
   node *new_MenuBinds = (node *)0;
   uldat new_MenuBindsMax;
   screen new_Screens = (screen)0;
