@@ -16,7 +16,7 @@
 #include "methods.h" // Act(), InsertLast()
 
 #include <new>
-#include <string.h> // memcmp()
+#include <cstring> // memcmp()
 
 mutex s_mutex::Create(msgport owner, byte namelen, const char *name, byte perm) {
   byte mask = PERM_WRITE;

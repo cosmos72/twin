@@ -14,7 +14,7 @@
 #include "stl/void.h"
 #include "stl/type_traits.h"
 
-#include <stddef.h>
+#include <cstddef>
 
 /** Helper class to convert arbitrary types to string */
 class FmtBase {

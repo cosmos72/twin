@@ -18,7 +18,7 @@
 #include "twin.h"  // NOFD, NOPID, NOSLOT
 
 #include <new>
-#include <string.h>    // memset()
+#include <cstring>     // memset()
 #include <Tutf/Tutf.h> // Tutf_CP437_to_UTF_32[]
 
 static byte InitTtyDataWindow(window w, dat scrollbacklines);

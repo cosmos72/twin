@@ -9,8 +9,6 @@
 #ifndef TWIN_DRAW_H
 #define TWIN_DRAW_H
 
-byte InitDraw(void);
-
 widget FindWidgetAt(widget Parent, dat X, dat Y);
 
 void DrawSelfWidget(draw_ctx *D);

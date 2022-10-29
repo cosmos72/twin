@@ -21,7 +21,7 @@
 #endif
 
 #ifdef TW_HAVE_STRING_H
-#include <string.h>
+#include <cstring>
 #else
 char *strerror(int errnum);
 #endif

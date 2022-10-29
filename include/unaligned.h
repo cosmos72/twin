@@ -8,6 +8,8 @@
 #ifndef TWIN_UNALIGNED_H
 #define TWIN_UNALIGNED_H
 
+#include "stl/macros.h" // NOTHROW
+
 #include <string.h> // memcpy()
 
 #define PopV(s, len, vec) (memcpy(vec, s, len), (s) += (len))
@@ -15,24 +17,24 @@
 #define PushV(s, len, vec) (memcpy(s, vec, len), (s) += (len))
 
 #ifdef __cplusplus
-template <class T> inline T deserialize(const void *addr, size_t byte_offset = 0) {
+template <class T> inline T deserialize(const void *addr, size_t byte_offset = 0) NOTHROW {
   T ret;
   std::memcpy(&ret, static_cast<const byte *>(addr) + byte_offset, sizeof(T));
   return ret;
 }
-template <class T> inline void serialize(void *addr, size_t byte_offset, T value) {
+template <class T> inline void serialize(void *addr, size_t byte_offset, T value) NOTHROW {
   std::memcpy(static_cast<byte *>(addr) + byte_offset, &value, sizeof(T));
 }
 
-template <class T> inline byte *Pop(const byte *src, T &val) {
+template <class T> inline byte *Pop(const byte *src, T &val) NOTHROW {
   std::memcpy(&val, src, sizeof(T));
   return const_cast<byte *>(src) + sizeof(T);
 }
-template <class T> inline char *Pop(const char *src, T &val) {
+template <class T> inline char *Pop(const char *src, T &val) NOTHROW {
   std::memcpy(&val, src, sizeof(T));
   return const_cast<char *>(src) + sizeof(T);
 }
-template <class T> inline byte *Push(byte *dst, T val) {
+template <class T> inline byte *Push(byte *dst, T val) NOTHROW {
   std::memcpy(dst, &val, sizeof(T));
   return dst + sizeof(T);
 }

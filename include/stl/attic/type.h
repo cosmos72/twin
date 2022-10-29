@@ -9,8 +9,8 @@
 #ifndef TWIN_STL_TYPE_H
 #define TWIN_STL_TYPE_H
 
-#include <stddef.h> // size_t
-#include <new>      // placement new
+#include <cstddef> // size_t
+#include <new>     // placement new
 
 // --------------------------- TypeId --------------------------------
 class TypeId {

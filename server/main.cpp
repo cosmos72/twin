@@ -196,7 +196,7 @@ static byte Init(void) {
           * also Video[]. The former is initialized by InitBuiltin(), the latter by InitHW().
           * No DrawArea2() are allowed at all before InitHW() !
           */
-         InitDraw() && InitWM();
+         InitWM();
 }
 
 void Quit(int status) {

@@ -74,7 +74,7 @@ static VOLATILE byte GotSignalWinch;
 static VOLATILE byte GotSignalChild;
 static VOLATILE byte GotSignalHangup;
 
-static void SignalWinch(int n) {
+static void SignalWinch(int n) NOTHROW {
   GotSignals = GotSignalWinch = ttrue;
   signal(SIGWINCH, SignalWinch);
   TW_RETFROMSIGNAL(0);
@@ -89,7 +89,7 @@ static void HandleSignalWinch(void) {
   TW_RETFROMSIGNAL(0);
 }
 
-static void SignalChild(int n) {
+static void SignalChild(int n) NOTHROW {
   GotSignals = GotSignalChild = ttrue;
   signal(SIGCHLD, SignalChild);
   TW_RETFROMSIGNAL(0);
@@ -150,7 +150,7 @@ static void SignalFatal(int n) {
 }
 #endif
 
-static int signals_ignore[] = {
+static const int signals_ignore[] = {
     SIGUSR1,   SIGUSR2, SIGPIPE, SIGALRM,
 #ifdef SIGIO
     SIGIO,
@@ -182,7 +182,7 @@ static int signals_ignore[] = {
 #endif
 };
 
-static int signals_fatal[] = {
+static const int signals_fatal[] = {
     SIGINT,    SIGQUIT, SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGSEGV, SIGTERM,
 #ifdef SIGXPCU
     SIGXCPU,
@@ -201,7 +201,7 @@ static int signals_fatal[] = {
 #endif
 };
 
-byte InitSignals(void) {
+byte InitSignals(void) NOTHROW {
   uldat i;
   signal(SIGWINCH, SignalWinch);
   signal(SIGCHLD, SignalChild);
@@ -213,7 +213,7 @@ byte InitSignals(void) {
   return ttrue;
 }
 
-void QuitSignals(void) {
+void QuitSignals(void) NOTHROW {
   uldat i;
   signal(SIGWINCH, SIG_IGN);
   signal(SIGCHLD, SIG_IGN);
@@ -223,7 +223,7 @@ void QuitSignals(void) {
     signal(signals_fatal[i], SIG_DFL);
 }
 
-void AllDefaultSignals(void) {
+void AllDefaultSignals(void) NOTHROW {
   uldat i;
   signal(SIGWINCH, SIG_DFL);
   signal(SIGCHLD, SIG_DFL);
@@ -234,12 +234,12 @@ void AllDefaultSignals(void) {
     signal(signals_fatal[i], SIG_DFL);
 }
 
-void MoveToXY(dat x, dat y) {
+void MoveToXY(dat x, dat y) NOTHROW {
   CursorX = x;
   CursorY = y;
 }
 
-void SetCursorType(uldat type) {
+void SetCursorType(uldat type) NOTHROW {
   if ((type & 0xF) == 0)
     type |= LINECURSOR;
   else if ((type & 0xF) > SOLIDCURSOR)
@@ -248,7 +248,7 @@ void SetCursorType(uldat type) {
   CursorType = type;
 }
 
-void NeedRedrawVideo(dat Left, dat Up, dat Right, dat Down) {
+void NeedRedrawVideo(dat Left, dat Up, dat Right, dat Down) NOTHROW {
   if (HW->RedrawVideo) {
     HW->RedrawLeft = Min2(HW->RedrawLeft, Left);
     HW->RedrawUp = Min2(HW->RedrawUp, Up);
@@ -275,7 +275,7 @@ void NeedRedrawVideo(dat Left, dat Up, dat Right, dat Down) {
  * for better cleannes, DirtyVideo()
  * should be used *before* actually touching Video[]
  */
-void DirtyVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) {
+void DirtyVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) NOTHROW {
   dat s0, s1, e0, e1, len, min;
   byte i;
 
@@ -393,7 +393,7 @@ void DirtyVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) {
   }
 }
 
-static void Video2OldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) {
+static void Video2OldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) NOTHROW {
   tcell *src, *dst;
   uldat xc, yc;
 
@@ -478,7 +478,7 @@ void DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     Video2OldVideo(DstLeft, DstUp, DstRgt, DstDwn);
 }
 
-byte InitTtysave(void) {
+byte InitTtysave(void) NOTHROW {
   int fd = open("/dev/tty", O_RDWR | O_NOCTTY);
   InitTtyStruct(fd, ttysave);
   if (fd >= 0)
@@ -486,7 +486,7 @@ byte InitTtysave(void) {
   return ttrue;
 }
 
-void InitTtyStruct(int fd, termios &ttyb) {
+void InitTtyStruct(int fd, termios &ttyb) NOTHROW {
 
   byte ok = tty_getioctl(fd, &ttyb) == 0;
 

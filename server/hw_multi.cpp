@@ -65,15 +65,15 @@ static byte ConfigureHWDefault[HW_CONFIGURE_MAX];
 
 /* common functions */
 
-dat GetDisplayWidth(void) {
+dat GetDisplayWidth(void) NOTHROW {
   return All->FirstDisplayHW && !All->FirstDisplayHW->Quitted ? DisplayWidth : savedDisplayWidth;
 }
 
-dat GetDisplayHeight(void) {
+dat GetDisplayHeight(void) NOTHROW {
   return All->FirstDisplayHW && !All->FirstDisplayHW->Quitted ? DisplayHeight : savedDisplayHeight;
 }
 
-void UpdateFlagsHW(void) {
+void UpdateFlagsHW(void) NOTHROW {
   StrategyReset(); /* reset StrategyFlag */
 
   NeedOldVideo = ExpensiveFlushVideo = tfalse;
@@ -1017,13 +1017,13 @@ inline uldat Plain_countDirtyVideo(dat X1, dat Y1, dat X2, dat Y2) {
   return t;
 }
 
-void StrategyReset(void) {
+void StrategyReset(void) NOTHROW {
   AccelVideo[0] = AccelVideo[1] = TW_MAXDAT;
   AccelVideo[2] = AccelVideo[3] = TW_MINDAT;
   StrategyFlag = HW_UNSET;
 }
 
-byte Strategy4Video(dat Xstart, dat Ystart, dat Xend, dat Yend) {
+byte Strategy4Video(dat Xstart, dat Ystart, dat Xend, dat Yend) NOTHROW {
   uldat Varea = 0, XYarea_2 = (Xend - Xstart + 1) * (Yend - Ystart + 1) / 2;
   dat x1, y1, x2, y2;
 

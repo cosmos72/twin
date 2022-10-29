@@ -20,14 +20,14 @@
 #include <signal.h>
 #endif
 
-void *CloneMem(const void *From, uldat len) {
+void *CloneMem(const void *From, uldat len) NOTHROW {
   void *temp;
   if (From && len && (temp = AllocMem(len)))
     return CopyMem(From, temp, len);
   return NULL;
 }
 
-char *CloneStr(const char *s) {
+char *CloneStr(const char *s) NOTHROW {
   char *q;
   uldat len;
 
@@ -40,7 +40,7 @@ char *CloneStr(const char *s) {
   return NULL;
 }
 
-char *CloneStrL(const char *s, uldat len) {
+char *CloneStrL(const char *s, uldat len) NOTHROW {
   char *q;
 
   if (s) {
@@ -54,7 +54,7 @@ char *CloneStrL(const char *s, uldat len) {
   return NULL;
 }
 
-char **CloneStrList(char **s) {
+char **CloneStrList(char **s) NOTHROW {
   uldat n = 1;
   char **t = s, **v;
 
@@ -84,7 +84,7 @@ char **CloneStrList(char **s) {
   return t;
 }
 
-trune *CloneStr2TRune(const char *s, uldat len) {
+trune *CloneStr2TRune(const char *s, uldat len) NOTHROW {
   trune *temp, *save;
 
   if (s) {
@@ -102,11 +102,11 @@ trune *CloneStr2TRune(const char *s, uldat len) {
 #if defined(TW_HAVE_ALARM) && defined(TW_HAVE_SIGACTION)
 volatile int AlarmReceived = 0;
 
-static void AlarmHandler(int sig) {
+static void AlarmHandler(int sig) NOTHROW {
   AlarmReceived = 1;
   TW_RETFROMSIGNAL(0);
 }
-void SetAlarm(unsigned seconds) {
+void SetAlarm(unsigned seconds) NOTHROW {
   struct sigaction act;
   if (seconds != 0) {
     act.sa_handler = AlarmHandler;

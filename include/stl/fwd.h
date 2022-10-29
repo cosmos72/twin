@@ -22,11 +22,11 @@ typedef Span<char> CharSpan;
 
 struct to_chars_result;
 
-template <class T> T &lvalue(T &val) {
+template <class T> T &lvalue(T &val) NOTHROW {
   return val;
 }
 
-template <class T> const T &lvalue(const T &val) {
+template <class T> const T &lvalue(const T &val) NOTHROW {
   return val;
 }
 

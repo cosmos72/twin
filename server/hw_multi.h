@@ -22,8 +22,8 @@ extern tany StrategyDelay;
 #define HW_BUFFER 2
 #define HW_DELAY 3
 
-void StrategyReset(void);
-byte Strategy4Video(dat Xstart, dat Ystart, dat Xend, dat Yend);
+void StrategyReset(void) NOTHROW;
+byte Strategy4Video(dat Xstart, dat Ystart, dat Xend, dat Yend) NOTHROW;
 
 byte InitDisplayHW(display_hw);
 void QuitDisplayHW(display_hw);
@@ -42,7 +42,7 @@ void RefreshVideo(void);
 byte ResizeDisplay(void);
 
 void RunNoHW(byte print_info);
-void UpdateFlagsHW(void);
+void UpdateFlagsHW(void) NOTHROW;
 
 void EnableMouseMotionEvents(byte enable);
 

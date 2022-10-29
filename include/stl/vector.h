@@ -221,6 +221,4 @@ template <class T> void swap(Vector<T> &left, Vector<T> &right) NOTHROW {
   left.swap(right);
 }
 
-typedef Vector<char> CharVec;
-
 #endif /* TWIN_STL_VECTOR_H */

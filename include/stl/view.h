@@ -12,7 +12,7 @@
 #include "stl/fwd.h"
 #include "stl/mem.h"
 
-#include <stddef.h> // size_t
+#include <cstddef> // size_t
 #include <cassert>
 
 /** read-only view of T[] */

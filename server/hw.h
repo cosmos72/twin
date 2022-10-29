@@ -29,19 +29,19 @@ extern byte CanDragArea, ChangedVideoFlagAgain;
 extern byte QueuedDrawArea2FullScreen;
 
 extern VOLATILE byte GotSignals;
-byte InitSignals(void);
+byte InitSignals(void) NOTHROW;
 void HandleSignals(void);
-void QuitSignals(void);
-void AllDefaultSignals(void); // set all signal handlers to SIG_DFL
-byte InitTtysave(void);
+void QuitSignals(void) NOTHROW;
+void AllDefaultSignals(void) NOTHROW; // set all signal handlers to SIG_DFL
+byte InitTtysave(void) NOTHROW;
 
 struct termios;
-void InitTtyStruct(int fd, termios &ttyb);
+void InitTtyStruct(int fd, termios &ttyb) NOTHROW;
 
-void DirtyVideo(dat Xstart, dat Ystart, dat Xend, dat Yend);
+void DirtyVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) NOTHROW;
 void DragArea(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
 
-void MoveToXY(dat x, dat y);
-void SetCursorType(uldat type);
+void MoveToXY(dat x, dat y) NOTHROW;
+void SetCursorType(uldat type) NOTHROW;
 
 #endif /* TWIN_HW_H */

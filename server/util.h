@@ -30,7 +30,7 @@ extern String SocketDir;
 
 #if defined(TW_HAVE_ALARM) && defined(TW_HAVE_SIGACTION)
 extern volatile int AlarmReceived;
-void SetAlarm(unsigned seconds);
+void SetAlarm(unsigned seconds) NOTHROW;
 #else
 #define SetAlarm(seconds) ((void)0)
 #define AlarmReceived (0)

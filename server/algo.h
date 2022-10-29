@@ -9,27 +9,29 @@
 #ifndef TWIN_ALGO_H
 #define TWIN_ALGO_H
 
+#include "stl/macros.h" // NOTHROW
+
 #include <Tw/datatypes.h>
 
 #include <stddef.h>
 
-inline ldat Abs(ldat x) {
+inline ldat Abs(ldat x) NOTHROW {
   return x >= 0 ? x : -x;
 }
-inline dat Sign(ldat x) {
+inline dat Sign(ldat x) NOTHROW {
   return x > 0 ? 1 : x < 0 ? -1 : 0;
 }
-inline ldat Min2(ldat x, ldat y) {
+inline ldat Min2(ldat x, ldat y) NOTHROW {
   return x < y ? x : y;
 }
-inline ldat Max2(ldat x, ldat y) {
+inline ldat Max2(ldat x, ldat y) NOTHROW {
   return x > y ? x : y;
 }
-inline ldat Max3(ldat x, ldat y, ldat z) {
+inline ldat Max3(ldat x, ldat y, ldat z) NOTHROW {
   return Max2(Max2(x, y), z);
 }
 
-inline uldat Min2u(uldat x, uldat y) {
+inline uldat Min2u(uldat x, uldat y) NOTHROW {
   return x < y ? x : y;
 }
 

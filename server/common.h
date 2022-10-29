@@ -16,8 +16,8 @@
  * display.c and the whole twin sources, in particular hw_multi.c
  */
 
-char *CloneStr(const char *s);
-char *CloneStrL(const char *s, uldat len);
+char *CloneStr(const char *s) NOTHROW;
+char *CloneStrL(const char *s, uldat len) NOTHROW;
 
 byte AllHWCanDragAreaNow(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
 void DragAreaHW(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
@@ -48,8 +48,8 @@ byte SelectionAppendRunes(TRunes runes);
 byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq);
 byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons);
 
-dat GetDisplayWidth(void);
-dat GetDisplayHeight(void);
+dat GetDisplayWidth(void) NOTHROW;
+dat GetDisplayHeight(void) NOTHROW;
 
 byte InitTransUser(void);
 

@@ -25,11 +25,7 @@
 #include <Tutf/Tutf.h>
 #include <Tutf/Tutf_defs.h>
 
-byte InitDraw(void) {
-  return ttrue;
-}
-
-inline tcolor DoShadowColor(tcolor Color, byte Fg, byte Bg) {
+inline tcolor DoShadowColor(tcolor Color, byte Fg, byte Bg) NOTHROW {
   return (Bg   ? (Color & TCOL(0, tmaxcol)) > TCOL(0, thigh | tblack) ? TCOL(0, thigh | tblack)
                                                                       : TCOL(0, tblack)
             : Fg ? Color & TCOL(0, twhite)
@@ -43,7 +39,8 @@ inline tcolor DoShadowColor(tcolor Color, byte Fg, byte Bg) {
  * warning: DrawMenu() can cheat and give us a user Menu
  * while MenuItem is from All->CommonMenu
  */
-static void FindFontMenuItem(menu Menu, menuitem MenuItem, dat i, byte Select, tcell *PtrAttr) {
+static void FindFontMenuItem(menu Menu, menuitem MenuItem, dat i, byte Select,
+                             tcell *PtrAttr) NOTHROW {
   tcolor Color;
   byte ShortCutFound;
 
@@ -68,7 +65,7 @@ static void FindFontMenuItem(menu Menu, menuitem MenuItem, dat i, byte Select, t
   }
 }
 
-static void FindFontInfo(menu Menu, dat i, byte Select, tcell *PtrAttr) {
+static void FindFontInfo(menu Menu, dat i, byte Select, tcell *PtrAttr) NOTHROW {
   row Info;
   tcolor Color;
 

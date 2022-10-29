@@ -39,7 +39,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
-#include <string.h>
+#include <cstring>
 #include <signal.h>
 
 #ifndef PLUGINDIR
@@ -358,7 +358,7 @@ void warn_NoHW(uldat len, const char *arg, uldat tried) {
   log(ERROR) << "\n";
 }
 
-static void UpdateFlagsHW(void) {
+static void UpdateFlagsHW(void) NOTHROW {
   if (!HW->Quitted) {
     NeedOldVideo = HW->FlagsHW & FlHWNeedOldVideo;
     ExpensiveFlushVideo = HW->FlagsHW & FlHWExpensiveFlushVideo;
@@ -420,7 +420,7 @@ static display_hw CreateDisplayHW(Chars name) {
   return HW = _HW.Init(name.size(), name.data());
 }
 
-static byte IsValidHW(Chars carg) {
+static byte IsValidHW(Chars carg) NOTHROW {
   const char *arg = carg.data();
   size_t len = carg.size();
   uldat i;
@@ -504,7 +504,7 @@ inline void OptimizeChangedVideo(void) {
   } while (0)
 #endif
 
-inline void SyncOldVideo(void) {
+inline void SyncOldVideo(void) NOTHROW {
   ldat start, len;
   ldat i;
 
@@ -592,7 +592,7 @@ static byte ReAllocVideo(dat Width, dat Height) {
       Quit(1);
     }
     ValidVideo = tfalse;
-    memset(ChangedVideo, 0xff, (ldat)DisplayHeight * sizeof(dat) * 4);
+    std::memset(ChangedVideo, 0xff, (ldat)DisplayHeight * sizeof(dat) * 4);
   }
   return change;
 }
@@ -1029,14 +1029,14 @@ static void MainLoop(int Fd) {
   exit(1);
 }
 
-dat GetDisplayWidth(void) {
+dat GetDisplayWidth(void) NOTHROW {
   return DisplayWidth;
 }
-dat GetDisplayHeight(void) {
+dat GetDisplayHeight(void) NOTHROW {
   return DisplayHeight;
 }
 
-static void Usage(void) {
+static void Usage(void) NOTHROW {
   fputs("Usage: twdisplay [OPTIONS]\n"
         "Currently known options: \n"
         " -h, --help               display this help and exit\n"
@@ -1058,18 +1058,19 @@ static void Usage(void) {
         stdout);
 }
 
-static void TryUsage(const char *opt) {
-  if (opt)
+static void TryUsage(const char *opt) NOTHROW {
+  if (opt) {
     fprintf(stdout, "twdisplay: unknown option `" SS "'\n", opt);
+  }
   fputs("           try `twdisplay --help' for usage summary.\n", stdout);
 }
 
-static void ShowVersion(void) {
+static void ShowVersion(void) NOTHROW {
   fputs("twdisplay " TWIN_VERSION_STR " with socket protocol " TW_PROTOCOL_VERSION_STR "\n",
         stdout);
 }
 
-static byte VersionsMatch(byte force) {
+static bool VersionsMatch(bool force) {
   uldat cv = TW_PROTOCOL_VERSION, lv = TwLibraryVersion(), sv = TwServerVersion();
 
   if (lv != sv || lv != cv) {
@@ -1082,17 +1083,17 @@ static byte VersionsMatch(byte force) {
       log(WARNING) << "twdisplay: warning: socket protocol version mismatch!  (ignored)"
                       "\n           client is " TW_PROTOCOL_VERSION_STR ", library is "
                    << lib_verstr << ", server is " << srv_verstr << "\n";
-      return tfalse;
+      return false;
     } else {
       log(ERROR) << "twdisplay: fatal: socket protocol version mismatch!"
                     "\n           client is " TW_PROTOCOL_VERSION_STR ", library is "
                  << lib_verstr << ", server is " << srv_verstr << "\n";
     }
   }
-  return ttrue;
+  return true;
 }
 
-static void MergeHyphensArgv(int argc, char **argv) {
+static void MergeHyphensArgv(int argc, char **argv) NOTHROW {
   const char *s;
   while (argc) {
     if ((s = *argv) && s[0] == '-' && s[1] == '-' && s[2] && s[3])
@@ -1108,8 +1109,9 @@ int main(int argc, char *argv[]) {
   const char *dpy = NULL, *client_dpy = NULL;
   char *arg_hw = NULL;
   int Fd;
-  byte flags = TW_ATTACH_HW_REDIRECT, force = 0;
+  byte flags = TW_ATTACH_HW_REDIRECT;
   byte ret = 0, ourtty = 0;
+  bool force = false;
 
   MergeHyphensArgv(argc, argv);
 
@@ -1133,7 +1135,7 @@ int main(int argc, char *argv[]) {
     else if (!strcmp(argi, "-q") || !strcmp(argi, "-quiet"))
       flags &= ~TW_ATTACH_HW_REDIRECT;
     else if (!strcmp(argi, "-f") || !strcmp(argi, "-force"))
-      force = 1;
+      force = true;
     else if (!strncmp(argi, "-plugindir=", 11)) {
       plugindir = Chars::from_c(argi + 11);
     } else if (!strncmp(argi, "-twin@", 6))

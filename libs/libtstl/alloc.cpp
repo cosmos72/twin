@@ -14,7 +14,7 @@
 #include "stl/err.h"
 
 #include <stdlib.h>
-#include <string.h>
+#include <cstring>
 
 void *AllocMem(size_t len) NOTHROW {
   void *ret = NULL;

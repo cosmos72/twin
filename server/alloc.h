@@ -18,15 +18,18 @@
 #include <Tw/datatypes.h>
 #include <cstring> // memcpy(), memmove()
 
-/* inline/define stuff: */
+inline void *CopyMem(const void *from, void *to, size_t len) NOTHROW {
+  return std::memcpy(to, from, len);
+}
 
-#define CopyMem(from, to, len) std::memcpy(to, from, len)
-#define MoveMem(from, to, len) std::memmove(to, from, len)
+inline void *MoveMem(const void *from, void *to, size_t len) NOTHROW {
+  return std::memmove(to, from, len);
+}
 
-void *CloneMem(const void *From, uldat len);
-char *CloneStr(const char *s);
-char *CloneStrL(const char *s, uldat len);
-char **CloneStrList(char **s);
-trune *CloneStr2TRune(const char *s, uldat len);
+void *CloneMem(const void *From, uldat len) NOTHROW;
+char *CloneStr(const char *s) NOTHROW;
+char *CloneStrL(const char *s, uldat len) NOTHROW;
+char **CloneStrList(char **s) NOTHROW;
+trune *CloneStr2TRune(const char *s, uldat len) NOTHROW;
 
 #endif /* TWIN_ALLOC_H */
