@@ -77,7 +77,7 @@ struct Sgadget : public Sobj {
   HookFn ShutDownHook; /* hooks for this Twidget */
   HookFn Hook, *WhereHook;
   HookFn MapUnMapHook;
-  msg MapQueueMsg;
+  Tmsg MapQueueMsg;
   tcell USE_Fill;
   union {
     struct s_gT T;
@@ -97,7 +97,7 @@ struct Sgadget : public Sobj {
                uldat Attr, uldat Flags, udat Code, tcolor ColText, tcolor ColTextSelect,
                tcolor ColTextDisabled, tcolor ColTextSelectDisabled, dat Left, dat Up);
 
-  /* obj */
+  /* Tobj */
   uldat Magic() const {
     return Fn->Magic;
   }

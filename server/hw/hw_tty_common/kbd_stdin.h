@@ -81,7 +81,7 @@ static byte stdin_InitKeyboard(void) {
   )
     return tfalse;
 
-  HW->keyboard_slot = RegisterRemote(tty_fd, (obj)HW, (void (*)(int, obj))stdin_KeyboardEvent);
+  HW->keyboard_slot = RegisterRemote(tty_fd, (Tobj)HW, (void (*)(int, Tobj))stdin_KeyboardEvent);
   if (HW->keyboard_slot == NOSLOT) {
     stdin_QuitKeyboard();
     return tfalse;

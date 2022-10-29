@@ -98,7 +98,7 @@ static Twindow OpenTerm(const char *arg0, const char *const *argv) {
 }
 
 static void TwinTermH(Tmsgport MsgPort) {
-  msg Msg;
+  Tmsg Msg;
   event_any *Event;
   udat Code /*, Repeat*/;
   Twindow Win;
@@ -119,7 +119,7 @@ static void TwinTermH(Tmsgport MsgPort) {
                                      Event->EventKeyboard.AsciiSeq);
     } else if (Msg->Type == msg_selection) {
 
-      TwinSelectionRequest((obj)Term_MsgPort, Win->Id, TwinSelectionGetOwner());
+      TwinSelectionRequest((Tobj)Term_MsgPort, Win->Id, TwinSelectionGetOwner());
 
     } else if (Msg->Type == msg_selection_notify) {
 
@@ -209,7 +209,7 @@ static void OverrideMethods(bool enter) {
   }
 }
 
-EXTERN_C byte InitModule(module Module) {
+EXTERN_C byte InitModule(Tmodule Module) {
   Twindow Window;
   const char *shellpath, *shell;
 
@@ -245,7 +245,7 @@ EXTERN_C byte InitModule(module Module) {
   return tfalse;
 }
 
-EXTERN_C void QuitModule(module Module) {
+EXTERN_C void QuitModule(Tmodule Module) {
   UnRegisterExt(Term, Open, OpenTerm);
   OverrideMethods(false);
   if (Term_MsgPort) {

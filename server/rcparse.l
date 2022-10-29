@@ -34,10 +34,6 @@ static int yywrap(void);
 
 static char errbuf[256];
 
-/* twin.h typedefs `msg'... avoid it */
-#define msg Msg
-
-
 #ifdef PURE_PARSER
 # define YY_DECL int yylex(YYSTYPE *_yylval, void *yylloc)
 # define yylval (*_yylval)

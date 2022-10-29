@@ -507,7 +507,7 @@ void DrawSelfWidget(draw_ctx *d) {
       }
     } else {
       /* ask the client to draw */
-      msg Msg;
+      Tmsg Msg;
       event_widget *EventW;
 
       if ((Msg = New(msg)(msg_widget_change, 0))) {

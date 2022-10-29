@@ -55,10 +55,10 @@ tpos FakeFindBorderWindow(Twindow W, dat u, dat v, byte Border, tcell *PtrAttr);
 #define Win4Menu(Menu) Do(Create4Menu, window)(Menu)
 
 #define Row4Menu(w, code, flags, len, name)                                                        \
-  (Trow) Do(Create4Menu, menuitem)((obj)(w), (Twindow)0, (code), (flags), (len), (name))
+  (Trow) Do(Create4Menu, menuitem)((Tobj)(w), (Twindow)0, (code), (flags), (len), (name))
 
 #define Item4Menu(menu, w, flags, len, name)                                                       \
-  Do(Create4Menu, menuitem)((obj)(menu), (w), (udat)0, (flags), (len), (name))
+  Do(Create4Menu, menuitem)((Tobj)(menu), (w), (udat)0, (flags), (len), (name))
 
 #define Item4MenuCommon(Menu) Do(Create4MenuCommon, menuitem)(Menu)
 

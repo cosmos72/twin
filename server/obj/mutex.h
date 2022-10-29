@@ -40,7 +40,7 @@ struct Smutex : public Sobj {
   static Tmutex Create(Tmsgport owner, byte namelen, const char *name, byte perm);
   Tmutex Init(Tmsgport owner, byte namelen, const char *name, byte perm);
 
-  /* obj */
+  /* Tobj */
   uldat Magic() const {
     return Fn->Magic;
   }

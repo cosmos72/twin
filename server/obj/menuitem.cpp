@@ -20,7 +20,7 @@
 #include <new>
 #include <Tw/datasizes.h> // TW_MAXLDAT
 
-Tmenuitem Smenuitem::Create(obj parent, Twindow w, udat code, byte flags, dat left, ldat len,
+Tmenuitem Smenuitem::Create(Tobj parent, Twindow w, udat code, byte flags, dat left, ldat len,
                             dat shortcut, const char *name) {
   Tmenuitem item = NULL;
   if (parent && (IS_MENU(parent) || (IS_WINDOW(parent) && W_USE((Twindow)parent, USEROWS))) &&
@@ -39,7 +39,7 @@ Tmenuitem Smenuitem::Create(obj parent, Twindow w, udat code, byte flags, dat le
   return item;
 }
 
-Tmenuitem Smenuitem::Init(obj parent, Twindow w, udat code, byte flags, dat left, ldat len,
+Tmenuitem Smenuitem::Init(Tobj parent, Twindow w, udat code, byte flags, dat left, ldat len,
                           dat shortcut, const char *name) {
 
   if (parent && (IS_MENU(parent) || (IS_WINDOW(parent) && W_USE((Twindow)parent, USEROWS))) &&
@@ -64,7 +64,7 @@ Tmenuitem Smenuitem::Init(obj parent, Twindow w, udat code, byte flags, dat left
       if ((ldat)w->YWidth < (len = Min2(TW_MAXDAT, w->HLogic + (ldat)3)))
         w->YWidth = len;
 
-      this->Insert((obj)w, (Tmenuitem)w->USE.R.LastRow, NULL);
+      this->Insert((Tobj)w, (Tmenuitem)w->USE.R.LastRow, NULL);
     } else {
       this->Insert(parent, ((Tmenu)parent)->LastI, NULL);
       SyncMenu((Tmenu)parent);

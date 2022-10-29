@@ -22,11 +22,11 @@
 /* functions to manage Ids */
 
 struct s_idvec {
-  obj *Vec;
+  Tobj *Vec;
   uldat Bottom, Top, Size;
 
-  bool assign_id(e_magic_byte magic_byte, obj o);
-  void drop_id(e_magic_byte magic_byte, obj o);
+  bool assign_id(e_magic_byte magic_byte, Tobj o);
+  void drop_id(e_magic_byte magic_byte, Tobj o);
 
 private:
   // returns old size, or NOSLOT if resize failed
@@ -50,8 +50,8 @@ uldat s_idvec::grow(e_magic_byte magic_byte) {
   if (new_size > MAXID) {
     new_size = MAXID;
   }
-  obj *new_vec;
-  if (!(new_vec = (obj *)ReAllocMem0(Vec, sizeof(obj) * old_size, sizeof(obj) * new_size))) {
+  Tobj *new_vec;
+  if (!(new_vec = (Tobj *)ReAllocMem0(Vec, sizeof(Tobj) * old_size, sizeof(Tobj) * new_size))) {
     return NOSLOT;
   }
   Vec = new_vec;
@@ -60,11 +60,11 @@ uldat s_idvec::grow(e_magic_byte magic_byte) {
 }
 
 void s_idvec::shrink(e_magic_byte magic_byte) {
-  obj *new_vec;
+  Tobj *new_vec;
   uldat new_size = Max2(TW_BIGBUFF, Top << 1);
 
   if (new_size < Size &&
-      (new_vec = (obj *)ReAllocMem0(Vec, sizeof(obj) * Size, sizeof(obj) * new_size))) {
+      (new_vec = (Tobj *)ReAllocMem0(Vec, sizeof(Tobj) * Size, sizeof(Tobj) * new_size))) {
     Vec = new_vec;
     Size = new_size;
   }
@@ -74,7 +74,7 @@ uldat s_idvec::get(e_magic_byte magic_byte) {
   return Bottom < Size ? Bottom : grow(magic_byte);
 }
 
-bool s_idvec::assign_id(e_magic_byte magic_byte, obj o) {
+bool s_idvec::assign_id(e_magic_byte magic_byte, Tobj o) {
   const uldat id = get(magic_byte);
   if (id != NOSLOT) {
     o->Id = id | ((uldat)magic_byte << magic_shift);
@@ -95,7 +95,7 @@ bool s_idvec::assign_id(e_magic_byte magic_byte, obj o) {
   return false;
 }
 
-void s_idvec::drop_id(e_magic_byte magic_byte, obj o) {
+void s_idvec::drop_id(e_magic_byte magic_byte, Tobj o) {
   uldat id = o->Id & MAXID;
 
   if (id < Top && Vec[id] == o /* paranoia */) {
@@ -117,12 +117,12 @@ void s_idvec::drop_id(e_magic_byte magic_byte, obj o) {
   }
 }
 
-bool AssignId(const e_id class_magic_id, obj o) {
+bool AssignId(const e_id class_magic_id, Tobj o) {
   if (o) {
     const e_magic_byte magic_byte = e_magic_byte(class_magic_id >> magic_shift);
     switch (magic_byte) {
     case Tobj_magic_byte:
-      /* 'obj' is an abstract type, you can't create one */
+      /* 'Tobj' is an abstract type, you can't create one */
       break;
     case Trow_magic_byte:
     case Tmodule_magic_byte:
@@ -150,14 +150,14 @@ bool AssignId(const e_id class_magic_id, obj o) {
   return false;
 }
 
-void DropId(obj o) {
+void DropId(Tobj o) {
   obj_entry e = (obj_entry)o;
   if (o && e->Fn) {
     const e_magic_byte magic_byte = e_magic_byte(e->Fn->Magic >> magic_shift);
 
     switch (magic_byte) {
     case Tobj_magic_byte:
-      /* 'obj' is an abstract class, you can't create one */
+      /* 'Tobj' is an abstract class, you can't create one */
       break;
     case Trow_magic_byte:
     case Tmodule_magic_byte:
@@ -186,11 +186,11 @@ void DropId(obj o) {
   }
 }
 
-obj Id2Obj(e_magic_byte expected_magic_byte, uldat id) {
+Tobj Id2Obj(e_magic_byte expected_magic_byte, uldat id) {
   e_magic_byte magic_byte = e_magic_byte(id >> magic_shift);
 
   if (expected_magic_byte < magic_n && magic_byte < magic_n) {
-    /* everything is a valid (obj) */
+    /* everything is a valid (Tobj) */
     /* gadgets, windows, screens are valid (widget) */
     /* menuitems are valid (Trow) */
     if (expected_magic_byte == magic_byte || expected_magic_byte == Tobj_magic_byte ||
@@ -208,7 +208,7 @@ obj Id2Obj(e_magic_byte expected_magic_byte, uldat id) {
   return NULL;
 }
 
-static obj IdVec_all[1];
+static Tobj IdVec_all[1];
 
 bool AssignId_all(all a) {
   const e_magic_byte magic_byte = Tall_magic_byte;

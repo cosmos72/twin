@@ -755,13 +755,13 @@ static void FlipMoveMem(byte *mem, uldat len, uldat chunk) {
 }
 
 /*
- * Turn the (msg) into a (tmsg) and write it on the MsgPort file descriptor.
+ * Turn the (Tmsg) into a (tmsg) and write it on the MsgPort file descriptor.
  * Used when MsgPort slot is using non-native data sizes and endianity.
  *
  * this can be called in nasty places like detaching non-exclusive displays
  * when an exclusive one is started. Must preserve Slot, Fd and other globals!
  */
-static void alienSendMsg(Tmsgport MsgPort, msg Msg) {
+static void alienSendMsg(Tmsgport MsgPort, Tmsg Msg) {
   byte *t;
   char *Src;
   uldat save_Slot = Slot, Len = 0, Tot, N;

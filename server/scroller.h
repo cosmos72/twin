@@ -12,6 +12,6 @@
 byte InitScroller(void);
 
 extern Tmsgport Scroller_MsgPort;
-extern msg Do_Scroll, Dont_Scroll;
+extern Tmsg Do_Scroll, Dont_Scroll;
 
 #endif /* TWIN_SCROLLER_H */

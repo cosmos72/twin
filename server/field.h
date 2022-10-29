@@ -31,7 +31,7 @@ public:
 
   Field(size_t value, Label l, TypeId t) : any(value), label(l), type_id(t) {
   }
-  Field(obj o, Label l, TypeId t) : any(o), label(l), type_id(t) {
+  Field(Tobj o, Label l, TypeId t) : any(o), label(l), type_id(t) {
   }
   Field(CharSpan charspan, Label l, TypeId t) : any(charspan), label(l), type_id(t) {
   }
@@ -55,8 +55,8 @@ public:
   size_t &scalar() {
     return any.value<size_t>();
   }
-  obj &obj() {
-    return any.value<obj>();
+  Tobj &Tobj() {
+    return any.value<Tobj>();
   }
   CharSpan &chars() {
     return any.value<CharSpan>();

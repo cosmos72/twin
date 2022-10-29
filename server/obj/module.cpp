@@ -17,8 +17,8 @@
 
 #include <new>
 
-module Smodule::Create(uldat namelen, const char *name) {
-  module m = NULL;
+Tmodule Smodule::Create(uldat namelen, const char *name) {
+  Tmodule m = NULL;
   if (name) {
     void *addr = AllocMem0(sizeof(Smodule));
     if (addr) {
@@ -33,8 +33,8 @@ module Smodule::Create(uldat namelen, const char *name) {
   return m;
 }
 
-module Smodule::Init(uldat namelen, const char *name) {
-  if (!name || !((obj)this)->Init()) {
+Tmodule Smodule::Init(uldat namelen, const char *name) {
+  if (!name || !((Tobj)this)->Init()) {
     return NULL;
   }
   if (!(this->Name = CloneStrL(name, namelen))) {

@@ -326,7 +326,7 @@ static tpos WMFindBorderWindow(Twindow W, dat u, dat v, byte Border, tcell *PtrA
 static void SmartPlace(Twidget W, screen Screen);
 
 void Check4Resize(Twindow W) {
-  msg Msg;
+  Tmsg Msg;
   event_any *Event;
   byte HasBorder;
 
@@ -353,7 +353,7 @@ void Check4Resize(Twindow W) {
 }
 
 void AskCloseWidget(Twidget W) {
-  msg Msg;
+  Tmsg Msg;
 
   if (W && (!IS_WINDOW(W) || (W->Attr & WINDOW_CLOSE))) {
 
@@ -427,7 +427,7 @@ static Twidget RecursiveFindFocusWidget(Twidget W) {
 }
 
 static void CleanupLastW(Twidget LastW, udat LastKeys, byte LastInside) {
-  msg NewMsg;
+  Tmsg NewMsg;
   event_any *Event;
   udat i;
 
@@ -477,8 +477,8 @@ static void HandleHilightAndSelection(Twidget W, udat Code, dat X, dat Y, byte I
     if (_Code == All->SetUp->ButtonSelection && IS_WINDOW(W))
       SetSelectionFromWindow((Twindow)W);
     else if (_Code == All->SetUp->ButtonPaste && Inside) {
-      /* send Selection Paste msg */
-      msg NewMsg;
+      /* send Selection Paste Tmsg */
+      Tmsg NewMsg;
 
       /* store selection owner */
       SelectionImport();
@@ -496,7 +496,7 @@ static void HandleHilightAndSelection(Twidget W, udat Code, dat X, dat Y, byte I
   }
 }
 
-static byte CheckForwardMsg(wm_ctx *C, msg Msg, byte WasUsed) {
+static byte CheckForwardMsg(wm_ctx *C, Tmsg Msg, byte WasUsed) {
   static uldat LastWId = NOID;
   static byte LastInside = tfalse;
   static udat LastKeys = 0;
@@ -648,7 +648,7 @@ static byte CheckForwardMsg(wm_ctx *C, msg Msg, byte WasUsed) {
 
 static ldat DragPosition[2];
 
-static void InitCtx(const msg Msg, wm_ctx *C) {
+static void InitCtx(const Tmsg Msg, wm_ctx *C) {
 
   C->Code = Msg->Event.EventCommon.Code;
   C->ShiftFlags = Msg->Event.EventKeyboard.ShiftFlags; /* ok for mouse too */
@@ -867,7 +867,7 @@ static void ReleaseMenu(wm_ctx *C) {
   Tmenu Menu;
   Tmenuitem Item;
   Trow Row;
-  msg Msg;
+  Tmsg Msg;
   event_menu *Event;
   udat Code;
 
@@ -1422,7 +1422,7 @@ static Tmenuitem PrevItem(Tmenuitem Item, Tmenu Menu) {
   Tmenuitem Prev;
 
   if (!(Prev = Item->Prev)) {
-    if (Item->Parent == (obj)Menu) {
+    if (Item->Parent == (Tobj)Menu) {
       if (Menu->CommonItems && All->CommonMenu)
         Prev = All->CommonMenu->LastI;
     } else
@@ -1438,7 +1438,7 @@ static Tmenuitem NextItem(Tmenuitem Item, Tmenu Menu) {
   Tmenuitem Next;
 
   if (!(Next = Item->Next)) {
-    if (Item->Parent == (obj)Menu) {
+    if (Item->Parent == (Tobj)Menu) {
       if (Menu->CommonItems && All->CommonMenu)
         Next = All->CommonMenu->FirstI;
     } else
@@ -1665,7 +1665,7 @@ static void TryAutoFocus(wm_ctx *C) {
 static void WManagerH(Tmsgport MsgPort) {
   static wm_ctx _C;
   wm_ctx *C = &_C;
-  msg Msg;
+  Tmsg Msg;
   Twidget W;
   byte used;
 
@@ -1808,12 +1808,12 @@ static void WManagerH(Tmsgport MsgPort) {
   }
 
   if (All->MouseHW && All->MouseHW->MouseState.keys && Scroller_MsgPort->WakeUp != TIMER_ALWAYS) {
-    extern msg Do_Scroll;
+    extern Tmsg Do_Scroll;
     Scroller_MsgPort->WakeUp = TIMER_ALWAYS;
     SendMsg(Scroller_MsgPort, Do_Scroll);
   } else if ((!All->MouseHW || !All->MouseHW->MouseState.keys) &&
              Scroller_MsgPort->WakeUp == TIMER_ALWAYS) {
-    extern msg Dont_Scroll;
+    extern Tmsg Dont_Scroll;
     SendMsg(Scroller_MsgPort, Dont_Scroll);
   }
 

@@ -17,7 +17,7 @@
 
 #include <new>
 
-obj Sobj::Create() {
+Tobj Sobj::Create() {
   obj_entry o = NULL;
   void *addr = AllocMem0(sizeof(s_obj_entry));
   if (addr) {
@@ -31,7 +31,7 @@ obj Sobj::Create() {
   return o;
 }
 
-obj Sobj::Init() {
+Tobj Sobj::Init() {
   if (AssignId(e_id(((obj_entry)this)->Fn->Magic), this)) {
     return this;
   }

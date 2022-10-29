@@ -90,14 +90,14 @@ struct Sselection {
 
 struct Sall : public Sobj {
   TobjFn Fn;
-  obj Prev, Next, Parent;
+  Tobj Prev, Next, Parent;
 
   /* all */
   screen FirstScreen, LastScreen;
   Tmsgport FirstMsgPort, LastMsgPort, RunMsgPort;
   Tmutex FirstMutex, LastMutex;
 
-  module FirstModule, LastModule;
+  Tmodule FirstModule, LastModule;
   HookFn FnHookModule;
   Twidget HookModule;
 

@@ -838,7 +838,7 @@ static byte RCSleep(timevalue *_t) {
  * kill the queues, reload ~/.config/twin/twinrc and restart queues
  */
 static void RCReload(void) {
-  module M;
+  Tmodule M;
   bool (*mod_rcload)(void) = NULL;
   byte success;
 

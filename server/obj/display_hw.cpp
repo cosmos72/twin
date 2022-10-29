@@ -33,7 +33,7 @@ Tdisplay Sdisplay::Create(uldat namelen, const char *name) {
 }
 
 Tdisplay Sdisplay::Init(uldat namelen, const char *name) {
-  if (!((obj)this)->Init()) {
+  if (!((Tobj)this)->Init()) {
     return NULL;
   }
   if (!this->Name.format(Chars(name, namelen))) {

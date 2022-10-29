@@ -19,7 +19,7 @@ typedef struct s_obj_entry *obj_entry;
 struct ttydata;
 typedef struct s_remotedata remotedata;
 
-typedef struct Sobj *obj;
+typedef struct Sobj *Tobj;
 typedef struct Swidget *Twidget;
 typedef struct Sgadget *Tgadget;
 typedef struct Swindow *Twindow;
@@ -28,10 +28,10 @@ typedef struct Sgroup *Tgroup;
 typedef struct Srow *Trow;
 typedef struct Smenuitem *Tmenuitem;
 typedef struct Smenu *Tmenu;
-typedef struct Smsg *msg;
+typedef struct Smsg *Tmsg;
 typedef struct Smsgport *Tmsgport;
 typedef struct Smutex *Tmutex;
-typedef struct Smodule *module;
+typedef struct Smodule *Tmodule;
 typedef struct Sdisplay *Tdisplay;
 
 typedef struct SobjFn *TobjFn;

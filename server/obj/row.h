@@ -46,7 +46,7 @@ struct Srow : public Sobj {
   static Trow Create(udat code, byte flags);
   Trow Init(udat code, byte flags);
 
-  /* obj */
+  /* Tobj */
   uldat Magic() const {
     return Fn->Magic;
   }

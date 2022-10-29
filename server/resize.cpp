@@ -1577,7 +1577,7 @@ static void OpenTopMenuItem(Tmenu M, Tmenuitem Item, byte ByMouse) {
 
 static void OpenMenuItem(Tmenu M, Tmenuitem Item, byte ByMouse) {
   if (Item) {
-    obj O = Item->Parent;
+    Tobj O = Item->Parent;
     if (O && IS_WINDOW(O))
       OpenSubMenuItem(M, Item, ByMouse);
     else
@@ -1852,7 +1852,7 @@ void RestackWidgets(Twidget w, uldat N, const Twidget *arrayW) {
 
 /* ---------------- */
 
-void RestackRows(obj O, uldat N, const Trow *arrayR) {
+void RestackRows(Tobj O, uldat N, const Trow *arrayR) {
   Trow FR, CR;
   byte need_redraw = tfalse;
 
@@ -1861,7 +1861,7 @@ void RestackRows(obj O, uldat N, const Trow *arrayR) {
       /*
        * Allow only children that really have the given parent.
        */
-      if ((CR = *arrayR) && (obj)CR->Window == O) {
+      if ((CR = *arrayR) && (Tobj)CR->Window == O) {
         if (FR && CR != FR->Next) {
           /* restack after arrayR[0] */
           CR->Remove();
@@ -1884,7 +1884,7 @@ void RestackRows(obj O, uldat N, const Trow *arrayR) {
 /* ---------------- */
 
 void SendMsgGadget(Tgadget G) {
-  msg Msg;
+  Tmsg Msg;
   event_gadget *Event;
   if (G->Code && !(G->Flags & GADGETFL_DISABLED)) {
     if ((Msg = New(msg)(msg_widget_gadget, 0))) {

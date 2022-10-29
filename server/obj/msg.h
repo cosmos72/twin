@@ -21,31 +21,31 @@
 
 struct SmsgFn {
   uldat Magic;
-  void (*Insert)(msg, Tmsgport, msg Prev, msg Next);
-  void (*Remove)(msg);
-  void (*Delete)(msg);
-  void (*ChangeField)(msg, udat field, uldat CLEARMask, uldat XORMask);
-  /* msg */
+  void (*Insert)(Tmsg, Tmsgport, Tmsg Prev, Tmsg Next);
+  void (*Remove)(Tmsg);
+  void (*Delete)(Tmsg);
+  void (*ChangeField)(Tmsg, udat field, uldat CLEARMask, uldat XORMask);
+  /* Tmsg */
   TobjFn Fn_Obj;
 };
 
 struct Smsg : public Sobj {
   TmsgFn Fn;
-  msg Prev, Next;
+  Tmsg Prev, Next;
   Tmsgport MsgPort;
-  /* msg */
+  /* Tmsg */
   udat Type; /* See note above */
   uldat Len; /* length of Event, in bytes */
   event_any Event;
 
-  static msg Create(udat type, size_t eventlen);
-  msg Init(udat type, uldat eventlen);
+  static Tmsg Create(udat type, size_t eventlen);
+  Tmsg Init(udat type, uldat eventlen);
 
-  /* obj */
+  /* Tobj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(Tmsgport port, msg prev, msg next) {
+  void Insert(Tmsgport port, Tmsg prev, Tmsg next) {
     Fn->Insert(this, port, prev, next);
   }
   void Remove() {

@@ -112,9 +112,6 @@ static void yyprint(FILE *file, int type, void *value);
 
 #endif
 
-/* twin.h typedefs `msg'... avoid it */
-#define msg Msg
-
 #ifndef YY_CAST
 #ifdef __cplusplus
 #define YY_CAST(Type, Val) static_cast<Type>(Val)

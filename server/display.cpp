@@ -146,7 +146,7 @@ inline uldat FdListGet(void) {
   return NOSLOT;
 }
 
-uldat RegisterRemote(int Fd, obj HandlerData, handler_io_d HandlerIO) {
+uldat RegisterRemote(int Fd, Tobj HandlerData, handler_io_d HandlerIO) {
   uldat Slot, j;
 
   if ((Slot = FdListGet()) == NOSLOT)
@@ -219,31 +219,31 @@ static void RemoteEvent(int FdCount, fd_set *FdSet) {
 
 static struct SmoduleFn _FnModule = {
     module_magic,
-    (void (*)(module, all, module, module))NoOp, /* InsertModule */
-    (void (*)(module))NoOp,                      /* RemoveModule */
-    (void (*)(module))NoOp,                      /* DeleteModule */
-    (void (*)(module, udat, uldat, uldat))NoOp,  /* ChangeField  */
-    NULL,                                        /* Fn_Obj       */
-    (bool (*)(module))NoOp,                      /* DlOpen       */
-    (void (*)(module))NoOp,                      /* DlClose      */
+    (void (*)(Tmodule, all, Tmodule, Tmodule))NoOp, /* InsertModule */
+    (void (*)(Tmodule))NoOp,                        /* RemoveModule */
+    (void (*)(Tmodule))NoOp,                        /* DeleteModule */
+    (void (*)(Tmodule, udat, uldat, uldat))NoOp,    /* ChangeField  */
+    NULL,                                           /* Fn_Obj       */
+    (bool (*)(Tmodule))NoOp,                        /* DlOpen       */
+    (void (*)(Tmodule))NoOp,                        /* DlClose      */
 };
 
-obj Sobj::Init() {
+Tobj Sobj::Init() {
   return this;
 }
 
-module Smodule::Init(uldat /*namelen*/, const char * /*name*/) {
+Tmodule Smodule::Init(uldat /*namelen*/, const char * /*name*/) {
   Fn = &_FnModule;
   Sobj::Init();
   return this;
 }
 
 static Smodule _Module;
-static module const GModule = (_Module.Fn = &_FnModule, _Module.Init(0, NULL));
+static Tmodule const GModule = (_Module.Fn = &_FnModule, _Module.Init(0, NULL));
 
-static module DlLoadAny(Chars name) {
-  byte (*init_func)(module);
-  module m = GModule;
+static Tmodule DlLoadAny(Chars name) {
+  byte (*init_func)(Tmodule);
+  Tmodule m = GModule;
   String path;
 
   if (!dlinit_once()) {
@@ -257,9 +257,9 @@ static module DlLoadAny(Chars name) {
      * a Module MUST have a InitModule function, as it needs to set
      * Module->Private to its xxx_InitHW() startup code.
      */
-  } else if (!(init_func = (byte(*)(module))dlsym((dlhandle)m->Handle, "InitModule"))) {
+  } else if (!(init_func = (byte(*)(Tmodule))dlsym((dlhandle)m->Handle, "InitModule"))) {
     Error(DLERROR);
-    Errstr = Chars("InitModule() not found in module");
+    Errstr = Chars("InitModule() not found in Tmodule");
   } else if (!init_func(m)) {
     if (!Errstr) {
       Error(DLERROR);
@@ -272,7 +272,7 @@ static module DlLoadAny(Chars name) {
 }
 
 static bool module_InitHW(Chars arg) {
-  module m = NULL;
+  Tmodule m = NULL;
   const char *tmp;
   char *buf;
 
@@ -669,10 +669,10 @@ static void HandleMsg(tmsg Msg) {
     /*
      * Just like in TwinSelectionGetOwner() : normally Requestor
      * is a meaningful pointer; here it is just a libtw Id.
-     * Cast it to (obj) as expected by HW displays...
+     * Cast it to (Tobj) as expected by HW displays...
      * we will cast it back when needed
      */
-    HW->HWSelectionRequest((obj)(topaque)Msg->Event.EventSelectionRequest.Requestor,
+    HW->HWSelectionRequest((Tobj)(topaque)Msg->Event.EventSelectionRequest.Requestor,
                            Msg->Event.EventSelectionRequest.ReqPrivate);
     break;
   case TW_MSG_SELECTIONNOTIFY:
@@ -784,15 +784,15 @@ void SelectionExport(void) {
 /*
  * In the same function in twin server, this returns a meaningful pointer.
  * Here, it returns just an Id coming from libtw.
- * Cheat and cast to to (obj), since the underlying display HW code
+ * Cheat and cast to to (Tobj), since the underlying display HW code
  * treats it as opaque. We will cast it back to (uldat) when needed.
  */
-obj TwinSelectionGetOwner(void) {
-  return (obj)(topaque)TwGetOwnerSelection();
+Tobj TwinSelectionGetOwner(void) {
+  return (Tobj)(topaque)TwGetOwnerSelection();
 }
 
 /* HW back-end function: set selection owner */
-void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
+void TwinSelectionSetOwner(Tobj Owner, tany Time, tany Frac) {
   tmsg Msg;
 
   if ((Msg = TwCreateMsg(TW_MSG_SELECTIONCLEAR, sizeof(tevent_common)))) {
@@ -801,7 +801,7 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
 }
 
 /* HW back-end function: notify selection */
-void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN],
+void TwinSelectionNotify(Tobj Requestor, uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN],
                          Chars Data) {
   if (!MIME) {
     MIME = nullMIME;
@@ -809,17 +809,17 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, e_id Magic, const char
 #if 0
   log(INFO) << "twdisplay: Selection Notify to 0x" << hex((topaque)Requestor) << "\n";
 #endif
-  /* cast back Requestor from fake (obj) to its original (uldat) */
+  /* cast back Requestor from fake (Tobj) to its original (uldat) */
   TwNotifySelection((topaque)Requestor, ReqPrivate, Magic, MIME, Data.size(), Data.data());
 }
 
 /* HW back-end function: request selection */
-void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
+void TwinSelectionRequest(Tobj Requestor, uldat ReqPrivate, Tobj Owner) {
 #if 0
   log(INFO) << "twdisplay: Selection Request from 0x" << hex((topaque)Requestor) //
             << ", Owner is 0x" << hex((topaque)Owner);
 #endif
-  /* cast back Owner from the fake (obj) to (uldat) */
+  /* cast back Owner from the fake (Tobj) to (uldat) */
   TwRequestSelection((topaque)Owner, ReqPrivate);
 }
 

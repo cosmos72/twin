@@ -70,7 +70,7 @@ static byte GPM_InitMouse(void) {
   fcntl(GPM_fd, F_SETFD, FD_CLOEXEC);
   fcntl(GPM_fd, F_SETFL, O_NONBLOCK);
 
-  HW->mouse_slot = RegisterRemote(GPM_fd, (obj)HW, (void (*)(int, obj))GPM_MouseEvent);
+  HW->mouse_slot = RegisterRemote(GPM_fd, (Tobj)HW, (void (*)(int, Tobj))GPM_MouseEvent);
   if (HW->mouse_slot == NOSLOT) {
     Gpm_Close();
     return tfalse;

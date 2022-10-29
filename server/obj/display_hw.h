@@ -43,7 +43,7 @@ struct Sdisplay : public Sobj {
 
   /* Tdisplay */
   String Name;
-  module Module;
+  Tmodule Module;
 
   void *Private; /* used to store HW-specific data */
 
@@ -68,7 +68,7 @@ struct Sdisplay : public Sobj {
 
   byte (*HWSelectionImport)(void);
   void (*HWSelectionExport)(void);
-  void (*HWSelectionRequest)(obj Requestor, uldat ReqPrivate);
+  void (*HWSelectionRequest)(Tobj Requestor, uldat ReqPrivate);
   void (*HWSelectionNotify)(uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN], Chars Data);
   tany HWSelectionPrivate;
 
@@ -162,7 +162,7 @@ struct Sdisplay : public Sobj {
   static Tdisplay Create(uldat namelen, const char *name);
   Tdisplay Init(uldat namelen, const char *name);
 
-  /* obj */
+  /* Tobj */
   uldat Magic() const {
     return Fn->Magic;
   }

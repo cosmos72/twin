@@ -379,8 +379,8 @@ static bool XSYM(InitHW)(void) {
         xhints = NULL;
 
         HW->mouse_slot = NOSLOT;
-        HW->keyboard_slot = RegisterRemote(i = XConnectionNumber(xdisplay), (obj)HW,
-                                           (void (*)(int, obj))XSYM(KeyboardEvent));
+        HW->keyboard_slot = RegisterRemote(i = XConnectionNumber(xdisplay), (Tobj)HW,
+                                           (void (*)(int, Tobj))XSYM(KeyboardEvent));
         if (HW->keyboard_slot == NOSLOT)
           break;
         fcntl(i, F_SETFD, FD_CLOEXEC);
@@ -483,11 +483,11 @@ fail:
   return false;
 }
 
-EXTERN_C byte InitModule(module Module) {
-  Module->DoInit = XSYM(InitHW);
+EXTERN_C byte InitModule(Tmodule mod) {
+  mod->DoInit = XSYM(InitHW);
   return ttrue;
 }
 
 /* this MUST be defined, otherwise it seems to trigger a bug in dlsym() */
-EXTERN_C void QuitModule(module Module) {
+EXTERN_C void QuitModule(Tmodule mod) {
 }

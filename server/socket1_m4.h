@@ -123,20 +123,20 @@ case order_SetTRuneTranslation:
 
 case order_DeleteObj:
     if (a.size() >= 1)
-        sockDeleteObj((obj)a[1]_obj);
+        sockDeleteObj((Tobj)a[1]_obj);
     break;
 
 
 case order_ChangeFieldObj:
     if (a.size() >= 4)
-        Act(ChangeField,(obj)a[1]_obj)((obj)a[1]_obj, (udat)a[2]_any, (uldat)a[3]_any, (uldat)a[4]_any);
+        Act(ChangeField,(Tobj)a[1]_obj)((Tobj)a[1]_obj, (udat)a[2]_any, (uldat)a[3]_any, (uldat)a[4]_any);
     break;
 
 
 
 case order_CreateWidget:
     if (a.size() >= 7)
-        a[0]_obj = (obj)sockCreateWidget((dat)a[1]_any, (dat)a[2]_any, (uldat)a[3]_any, (uldat)a[4]_any, (dat)a[5]_any, (dat)a[6]_any, (tcell)a[7]_any);
+        a[0]_obj = (Tobj)sockCreateWidget((dat)a[1]_any, (dat)a[2]_any, (uldat)a[3]_any, (uldat)a[4]_any, (dat)a[5]_any, (dat)a[6]_any, (tcell)a[7]_any);
     break;
 
 
@@ -189,7 +189,7 @@ case order_FocusSubWidget:
 
 case order_FindWidgetAtWidget:
     if (a.size() >= 3)
-        a[0]_obj = (obj)Act(FindWidgetAt,(Twidget)a[1]_obj)((Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any);
+        a[0]_obj = (Tobj)Act(FindWidgetAt,(Twidget)a[1]_obj)((Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any);
     break;
 
 
@@ -217,13 +217,13 @@ case order_CirculateChildrenWidget:
 
 case order_CreateGadget:
     if (a.size() >= 13)
-        a[0]_obj = (obj)sockCreateGadget((Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (uldat)a[6]_any, (udat)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (tcolor)a[10]_any, (tcolor)a[11]_any, (dat)a[12]_any, (dat)a[13]_any);
+        a[0]_obj = (Tobj)sockCreateGadget((Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (uldat)a[6]_any, (udat)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (tcolor)a[10]_any, (tcolor)a[11]_any, (dat)a[12]_any, (dat)a[13]_any);
     break;
 
 
 case order_CreateButtonGadget:
     if (a.size() >= 11)
-        a[0]_obj = (obj)Do(CreateButton,gadget)((Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (udat)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
+        a[0]_obj = (Tobj)Do(CreateButton,gadget)((Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (udat)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
     break;
 
 
@@ -240,12 +240,12 @@ case order_WriteTRunesGadget:
 
 case order_CreateWindow:
     if (a.size() >= 11)
-        a[0]_obj = (obj)sockCreateWindow((dat)a[1]_any, (const char *)a[2]_vec, (const tcolor *)a[3]_vec, (Tmenu)a[4]_obj, (tcolor)a[5]_any, (uldat)a[6]_any, (uldat)a[7]_any, (uldat)a[8]_any, (dat)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
+        a[0]_obj = (Tobj)sockCreateWindow((dat)a[1]_any, (const char *)a[2]_vec, (const tcolor *)a[3]_vec, (Tmenu)a[4]_obj, (tcolor)a[5]_any, (uldat)a[6]_any, (uldat)a[7]_any, (uldat)a[8]_any, (dat)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
     break;
 
 case order_Create4MenuWindow:
     if (a.size() >= 1)
-        a[0]_obj = (obj)Do(Create4Menu,window)((Tmenu)a[1]_obj);
+        a[0]_obj = (Tobj)Do(Create4Menu,window)((Tmenu)a[1]_obj);
     break;
 
 
@@ -297,13 +297,13 @@ case order_ConfigureWindow:
 
 case order_FindRowByCodeWindow:
     if (a.size() >= 2)
-        a[0]_obj = (obj)sockFindRowByCodeWindow((Twindow)a[1]_obj, (dat)a[2]_any);
+        a[0]_obj = (Tobj)sockFindRowByCodeWindow((Twindow)a[1]_obj, (dat)a[2]_any);
     break;
 
 
 case order_CreateGroup:
     if (a.size() >= 0)
-        a[0]_obj = (obj)sockCreateGroup();
+        a[0]_obj = (Tobj)sockCreateGroup();
     break;
 
 case order_InsertGadgetGroup:
@@ -319,7 +319,7 @@ case order_RemoveGadgetGroup:
 
 case order_GetSelectedGadgetGroup:
     if (a.size() >= 1)
-        a[0]_obj = (obj)Act(GetSelectedGadget,(Tgroup)a[1]_obj)((Tgroup)a[1]_obj);
+        a[0]_obj = (Tobj)Act(GetSelectedGadget,(Tgroup)a[1]_obj)((Tgroup)a[1]_obj);
     break;
 
 case order_SetSelectedGadgetGroup:
@@ -340,18 +340,18 @@ case order_LowerRow:
 
 case order_RestackChildrenRow:
     if (a.size() >= 3)
-        sockRestackChildrenRow((obj)a[1]_obj, (uldat)a[2]_any, (const Trow *)a[3]_vec);
+        sockRestackChildrenRow((Tobj)a[1]_obj, (uldat)a[2]_any, (const Trow *)a[3]_vec);
     break;
 
 case order_CirculateChildrenRow:
     if (a.size() >= 2)
-        sockCirculateChildrenRow((obj)a[1]_obj, (byte)a[2]_any);
+        sockCirculateChildrenRow((Tobj)a[1]_obj, (byte)a[2]_any);
     break;
 
 
 case order_Create4MenuAny:
     if (a.size() >= 6)
-        a[0]_obj = (obj)sockCreate4MenuAny((obj)a[1]_obj, (Twindow)a[2]_obj, (udat)a[3]_any, (byte)a[4]_any, (ldat)a[5]_any, (const char *)a[6]_vec);
+        a[0]_obj = (Tobj)sockCreate4MenuAny((Tobj)a[1]_obj, (Twindow)a[2]_obj, (udat)a[3]_any, (byte)a[4]_any, (ldat)a[5]_any, (const char *)a[6]_vec);
     break;
 
 
@@ -363,7 +363,7 @@ case order_Create4MenuCommonMenuItem:
 
 case order_CreateMenu:
     if (a.size() >= 7)
-        a[0]_obj = (obj)sockCreateMenu((tcolor)a[1]_any, (tcolor)a[2]_any, (tcolor)a[3]_any, (tcolor)a[4]_any, (tcolor)a[5]_any, (tcolor)a[6]_any, (byte)a[7]_any);
+        a[0]_obj = (Tobj)sockCreateMenu((tcolor)a[1]_any, (tcolor)a[2]_any, (tcolor)a[3]_any, (tcolor)a[4]_any, (tcolor)a[5]_any, (tcolor)a[6]_any, (byte)a[7]_any);
     break;
 
 case order_SetInfoMenu:
@@ -374,12 +374,12 @@ case order_SetInfoMenu:
 
 case order_CreateMsgPort:
     if (a.size() >= 2)
-        a[0]_obj = (obj)sockCreateMsgPort((byte)a[1]_any, (const char *)a[2]_vec);
+        a[0]_obj = (Tobj)sockCreateMsgPort((byte)a[1]_any, (const char *)a[2]_vec);
     break;
 
 case order_FindMsgPort:
     if (a.size() >= 3)
-        a[0]_obj = (obj)sockFindMsgPort((Tmsgport)a[1]_obj, (byte)a[2]_any, (const char *)a[3]_vec);
+        a[0]_obj = (Tobj)sockFindMsgPort((Tmsgport)a[1]_obj, (byte)a[2]_any, (const char *)a[3]_vec);
     break;
 
 
@@ -391,63 +391,63 @@ case order_BgImageScreen:
 
 case order_PrevObj:
     if (a.size() >= 1)
-        a[0]_obj = (obj)sockPrevObj((obj)a[1]_obj);
+        a[0]_obj = (Tobj)sockPrevObj((Tobj)a[1]_obj);
     break;
 
 case order_NextObj:
     if (a.size() >= 1)
-        a[0]_obj = (obj)sockNextObj((obj)a[1]_obj);
+        a[0]_obj = (Tobj)sockNextObj((Tobj)a[1]_obj);
     break;
 
 case order_ParentObj:
     if (a.size() >= 1)
-        a[0]_obj = (obj)sockParentObj((obj)a[1]_obj);
+        a[0]_obj = (Tobj)sockParentObj((Tobj)a[1]_obj);
     break;
 
 
 case order_FirstScreen:
     if (a.size() >= 0)
-        a[0]_obj = (obj)sockFirstScreen();
+        a[0]_obj = (Tobj)sockFirstScreen();
     break;
 
 case order_FirstWidget:
     if (a.size() >= 1)
-        a[0]_obj = (obj)sockFirstWidget((Twidget )a[1]_obj);
+        a[0]_obj = (Tobj)sockFirstWidget((Twidget )a[1]_obj);
     break;
 
 case order_FirstMsgPort:
     if (a.size() >= 0)
-        a[0]_obj = (obj)sockFirstMsgPort();
+        a[0]_obj = (Tobj)sockFirstMsgPort();
     break;
 
 case order_FirstMenu:
     if (a.size() >= 1)
-        a[0]_obj = (obj)sockFirstMenu((Tmsgport)a[1]_obj);
+        a[0]_obj = (Tobj)sockFirstMenu((Tmsgport)a[1]_obj);
     break;
 
 case order_FirstW:
     if (a.size() >= 1)
-        a[0]_obj = (obj)sockFirstW((Tmsgport)a[1]_obj);
+        a[0]_obj = (Tobj)sockFirstW((Tmsgport)a[1]_obj);
     break;
 
 case order_FirstGroup:
     if (a.size() >= 1)
-        a[0]_obj = (obj)sockFirstGroup((Tmsgport)a[1]_obj);
+        a[0]_obj = (Tobj)sockFirstGroup((Tmsgport)a[1]_obj);
     break;
 
 case order_FirstMutex:
     if (a.size() >= 1)
-        a[0]_obj = (obj)sockFirstMutex((Tmsgport)a[1]_obj);
+        a[0]_obj = (Tobj)sockFirstMutex((Tmsgport)a[1]_obj);
     break;
 
 case order_FirstMenuItem:
     if (a.size() >= 1)
-        a[0]_obj = (obj)sockFirstMenuItem((Tmenu   )a[1]_obj);
+        a[0]_obj = (Tobj)sockFirstMenuItem((Tmenu   )a[1]_obj);
     break;
 
 case order_FirstGadget:
     if (a.size() >= 1)
-        a[0]_obj = (obj)sockFirstGadget((Tgroup  )a[1]_obj);
+        a[0]_obj = (Tobj)sockFirstGadget((Tgroup  )a[1]_obj);
     break;
 
 
@@ -463,7 +463,7 @@ case order_GetDisplayHeight:
 
 case order_GetAll:
     if (a.size() >= 0)
-        a[0]_obj = (obj)sockGetAll();
+        a[0]_obj = (Tobj)sockGetAll();
     break;
 
 
@@ -480,7 +480,7 @@ case order_BlindSendToMsgPort:
 
 case order_GetOwnerSelection:
     if (a.size() >= 0)
-        a[0]_obj = (obj)sockGetOwnerSelection();
+        a[0]_obj = (Tobj)sockGetOwnerSelection();
     break;
 
 case order_SetOwnerSelection:
@@ -490,12 +490,12 @@ case order_SetOwnerSelection:
 
 case order_RequestSelection:
     if (a.size() >= 2)
-        sockRequestSelection((obj)a[1]_obj, (uldat)a[2]_any);
+        sockRequestSelection((Tobj)a[1]_obj, (uldat)a[2]_any);
     break;
 
 case order_NotifySelection:
     if (a.size() >= 6)
-        sockNotifySelection((obj)a[1]_obj, (uldat)a[2]_any, (uldat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (const char *)a[6]_vec);
+        sockNotifySelection((Tobj)a[1]_obj, (uldat)a[2]_any, (uldat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (const char *)a[6]_vec);
     break;
 
 

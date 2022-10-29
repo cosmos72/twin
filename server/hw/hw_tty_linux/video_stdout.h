@@ -77,7 +77,7 @@ static byte linux_InitVideo(void) {
 
   HW->HWSelectionImport = AlwaysFalse;
   HW->HWSelectionExport = NoOp;
-  HW->HWSelectionRequest = (void (*)(obj, uldat))NoOp;
+  HW->HWSelectionRequest = (void (*)(Tobj, uldat))NoOp;
   HW->HWSelectionNotify = (void (*)(uldat, e_id, const char *, Chars))NoOp;
   HW->HWSelectionPrivate = 0;
 

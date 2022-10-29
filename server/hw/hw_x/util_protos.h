@@ -18,7 +18,7 @@ static void XSYM(SelectionExport_X11)(void);
 static void XSYM(SelectionNotify_X11)(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
                                       Chars Data);
 static void XSYM(SelectionNotify_up)(Window win, Atom prop);
-static void XSYM(SelectionRequest_X11)(obj Requestor, uldat ReqPrivate);
+static void XSYM(SelectionRequest_X11)(Tobj Requestor, uldat ReqPrivate);
 static void XSYM(SelectionRequest_up)(XSelectionRequestEvent *req);
 static byte XSYM(CanDragArea)(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
 static void XSYM(DragArea)(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);

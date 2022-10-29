@@ -49,7 +49,7 @@ static byte lrawkbd_InitKeyboard(void) {
 
   lrawkbd_HW = HW;
 
-  HW->keyboard_slot = RegisterRemote(tty_fd, (obj)HW, (void (*)(int, obj))lrawkbd_KeyboardEvent);
+  HW->keyboard_slot = RegisterRemote(tty_fd, (Tobj)HW, (void (*)(int, Tobj))lrawkbd_KeyboardEvent);
   if (HW->keyboard_slot == NOSLOT)
     return tfalse;
 

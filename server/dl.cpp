@@ -21,11 +21,11 @@
 
 #include "dl_helper.h"
 
-bool DlOpen(module Module) {
+bool DlOpen(Tmodule Module) {
   String name;
   dlhandle Handle = NULL;
   uldat len;
-  byte (*init_func)(module);
+  byte (*init_func)(Tmodule);
 
   if (!dlinit_once()) {
     return false;
@@ -47,7 +47,7 @@ bool DlOpen(module Module) {
   }
 
   if (name) {
-    init_func = (byte(*)(module))dlsym(Handle, "InitModule");
+    init_func = (byte(*)(Tmodule))dlsym(Handle, "InitModule");
     if (init_func && init_func(Module)) {
       Module->Handle = (void *)Handle;
       return true;
@@ -61,17 +61,17 @@ bool DlOpen(module Module) {
       }
     } else {
       Error(DLERROR);
-      Errstr = "InitModule() not found in module";
+      Errstr = "InitModule() not found in Tmodule";
     }
     return false;
   }
   return true;
 }
 
-void DlClose(module Module) {
+void DlClose(Tmodule Module) {
   if (Module && Module->Handle) {
     if (Module->Name) {
-      void (*quit_func)(module) = (void (*)(module))dlsym((dlhandle)Module->Handle, "QuitModule");
+      void (*quit_func)(Tmodule) = (void (*)(Tmodule))dlsym((dlhandle)Module->Handle, "QuitModule");
       if (quit_func)
         quit_func(Module);
     }
@@ -80,9 +80,9 @@ void DlClose(module Module) {
   }
 }
 
-module DlLoadAny(uldat len, const char *name) {
+Tmodule DlLoadAny(uldat len, const char *name) {
   Chars cname(name, len);
-  module Module;
+  Tmodule Module;
 
   for (Module = All->FirstModule; Module; Module = Module->Next) {
     if (cname == Chars(Module->Name, Module->NameLen)) {
@@ -98,7 +98,7 @@ module DlLoadAny(uldat len, const char *name) {
   return NULL;
 }
 
-static module So[MAX_So];
+static Tmodule So[MAX_So];
 
 udat DlName2Code(const char *name) {
   if (!strcmp(name, "term"))
@@ -124,8 +124,8 @@ static Chars DlCode2Name(uldat code) {
   }
 }
 
-module DlLoad(uldat code) {
-  module M = (module)0;
+Tmodule DlLoad(uldat code) {
+  Tmodule M = (Tmodule)0;
   if (code < MAX_So && !(M = So[code])) {
     const Chars name = DlCode2Name(code);
     M = DlLoadAny(name.size(), name.data());
@@ -151,13 +151,13 @@ void DlUnload(uldat code) {
   }
 }
 
-module DlIsLoaded(uldat code) {
+Tmodule DlIsLoaded(uldat code) {
   if (code < MAX_So)
     return So[code];
-  return (module)0;
+  return (Tmodule)0;
 }
 
-void *DlSym(module Module, const char *name) {
+void *DlSym(Tmodule Module, const char *name) {
   if (Module && name)
     return (void *)dlsym((dlhandle)Module->Handle, name);
 

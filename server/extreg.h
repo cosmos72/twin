@@ -22,7 +22,7 @@ struct exts {
     void (*KillSlot)(uldat slot);
   } Remote;
   struct {
-    void (*SendMsg)(Tmsgport MsgPort, msg Msg);
+    void (*SendMsg)(Tmsgport MsgPort, Tmsg Msg);
     byte (*InitAuth)(void);
     void (*MultiplexS)(uldat order, Span<s_tsfield> args);
   } Socket;

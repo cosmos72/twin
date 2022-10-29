@@ -695,7 +695,7 @@ static void respond_string(const char *p) {
   if (!RemoteWindowWriteQueue(Win, len, p)) {
 
     /* or we may need to send a Msg to Win->Owner */
-    msg Msg;
+    Tmsg Msg;
     event_keyboard *Event;
     if ((Msg = New(msg)(msg_widget_key, len))) {
       /* this is the same code as in KeyboardEvent() in hw.c */

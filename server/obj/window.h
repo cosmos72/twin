@@ -134,7 +134,7 @@ struct Swindow : public Sobj {
   HookFn ShutDownHook; /* hooks for this Twidget */
   HookFn Hook, *WhereHook;
   HookFn MapUnMapHook;
-  msg MapQueueMsg;
+  Tmsg MapQueueMsg;
   tcell USE_Fill;
   union {
     struct s_WR R;
@@ -160,7 +160,7 @@ struct Swindow : public Sobj {
   ldat WLogic, HLogic;  /* Twindow interior logic size */
   trune const *Charset; /* the byte -> trune translation to use */
 
-  /* obj */
+  /* Tobj */
   static Twindow Create(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle,
                         Tmenu menu, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
                         dat xwidth, dat ywidth, dat scrollbacklines);

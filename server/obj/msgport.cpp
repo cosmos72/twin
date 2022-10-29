@@ -40,7 +40,7 @@ Tmsgport Smsgport::Create(byte namelen, const char *name, tany pausesec, tany pa
 Tmsgport Smsgport::Init(byte namelen, const char *name, tany pausesec, tany pausefraction,
                         byte wakeup, void (*handler)(Tmsgport)) {
 
-  if (!handler || !((obj)this)->Init()) {
+  if (!handler || !((Tobj)this)->Init()) {
     return NULL;
   }
   if (name && !(this->Name = CloneStrL(name, namelen))) {

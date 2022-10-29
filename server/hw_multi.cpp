@@ -147,7 +147,7 @@ static bool module_InitHW(Chars arg) {
   }
 
   String alloc_name;
-  module Module = NULL;
+  Tmodule Module = NULL;
 
   if (alloc_name.format("hw_", name)) {
     name = alloc_name;
@@ -261,7 +261,7 @@ void QuitDisplayHW(Tdisplay D_HW) {
     if (D_HW->Module) {
       D_HW->Module->Used--;
       D_HW->Module->Delete();
-      D_HW->Module = (module)0;
+      D_HW->Module = (Tmodule)0;
     }
     UpdateFlagsHW(); /* this garbles HW... not a problem here */
   }
@@ -616,7 +616,7 @@ void ResetPaletteHW(void) {
 }
 
 /* HW back-end function: get selection owner */
-obj TwinSelectionGetOwner(void) {
+Tobj TwinSelectionGetOwner(void) {
   /*
    * this looks odd... but it's correct:
    * only libtw clients can persistently own the Selection;
@@ -624,23 +624,23 @@ obj TwinSelectionGetOwner(void) {
    * on its display, and even in this case it will own the Selection
    * only for a single request.
    */
-  obj Owner = (obj)All->Selection->OwnerOnce;
+  Tobj Owner = (Tobj)All->Selection->OwnerOnce;
   if (Owner)
     All->Selection->OwnerOnce = NULL;
   else
-    Owner = (obj)All->Selection->Owner;
+    Owner = (Tobj)All->Selection->Owner;
   return Owner;
 }
 
 static void SelectionClear(Tmsgport Owner) {
-  msg Msg;
+  Tmsg Msg;
 
   if ((Msg = New(msg)(msg_selection_clear, 0)))
     SendMsg(Owner, Msg);
 }
 
 /* HW back-end function: set selection owner */
-void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
+void TwinSelectionSetOwner(Tobj Owner, tany Time, tany Frac) {
   timevalue T;
   if (Time == SEL_CURRENTTIME)
     CopyMem(&All->Now, &T, sizeof(timevalue));
@@ -666,9 +666,9 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
   }
 }
 
-void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN],
+void TwinSelectionNotify(Tobj Requestor, uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN],
                          Chars Data) {
-  msg NewMsg;
+  Tmsg NewMsg;
   event_any *Event;
 #if 0
   log(INFO) << "twin: Selection Notify to 0x" << hex(Requestor ? Requestor->Id : NOID) << "\n";
@@ -702,14 +702,14 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, e_id Magic, const char
   }
 }
 
-void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
+void TwinSelectionRequest(Tobj Requestor, uldat ReqPrivate, Tobj Owner) {
 #if 0
   log(INFO) << "twin: Selection Request from 0x" << (Requestor ? Requestor->Id : NOID)
             << ", owner is 0x" << (Owner ? Owner->Id : NOID) << "\n";
 #endif
   if (Owner) {
     if (Owner->Id >> magic_shift == msgport_magic >> magic_shift) {
-      msg NewMsg;
+      Tmsg NewMsg;
       event_any *Event;
       if ((NewMsg = New(msg)(msg_selection_request, 0))) {
 
@@ -925,7 +925,7 @@ void FlushHW(void) {
 
 void SyntheticKey(Twidget W, udat Code, udat ShiftFlags, byte Len, const char *Seq) {
   event_keyboard *Event;
-  msg Msg;
+  Tmsg Msg;
 
   if (W && Len && Seq && (Msg = New(msg)(msg_widget_key, Len))) {
 
@@ -1134,7 +1134,7 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
 }
 
 byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
-  msg Msg;
+  Tmsg Msg;
   event_mouse *Event;
 
   if (HW && HW == All->MouseHW && HW->FlagsHW & FlHWNoInput)
@@ -1161,7 +1161,7 @@ byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
 
 byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) {
   event_keyboard *Event;
-  msg Msg;
+  Tmsg Msg;
 
   if (HW->FlagsHW & FlHWNoInput)
     return ttrue;

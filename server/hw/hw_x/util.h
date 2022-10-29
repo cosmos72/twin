@@ -348,7 +348,7 @@ static void XSYM(SelectionNotify_up)(Window win, Atom prop) {
 /*
  * request X11 Selection
  */
-static void XSYM(SelectionRequest_X11)(obj Requestor, uldat ReqPrivate) {
+static void XSYM(SelectionRequest_X11)(Tobj Requestor, uldat ReqPrivate) {
   if (!HW->HWSelectionPrivate) {
 
     if (xReqCount == NEST) {
@@ -396,7 +396,7 @@ static void XSYM(SelectionRequest_up)(XSelectionRequestEvent *req) {
   }
 #endif
   CopyMem(req, &XReq(XReqCount), sizeof(XSelectionRequestEvent));
-  TwinSelectionRequest((obj)HW, XReqCount++, TwinSelectionGetOwner());
+  TwinSelectionRequest((Tobj)HW, XReqCount++, TwinSelectionGetOwner());
   /* we will get a call to HW->HWSelectionNotify i.e. XSYM(SelectionNotify_X11) */
   /* the call **CAN** arrive while we are still inside TwinSelectionRequest() !!! */
 }

@@ -31,7 +31,7 @@ static void ScrollerH(Tmsgport MsgPort);
  * just dummy msgs that we receive when we are called
  * to start/stop scrolling immediately
  */
-msg Do_Scroll, Dont_Scroll;
+Tmsg Do_Scroll, Dont_Scroll;
 
 byte InitScroller(void) {
   if ((Scroller_MsgPort =
@@ -61,7 +61,7 @@ inline void ScrollerDelayRepeat(void) {
 }
 
 static void ScrollerH(Tmsgport MsgPort) {
-  msg Msg, saveMsg;
+  Tmsg Msg, saveMsg;
   mouse_state *Mouse;
   uldat Attr, WState;
   dat Limit;

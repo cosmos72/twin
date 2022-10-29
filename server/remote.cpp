@@ -165,7 +165,7 @@ Tmsgport RemoteGetMsgPort(uldat Slot) {
  * On success, return the slot number.
  * On failure, return NOSLOT (-1).
  */
-uldat RegisterRemote(int Fd, obj HandlerData, handler_obj HandlerObj) {
+uldat RegisterRemote(int Fd, Tobj HandlerData, handler_obj HandlerObj) {
   uldat Slot, j;
 
   if ((Slot = FdListGet()) == NOSLOT) {
@@ -206,7 +206,7 @@ uldat RegisterRemoteFd(int Fd, handler_io HandlerIO) {
 }
 
 byte RegisterWindowFdIO(Twindow Window, handler_window HandlerWindow) {
-  return (Window->RemoteData.FdSlot = RegisterRemote(Window->RemoteData.Fd, (obj)Window,
+  return (Window->RemoteData.FdSlot = RegisterRemote(Window->RemoteData.Fd, (Tobj)Window,
                                                      (handler_obj)HandlerWindow)) != NOSLOT;
 }
 
@@ -293,7 +293,7 @@ void remoteKillSlot(uldat slot) {
 void RemotePidIsDead(pid_t pid) {
   uldat Slot;
   int Fd;
-  obj HData;
+  Tobj HData;
   remotedata *RData;
 
   for (Slot = 0; Slot < FdTop; Slot++) {

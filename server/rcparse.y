@@ -61,10 +61,6 @@
 
 #endif
 
-/* twin.h typedefs `msg'... avoid it */
-#define msg Msg
-
-
 %}
 
 /*

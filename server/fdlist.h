@@ -17,13 +17,13 @@
 #define TWIN_FDLIST_H
 
 typedef void (*handler_io_s)(int, uldat);
-typedef void (*handler_io_d)(int, obj);
+typedef void (*handler_io_d)(int, Tobj);
 
 typedef struct fdlist fdlist; /* for compressed sockets, two fdlist's are used: */
 struct fdlist {               /* the uncompressed one has                       */
   int Fd;                     /* Fd == GZFD and pairSlot == the compressed one; */
   uldat pairSlot;             /* the compressed has                             */
-  obj HandlerData;            /* Fd == real fd and pairSlot == the uncompressed;*/
+  Tobj HandlerData;           /* Fd == real fd and pairSlot == the uncompressed;*/
   union {
     handler_io_s S;
     handler_io_d D;

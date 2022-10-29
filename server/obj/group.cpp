@@ -35,7 +35,7 @@ Tgroup Sgroup::Create(Tmsgport owner) {
 }
 
 Tgroup Sgroup::Init(Tmsgport owner) {
-  if (!owner || !((obj)this)->Init()) {
+  if (!owner || !((Tobj)this)->Init()) {
     return NULL;
   }
   // this->FirstG = this->LastG = this->SelectG = NULL;

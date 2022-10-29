@@ -4,8 +4,8 @@
 
 typedef union s_tsval {
   tany _;
-#ifdef obj
-  obj o;
+#ifdef Tobj
+  Tobj o;
 #endif
   struct {
     union {

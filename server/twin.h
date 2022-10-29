@@ -17,8 +17,8 @@
 #include "twconfig.h"    /* for CONF_* macros */
 
 #include "obj/fwd.h"
-/* pull in "obj" field in <Tw/stattypes.h> */
-#define obj obj
+/* pull in "Tobj" field in <Tw/stattypes.h> */
+#define Tobj Tobj
 
 #include "compiler.h"
 #include "version.h"

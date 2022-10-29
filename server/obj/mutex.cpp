@@ -57,7 +57,7 @@ Tmutex Smutex::Create(Tmsgport owner, byte namelen, const char *name, byte perm)
 }
 
 Tmutex Smutex::Init(Tmsgport owner, byte namelen, const char *name, byte perm) {
-  if (!((obj)this)->Init()) {
+  if (!((Tobj)this)->Init()) {
     return NULL;
   }
   this->Perm = perm;

@@ -34,7 +34,7 @@ Trow Srow::Create(udat code, byte flags) {
 }
 
 Trow Srow::Init(udat code, byte flags) {
-  if (code < COD_RESERVED && ((obj)this)->Init()) {
+  if (code < COD_RESERVED && ((Tobj)this)->Init()) {
     this->Code = code;
     this->Flags = flags;
     // this->Gap = this->LenGap = this->Len = this->MaxLen = 0;

@@ -12,5 +12,5 @@ static ldat XSYM(CalcFontScore)(udat fontwidth, udat fontheight, ldat width, lda
 static byte XSYM(LoadFont)(const char *fontname, udat fontwidth, udat fontheight);
 static void XSYM(QuitHW)(void);
 static bool XSYM(InitHW)(void);
-EXTERN_C byte InitModule(module Module);
-EXTERN_C void QuitModule(module Module);
+EXTERN_C byte InitModule(Tmodule Module);
+EXTERN_C void QuitModule(Tmodule Module);

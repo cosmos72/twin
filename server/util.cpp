@@ -289,7 +289,7 @@ void SortAllMsgPortsByCallTime(void) {
 }
 
 byte SendControlMsg(Tmsgport MsgPort, udat Code, udat Len, const char *Data) {
-  msg Msg;
+  Tmsg Msg;
   event_control *Event;
 
   if (MsgPort && (Msg = New(msg)(msg_control, Len))) {

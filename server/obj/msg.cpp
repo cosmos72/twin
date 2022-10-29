@@ -17,8 +17,8 @@
 #include "obj/msg.h"
 #include "stl/fmt.h"
 
-msg Smsg::Create(udat type, size_t eventlen) {
-  size_t headerlen = (size_t) & ((msg)NULL)->Event;
+Tmsg Smsg::Create(udat type, size_t eventlen) {
+  size_t headerlen = (size_t) & ((Tmsg)NULL)->Event;
 
   switch (type) {
   case msg_map:
@@ -73,8 +73,8 @@ msg Smsg::Create(udat type, size_t eventlen) {
     log(ERROR) << "twin: CreateMsg(): event length too large: " << eventlen << "\n";
     return NULL;
   }
-  msg m;
-  if ((m = (msg)AllocMem0(headerlen + eventlen))) {
+  Tmsg m;
+  if ((m = (Tmsg)AllocMem0(headerlen + eventlen))) {
     m->Fn = Fn_Tmsg;
     if (!m->Init(type, (uldat)eventlen)) {
       m->Delete();
@@ -84,8 +84,8 @@ msg Smsg::Create(udat type, size_t eventlen) {
   return m;
 }
 
-msg Smsg::Init(udat type, uldat eventlen) {
-  if (AssignId(e_id(Fn->Magic), (obj)this)) {
+Tmsg Smsg::Init(udat type, uldat eventlen) {
+  if (AssignId(e_id(Fn->Magic), (Tobj)this)) {
     // this->Prev = this->Next = NULL;
     // this->MsgPort = NULL;
     this->Type = type;

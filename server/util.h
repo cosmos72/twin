@@ -55,7 +55,7 @@ uldat ComputeUsableLenArgv(char *const *argv);
 void SetArgv0(char *const *argv, uldat argv_usable_len, const char *src);
 
 bool SetSelectionFromWindow(Twindow Window);
-void doSelectionSetOwner(obj Owner, tany Time, tany Frac);
+void doSelectionSetOwner(Tobj Owner, tany Time, tany Frac);
 #define SEL_CURRENTTIME ((tany)0)
 
 byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, char *buf);

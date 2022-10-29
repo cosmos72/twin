@@ -120,13 +120,13 @@ struct Swidget : public Sobj {
   HookFn ShutDownHook; /* hooks for this Twidget */
   HookFn Hook, *WhereHook;
   HookFn MapUnMapHook;
-  msg MapQueueMsg;
+  Tmsg MapQueueMsg;
   tcell USE_Fill;
   union {
     struct s_wE E;
   } USE;
 
-  /* obj */
+  /* Tobj */
   uldat Magic() const {
     return Fn->Magic;
   }

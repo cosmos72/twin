@@ -381,7 +381,7 @@ static void XSYM(HandleEvent)(XEvent *event) {
       break;
     case SelectionClear:
       HW->HWSelectionPrivate = 0; /* selection now owned by some other X11 client */
-      TwinSelectionSetOwner((obj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
+      TwinSelectionSetOwner((Tobj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
       break;
     case SelectionRequest:
       XSYM(SelectionRequest_up)(&event->xselectionrequest);

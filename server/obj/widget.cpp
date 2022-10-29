@@ -36,7 +36,7 @@ Twidget Swidget::Create(Tmsgport owner, dat xwidth, dat ywidth, uldat attr, ulda
 
 Twidget Swidget::Init(Tmsgport owner, dat xwidth, dat ywidth, uldat attr, uldat flags, dat left,
                       dat up, tcell fill) {
-  if (owner && ((obj)this)->Init()) {
+  if (owner && ((Tobj)this)->Init()) {
     Left = left;
     Up = up;
     XWidth = xwidth;

@@ -11,8 +11,8 @@
 
 class Chars;
 
-bool DlOpen(module Module);
-void DlClose(module Module);
+bool DlOpen(Tmodule Module);
+void DlClose(Tmodule Module);
 
 #define MainSo ((uldat)0)
 #define TermSo ((uldat)2)
@@ -20,13 +20,13 @@ void DlClose(module Module);
 #define RCParseSo ((uldat)4)
 #define MAX_So ((uldat)5)
 
-module DlLoad(uldat code);
+Tmodule DlLoad(uldat code);
 void DlUnload(uldat code);
-module DlIsLoaded(uldat code);
+Tmodule DlIsLoaded(uldat code);
 udat DlName2Code(const char *name);
 
-module DlLoadAny(uldat len, const char *name);
+Tmodule DlLoadAny(uldat len, const char *name);
 
-void *DlSym(module Module, const char *name);
+void *DlSym(Tmodule Module, const char *name);
 
 #endif /* TWIN_DL_H */

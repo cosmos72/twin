@@ -220,7 +220,7 @@ struct event_selectionnotify {
 struct event_selectionrequest {
   Twidget W;
   udat Code, pad; /* unused */
-  obj Requestor;
+  Tobj Requestor;
   uldat ReqPrivate;
 };
 

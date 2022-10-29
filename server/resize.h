@@ -64,7 +64,7 @@ void RaiseWidget(Twidget W, byte alsoFocus);
 void LowerWidget(Twidget W, byte alsoDeFocus);
 void RestackWidgets(Twidget P, uldat N, const Twidget *arrayW);
 
-void RestackRows(obj O, uldat N, const Trow *arrayR);
+void RestackRows(Tobj O, uldat N, const Trow *arrayR);
 
 void PressGadget(Tgadget G);
 void UnPressGadget(Tgadget G, byte maySendMsgIfNotToggle);

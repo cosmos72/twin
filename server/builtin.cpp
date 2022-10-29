@@ -258,7 +258,7 @@ void UpdateOptionWin(void) {
   OptionWin->RowWriteCharset(1, &ch);
 }
 
-static void OptionH(msg Msg) {
+static void OptionH(Tmsg Msg) {
   byte Flags = All->SetUp->Flags, XShade = All->SetUp->DeltaXShade,
        YShade = All->SetUp->DeltaYShade;
   byte redraw = ttrue;
@@ -408,7 +408,7 @@ void UpdateButtonWin(void) {
   }
 }
 
-static void BordersH(msg Msg) {
+static void BordersH(Tmsg Msg) {
   udat Code = Msg->Event.EventGadget.Code;
   sbyte op = -1;
 
@@ -454,7 +454,7 @@ static void SelectRowWindow(Twindow CurrWin, ldat newCurY) {
   }
 }
 
-static void DisplayGadgetH(msg Msg) {
+static void DisplayGadgetH(Tmsg Msg) {
   Tdisplay hw;
   ldat i;
 
@@ -484,7 +484,7 @@ static void DisplayGadgetH(msg Msg) {
 }
 
 static void BuiltinH(Tmsgport MsgPort) {
-  msg Msg;
+  Tmsg Msg;
   event_any *Event;
   screen Screen;
   Twindow NewWindow, tempWin;
@@ -692,7 +692,7 @@ static void BuiltinH(Tmsgport MsgPort) {
     case msg_selection:
       /* user wants to paste. ask for selection contents */
       if (Msg->Event.EventSelection.W == (Twidget)ExecuteWin)
-        TwinSelectionRequest((obj)Builtin_MsgPort, ExecuteWin->Id, TwinSelectionGetOwner());
+        TwinSelectionRequest((Tobj)Builtin_MsgPort, ExecuteWin->Id, TwinSelectionGetOwner());
       break;
 
     case msg_selection_notify:

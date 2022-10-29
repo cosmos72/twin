@@ -12,7 +12,7 @@
     /* ensure type size WAS negotiated */                                                          \
     if (CAT(TWS_, fieldtype) <= TWS_tcolor || CAT(TWS_, fieldtype) >= TWS_highest ||               \
         AlienSizeof(fieldtype, Slot)) {                                                            \
-      TSF->CAT(TWS_field_, fieldtype) = (fieldtype)x->field;                                       \
+      TSF->CAT(TWS_field_, fieldtype) = x->field;                                                  \
       TSF->type = CAT(TWS_, fieldtype);                                                            \
       break;                                                                                       \
     }                                                                                              \
@@ -23,7 +23,7 @@
     /* ensure type size WAS negotiated */                                                          \
     if (CAT(TWS_, fieldtype) <= TWS_tcolor || CAT(TWS_, fieldtype) >= TWS_highest ||               \
         AlienSizeof(fieldtype, Slot)) {                                                            \
-      TSF->CAT(TWS_field_, fieldtype) = (fieldtype)x->USE.use.field;                               \
+      TSF->CAT(TWS_field_, fieldtype) = x->USE.use.field;                                          \
       TSF->type = CAT(TWS_, fieldtype);                                                            \
       break;                                                                                       \
     }                                                                                              \
@@ -34,7 +34,7 @@
     /* ensure type size WAS negotiated */                                                          \
     if (CAT(TWS_, fieldtype) <= TWS_tcolor || CAT(TWS_, fieldtype) >= TWS_highest ||               \
         AlienSizeof(fieldtype, Slot)) {                                                            \
-      TSF->CAT(TWS_field_, fieldtype) = (fieldtype)x->field[n];                                    \
+      TSF->CAT(TWS_field_, fieldtype) = x->field[n];                                               \
       TSF->type = CAT(TWS_, fieldtype);                                                            \
       break;                                                                                       \
     }                                                                                              \
@@ -45,7 +45,7 @@
     /* ensure type size WAS negotiated */                                                          \
     if (CAT(TWS_, fieldtype) <= TWS_tcolor || CAT(TWS_, fieldtype) >= TWS_highest ||               \
         AlienSizeof(fieldtype, Slot)) {                                                            \
-      TSF->CAT(TWS_field_, fieldtype) = (fieldtype)x->USE.use.field[n];                            \
+      TSF->CAT(TWS_field_, fieldtype) = x->USE.use.field[n];                                       \
       TSF->type = CAT(TWS_, fieldtype);                                                            \
       break;                                                                                       \
     }                                                                                              \
@@ -82,30 +82,30 @@
 #define fieldDelta(field) ((udat)(size_t) & (((obj_entry)0)->field))
 #define OFFSET_OF(type, field) ((udat)(size_t) & (((type)0)->field))
 
-#define sockAllocListPrevObjs(F, len) sockAllocListDeltaObjs((obj)(F), (len), fieldDelta(Prev))
-#define sockAllocListNextObjs(F, len) sockAllocListDeltaObjs((obj)(F), (len), fieldDelta(Next))
-#define sockAllocListParentObjs(F, len) sockAllocListDeltaObjs((obj)(F), (len), fieldDelta(Parent))
+#define sockAllocListPrevObjs(F, len) sockAllocListDeltaObjs((Tobj)(F), (len), fieldDelta(Prev))
+#define sockAllocListNextObjs(F, len) sockAllocListDeltaObjs((Tobj)(F), (len), fieldDelta(Next))
+#define sockAllocListParentObjs(F, len) sockAllocListDeltaObjs((Tobj)(F), (len), fieldDelta(Parent))
 
-static tobj *sockAllocListDeltaObjs(obj F, topaque *len, udat fdelta) {
+static tobj *sockAllocListDeltaObjs(Tobj F, topaque *len, udat fdelta) {
   topaque L = 0;
   tobj *_LW, *LW;
-  obj O = F;
+  Tobj O = F;
   while (O) {
     L++;
-    O = deserialize<obj>(O, fdelta);
+    O = deserialize<Tobj>(O, fdelta);
   }
   if ((_LW = LW = (tobj *)AllocMem(L *= sizeof(tobj)))) {
     *len = L;
     O = F;
     while (O) {
       *LW++ = O->Id;
-      O = deserialize<obj>(O, fdelta);
+      O = deserialize<Tobj>(O, fdelta);
     }
   }
   return _LW;
 }
 
-static byte sockStatObj(obj o, tsfield TSF) {
+static byte sockStatObj(Tobj o, tsfield TSF) {
   obj_entry x = (obj_entry)o;
   switch (TSF->label) {
   case TWS_obj_Id:
@@ -134,7 +134,7 @@ static byte sockStatObj(obj o, tsfield TSF) {
   default:
     return tfalse;
   }
-  TSF->TWS_field_obj = (obj)x;
+  TSF->TWS_field_obj = (Tobj)x;
   TSF->type = TWS_obj;
   return ttrue;
 }
@@ -157,17 +157,17 @@ static byte sockStatWidget(Twidget x, tsfield TSF) {
     TWScase(widget, Owner, obj);
     TWScase(widget, USE_Fill, tcell);
   case TWS_widget_ChildrenW_List:
-    TSF->TWS_field_vecV = sockAllocListNextObjs((obj)x->FirstW, &TSF->TWS_field_vecL);
+    TSF->TWS_field_vecV = sockAllocListNextObjs((Tobj)x->FirstW, &TSF->TWS_field_vecL);
     TSF->type = TWS_vec | TWS_tobj;
     break;
   case TWS_widget_O_Prev_List:
     TSF->TWS_field_vecV =
-        sockAllocListDeltaObjs((obj)x->O_Prev, &TSF->TWS_field_vecL, OFFSET_OF(Twidget, O_Prev));
+        sockAllocListDeltaObjs((Tobj)x->O_Prev, &TSF->TWS_field_vecL, OFFSET_OF(Twidget, O_Prev));
     TSF->type = TWS_vec | TWS_tobj;
     break;
   case TWS_widget_O_Next_List:
     TSF->TWS_field_vecV =
-        sockAllocListDeltaObjs((obj)x->O_Next, &TSF->TWS_field_vecL, OFFSET_OF(Twidget, O_Next));
+        sockAllocListDeltaObjs((Tobj)x->O_Next, &TSF->TWS_field_vecL, OFFSET_OF(Twidget, O_Next));
     TSF->type = TWS_vec | TWS_tobj;
     break;
   default:
@@ -196,12 +196,12 @@ static byte sockStatGadget(Tgadget x, tsfield TSF) {
     TWScase(gadget, Group, obj);
   case TWS_gadget_G_Prev_List:
     TSF->TWS_field_vecV =
-        sockAllocListDeltaObjs((obj)x->G_Prev, &TSF->TWS_field_vecL, OFFSET_OF(Tgadget, G_Prev));
+        sockAllocListDeltaObjs((Tobj)x->G_Prev, &TSF->TWS_field_vecL, OFFSET_OF(Tgadget, G_Prev));
     TSF->type = TWS_vec | TWS_tobj;
     break;
   case TWS_gadget_G_Next_List:
     TSF->TWS_field_vecV =
-        sockAllocListDeltaObjs((obj)x->G_Next, &TSF->TWS_field_vecL, OFFSET_OF(Tgadget, G_Next));
+        sockAllocListDeltaObjs((Tobj)x->G_Next, &TSF->TWS_field_vecL, OFFSET_OF(Tgadget, G_Next));
     TSF->type = TWS_vec | TWS_tobj;
     break;
   default:
@@ -278,7 +278,7 @@ static byte sockStatWindow(Twindow x, tsfield TSF) {
         TWScaseUSE(window, R, FirstRow, obj);
         TWScaseUSE(window, R, LastRow, obj);
       case TWS_window_USE_R_ChildrenRow_List:
-        TSF->TWS_field_vecV = sockAllocListNextObjs((obj)x->USE.R.FirstRow, &TSF->TWS_field_vecL);
+        TSF->TWS_field_vecV = sockAllocListNextObjs((Tobj)x->USE.R.FirstRow, &TSF->TWS_field_vecL);
         TSF->type = TWS_vec | TWS_tobj;
         break;
       default:
@@ -325,7 +325,7 @@ static byte sockStatGroup(Tgroup x, tsfield TSF) {
     TWScase(group, SelectG, obj);
   case TWS_group_ChildrenG_List:
     TSF->TWS_field_vecV =
-        sockAllocListDeltaObjs((obj)x->FirstG, &TSF->TWS_field_vecL, OFFSET_OF(Tgadget, G_Next));
+        sockAllocListDeltaObjs((Tobj)x->FirstG, &TSF->TWS_field_vecL, OFFSET_OF(Tgadget, G_Next));
     TSF->type = TWS_vec | TWS_tobj;
     break;
   default:
@@ -378,7 +378,7 @@ static byte sockStatMenu(Tmenu x, tsfield TSF) {
     TWScase(menu, LastI, obj);
     TWScase(menu, SelectI, obj);
   case TWS_menu_ChildrenI_List:
-    TSF->TWS_field_vecV = sockAllocListNextObjs((obj)x->FirstI, &TSF->TWS_field_vecL);
+    TSF->TWS_field_vecV = sockAllocListNextObjs((Tobj)x->FirstI, &TSF->TWS_field_vecL);
     TSF->type = TWS_vec | TWS_tobj;
     break;
   default:
@@ -401,21 +401,21 @@ static byte sockStatMsgPort(Tmsgport x, tsfield TSF) {
     TWScase(msgport, FirstMutex, obj);
     TWScase(msgport, LastMutex, obj);
   case TWS_msgport_ChildrenMenu_List:
-    TSF->TWS_field_vecV = sockAllocListNextObjs((obj)x->FirstMenu, &TSF->TWS_field_vecL);
+    TSF->TWS_field_vecV = sockAllocListNextObjs((Tobj)x->FirstMenu, &TSF->TWS_field_vecL);
     TSF->type = TWS_vec | TWS_tobj;
     break;
   case TWS_msgport_ChildrenW_List:
     TSF->TWS_field_vecV =
-        sockAllocListDeltaObjs((obj)x->FirstW, &TSF->TWS_field_vecL, OFFSET_OF(Twidget, O_Next));
+        sockAllocListDeltaObjs((Tobj)x->FirstW, &TSF->TWS_field_vecL, OFFSET_OF(Twidget, O_Next));
     TSF->type = TWS_vec | TWS_tobj;
     break;
   case TWS_msgport_ChildrenGroup_List:
-    TSF->TWS_field_vecV = sockAllocListNextObjs((obj)x->FirstGroup, &TSF->TWS_field_vecL);
+    TSF->TWS_field_vecV = sockAllocListNextObjs((Tobj)x->FirstGroup, &TSF->TWS_field_vecL);
     TSF->type = TWS_vec | TWS_tobj;
     break;
   case TWS_msgport_ChildrenMutex_List:
-    TSF->TWS_field_vecV =
-        sockAllocListDeltaObjs((obj)x->FirstMutex, &TSF->TWS_field_vecL, OFFSET_OF(Tmutex, O_Next));
+    TSF->TWS_field_vecV = sockAllocListDeltaObjs((Tobj)x->FirstMutex, &TSF->TWS_field_vecL,
+                                                 OFFSET_OF(Tmutex, O_Next));
     TSF->type = TWS_vec | TWS_tobj;
     break;
   default:
@@ -434,12 +434,12 @@ static byte sockStatMutex(Tmutex x, tsfield TSF) {
     TWScasevec(mutex, Name, byte, x->NameLen);
   case TWS_mutex_O_Prev_List:
     TSF->TWS_field_vecV =
-        sockAllocListDeltaObjs((obj)x->O_Prev, &TSF->TWS_field_vecL, OFFSET_OF(Tmutex, O_Prev));
+        sockAllocListDeltaObjs((Tobj)x->O_Prev, &TSF->TWS_field_vecL, OFFSET_OF(Tmutex, O_Prev));
     TSF->type = TWS_vec | TWS_tobj;
     break;
   case TWS_mutex_O_Next_List:
     TSF->TWS_field_vecV =
-        sockAllocListDeltaObjs((obj)x->O_Next, &TSF->TWS_field_vecL, OFFSET_OF(Tmutex, O_Next));
+        sockAllocListDeltaObjs((Tobj)x->O_Next, &TSF->TWS_field_vecL, OFFSET_OF(Tmutex, O_Next));
     TSF->type = TWS_vec | TWS_tobj;
     break;
   default:
@@ -461,15 +461,15 @@ static byte sockStatAll(all x, tsfield TSF) {
     TWScase(all, BuiltinMenu, obj);
     TWScase(all, CommonMenu, obj);
   case TWS_all_ChildrenScreen_List:
-    TSF->TWS_field_vecV = sockAllocListNextObjs((obj)x->FirstScreen, &TSF->TWS_field_vecL);
+    TSF->TWS_field_vecV = sockAllocListNextObjs((Tobj)x->FirstScreen, &TSF->TWS_field_vecL);
     TSF->type = TWS_vec | TWS_tobj;
     break;
   case TWS_all_ChildrenMsgPort_List:
-    TSF->TWS_field_vecV = sockAllocListNextObjs((obj)x->FirstMsgPort, &TSF->TWS_field_vecL);
+    TSF->TWS_field_vecV = sockAllocListNextObjs((Tobj)x->FirstMsgPort, &TSF->TWS_field_vecL);
     TSF->type = TWS_vec | TWS_tobj;
     break;
   case TWS_all_ChildrenMutex_List:
-    TSF->TWS_field_vecV = sockAllocListNextObjs((obj)x->FirstMutex, &TSF->TWS_field_vecL);
+    TSF->TWS_field_vecV = sockAllocListNextObjs((Tobj)x->FirstMutex, &TSF->TWS_field_vecL);
     TSF->type = TWS_vec | TWS_tobj;
     break;
   default:
@@ -478,7 +478,7 @@ static byte sockStatAll(all x, tsfield TSF) {
   return ttrue;
 }
 
-static void sockStat(obj x, udat n, const byte *in) {
+static void sockStat(Tobj x, udat n, const byte *in) {
   udat i, j;
   tsfield TSF;
   uldat len, q;

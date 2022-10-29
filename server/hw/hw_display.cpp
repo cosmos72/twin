@@ -33,7 +33,7 @@ struct display_data {
 #define display (displaydata->display)
 #define Helper (displaydata->Helper)
 
-static msg Msg;
+static Tmsg Msg;
 static event_display *ev;
 static uldat Used;
 
@@ -62,7 +62,7 @@ static void display_Configure(udat resource, byte todefault, udat value) {
 
 /* handle messages from twdisplay */
 static void display_HandleEvent(Tdisplay hw) {
-  msg hMsg;
+  Tmsg hMsg;
   event_any *Event;
   dat x, y, dx, dy;
   udat keys;
@@ -99,10 +99,10 @@ static void display_HandleEvent(Tdisplay hw) {
       /* selection now owned by some other client on the same display HW as twdisplay */
       HW->HWSelectionPrivate = (tany)0;
       /*
-       * DO NOT use (obj)display here instead of (obj)HW, as it is a Tmsgport
+       * DO NOT use (Tobj)display here instead of (Tobj)HW, as it is a Tmsgport
        * and would bypass the OwnerOnce mechanism, often resulting in an infinite loop.
        */
-      TwinSelectionSetOwner((obj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
+      TwinSelectionSetOwner((Tobj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
       break;
     case msg_selection_request:
       /*
@@ -350,13 +350,13 @@ static void display_SelectionExport_display(void) {
 /*
  * request Selection from twdisplay
  */
-static void display_SelectionRequest_display(obj Requestor, uldat ReqPrivate) {
+static void display_SelectionRequest_display(Tobj Requestor, uldat ReqPrivate) {
   if (!HW->HWSelectionPrivate) {
     /*
      * shortcut: since (display) is a Tmsgport, use fail-safe TwinSelectionRequest()
      * to send message to twdisplay.
      */
-    TwinSelectionRequest(Requestor, ReqPrivate, (obj)display);
+    TwinSelectionRequest(Requestor, ReqPrivate, (Tobj)display);
   }
   /* else race! someone else became Selection owner in the meanwhile... */
 }
@@ -370,7 +370,7 @@ static void display_SelectionNotify_display(uldat ReqPrivate, e_id Magic,
    * shortcut: since (display) is a Tmsgport, use fail-safe TwinSelectionNotify()
    * to send message to twdisplay.
    */
-  TwinSelectionNotify((obj)display, ReqPrivate, Magic, MIME, Data);
+  TwinSelectionNotify((Tobj)display, ReqPrivate, Magic, MIME, Data);
 }
 
 static void display_QuitHW(void) {
@@ -552,11 +552,11 @@ static bool display_InitHW(void) {
   return true;
 }
 
-EXTERN_C byte InitModule(module Module) {
+EXTERN_C byte InitModule(Tmodule Module) {
   Module->DoInit = display_InitHW;
   return ttrue;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-EXTERN_C void QuitModule(module Module) {
+EXTERN_C void QuitModule(Tmodule Module) {
 }

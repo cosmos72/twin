@@ -17,38 +17,38 @@
 #include "obj/obj.h"
 #include <Tw/datatypes.h>
 
-/* module */
+/* Tmodule */
 
 struct SmoduleFn {
   uldat Magic;
-  void (*Insert)(module, all, module Prev, module Next);
-  void (*Remove)(module);
-  void (*Delete)(module);
-  void (*ChangeField)(module, udat field, uldat CLEARMask, uldat XORMask);
-  /* module */
+  void (*Insert)(Tmodule, all, Tmodule Prev, Tmodule Next);
+  void (*Remove)(Tmodule);
+  void (*Delete)(Tmodule);
+  void (*ChangeField)(Tmodule, udat field, uldat CLEARMask, uldat XORMask);
+  /* Tmodule */
   TobjFn Fn_Obj;
-  bool (*DlOpen)(module);
-  void (*DlClose)(module);
+  bool (*DlOpen)(Tmodule);
+  void (*DlClose)(Tmodule);
 };
 
 struct Smodule : public Sobj {
   TmoduleFn Fn;
-  module Prev, Next; /* in the same All */
+  Tmodule Prev, Next; /* in the same All */
   all All;
-  /* module */
+  /* Tmodule */
   uldat NameLen, Used;
   char *Name;
   void *Handle;
   bool (*DoInit)(void);
 
-  static module Create(uldat namelen, const char *name);
-  module Init(uldat namelen, const char *name);
+  static Tmodule Create(uldat namelen, const char *name);
+  Tmodule Init(uldat namelen, const char *name);
 
-  /* obj */
+  /* Tobj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(all a, module prev, module next) {
+  void Insert(all a, Tmodule prev, Tmodule next) {
     Fn->Insert(this, a, prev, next);
   }
   void Remove() {
@@ -57,7 +57,7 @@ struct Smodule : public Sobj {
   void Delete() {
     Fn->Delete(this);
   }
-  /* module */
+  /* Tmodule */
   bool DlOpen() {
     return Fn->DlOpen(this);
   }

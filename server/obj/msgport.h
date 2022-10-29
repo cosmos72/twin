@@ -39,7 +39,7 @@ struct Smsgport : public Sobj {
   void (*ShutDownHook)(Tmsgport);
   timevalue CallTime, PauseDuration;
   remotedata RemoteData;
-  msg FirstMsg, LastMsg;
+  Tmsg FirstMsg, LastMsg;
   Tmenu FirstMenu, LastMenu;    /* menus created by this MsgPort */
   Twidget FirstW, LastW;        /* widgets owned by this MsgPort */
   Tgroup FirstGroup, LastGroup; /* groups owned by this MsgPort */
@@ -51,7 +51,7 @@ struct Smsgport : public Sobj {
   Tmsgport Init(byte NameLen, const char *Name, tany PauseSec, tany PauseFraction, byte WakeUp,
                 void (*Handler)(Tmsgport));
 
-  /* obj */
+  /* Tobj */
   uldat Magic() const {
     return Fn->Magic;
   }

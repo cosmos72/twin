@@ -116,7 +116,7 @@ static void TW_HandleMsg(tmsg Msg) {
   switch (Msg->Type) {
   case TW_MSG_SELECTIONCLEAR:
     HW->HWSelectionPrivate = 0; /* selection now owned by some other libtw client */
-    TwinSelectionSetOwner((obj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
+    TwinSelectionSetOwner((Tobj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
     return;
   case TW_MSG_SELECTIONREQUEST:
     TW_SelectionRequest_up(Event->EventSelectionRequest.Requestor,
@@ -319,7 +319,7 @@ static void TW_SelectionExport_TW(void) {
 /*
  * request Selection from libtw
  */
-static void TW_SelectionRequest_TW(obj Requestor, uldat ReqPrivate) {
+static void TW_SelectionRequest_TW(Tobj Requestor, uldat ReqPrivate) {
   if (!HW->HWSelectionPrivate) {
     if (TSelCount < TSELMAX) {
 #ifdef DEBUG_HW_TWIN
@@ -356,7 +356,7 @@ static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
      */
     SelReq[SelCount].Requestor = Requestor;
     SelReq[SelCount].ReqPrivate = ReqPrivate;
-    TwinSelectionRequest((obj)HW, SelCount++, TwinSelectionGetOwner());
+    TwinSelectionRequest((Tobj)HW, SelCount++, TwinSelectionGetOwner());
     /* we will get a HW->HWSelectionNotify(), i.e. TW_SelectionNotify_TW() call */
     /* the call **CAN** arrive while we are still inside TwinSelectionRequest() !!! */
   } else {
@@ -392,7 +392,7 @@ static void TW_SelectionNotify_up(uldat ReqPrivate, e_id Magic, const char MIME[
 #endif
   if (ReqPrivate + 1 == TSelCount) {
     TSelCount--;
-    TwinSelectionNotify((obj)(topaque)TSelReq[TSelCount].Requestor, TSelReq[TSelCount].ReqPrivate,
+    TwinSelectionNotify((Tobj)(topaque)TSelReq[TSelCount].Requestor, TSelReq[TSelCount].ReqPrivate,
                         Magic, MIME, Data);
   }
 }
@@ -531,7 +531,7 @@ static bool TW_InitHW(void) {
 
       HW->mouse_slot = NOSLOT;
       HW->keyboard_slot =
-          RegisterRemote(Tw_ConnectionFd(Td), (obj)HW, (void (*)(int, obj))TW_KeyboardEvent);
+          RegisterRemote(Tw_ConnectionFd(Td), (Tobj)HW, (void (*)(int, Tobj))TW_KeyboardEvent);
       if (HW->keyboard_slot == NOSLOT)
         break;
 
@@ -607,11 +607,11 @@ static bool TW_InitHW(void) {
   return false;
 }
 
-EXTERN_C byte InitModule(module Module) {
+EXTERN_C byte InitModule(Tmodule Module) {
   Module->DoInit = TW_InitHW;
   return ttrue;
 }
 
 /* this MUST be defined, or it seems that a bug in dlsym() gets triggered */
-EXTERN_C void QuitModule(module Module) {
+EXTERN_C void QuitModule(Tmodule Module) {
 }

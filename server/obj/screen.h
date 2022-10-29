@@ -74,7 +74,7 @@ struct Sscreen : public Sobj {
   HookFn ShutDownHook; /* hooks for this Twidget */
   HookFn Hook, *WhereHook;
   HookFn MapUnMapHook;
-  msg MapQueueMsg;
+  Tmsg MapQueueMsg;
   tcell USE_Fill;
   union {
     struct s_sB B;
@@ -91,7 +91,7 @@ struct Sscreen : public Sobj {
   static screen Create(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
   screen Init(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
 
-  /* obj */
+  /* Tobj */
   uldat Magic() const {
     return Fn->Magic;
   }

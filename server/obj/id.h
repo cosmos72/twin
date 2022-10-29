@@ -56,9 +56,9 @@ enum e_id /*: uldat*/ {
   all_magic = 0xFA11FA11ul,
 };
 
-bool AssignId(const e_id class_magic_id, obj Obj);
+bool AssignId(const e_id class_magic_id, Tobj Obj);
 bool AssignId_all(all Obj);
-void DropId(obj Obj);
-obj Id2Obj(e_magic_byte expected_magic_byte, uldat Id);
+void DropId(Tobj Obj);
+Tobj Id2Obj(e_magic_byte expected_magic_byte, uldat Id);
 
 #endif /* TWIN_ID_H */

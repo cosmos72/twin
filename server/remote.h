@@ -10,11 +10,11 @@
 #define TWIN_REMOTE_H
 
 typedef void (*handler_io)(int Fd, uldat Slot);
-typedef void (*handler_obj)(int Fd, obj HandlerObj);
+typedef void (*handler_obj)(int Fd, Tobj HandlerObj);
 typedef void (*handler_window)(int Fd, Twindow Window);
 
 uldat RegisterRemoteFd(int Fd, handler_io HandlerIO);
-uldat RegisterRemote(int Fd, obj HandlerData, handler_obj HandlerObj);
+uldat RegisterRemote(int Fd, Tobj HandlerData, handler_obj HandlerObj);
 void UnRegisterRemote(uldat Slot);
 byte RegisterWindowFdIO(Twindow Window, handler_window HandlerWindow);
 void UnRegisterWindowFdIO(Twindow Window);

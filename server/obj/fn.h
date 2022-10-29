@@ -25,7 +25,7 @@ struct SstructFn {
   TrowFn row;
   TmenuitemFn menuitem;
   TmenuFn menu;
-  TmsgportFn Tmsgport;
+  TmsgportFn msgport;
   TmutexFn mutex;
   TmsgFn msg;
   TmoduleFn module;
@@ -43,7 +43,7 @@ extern TstructFn FnStruct;
 #define Fn_Trow (FnStruct.row)
 #define Fn_Tmenuitem (FnStruct.menuitem)
 #define Fn_Tmenu (FnStruct.menu)
-#define Fn_Tmsgport (FnStruct.Tmsgport)
+#define Fn_Tmsgport (FnStruct.msgport)
 #define Fn_Tmutex (FnStruct.mutex)
 #define Fn_Tmsg (FnStruct.msg)
 #define Fn_Tmodule (FnStruct.module)

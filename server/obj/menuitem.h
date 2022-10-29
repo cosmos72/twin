@@ -17,7 +17,7 @@
 
 struct SmenuitemFn {
   uldat Magic;
-  void (*Insert)(Tmenuitem, obj, Tmenuitem Prev, Tmenuitem Next);
+  void (*Insert)(Tmenuitem, Tobj, Tmenuitem Prev, Tmenuitem Next);
   void (*Remove)(Tmenuitem);
   void (*Delete)(Tmenuitem);
   void (*ChangeField)(Tmenuitem, udat field, uldat CLEARMask, uldat XORMask);
@@ -29,7 +29,7 @@ struct SmenuitemFn {
   void (*Raise)(Tmenuitem);
   void (*Lower)(Tmenuitem);
   TrowFn Fn_Row;
-  Tmenuitem (*Create4Menu)(obj Parent, Twindow Window, udat Code, byte Flags, ldat Len,
+  Tmenuitem (*Create4Menu)(Tobj Parent, Twindow Window, udat Code, byte Flags, ldat Len,
                            const char *Name);
   uldat (*Create4MenuCommon)(Tmenu);
   /* for compatibility this must return a non-zero value. */
@@ -38,7 +38,7 @@ struct SmenuitemFn {
 struct Smenuitem : public Sobj {
   TmenuitemFn Fn;
   Tmenuitem Prev, Next;
-  obj Parent;
+  Tobj Parent;
   /* Trow */
   udat Code;
   byte Flags;
@@ -51,16 +51,16 @@ struct Smenuitem : public Sobj {
   dat Left, ShortCut;
   ldat WCurY;
 
-  static Tmenuitem Create(obj Parent, Twindow Window, udat Code, byte Flags, dat Left, ldat Len,
+  static Tmenuitem Create(Tobj Parent, Twindow Window, udat Code, byte Flags, dat Left, ldat Len,
                           dat ShortCut, const char *Name);
-  Tmenuitem Init(obj Parent, Twindow Window, udat Code, byte Flags, dat Left, ldat Len,
+  Tmenuitem Init(Tobj Parent, Twindow Window, udat Code, byte Flags, dat Left, ldat Len,
                  dat ShortCut, const char *Name);
 
-  /* obj */
+  /* Tobj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(obj parent, Tmenuitem prev, Tmenuitem next) {
+  void Insert(Tobj parent, Tmenuitem prev, Tmenuitem next) {
     Fn->Insert(this, parent, prev, next);
   }
   void Remove() {

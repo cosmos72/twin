@@ -40,7 +40,7 @@ Tmenu Smenu::Create(Tmsgport owner, tcolor colitem, tcolor colselect, tcolor col
 Tmenu Smenu::Init(Tmsgport owner, tcolor colitem, tcolor colselect, tcolor coldisabled,
                   tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
                   byte flagdefcolinfo) {
-  if (!owner || !((obj)this)->Init()) {
+  if (!owner || !((Tobj)this)->Init()) {
     return NULL;
   }
   this->ColItem = colitem;

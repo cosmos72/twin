@@ -28,7 +28,7 @@ struct XSYM(data) {
 #endif
   XComposeStatus xcompose;
   byte xwindow_AllVisible, xfont_map;
-  obj xRequestor[NEST];
+  Tobj xRequestor[NEST];
   uldat xReqPrivate[NEST];
   uldat xReqCount;
   uldat XReqCount;

@@ -20,17 +20,17 @@
 
 #include <Tw/datatypes.h>
 
-typedef struct Sobj *obj;
+typedef struct Sobj *Tobj;
 typedef struct SobjFn *TobjFn;
 typedef struct s_obj_entry *obj_entry;
 typedef struct s_obj_list *obj_list;
 
 struct SobjFn {
   uldat Magic;
-  void (*Insert)(obj self, obj parent, obj prev, obj next);
-  void (*Remove)(obj self);
-  void (*Delete)(obj self);
-  void (*ChangeField)(obj self, udat field, uldat clear_mask, uldat xor_mask);
+  void (*Insert)(Tobj self, Tobj parent, Tobj prev, Tobj next);
+  void (*Remove)(Tobj self);
+  void (*Delete)(Tobj self);
+  void (*ChangeField)(Tobj self, udat field, uldat clear_mask, uldat xor_mask);
 };
 
 struct Sobj {
@@ -44,13 +44,13 @@ public:
   uldat Id;
   //  TobjFn Fn;
 
-  static obj Create();
-  obj Init();
+  static Tobj Create();
+  Tobj Init();
 
 #if 0
   virtual e_id Magic() const = 0;
 
-  void Insert(obj parent, obj prev, obj next) {
+  void Insert(Tobj parent, Tobj prev, Tobj next) {
     ((obj_entry)this)->Fn->Insert(this, parent, prev, next);
   }
   void Remove() {
@@ -61,7 +61,7 @@ public:
   void ChangeField(udat field, uldat clear_mask, uldat xor_mask);
 };
 
-inline uldat Obj2Id(obj o) {
+inline uldat Obj2Id(Tobj o) {
   return o ? o->Id : NOID;
 }
 

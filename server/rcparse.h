@@ -1515,12 +1515,12 @@ static bool rcload(void) {
 #endif
 }
 
-EXTERN_C byte InitModule(module Module) {
+EXTERN_C byte InitModule(Tmodule Module) {
   Module->DoInit = rcload;
   return ttrue;
 }
 
-EXTERN_C void QuitModule(module Module) {
+EXTERN_C void QuitModule(Tmodule Module) {
 }
 
 #endif /* TWIN_RCPARSE_H */
