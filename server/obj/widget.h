@@ -64,9 +64,15 @@ struct s_draw_ctx {
   ldat X1, Y1, X2, Y2;     /* screen area to draw */
   dat DWidth;
   dat DHeight;
-  byte NoChildren;
-  byte BorderDone;
-  byte Shaded;
+  bool NoChildren;
+  bool BorderDone;
+  bool Shaded;
+
+  bool Init(widget w, dat x1, dat y1, dat x2, dat y2, bool shaded);
+  bool InitAbsolute(widget w, dat x1, dat y1, dat x2, dat y2, bool shaded);
+
+  void Draw();
+  void DrawArea();
 };
 
 struct s_fn_widget {

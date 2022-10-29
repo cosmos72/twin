@@ -20,7 +20,10 @@ struct s_node {
   ldat id;
   cstr name;
   node next, body;
-  str data;
+  union {
+    char *bytes;
+    trune *runes;
+  };
   union {
     struct {
       ldat plus_minus, flag, a, b;

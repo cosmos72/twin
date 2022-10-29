@@ -49,11 +49,11 @@
 byte NeedUpdateCursor;
 
 void FlushCursor(void) {
-  draw_ctx D;
+  draw_ctx d;
   uldat type = NOCURSOR;
   screen Screen;
   window Window;
-  widget W;
+  widget w;
   ldat CurX, CurY;
   byte HasBorder;
 
@@ -66,7 +66,7 @@ void FlushCursor(void) {
     if (Window &&
         ((Window->Flags & WINDOWFL_CURSOR_ON) || (All->SetUp->Flags & setup_cursor_always))) {
 
-      W = (widget)Window;
+      w = (widget)Window;
 
       HasBorder = !(Window->Flags & WINDOWFL_BORDERLESS);
 
@@ -75,18 +75,18 @@ void FlushCursor(void) {
 
       if (CurX >= 0 && CurX < (Window->XWidth - HasBorder) && CurY >= 0 &&
           CurY < (Window->YWidth - HasBorder) &&
-          InitDrawCtx(W, (dat)CurX, (dat)CurY, (dat)CurX, (dat)CurY, tfalse, &D) &&
+          d.Init(w, (dat)CurX, (dat)CurY, (dat)CurX, (dat)CurY, false) &&
           ((Window == (window)Screen->FirstW && !Window->FirstW) ||
 #if 1
            /* widgets and gadgets cannot contain cursor, but they can obscure it */
-           W == RecursiveFindWidgetAt((widget)Screen, (dat)D.X1, (dat)D.Y1 - Screen->YLimit)
+           w == RecursiveFindWidgetAt((widget)Screen, (dat)d.X1, (dat)d.Y1 - Screen->YLimit)
 #else
-           Window == WindowParent(RecursiveFindWidgetAt((widget)Screen, (dat)D.X1,
-                                                        (dat)D.Y1 - Screen->YLimit))
+           Window == WindowParent(RecursiveFindWidgetAt((widget)Screen, (dat)d.X1,
+                                                        (dat)d.Y1 - Screen->YLimit))
 #endif
                )) {
 
-        MoveToXY((dat)D.X1, (dat)D.Y1);
+        MoveToXY((dat)d.X1, (dat)d.Y1);
         if ((type = Window->CursorType) == NOCURSOR && All->SetUp->Flags & setup_cursor_always)
           type = LINECURSOR;
       }
@@ -454,49 +454,49 @@ byte RowWriteTRune(window Window, uldat Len, const trune *runes) {
   return ttrue;
 }
 
-void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
+void ExposeWidget2(widget w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
                    const char *utf8_bytes, const trune *runes, const tcell *cells) {
-  if (w_USE(W, USEEXPOSE)) {
+  if (w_USE(w, USEEXPOSE)) {
     if (utf8_bytes || runes || cells) {
       if (utf8_bytes) {
-        W->USE.E.E.Text = utf8_bytes;
-        W->USE.E.Flags = WIDGET_USEEXPOSE_TEXT;
+        w->USE.E.E.Text = utf8_bytes;
+        w->USE.E.Flags = WIDGET_USEEXPOSE_TEXT;
       } else if (runes) {
-        W->USE.E.E.TRune = runes;
-        W->USE.E.Flags = WIDGET_USEEXPOSE_TRUNE;
+        w->USE.E.E.TRune = runes;
+        w->USE.E.Flags = WIDGET_USEEXPOSE_TRUNE;
       } else {
-        W->USE.E.E.TCell = cells;
-        W->USE.E.Flags = WIDGET_USEEXPOSE_TCELL;
+        w->USE.E.E.TCell = cells;
+        w->USE.E.Flags = WIDGET_USEEXPOSE_TCELL;
       }
-      W->USE.E.X1 = Left;
-      W->USE.E.X2 = Left + XWidth - 1;
-      W->USE.E.Y1 = Up;
-      W->USE.E.Y2 = Up + YWidth - 1;
-      W->USE.E.Pitch = Pitch;
+      w->USE.E.X1 = Left;
+      w->USE.E.X2 = Left + XWidth - 1;
+      w->USE.E.Y1 = Up;
+      w->USE.E.Y2 = Up + YWidth - 1;
+      w->USE.E.Pitch = Pitch;
     } else {
-      W->USE.E.E.Text = (char *)1;
-      W->USE.E.Flags = WIDGET_USEEXPOSE_TEXT;
-      W->USE.E.X1 = W->USE.E.Y1 = W->USE.E.X2 = W->USE.E.Y2 = -1;
-      W->USE.E.Pitch = 0;
+      w->USE.E.E.Text = (char *)1;
+      w->USE.E.Flags = WIDGET_USEEXPOSE_TEXT;
+      w->USE.E.X1 = w->USE.E.Y1 = w->USE.E.X2 = w->USE.E.Y2 = -1;
+      w->USE.E.Pitch = 0;
     }
 
-    DrawLogicWidget(W, Left, Up, Left + XWidth - 1, Up + YWidth - 1);
+    DrawLogicWidget(w, Left, Up, Left + XWidth - 1, Up + YWidth - 1);
 
-    memset(&W->USE.E.E, '\0', sizeof(W->USE.E.E));
-    W->USE.E.Flags = 0;
+    memset(&w->USE.E.E, '\0', sizeof(w->USE.E.E));
+    w->USE.E.Flags = 0;
   }
 }
 
-void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
+void ExposeWindow2(window w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
                    const char *utf8_bytes, const trune *runes, const tcell *cells) {
   ldat CurX, CurY;
 
-  if (W_USE(W, USEEXPOSE)) {
-    ExposeWidget2((widget)W, XWidth, YWidth, Left, Up, Pitch, utf8_bytes, runes, cells);
+  if (W_USE(w, USEEXPOSE)) {
+    ExposeWidget2((widget)w, XWidth, YWidth, Left, Up, Pitch, utf8_bytes, runes, cells);
     return;
   }
 
-  if (!W_USE(W, USECONTENTS) && !W_USE(W, USEROWS))
+  if (!W_USE(w, USECONTENTS) && !W_USE(w, USEROWS))
     return;
 
   /* handle negative (Left,Up) by clipping */
@@ -521,10 +521,10 @@ void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
     Up = 0;
   }
 
-  if (W_USE(W, USECONTENTS)) {
+  if (W_USE(w, USECONTENTS)) {
     /* clip to window size */
-    CurX = W->USE.C.TtyData->SizeX;
-    CurY = W->USE.C.TtyData->SizeY;
+    CurX = w->USE.C.TtyData->SizeX;
+    CurY = w->USE.C.TtyData->SizeY;
     if (Left >= CurY || Up >= CurY)
       return;
     if ((ldat)XWidth + Left > CurX)
@@ -537,60 +537,60 @@ void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
 
   if (utf8_bytes) {
     byte (*WriteUtf8)(window, uldat, const char *);
-    if (W_USE(W, USECONTENTS)) {
-      WriteUtf8 = W->Fn->TtyWriteUtf8;
+    if (W_USE(w, USECONTENTS)) {
+      WriteUtf8 = w->Fn->TtyWriteUtf8;
     } else
-      WriteUtf8 = W->Fn->RowWriteUtf8;
+      WriteUtf8 = w->Fn->RowWriteUtf8;
 
-    CurX = W->CurX;
-    CurY = W->CurY;
+    CurX = w->CurX;
+    CurY = w->CurY;
     for (; YWidth; YWidth--, Up++, utf8_bytes += Pitch) {
-      Act(GotoXY, W)(W, Left, Up);
-      WriteUtf8(W, (uldat)XWidth, utf8_bytes);
+      Act(GotoXY, w)(w, Left, Up);
+      WriteUtf8(w, (uldat)XWidth, utf8_bytes);
     }
-    Act(GotoXY, W)(W, CurX, CurY);
+    Act(GotoXY, w)(w, CurX, CurY);
 
   } else if (runes) {
     byte (*WriteTRune)(window, uldat, const trune *);
-    if (W_USE(W, USECONTENTS))
-      WriteTRune = W->Fn->TtyWriteTRune;
+    if (W_USE(w, USECONTENTS))
+      WriteTRune = w->Fn->TtyWriteTRune;
     else
-      WriteTRune = W->Fn->RowWriteTRune;
+      WriteTRune = w->Fn->RowWriteTRune;
 
-    CurX = W->CurX;
-    CurY = W->CurY;
+    CurX = w->CurX;
+    CurY = w->CurY;
     for (; YWidth; YWidth--, Up++, runes += Pitch) {
-      Act(GotoXY, W)(W, Left, Up);
-      WriteTRune(W, (uldat)XWidth, runes);
+      Act(GotoXY, w)(w, Left, Up);
+      WriteTRune(w, (uldat)XWidth, runes);
     }
-    Act(GotoXY, W)(W, CurX, CurY);
+    Act(GotoXY, w)(w, CurX, CurY);
 
   } else if (cells) {
     byte (*WriteTCell)(window, dat, dat, uldat, const tcell *);
-    if (W_USE(W, USECONTENTS))
-      WriteTCell = W->Fn->TtyWriteTCell;
+    if (W_USE(w, USECONTENTS))
+      WriteTCell = w->Fn->TtyWriteTCell;
     else
-      WriteTCell = W->Fn->RowWriteTCell;
+      WriteTCell = w->Fn->RowWriteTCell;
 
     for (; YWidth; YWidth--, Up++, cells += Pitch)
-      WriteTCell(W, Left, Up, (uldat)XWidth, cells);
+      WriteTCell(w, Left, Up, (uldat)XWidth, cells);
   }
 }
 
 /***************/
 
-void ResizeWidget(widget W, dat X, dat Y) {
-  if (W) {
+void ResizeWidget(widget w, dat X, dat Y) {
+  if (w) {
     X = Max2(1, X);
     Y = Max2(1, Y);
-    /* mX = Max2(X, W->XWidth); */
-    /* mY = Max2(Y, W->YWidth); */
-    W->XWidth = X;
-    W->YWidth = Y;
+    /* mX = Max2(X, w->XWidth); */
+    /* mY = Max2(Y, w->YWidth); */
+    w->XWidth = X;
+    w->YWidth = Y;
 
-    if (!(W->Flags & WIDGETFL_NOTVISIBLE))
+    if (!(w->Flags & WIDGETFL_NOTVISIBLE))
       /* FIXME: use mX and mY */
-      DrawAreaWidget(W);
+      DrawAreaWidget(w);
   }
 }
 
@@ -1388,21 +1388,21 @@ void ScrollWindow(window Window, ldat DeltaX, ldat DeltaY) {
     UpdateCursor();
 }
 
-void ScrollWidget(widget W, ldat DeltaX, ldat DeltaY) {
+void ScrollWidget(widget w, ldat DeltaX, ldat DeltaY) {
   ldat XLogic, YLogic;
   dat YWidth;
 
-  if (!W || !(DeltaX || DeltaY))
+  if (!w || !(DeltaX || DeltaY))
     return;
 
-  if (IS_WINDOW(W)) {
-    ScrollWindow((window)W, DeltaX, DeltaY);
+  if (IS_WINDOW(w)) {
+    ScrollWindow((window)w, DeltaX, DeltaY);
     return;
   }
 
-  YWidth = W->YWidth;
-  XLogic = W->XLogic;
-  YLogic = W->YLogic;
+  YWidth = w->YWidth;
+  XLogic = w->XLogic;
+  YLogic = w->YLogic;
 
   if (DeltaX > 0 && XLogic >= TW_MAXLDAT - DeltaX)
     DeltaX = TW_MAXLDAT - XLogic - 1;
@@ -1418,13 +1418,13 @@ void ScrollWidget(widget W, ldat DeltaX, ldat DeltaY) {
     DeltaY = -YLogic;
 
   if (DeltaX)
-    W->XLogic = (XLogic += DeltaX);
+    w->XLogic = (XLogic += DeltaX);
   if (DeltaY)
-    W->YLogic = (YLogic += DeltaY);
+    w->YLogic = (YLogic += DeltaY);
 
-  DrawAreaWidget(W);
+  DrawAreaWidget(w);
 
-  if (ContainsCursor(W))
+  if (ContainsCursor(w))
     UpdateCursor();
 }
 
@@ -1516,7 +1516,7 @@ void HideMenu(byte on_off) {
 
 static void OpenSubMenuItem(menu M, menuitem Item, byte ByMouse) {
   window P = (window)Item->Parent;
-  window W = Item->Window;
+  window w = Item->Window;
   screen S = All->FirstScreen;
   ldat y = P->CurY;
 
@@ -1528,16 +1528,16 @@ static void OpenSubMenuItem(menu M, menuitem Item, byte ByMouse) {
   if ((y = P->CurY) != TW_MAXLDAT)
     DrawLogicWidget((widget)P, 0, y, TW_MAXLDAT, y);
 
-  if (W) {
-    if (!W->Parent) {
-      W->Left = P->Left + P->XWidth - S->XLogic;
-      W->Up = P->Up + P->CurY - P->YLogic - S->YLogic + 1;
+  if (w) {
+    if (!w->Parent) {
+      w->Left = P->Left + P->XWidth - S->XLogic;
+      w->Up = P->Up + P->CurY - P->YLogic - S->YLogic + 1;
     }
     if (ByMouse)
-      W->CurY = TW_MAXLDAT;
-    else if (W->CurY == TW_MAXLDAT)
-      W->CurY = 0;
-    Act(MapTopReal, W)(W, S);
+      w->CurY = TW_MAXLDAT;
+    else if (w->CurY == TW_MAXLDAT)
+      w->CurY = 0;
+    Act(MapTopReal, w)(w, S);
   }
   if ((widget)P != S->FocusW)
     Act(Focus, P)(P);
@@ -1545,32 +1545,32 @@ static void OpenSubMenuItem(menu M, menuitem Item, byte ByMouse) {
 
 static void OpenTopMenuItem(menu M, menuitem Item, byte ByMouse) {
   menu _M = (menu)Item->Parent; /* may either be M or All->CommonMenu */
-  window W = Item->Window;
+  window w = Item->Window;
 
-  if (!W->Parent) {
-    W->Up = 1;
-    W->Left = Item->Left;
+  if (!w->Parent) {
+    w->Up = 1;
+    w->Left = Item->Left;
 
     if (M != _M && M->LastI)
-      /* adjust common menu W->Left to the Item position in this menu */
-      W->Left += M->LastI->Left + M->LastI->Len;
+      /* adjust common menu w->Left to the Item position in this menu */
+      w->Left += M->LastI->Left + M->LastI->Len;
   }
 
   Act(SetSelectedItem, M)(M, Item);
 
   if (ByMouse)
-    W->CurY = TW_MAXLDAT;
-  else if (W->CurY == TW_MAXLDAT)
-    W->CurY = (ldat)0;
+    w->CurY = TW_MAXLDAT;
+  else if (w->CurY == TW_MAXLDAT)
+    w->CurY = (ldat)0;
 
   if (Item->Flags & ROW_ACTIVE)
-    W->Flags &= ~WINDOWFL_DISABLED;
+    w->Flags &= ~WINDOWFL_DISABLED;
   else
-    W->Flags |= WINDOWFL_DISABLED;
+    w->Flags |= WINDOWFL_DISABLED;
 
-  Act(MapTopReal, W)(W, All->FirstScreen);
+  Act(MapTopReal, w)(w, All->FirstScreen);
 
-  if (W->CurY != TW_MAXLDAT && (Item = (menuitem)Act(FindRow, W)(W, W->CurY)))
+  if (w->CurY != TW_MAXLDAT && (Item = (menuitem)Act(FindRow, w)(w, w->CurY)))
     OpenSubMenuItem(M, Item, ByMouse);
 }
 
@@ -1588,7 +1588,7 @@ static void OpenMenuItem(menu M, menuitem Item, byte ByMouse) {
 /* this activates the menu bar */
 static void OpenMenu(menuitem Item, byte ByMouse) {
   screen S = All->FirstScreen;
-  widget W = S->FocusW;
+  widget w = S->FocusW;
   menu M = Act(FindMenu, S)(S);
 
   if ((All->State & state_any) == state_default) {
@@ -1598,8 +1598,8 @@ static void OpenMenu(menuitem Item, byte ByMouse) {
     if (All->SetUp->Flags & setup_menu_hide)
       HideMenu(tfalse);
 
-    if (!S->MenuWindow && W) {
-      S->MenuWindow = (window)W; /* so that it keeps `active' borders */
+    if (!S->MenuWindow && w) {
+      S->MenuWindow = (window)w; /* so that it keeps `active' borders */
       S->FocusW = (widget)0;
     }
   }
@@ -1611,10 +1611,10 @@ static void OpenMenu(menuitem Item, byte ByMouse) {
  * do NOT use to close the menu, CloseMenu() does that
  */
 static menuitem CloseMenuItem(menu M, menuitem Item, byte ByMouse) {
-  window P = (window)Item->Parent, W = Item->Window;
+  window P = (window)Item->Parent, w = Item->Window;
 
-  if (W)
-    Act(UnMap, W)(W);
+  if (w)
+    Act(UnMap, w)(w);
 
   if (P && IS_WINDOW(P)) {
     if (ByMouse) {
@@ -1626,9 +1626,9 @@ static menuitem CloseMenuItem(menu M, menuitem Item, byte ByMouse) {
     }
     Item = P->MenuItem;
     if (Item) {
-      W = (window)Item->Parent;
-      if (W && IS_WINDOW(W))
-        W->Focus();
+      w = (window)Item->Parent;
+      if (w && IS_WINDOW(w))
+        w->Focus();
       else
         P->Focus();
     }
@@ -1641,11 +1641,11 @@ static menuitem CloseMenuItem(menu M, menuitem Item, byte ByMouse) {
 }
 
 static dat DepthOfMenuItem(menuitem I) {
-  window W;
+  window w;
   dat d = 0;
 
-  while (I && (W = (window)I->Parent) && IS_WINDOW(W)) {
-    I = W->MenuItem;
+  while (I && (w = (window)I->Parent) && IS_WINDOW(w)) {
+    I = w->MenuItem;
     d++;
   }
   return d;
@@ -1676,20 +1676,20 @@ void CloseMenu(void) {
   screen S = All->FirstScreen;
   menu M = Act(FindMenu, S)(S);
   menuitem Item;
-  window W;
+  window w;
 
   if (M) {
-    if ((W = S->MenuWindow)) {
-      Act(KbdFocus, W)(W);
+    if ((w = S->MenuWindow)) {
+      Act(KbdFocus, w)(w);
       S->MenuWindow = NULL;
     } else
       Do(KbdFocus, window)(NULL);
 
     /* close whole currently open menu tree */
     Item = Act(GetSelectedItem, M)(M);
-    while (Item && IS_MENUITEM(Item) && (W = (window)Item->Window) && IS_WINDOW(W)) {
-      Item = (menuitem)Act(FindRow, W)(W, W->CurY);
-      Act(UnMap, W)(W);
+    while (Item && IS_MENUITEM(Item) && (w = (window)Item->Window) && IS_WINDOW(w)) {
+      Item = (menuitem)Act(FindRow, w)(w, w->CurY);
+      Act(UnMap, w)(w);
     }
   }
   All->State = state_default;
@@ -1722,70 +1722,70 @@ void SetMenuState(menuitem Item, byte ByMouse) {
 
 /* ---------------- */
 
-void UnFocusWidget(widget W) {
-  if (W && W->Parent == (widget)All->FirstScreen && W == All->FirstScreen->FocusW) {
-    if (IS_WINDOW(W)) {
-      Act(KbdFocus, W)((widget)0);
-      DrawBorderWindow((window)W, BORDER_ANY);
-      Act(DrawMenu, (screen)W->Parent)((screen)W->Parent, 0, TW_MAXDAT);
+void UnFocusWidget(widget w) {
+  if (w && w->Parent == (widget)All->FirstScreen && w == All->FirstScreen->FocusW) {
+    if (IS_WINDOW(w)) {
+      Act(KbdFocus, w)((widget)0);
+      DrawBorderWindow((window)w, BORDER_ANY);
+      Act(DrawMenu, (screen)w->Parent)((screen)w->Parent, 0, TW_MAXDAT);
       UpdateCursor();
     } else
       All->FirstScreen->FocusW = (widget)0;
   }
 }
 
-void RollUpWindow(window W, byte on_off) {
-  if (W && !(W->Flags & WINDOWFL_BORDERLESS)) {
+void RollUpWindow(window w, byte on_off) {
+  if (w && !(w->Flags & WINDOWFL_BORDERLESS)) {
     /*
      * you cannot roll-up borderless windows...
      * without a top border you cannot collapse them
      * to their top border :/
      */
-    if (on_off && !(W->Attr & WINDOW_ROLLED_UP)) {
-      W->Attr |= WINDOW_ROLLED_UP;
-      ReDrawRolledUpAreaWindow(W, tfalse);
-    } else if (!on_off && (W->Attr & WINDOW_ROLLED_UP)) {
-      W->Attr &= ~WINDOW_ROLLED_UP;
-      DrawAreaWindow2(W);
+    if (on_off && !(w->Attr & WINDOW_ROLLED_UP)) {
+      w->Attr |= WINDOW_ROLLED_UP;
+      ReDrawRolledUpAreaWindow(w, tfalse);
+    } else if (!on_off && (w->Attr & WINDOW_ROLLED_UP)) {
+      w->Attr &= ~WINDOW_ROLLED_UP;
+      DrawAreaWindow2(w);
     }
-    if (W->Parent == (widget)All->FirstScreen)
+    if (w->Parent == (widget)All->FirstScreen)
       UpdateCursor();
   }
 }
 
 /* ---------------- */
 
-void SetVisibleWidget(widget W, byte on_off) {
+void SetVisibleWidget(widget w, byte on_off) {
   byte visible;
-  if (W) {
+  if (w) {
     on_off = !!on_off;
-    visible = !(W->Flags & WIDGETFL_NOTVISIBLE);
+    visible = !(w->Flags & WIDGETFL_NOTVISIBLE);
 
     if (on_off != visible) {
-      W->Flags ^= WIDGETFL_NOTVISIBLE;
-      if (IS_WINDOW(W))
-        DrawAreaWindow2((window)W);
+      w->Flags ^= WIDGETFL_NOTVISIBLE;
+      if (IS_WINDOW(w))
+        DrawAreaWindow2((window)w);
       else
-        DrawAreaWidget(W);
+        DrawAreaWidget(w);
     }
   }
 }
 
-void RaiseWidget(widget W, byte alsoFocus) {
+void RaiseWidget(widget w, byte alsoFocus) {
   screen Screen;
 
-  if (W && (Screen = (screen)W->Parent) && IS_SCREEN(Screen)) {
+  if (w && (Screen = (screen)w->Parent) && IS_SCREEN(Screen)) {
 
-    if (Screen->FirstW != W) {
-      MoveFirst(W, (widget)Screen, W);
-      if (IS_WINDOW(W))
-        DrawAreaWindow2((window)W);
+    if (Screen->FirstW != w) {
+      MoveFirst(W, (widget)Screen, w);
+      if (IS_WINDOW(w))
+        DrawAreaWindow2((window)w);
       else
-        DrawAreaWidget(W);
+        DrawAreaWidget(w);
     }
     if (Screen == All->FirstScreen) {
       if (alsoFocus)
-        Act(Focus, W)(W);
+        Act(Focus, w)(w);
       UpdateCursor();
     }
 
@@ -1794,23 +1794,23 @@ void RaiseWidget(widget W, byte alsoFocus) {
   }
 }
 
-void LowerWidget(widget W, byte alsoUnFocus) {
+void LowerWidget(widget w, byte alsoUnFocus) {
   screen Screen;
   widget _W;
 
-  if (W && (Screen = (screen)W->Parent) && IS_SCREEN(Screen)) {
+  if (w && (Screen = (screen)w->Parent) && IS_SCREEN(Screen)) {
 
-    if (Screen->LastW != W) {
-      MoveLast(W, (widget)Screen, W);
-      if (IS_WINDOW(W))
-        DrawAreaWindow2((window)W);
+    if (Screen->LastW != w) {
+      MoveLast(W, (widget)Screen, w);
+      if (IS_WINDOW(w))
+        DrawAreaWindow2((window)w);
       else
-        DrawAreaWidget(W);
+        DrawAreaWidget(w);
     }
     if (Screen == All->FirstScreen) {
       if (alsoUnFocus) {
         _W = Screen->FirstW;
-        if (_W && IS_WINDOW(_W) && _W != W)
+        if (_W && IS_WINDOW(_W) && _W != w)
           _W->Focus();
         else
           Do(Focus, window)(NULL);
@@ -1823,21 +1823,21 @@ void LowerWidget(widget W, byte alsoUnFocus) {
   }
 }
 
-void RestackWidgets(widget W, uldat N, const widget *arrayW) {
+void RestackWidgets(widget w, uldat N, const widget *arrayW) {
   widget FW, CW;
   byte need_redraw = tfalse;
 
-  if (W && N && arrayW) {
+  if (w && N && arrayW) {
     for (FW = (widget)0; N; N--, arrayW++) {
       /*
        * Allow only children that really have the given parent.
        * Also deny WINDOFL_MENU windows
        */
-      if ((CW = *arrayW) && CW->Parent == W && !(CW->Flags & WINDOWFL_MENU)) {
+      if ((CW = *arrayW) && CW->Parent == w && !(CW->Flags & WINDOWFL_MENU)) {
         if (FW && CW != FW->Next) {
           /* restack after arrayW[0] */
           CW->Remove();
-          Act(Insert, CW)(CW, W, FW, FW->Next);
+          Act(Insert, CW)(CW, w, FW, FW->Next);
           need_redraw = ttrue;
         }
         FW = CW;
@@ -1845,7 +1845,7 @@ void RestackWidgets(widget W, uldat N, const widget *arrayW) {
     }
     /* FIXME: this is gross */
     if (need_redraw)
-      DrawAreaWidget(W);
+      DrawAreaWidget(w);
   }
 }
 
@@ -1941,7 +1941,7 @@ void UnPressGadget(gadget G, byte maySendMsgIfNotToggle) {
 void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, const char *charset_bytes, dat L,
                       dat U) {
   dat GW = G->XWidth, GH = G->YWidth;
-  dat TL = 0, TU = 0, W, H;
+  dat TL = 0, TU = 0, w, H;
   dat _W;
   trune *GT;
   const char *TT;
@@ -1969,7 +1969,7 @@ void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, const char *charset
       U = 0;
     }
   }
-  W = Min2(TW - TL, GW - L);
+  w = Min2(TW - TL, GW - L);
   H = Min2(TH - TU, GH - U);
 
   if (G->Flags & GADGETFL_BUTTON) {
@@ -1977,7 +1977,7 @@ void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, const char *charset
     GH++;
   }
 
-  if (W > 0) {
+  if (w > 0) {
     for (i = 0; i < 4; i++, bitmap >>= 1) {
       if ((bitmap & 1) && G->USE.T.Text[i]) {
         GT = G->USE.T.Text[i] + L + U * GW;
@@ -1985,20 +1985,20 @@ void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, const char *charset
           TT = charset_bytes + TL + TU * TW;
           /* update the specified part, do not touch the rest */
           while (H-- > 0) {
-            _W = W;
+            _W = w;
             while (_W-- > 0) {
               *GT++ = Tutf_CP437_to_UTF_32[(byte)(*TT++)];
             }
-            GT += GW - W;
-            TT += TW - W;
+            GT += GW - w;
+            TT += TW - w;
           }
         } else {
           /* clear the specified part of gadget contents */
           while (H-- > 0) {
-            _W = W;
+            _W = w;
             while (_W-- > 0)
               *GT++ = ' ';
-            GT += GW - W;
+            GT += GW - w;
           }
         }
       }
@@ -2011,7 +2011,7 @@ void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, const char *charset
 /* Up   < 0 means down-align  leaving (-Up-1)   margin */
 void WriteTRunesGadget(gadget G, byte bitmap, dat TW, dat TH, const trune *TRune, dat L, dat U) {
   dat GW = G->XWidth, GH = G->YWidth;
-  dat TL = 0, TU = 0, W, H;
+  dat TL = 0, TU = 0, w, H;
   dat _W;
   trune *GT;
   const trune *TT;
@@ -2039,7 +2039,7 @@ void WriteTRunesGadget(gadget G, byte bitmap, dat TW, dat TH, const trune *TRune
       U = 0;
     }
   }
-  W = Min2(TW - TL, GW - L);
+  w = Min2(TW - TL, GW - L);
   H = Min2(TH - TU, GH - U);
 
   if (G->Flags & GADGETFL_BUTTON) {
@@ -2047,7 +2047,7 @@ void WriteTRunesGadget(gadget G, byte bitmap, dat TW, dat TH, const trune *TRune
     GH++;
   }
 
-  if (W > 0) {
+  if (w > 0) {
     for (i = 0; i < 4; i++, bitmap >>= 1) {
       if ((bitmap & 1) && G->USE.T.Text[i]) {
         GT = G->USE.T.Text[i] + L + U * GW;
@@ -2055,20 +2055,20 @@ void WriteTRunesGadget(gadget G, byte bitmap, dat TW, dat TH, const trune *TRune
           TT = TRune + TL + TU * TW;
           /* update the specified part, do not touch the rest */
           while (H-- > 0) {
-            _W = W;
+            _W = w;
             while (_W-- > 0) {
               *GT++ = Tutf_CP437_to_UTF_32[*TT++];
             }
-            GT += GW - W;
-            TT += TW - W;
+            GT += GW - w;
+            TT += TW - w;
           }
         } else {
           /* clear the specified part of gadget contents */
           while (H-- > 0) {
-            _W = W;
+            _W = w;
             while (_W-- > 0)
               *GT++ = ' ';
-            GT += GW - W;
+            GT += GW - w;
           }
         }
       }

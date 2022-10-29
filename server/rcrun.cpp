@@ -259,7 +259,7 @@ trune *RCFindBorderPattern(window W, byte Border) {
     if ((l->x.f.flag == FL_INACTIVE) == Border && wildcard_match(l->name, W->Name))
       break;
   }
-  return W->BorderPattern[Border] = l ? (trune *)l->data : NULL;
+  return W->BorderPattern[Border] = l ? l->runes : NULL;
 }
 
 inline void RCRemove(run **p) {
@@ -1096,7 +1096,7 @@ byte InitRC(void) {
        NULL,
        NULL,
        NULL,
-       NULL,
+       {NULL},
        {
            {
                0,
@@ -1107,7 +1107,7 @@ byte InitRC(void) {
        NULL,
        NULL,
        NULL,
-       NULL,
+       {NULL},
        {
            {
                0,
@@ -1118,7 +1118,7 @@ byte InitRC(void) {
        NULL,
        NULL,
        NULL,
-       NULL,
+       {NULL},
        {
            {
                0,
@@ -1138,7 +1138,7 @@ byte InitRC(void) {
        NULL,
        NULL,
        NULL,
-       NULL,
+       {NULL},
        {
            {
                0,
@@ -1152,7 +1152,7 @@ byte InitRC(void) {
        NULL,
        NULL,
        NULL,
-       NULL,
+       {NULL},
        {
            {
                0,
@@ -1163,7 +1163,7 @@ byte InitRC(void) {
        NULL,
        NULL,
        NULL,
-       NULL,
+       {NULL},
        {
            {
                '+',
@@ -1199,7 +1199,7 @@ byte InitRC(void) {
                                NULL,
                                N + 8,
                                NULL,
-                               NULL,
+                               {NULL},
                                {{
                                    0,
                                    0,
@@ -1217,7 +1217,7 @@ byte InitRC(void) {
                                NULL,
                                NULL,
                                NULL,
-                               NULL,
+                               {NULL},
                                {
                                    {
                                        0,
@@ -1231,7 +1231,7 @@ byte InitRC(void) {
                                "0",
                                M + 1,
                                N + 13,
-                               NULL,
+                               {NULL},
                                {{
                                    CTX_0,
                                }}},
@@ -1240,7 +1240,7 @@ byte InitRC(void) {
                                "1",
                                M + 2,
                                N + 7,
-                               NULL,
+                               {NULL},
                                {{
                                    CTX_1,
                                }}},
@@ -1249,7 +1249,7 @@ byte InitRC(void) {
                                "2",
                                M + 3,
                                N + 6,
-                               NULL,
+                               {NULL},
                                {{
                                    CTX_2,
                                }}},
@@ -1258,7 +1258,7 @@ byte InitRC(void) {
                                "TS",
                                M + 4,
                                N + 0,
-                               NULL,
+                               {NULL},
                                {{
                                    CTX_TITLE | CTX_SIDE,
                                }}},
@@ -1267,7 +1267,7 @@ byte InitRC(void) {
                                "C",
                                M + 5,
                                N + 1,
-                               NULL,
+                               {NULL},
                                {{
                                    CTX_CORNER,
                                }}},
@@ -1276,7 +1276,7 @@ byte InitRC(void) {
                                "B",
                                M + 6,
                                N + 2,
-                               NULL,
+                               {NULL},
                                {{
                                    CTX_BARS,
                                }}},
@@ -1285,7 +1285,7 @@ byte InitRC(void) {
                                "R",
                                M + 8,
                                M + 7,
-                               NULL,
+                               {NULL},
                                {{
                                    CTX_ROOT,
                                }}},
@@ -1298,7 +1298,7 @@ byte InitRC(void) {
                                "R",
                                M + 9,
                                N + 10,
-                               NULL,
+                               {NULL},
                                {{
                                    CTX_ROOT,
                                }}},
@@ -1307,7 +1307,7 @@ byte InitRC(void) {
                                "A",
                                M + 10,
                                K + 1,
-                               NULL,
+                               {NULL},
                                {{
                                    CTX_ANY,
                                }}},
@@ -1316,7 +1316,7 @@ byte InitRC(void) {
                                "M",
                                NULL,
                                M + 11,
-                               NULL,
+                               {NULL},
                                {{
                                    CTX_MENU,
                                }}},
@@ -1324,7 +1324,7 @@ byte InitRC(void) {
                                NULL,
                                NULL,
                                NULL,
-                               NULL,
+                               {NULL},
                                {
                                    {
                                        0,

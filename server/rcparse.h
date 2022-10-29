@@ -275,12 +275,12 @@ static byte ImmBackground(str name, tcell color, node shape) {
 
 static void UnwindBorderShape(node n) {
   cstr s = NULL;
-  str d = n->data = (str)my_malloc(n->x.ctx = 10);
+  str d = n->bytes = (str)my_malloc(n->x.ctx = 10);
   node shape = n->body;
 
   while (shape) {
     s = shape->name;
-    while (*s && (d - n->data) < 9)
+    while (*s && (d - n->bytes) < 9)
       *d++ = *s++;
     if (!*s)
       shape = shape->next;
