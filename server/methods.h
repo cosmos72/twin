@@ -13,13 +13,13 @@
 #include "obj/window.h" // tpos
 
 byte FindInfo(menu Menu, dat i);
-window FakeOpenTerm(const char *arg0, const char *const *argv);
+Twindow FakeOpenTerm(const char *arg0, const char *const *argv);
 Twidget FakeKbdFocus(Twidget W);
-byte FakeWriteCharset(window Window, uldat Len, const char *charset_bytes);
-byte FakeWriteUtf8(window Window, uldat Len, const char *utf8_bytes);
-byte FakeWriteTRune(window Window, uldat Len, const trune *runes);
-byte FakeWriteTCell(window Window, dat x, dat y, uldat Len, const tcell *cells);
-tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr);
+byte FakeWriteCharset(Twindow Window, uldat Len, const char *charset_bytes);
+byte FakeWriteUtf8(Twindow Window, uldat Len, const char *utf8_bytes);
+byte FakeWriteTRune(Twindow Window, uldat Len, const trune *runes);
+byte FakeWriteTCell(Twindow Window, dat x, dat y, uldat Len, const tcell *cells);
+tpos FakeFindBorderWindow(Twindow W, dat u, dat v, byte Border, tcell *PtrAttr);
 
 #define Do(Command, objtype) (Fn_T##objtype->Command)
 
@@ -48,17 +48,17 @@ tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr);
 
 #define MoveLast(ObjName, Parent, Obj) ((Obj)->Remove(), InsertLast(ObjName, Obj, Parent))
 
-#define SendMsg(MsgPort, WhichMsg) (InsertLast(Msg, WhichMsg, (MsgPort)))
+#define SendMsg(msgport, whichmsg) (InsertLast(Msg, (whichmsg), (msgport)))
 
-#define Info4Menu(Menu, Flags, Len, Text, ColText) (Menu)->SetInfo(Flags, Len, Text, ColText)
+#define Info4Menu(menu, flags, len, text, coltext) (menu)->SetInfo(flags, len, text, coltext)
 
 #define Win4Menu(Menu) Do(Create4Menu, window)(Menu)
 
-#define Row4Menu(Window, Code, Flags, Len, Name)                                                   \
-  (row) Do(Create4Menu, menuitem)((obj)(Window), (window)0, (Code), (Flags), (Len), (Name))
+#define Row4Menu(w, code, flags, len, name)                                                        \
+  (row) Do(Create4Menu, menuitem)((obj)(w), (Twindow)0, (code), (flags), (len), (name))
 
-#define Item4Menu(Menu, Window, Flags, Len, Name)                                                  \
-  Do(Create4Menu, menuitem)((obj)(Menu), (Window), (udat)0, (Flags), (Len), (Name))
+#define Item4Menu(menu, w, flags, len, name)                                                       \
+  Do(Create4Menu, menuitem)((obj)(menu), (w), (udat)0, (flags), (len), (name))
 
 #define Item4MenuCommon(Menu) Do(Create4MenuCommon, menuitem)(Menu)
 

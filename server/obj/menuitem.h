@@ -29,7 +29,7 @@ struct SmenuitemFn {
   void (*Raise)(Tmenuitem);
   void (*Lower)(Tmenuitem);
   TrowFn Fn_Row;
-  Tmenuitem (*Create4Menu)(obj Parent, window Window, udat Code, byte Flags, ldat Len,
+  Tmenuitem (*Create4Menu)(obj Parent, Twindow Window, udat Code, byte Flags, ldat Len,
                            const char *Name);
   uldat (*Create4MenuCommon)(menu);
   /* for compatibility this must return a non-zero value. */
@@ -47,14 +47,14 @@ struct Smenuitem : public Sobj {
   trune *Text;
   tcolor *ColText;
   /* Tmenuitem */
-  window Window;
+  Twindow Window;
   dat Left, ShortCut;
   ldat WCurY;
 
-  static Tmenuitem Create(obj Parent, window Window, udat Code, byte Flags, dat Left, ldat Len,
+  static Tmenuitem Create(obj Parent, Twindow Window, udat Code, byte Flags, dat Left, ldat Len,
                           dat ShortCut, const char *Name);
-  Tmenuitem Init(obj Parent, window Window, udat Code, byte Flags, dat Left, ldat Len, dat ShortCut,
-                 const char *Name);
+  Tmenuitem Init(obj Parent, Twindow Window, udat Code, byte Flags, dat Left, ldat Len,
+                 dat ShortCut, const char *Name);
 
   /* obj */
   uldat Magic() const {

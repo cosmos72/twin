@@ -249,7 +249,7 @@ static node RCFindMouseBind(ldat code, ldat ctx) {
   return NULL;
 }
 
-trune *RCFindBorderPattern(window W, byte Border) {
+trune *RCFindBorderPattern(Twindow W, byte Border) {
   node l;
 
   if (!W)
@@ -349,18 +349,18 @@ static ldat applyflagy(node n) {
   return y * n->x.f.b;
 }
 
-static window RCFindWindowName(cstr name) {
+static Twindow RCFindWindowName(cstr name) {
   uldat len = strlen(name);
-  window W;
+  Twindow W;
   screen S = All->FirstScreen;
 
   while (S) {
     /* search among mapped windows */
-    W = (window)S->FirstW;
+    W = (Twindow)S->FirstW;
     while (W) {
       if (IS_WINDOW(W) && W->NameLen >= 0 && (udat)W->NameLen == len && !memcmp(W->Name, name, len))
         return W;
-      W = (window)W->Next;
+      W = (Twindow)W->Next;
     }
     S = S->Next;
   }
@@ -516,7 +516,7 @@ static byte RCSteps(run *r) {
         break;
       case MOVE:
         if (W && IS_WINDOW(W))
-          DragWindow((window)W, applyflagx(n), applyflagy(n));
+          DragWindow((Twindow)W, applyflagx(n), applyflagy(n));
         break;
       case MOVESCREEN:
         if (S && S != All->FirstScreen)
@@ -536,8 +536,8 @@ static byte RCSteps(run *r) {
             x = n->x.f.a - W->XWidth + 2 * !(W->Flags & WINDOWFL_BORDERLESS);
           if (n->x.f.flag == 0)
             y = n->x.f.b - W->YWidth + 2 * !(W->Flags & WINDOWFL_BORDERLESS);
-          ResizeRelWindow((window)W, x, y);
-          Check4Resize((window)W); /* send MSG_WINDOW_CHANGE and realloc(W->Contents) */
+          ResizeRelWindow((Twindow)W, x, y);
+          Check4Resize((Twindow)W); /* send MSG_WINDOW_CHANGE and realloc(W->Contents) */
         }
         break;
       case RESIZESCREEN:
@@ -547,7 +547,7 @@ static byte RCSteps(run *r) {
         break;
       case SCROLL:
         if (W && IS_WINDOW(W))
-          ScrollWindow((window)W, applyflagx(n), applyflagy(n));
+          ScrollWindow((Twindow)W, applyflagx(n), applyflagy(n));
         break;
       case SENDTOSCREEN:
         if (W && IS_WINDOW(W) && S && n->name) {
@@ -647,7 +647,7 @@ static byte RCSteps(run *r) {
         break;
       case CENTER:
         if (W && IS_WINDOW(W))
-          CenterWindow((window)W);
+          CenterWindow((Twindow)W);
         break;
       case CLOSE:
         if (W)
@@ -704,7 +704,7 @@ static byte RCSteps(run *r) {
       case MAXIMIZE:
       case FULLSCREEN:
         if (W && IS_WINDOW(W) && S)
-          MaximizeWindow((window)W, n->id == FULLSCREEN);
+          MaximizeWindow((Twindow)W, n->id == FULLSCREEN);
         break;
       case LOWER:
         if (W && S)
@@ -727,7 +727,7 @@ static byte RCSteps(run *r) {
           flag = n->x.f.flag;
           if (flag == FL_TOGGLE)
             flag = W->Attr & WINDOW_ROLLED_UP ? FL_OFF : FL_ON;
-          RollUpWindow((window)W, flag == FL_ON);
+          RollUpWindow((Twindow)W, flag == FL_ON);
         }
         break;
       case USERFUNC:
@@ -892,7 +892,7 @@ static void RCWake(void) {
 }
 
 /* wake up queues when the wanted window appears */
-static void RCWake4Window(window W) {
+static void RCWake4Window(Twindow W) {
   str Name = W->Name;
   run **p = &Wait, *r;
 
@@ -967,7 +967,7 @@ byte RC_VMQueue(const wm_ctx *C) {
     }
     break;
   case msg_map:
-    used = ttrue, RCWake4Window((window)C->W);
+    used = ttrue, RCWake4Window((Twindow)C->W);
     break;
   case msg_control:
     if (C->Code == MSG_CONTROL_OPEN) {
@@ -1039,7 +1039,7 @@ void QuitRC(void) {
 static byte USEDefaultCommonMenu(void) {
   menu Menu;
   Tmenuitem Item;
-  window W;
+  Twindow W;
   row Row;
 
   if (!(Menu = New(menu)(Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0,

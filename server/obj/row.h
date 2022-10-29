@@ -19,7 +19,7 @@
 
 struct SrowFn {
   uldat Magic;
-  void (*Insert)(row, window, row prev, row next);
+  void (*Insert)(row, Twindow, row prev, row next);
   void (*Remove)(row);
   void (*Delete)(row);
   void (*ChangeField)(row, udat field, uldat clearmask, uldat xormask);
@@ -34,7 +34,7 @@ struct SrowFn {
 struct Srow : public Sobj {
   TrowFn Fn;
   row Prev, Next;
-  window Window;
+  Twindow Window;
   /* row */
   udat Code;
   byte Flags;
@@ -50,7 +50,7 @@ struct Srow : public Sobj {
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(window w, row prev, row next) {
+  void Insert(Twindow w, row prev, row next) {
     Fn->Insert(this, w, prev, next);
   }
   void Remove() {

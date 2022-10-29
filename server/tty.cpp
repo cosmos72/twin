@@ -39,7 +39,7 @@
 
 /* static variables, common to most functions */
 
-static window Win;
+static Twindow Win;
 static ttydata *Data;
 static uldat *Flags;
 /* enable keypad by default */
@@ -184,7 +184,7 @@ static void flush_tty(void) {
   /* finally, keyboard focus configuration: */
   if (*Flags & TTY_NEEDREFOCUS) {
     *Flags &= ~TTY_NEEDREFOCUS;
-    if (Win == (window)All->FirstScreen->FocusW)
+    if (Win == (Twindow)All->FirstScreen->FocusW)
       Win->KbdFocus();
   }
 }
@@ -1443,12 +1443,12 @@ Twidget TtyKbdFocus(Twidget newW) {
     oldW = newW = (Twidget)0;
 
   if (Screen == All->FirstScreen) {
-    if (!newW || !IS_WINDOW(newW) || !W_USE((window)newW, USECONTENTS) ||
-        !((window)newW)->USE.C.TtyData)
+    if (!newW || !IS_WINDOW(newW) || !W_USE((Twindow)newW, USECONTENTS) ||
+        !((Twindow)newW)->USE.C.TtyData)
 
       newFlags = defaultFlags;
     else
-      newFlags = ((window)newW)->USE.C.TtyData->Flags;
+      newFlags = ((Twindow)newW)->USE.C.TtyData->Flags;
 
     if ((newFlags ^ kbdFlags) & TTY_KBDAPPLIC)
       ConfigureHW(HW_KBDAPPLIC, tfalse, newFlags & TTY_KBDAPPLIC);
@@ -1467,7 +1467,7 @@ void ForceKbdFocus(void) {
 }
 
 /* initialize global static data */
-static void common(window w) {
+static void common(Twindow w) {
   Win = w;
   Data = Win->USE.C.TtyData;
   Flags = &Data->Flags;
@@ -1520,7 +1520,7 @@ static tbool combine_utf8(trune *pc) {
 }
 
 /* this is the main entry point */
-byte TtyWriteCharsetOrUtf8(window w, uldat len, const char *chars, bool force_utf8) {
+byte TtyWriteCharsetOrUtf8(Twindow w, uldat len, const char *chars, bool force_utf8) {
   trune c;
   byte printable, utf8_in_use, disp_ctrl, state_normal;
 
@@ -1596,16 +1596,16 @@ byte TtyWriteCharsetOrUtf8(window w, uldat len, const char *chars, bool force_ut
   return ttrue;
 }
 
-byte TtyWriteCharset(window w, uldat len, const char *charset_bytes) {
+byte TtyWriteCharset(Twindow w, uldat len, const char *charset_bytes) {
   return TtyWriteCharsetOrUtf8(w, len, charset_bytes, false);
 }
 
-byte TtyWriteUtf8(window w, uldat len, const char *utf8_bytes) {
+byte TtyWriteUtf8(Twindow w, uldat len, const char *utf8_bytes) {
   return TtyWriteCharsetOrUtf8(w, len, utf8_bytes, true);
 }
 
 /* similar to TtyWriteUtf8(), but writes UTF-32 */
-byte TtyWriteTRune(window w, uldat len, const trune *runes) {
+byte TtyWriteTRune(Twindow w, uldat len, const trune *runes) {
   trune c;
   byte ok;
 
@@ -1661,7 +1661,7 @@ byte TtyWriteTRune(window w, uldat len, const trune *runes) {
  * this currently wraps at window width so it can write multiple rows at time.
  * does not move cursor position, nor interacts with wrapglitch.
  */
-byte TtyWriteTCell(window w, dat x, dat y, uldat len, const tcell *text) {
+byte TtyWriteTCell(Twindow w, dat x, dat y, uldat len, const tcell *text) {
   ldat left, max, chunk;
   ldat i;
   tcell *dst;
@@ -1746,7 +1746,7 @@ static void con_start(struct tty_struct *tty) {
     set_leds();
 }
 
-static void clear_buffer_attributes(window w) {
+static void clear_buffer_attributes(Twindow w) {
     unsigned short *p = (unsigned short *) origin;
     int count = screenbuf_size/2;
     int mask = hi_font_mask | 0xff;
@@ -1759,7 +1759,7 @@ static void clear_buffer_attributes(window w) {
 /*
  *        Palettes
  */
-void set_palette(window w) {
+void set_palette(Twindow w) {
     if (vcmode != KD_GRAPHICS)
           sw->con_set_palette(vc_cons.d, color_table);
 }
@@ -1804,7 +1804,7 @@ int con_get_cmap(unsigned char *arg) {
     return set_get_cmap (arg,0);
 }
 
-void reset_palette(window w) {
+void reset_palette(Twindow w) {
     int j, k;
     for (j=k=0; j<16; j++) {
         palette[k++] = default_red[j];

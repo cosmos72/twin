@@ -20,10 +20,10 @@
 #include <new>
 #include <Tw/datasizes.h> // TW_MAXLDAT
 
-Tmenuitem Smenuitem::Create(obj parent, window w, udat code, byte flags, dat left, ldat len,
+Tmenuitem Smenuitem::Create(obj parent, Twindow w, udat code, byte flags, dat left, ldat len,
                             dat shortcut, const char *name) {
   Tmenuitem item = NULL;
-  if (parent && (IS_MENU(parent) || (IS_WINDOW(parent) && W_USE((window)parent, USEROWS))) &&
+  if (parent && (IS_MENU(parent) || (IS_WINDOW(parent) && W_USE((Twindow)parent, USEROWS))) &&
       (!w || IS_WINDOW(w)) && name) {
 
     void *addr = AllocMem0(sizeof(Smenuitem));
@@ -39,10 +39,10 @@ Tmenuitem Smenuitem::Create(obj parent, window w, udat code, byte flags, dat lef
   return item;
 }
 
-Tmenuitem Smenuitem::Init(obj parent, window w, udat code, byte flags, dat left, ldat len,
+Tmenuitem Smenuitem::Init(obj parent, Twindow w, udat code, byte flags, dat left, ldat len,
                           dat shortcut, const char *name) {
 
-  if (parent && (IS_MENU(parent) || (IS_WINDOW(parent) && W_USE((window)parent, USEROWS))) &&
+  if (parent && (IS_MENU(parent) || (IS_WINDOW(parent) && W_USE((Twindow)parent, USEROWS))) &&
       (!w || IS_WINDOW(w)) && name && (this->Text = CloneStr2TRune(name, len)) &&
       ((row)this)->Init(code, flags)) {
 
@@ -56,7 +56,7 @@ Tmenuitem Smenuitem::Init(obj parent, window w, udat code, byte flags, dat left,
       w->MenuItem = this;
 
     if (IS_WINDOW(parent)) {
-      w = (window)parent;
+      w = (Twindow)parent;
 
       if ((ldat)w->XWidth < (len = Max2((ldat)10, len + (ldat)2)))
         w->XWidth = len;

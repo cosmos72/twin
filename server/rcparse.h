@@ -1259,7 +1259,7 @@ static byte NewCommonMenu(void *const *shm_M, menu *res_CommonMenu, node **res_M
 
   menu Menu = (menu)0;
   Tmenuitem Item;
-  window W;
+  Twindow W;
   row Row;
   node N, M;
   uldat maxlen, l;

@@ -192,12 +192,12 @@ Twidget FocusWidget(Twidget W) {
 
   if (W != oldW && (!W || W->Parent == (Twidget)All->FirstScreen)) {
     if (W && IS_WINDOW(W))
-      DrawBorderWindow((window)W, BORDER_ANY);
+      DrawBorderWindow((Twindow)W, BORDER_ANY);
     if (oldW && IS_WINDOW(oldW))
-      DrawBorderWindow((window)oldW, BORDER_ANY);
+      DrawBorderWindow((Twindow)oldW, BORDER_ANY);
     if ((W && IS_WINDOW(W)) || (oldW && IS_WINDOW(oldW))) {
       UpdateCursor();
-      if (!W || !IS_WINDOW(W) || !(((window)W)->Flags & WINDOWFL_MENU))
+      if (!W || !IS_WINDOW(W) || !(((Twindow)W)->Flags & WINDOWFL_MENU))
         All->FirstScreen->DrawMenu(0, TW_MAXDAT);
     }
   }
@@ -274,7 +274,7 @@ static void MapWidget(Twidget W, Twidget Parent) {
 static void MapTopRealWidget(Twidget W, screen Screen) {
   Twidget OldW;
 
-  if (Screen && !W->Parent && (!IS_WINDOW(W) || ((window)W)->Menu)) {
+  if (Screen && !W->Parent && (!IS_WINDOW(W) || ((Twindow)W)->Menu)) {
     if (W->MapQueueMsg)
       /*
        * let the upper layer do this:
@@ -302,11 +302,11 @@ static void MapTopRealWidget(Twidget W, screen Screen) {
     if (Screen == All->FirstScreen) {
       OldW = W->KbdFocus();
       if (OldW && IS_WINDOW(OldW))
-        DrawBorderWindow((window)OldW, BORDER_ANY);
+        DrawBorderWindow((Twindow)OldW, BORDER_ANY);
       UpdateCursor();
     }
     if (IS_WINDOW(W))
-      DrawAreaWindow2((window)W);
+      DrawAreaWindow2((Twindow)W);
     else
       DrawAreaWidget(W);
     if (!(W->Flags & WINDOWFL_MENU))
@@ -322,7 +322,7 @@ static void MapTopRealWidget(Twidget W, screen Screen) {
 
 static void UnMapWidget(Twidget W) {
   Twidget Parent;
-  window Next;
+  Twindow Next;
   screen Screen;
   byte wasFocus;
 
@@ -340,7 +340,7 @@ static void UnMapWidget(Twidget W) {
       if (W->Attr & (WIDGET_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS))
         DecMouseMotionN();
 
-      if (Screen->ClickWindow == (window)W)
+      if (Screen->ClickWindow == (Twindow)W)
         Screen->ClickWindow = NULL;
 
       if ((wasFocus = W == Screen->FocusW)) {
@@ -348,18 +348,18 @@ static void UnMapWidget(Twidget W) {
           Next = Screen->MenuWindow;
         else {
           if ((Twidget)W == Screen->FirstW)
-            Next = (window)W->Next;
+            Next = (Twindow)W->Next;
           else
-            Next = (window)Screen->FirstW;
+            Next = (Twindow)Screen->FirstW;
 
           while (Next && !IS_WINDOW(Next))
-            Next = (window)Next->Next;
+            Next = (Twindow)Next->Next;
         }
       }
 
       W->Remove();
       if (IS_WINDOW(W))
-        DrawAreaWindow2((window)W);
+        DrawAreaWindow2((Twindow)W);
       else
         DrawAreaWidget(W);
 
@@ -372,7 +372,7 @@ static void UnMapWidget(Twidget W) {
       if (wasFocus) {
         if (Screen == All->FirstScreen) {
           /*
-           * in case the user was dragging this window...
+           * in case the user was dragging this Twindow...
            */
           if ((All->State & state_any) < state_menu)
             All->State &= ~state_any;
@@ -700,9 +700,9 @@ static struct SgadgetFn _FnGadget = {
     WriteTRunesGadget, /* exported by resize.c */
 };
 
-/* window */
+/* Twindow */
 
-static void DeleteWindow(window W) {
+static void DeleteWindow(Twindow W) {
   W->UnMap();
   if (W->Name)
     FreeMem(W->Name);
@@ -719,7 +719,7 @@ static void DeleteWindow(window W) {
   DeleteWidget((Twidget)W);
 }
 
-static void ChangeFieldWindow(window W, udat field, uldat CLEARMask, uldat XORMask) {
+static void ChangeFieldWindow(Twindow W, udat field, uldat CLEARMask, uldat XORMask) {
   uldat i, mask;
 
   if (W)
@@ -832,7 +832,7 @@ static void ChangeFieldWindow(window W, udat field, uldat CLEARMask, uldat XORMa
     }
 }
 
-static void SetTitleWindow(window W, dat titlelen, char *title) {
+static void SetTitleWindow(Twindow W, dat titlelen, char *title) {
   Twidget P;
 
   if (W->Name)
@@ -843,7 +843,7 @@ static void SetTitleWindow(window W, dat titlelen, char *title) {
 
 #if 1
   /*
-   * do not allow changing window borders just because
+   * do not allow changing Twindow borders just because
    * some untrusted application set a new title
    */
   DrawBorderWindow(W, BORDER_UP);
@@ -854,17 +854,17 @@ static void SetTitleWindow(window W, dat titlelen, char *title) {
 #endif
 
   if ((P = W->Parent) && IS_SCREEN(P)) {
-    /* need to update window list with new name ? */
+    /* need to update Twindow list with new name ? */
     if (((screen)P)->FnHookW)
       ((screen)P)->FnHookW(((screen)P)->HookW);
   }
 }
 
-static void SetColTextWindow(window W, tcolor ColText) {
+static void SetColTextWindow(Twindow W, tcolor ColText) {
   W->ColText = ColText;
 }
 
-static void SetColorsWindow(window W, udat Bitmap, tcolor ColGadgets, tcolor ColArrows,
+static void SetColorsWindow(Twindow W, udat Bitmap, tcolor ColGadgets, tcolor ColArrows,
                             tcolor ColBars, tcolor ColTabs, tcolor ColBorder, tcolor ColText,
                             tcolor ColSelect, tcolor ColDisabled, tcolor ColSelectDisabled) {
   if (Bitmap & 1)
@@ -892,7 +892,7 @@ static void SetColorsWindow(window W, udat Bitmap, tcolor ColGadgets, tcolor Col
     DrawBorderWindow(W, BORDER_ANY);
 }
 
-static void SetXYWindow(window W, dat X, dat Y) {
+static void SetXYWindow(Twindow W, dat X, dat Y) {
   Twidget Prev, Next;
 
   if (W->Parent) {
@@ -913,7 +913,7 @@ static void SetXYWindow(window W, dat X, dat Y) {
   }
 }
 
-static void ConfigureWindow(window W, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
+static void ConfigureWindow(Twindow W, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
                             dat MaxXWidth, dat MaxYWidth) {
   Twidget Prev, Next;
   dat HasBorder = 2 * !(W->Flags & WINDOWFL_BORDERLESS);
@@ -966,7 +966,7 @@ static void ConfigureWindow(window W, byte Bitmap, dat Left, dat Up, dat MinXWid
   }
 }
 
-static void GotoXYWindow(window Window, ldat X, ldat Y) {
+static void GotoXYWindow(Twindow Window, ldat X, ldat Y) {
   if (W_USE(Window, USECONTENTS)) {
     ttydata *TT = Window->USE.C.TtyData;
 
@@ -989,8 +989,8 @@ static void GotoXYWindow(window Window, ldat X, ldat Y) {
     UpdateCursor();
 }
 
-window Create4MenuWindow(menu Menu) {
-  window Window = (window)0;
+Twindow Create4MenuWindow(menu Menu) {
+  Twindow Window = (Twindow)0;
   if (Menu && (Window = New(window)(Menu->MsgPort, 0, NULL, (tcolor *)0, Menu, TCOL(tblack, twhite),
                                     NOCURSOR, WINDOW_AUTO_KEYS,
                                     WINDOWFL_MENU | WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL |
@@ -1005,37 +1005,37 @@ window Create4MenuWindow(menu Menu) {
   return Window;
 }
 
-byte FakeWriteCharset(window Window, uldat Len, const char *charset_bytes) {
+byte FakeWriteCharset(Twindow Window, uldat Len, const char *charset_bytes) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteCharset != FakeWriteCharset)
     return Window->TtyWriteCharset(Len, charset_bytes);
   return tfalse;
 }
 
-byte FakeWriteUtf8(window Window, uldat Len, const char *utf8_bytes) {
+byte FakeWriteUtf8(Twindow Window, uldat Len, const char *utf8_bytes) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteUtf8 != FakeWriteUtf8)
     return Window->TtyWriteUtf8(Len, utf8_bytes);
   return tfalse;
 }
 
-byte FakeWriteTRune(window Window, uldat Len, const trune *runes) {
+byte FakeWriteTRune(Twindow Window, uldat Len, const trune *runes) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteTRune != FakeWriteTRune)
     return Window->TtyWriteTRune(Len, runes);
   return tfalse;
 }
 
-byte FakeWriteTCell(window Window, dat x, dat y, uldat Len, const tcell *cells) {
+byte FakeWriteTCell(Twindow Window, dat x, dat y, uldat Len, const tcell *cells) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteTCell != FakeWriteTCell)
     return Window->TtyWriteTCell(x, y, Len, cells);
   return tfalse;
 }
 
-window FakeOpenTerm(const char *arg0, const char *const *argv) {
+Twindow FakeOpenTerm(const char *arg0, const char *const *argv) {
   if (DlLoad(TermSo) && Ext(Term, Open) != FakeOpenTerm)
     return Ext(Term, Open)(arg0, argv);
   return NULL;
 }
 
-tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr) {
+tpos FakeFindBorderWindow(Twindow W, dat u, dat v, byte Border, tcell *PtrAttr) {
   byte Horiz, Vert;
 
   Horiz = u ? u + 1 == W->XWidth ? (byte)2 : (byte)1 : (byte)0;
@@ -1047,7 +1047,7 @@ tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr) {
   return v ? POS_ROOT : POS_TITLE;
 }
 
-static row FindRow(window Window, ldat Row) {
+static row FindRow(Twindow Window, ldat Row) {
   row CurrRow, ElPossib[4];
   byte Index;
   ldat k, ElNumRows[4], ElDist[4];
@@ -1082,7 +1082,7 @@ static row FindRow(window Window, ldat Row) {
   return CurrRow;
 }
 
-static row FindRowByCode(window Window, udat Code, ldat *NumRow) {
+static row FindRowByCode(Twindow Window, udat Code, ldat *NumRow) {
   row Row;
   ldat Num = (ldat)0;
 
@@ -1099,32 +1099,32 @@ static row FindRowByCode(window Window, udat Code, ldat *NumRow) {
 
 static struct SwindowFn _FnWindow = {
     window_magic,
-    (void (*)(window, Twidget, Twidget, Twidget))InsertWidget,
-    (void (*)(window))RemoveWidget,
+    (void (*)(Twindow, Twidget, Twidget, Twidget))InsertWidget,
+    (void (*)(Twindow))RemoveWidget,
     DeleteWindow,
     ChangeFieldWindow,
     /* Twidget */
     &_FnObj,
     DrawSelfWindow,
-    (Twidget(*)(window, dat, dat))FindWidgetAt,
-    (gadget(*)(window, udat))FindGadgetByCode,
+    (Twidget(*)(Twindow, dat, dat))FindWidgetAt,
+    (gadget(*)(Twindow, udat))FindGadgetByCode,
     SetXYWindow,
-    (void (*)(window, tcell))SetFillWidget,
-    (Twidget(*)(window))FocusWidget,
-    (Twidget(*)(window))TtyKbdFocus,
-    (void (*)(window, Twidget))MapWidget,
-    (void (*)(window))UnMapWidget,
-    (void (*)(window, screen))MapTopRealWidget,
-    (void (*)(window))RaiseW,
-    (void (*)(window))LowerW,
-    (void (*)(window, Tmsgport))OwnWidget,
-    (void (*)(window))DisOwnWidget,
-    (void (*)(window, Tmsgport))RecursiveDeleteWidget,
-    (void (*)(window, dat, dat, dat, dat, const char *, const trune *,
+    (void (*)(Twindow, tcell))SetFillWidget,
+    (Twidget(*)(Twindow))FocusWidget,
+    (Twidget(*)(Twindow))TtyKbdFocus,
+    (void (*)(Twindow, Twidget))MapWidget,
+    (void (*)(Twindow))UnMapWidget,
+    (void (*)(Twindow, screen))MapTopRealWidget,
+    (void (*)(Twindow))RaiseW,
+    (void (*)(Twindow))LowerW,
+    (void (*)(Twindow, Tmsgport))OwnWidget,
+    (void (*)(Twindow))DisOwnWidget,
+    (void (*)(Twindow, Tmsgport))RecursiveDeleteWidget,
+    (void (*)(Twindow, dat, dat, dat, dat, const char *, const trune *,
               const tcell *))ExposeWindow2, /* exported by resize.c */
-    (byte (*)(window, HookFn, void (**)(Twidget)))InstallHookWidget,
-    (void (*)(window, HookFn, void (**)(Twidget)))RemoveHookWidget,
-    /* window */
+    (byte (*)(Twindow, HookFn, void (**)(Twidget)))InstallHookWidget,
+    (void (*)(Twindow, HookFn, void (**)(Twidget)))RemoveHookWidget,
+    /* Twindow */
     &_FnWidget,
     FakeWriteCharset,
     FakeWriteUtf8,
@@ -1133,7 +1133,7 @@ static struct SwindowFn _FnWindow = {
     RowWriteCharset, /* exported by resize.c */
     RowWriteUtf8,
     RowWriteTRune,
-    (byte(*)(window, dat, dat, uldat, const tcell *))AlwaysFalse,
+    (byte(*)(Twindow, dat, dat, uldat, const tcell *))AlwaysFalse,
 
     GotoXYWindow,
     SetTitleWindow,
@@ -1217,13 +1217,13 @@ static menu FindMenuScreen(screen Screen) {
       /* menu activated from Screen->MenuWindow, return its menu */
       return Screen->MenuWindow->Menu;
 
-    /* no window activated the menu... either the menu is inactive
+    /* no Twindow activated the menu... either the menu is inactive
      * or it is activated from the builtin menu */
 
     if (Screen->FocusW && IS_WINDOW(Screen->FocusW) &&
-        ((window)Screen->FocusW)->Menu != All->CommonMenu)
-      /* menu inactive... return the focus window's one */
-      return ((window)Screen->FocusW)->Menu;
+        ((Twindow)Screen->FocusW)->Menu != All->CommonMenu)
+      /* menu inactive... return the focus Twindow's one */
+      return ((Twindow)Screen->FocusW)->Menu;
 
     /* last case: menu activated from builtin menu */
     return All->BuiltinMenu;
@@ -1392,7 +1392,7 @@ static struct SgroupFn _FnGroup = {
 
 /* row */
 
-static void InsertRow(row Row, window Parent, row Prev, row Next) {
+static void InsertRow(row Row, Twindow Parent, row Prev, row Next) {
   if (!Row->Window && Parent && W_USE(Parent, USEROWS)) {
     InsertGeneric((obj_entry)Row, (obj_list)&Parent->USE.R.FirstRow, (obj_entry)Prev,
                   (obj_entry)Next, &Parent->HLogic);
@@ -1411,7 +1411,7 @@ static void RemoveRow(row Row) {
 
 static void DeleteRow(row Row) {
   if (Row) {
-    window W = Row->Window;
+    Twindow W = Row->Window;
 
     Row->Remove();
     if (Row->Text)
@@ -1472,8 +1472,8 @@ static void RaiseMenuItem(Tmenuitem M) {
   if (M && (Parent = (obj)M->Parent)) {
     if (IS_MENU(Parent))
       Next = ((menu)Parent)->FirstI;
-    else if (IS_WINDOW(Parent) && W_USE((window)Parent, USEROWS))
-      Next = (Tmenuitem)((window)Parent)->USE.R.FirstRow;
+    else if (IS_WINDOW(Parent) && W_USE((Twindow)Parent, USEROWS))
+      Next = (Tmenuitem)((Twindow)Parent)->USE.R.FirstRow;
     else
       return;
 
@@ -1498,8 +1498,8 @@ static void LowerMenuItem(Tmenuitem M) {
   if (M && (Parent = (obj)M->Parent)) {
     if (IS_MENU(Parent))
       Prev = ((menu)Parent)->LastI;
-    else if (IS_WINDOW(Parent) && W_USE((window)Parent, USEROWS))
-      Prev = (Tmenuitem)((window)Parent)->USE.R.LastRow;
+    else if (IS_WINDOW(Parent) && W_USE((Twindow)Parent, USEROWS))
+      Prev = (Tmenuitem)((Twindow)Parent)->USE.R.LastRow;
     else
       return;
 
@@ -1544,7 +1544,7 @@ static void InsertMenuItem(Tmenuitem MenuItem, obj Parent, Tmenuitem Prev, Tmenu
                     (obj_entry)Next, NULL);
       MenuItem->Parent = Parent;
     } else if (IS_WINDOW(Parent)) {
-      InsertRow((row)MenuItem, (window)Parent, (row)Prev, (row)Next);
+      InsertRow((row)MenuItem, (Twindow)Parent, (row)Prev, (row)Next);
     }
   }
 }
@@ -1575,7 +1575,7 @@ static void DeleteMenuItem(Tmenuitem MenuItem) {
   }
 }
 
-Tmenuitem Create4MenuMenuItem(obj Parent, window Window, udat Code, byte Flags, ldat Len,
+Tmenuitem Create4MenuMenuItem(obj Parent, Twindow Window, udat Code, byte Flags, ldat Len,
                               const char *Name) {
   dat Left, ShortCut;
 
@@ -1652,7 +1652,7 @@ static void DeleteMenu(menu Menu) {
      * the only way to get the list of windows that
      * are using this menu is to scan the whole MsgPort.
      * We must UnMap() all those windows
-     * as a window without menu cannot be displayed.
+     * as a Twindow without menu cannot be displayed.
      *
      * optimization: if we are going to UnMap() a lot of windows,
      * we set QueuedDrawArea2FullScreen = ttrue, so that the UnMap()
@@ -1661,7 +1661,7 @@ static void DeleteMenu(menu Menu) {
     if (!QueuedDrawArea2FullScreen) {
       for (W = MsgPort->FirstW; W && count; W = WNext) {
         WNext = W->O_Next;
-        if (IS_WINDOW(W) && ((window)W)->Menu == Menu) {
+        if (IS_WINDOW(W) && ((Twindow)W)->Menu == Menu) {
           if (W->Parent && IS_SCREEN(W->Parent)) {
             count--;
           }
@@ -1672,10 +1672,10 @@ static void DeleteMenu(menu Menu) {
     }
     for (W = MsgPort->FirstW; W; W = WNext) {
       WNext = W->O_Next;
-      if (IS_WINDOW(W) && ((window)W)->Menu == Menu) {
+      if (IS_WINDOW(W) && ((Twindow)W)->Menu == Menu) {
         if (W->Parent && IS_SCREEN(W->Parent)) {
           W->UnMap();
-          ((window)W)->Menu = NULL;
+          ((Twindow)W)->Menu = NULL;
         }
       }
     }
@@ -1744,7 +1744,7 @@ static Tmenuitem GetSelectedItem(menu Menu) {
 
 static Tmenuitem RecursiveGetSelectedItem(menu Menu, dat *depth) {
   Tmenuitem I = NULL, _I = Menu->GetSelectedItem();
-  window W = (window)0, FW = (window)All->FirstScreen->FocusW;
+  Twindow W = (Twindow)0, FW = (Twindow)All->FirstScreen->FocusW;
   dat d = -1;
 
   while (_I && IS_MENUITEM(_I)) {

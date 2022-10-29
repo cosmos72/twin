@@ -67,61 +67,61 @@ struct s_WC { /* for WINDOWFL_USECONTENTS windows */
 
 struct SwindowFn {
   uldat Magic;
-  void (*Insert)(window, Twidget Parent, Twidget Prev, Twidget Next);
-  void (*Remove)(window);
-  void (*Delete)(window);
-  void (*ChangeField)(window, udat field, uldat CLEARMask, uldat XORMask);
+  void (*Insert)(Twindow, Twidget Parent, Twidget Prev, Twidget Next);
+  void (*Remove)(Twindow);
+  void (*Delete)(Twindow);
+  void (*ChangeField)(Twindow, udat field, uldat CLEARMask, uldat XORMask);
   /* Twidget */
   TobjFn Fn_Obj;
   void (*DrawSelf)(draw_ctx *D);
-  Twidget (*FindWidgetAt)(window Parent, dat X, dat Y);
-  gadget (*FindGadgetByCode)(window Parent, udat Code);
-  void (*SetXY)(window, dat X, dat Y);
-  void (*SetFill)(window, tcell Fill);
-  Twidget (*Focus)(window);
-  Twidget (*KbdFocus)(window);
-  void (*Map)(window, Twidget Parent);
-  void (*UnMap)(window);
-  void (*MapTopReal)(window, screen);
-  void (*Raise)(window);
-  void (*Lower)(window);
-  void (*Own)(window, Tmsgport);
-  void (*DisOwn)(window);
-  void (*RecursiveDelete)(window, Tmsgport);
-  void (*Expose)(window, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
+  Twidget (*FindWidgetAt)(Twindow Parent, dat X, dat Y);
+  gadget (*FindGadgetByCode)(Twindow Parent, udat Code);
+  void (*SetXY)(Twindow, dat X, dat Y);
+  void (*SetFill)(Twindow, tcell Fill);
+  Twidget (*Focus)(Twindow);
+  Twidget (*KbdFocus)(Twindow);
+  void (*Map)(Twindow, Twidget Parent);
+  void (*UnMap)(Twindow);
+  void (*MapTopReal)(Twindow, screen);
+  void (*Raise)(Twindow);
+  void (*Lower)(Twindow);
+  void (*Own)(Twindow, Tmsgport);
+  void (*DisOwn)(Twindow);
+  void (*RecursiveDelete)(Twindow, Tmsgport);
+  void (*Expose)(Twindow, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
                  const tcell *);
-  byte (*InstallHook)(window, HookFn, HookFn *Where);
-  void (*RemoveHook)(window, HookFn, HookFn *Where);
-  /* window */
+  byte (*InstallHook)(Twindow, HookFn, HookFn *Where);
+  void (*RemoveHook)(Twindow, HookFn, HookFn *Where);
+  /* Twindow */
   TwidgetFn Fn_Widget;
-  byte (*TtyWriteCharset)(window, uldat Len, const char *charset_bytes);
-  byte (*TtyWriteUtf8)(window, uldat Len, const char *utf8_bytes);
-  byte (*TtyWriteTRune)(window, uldat Len, const trune *runes);
-  byte (*TtyWriteTCell)(window, dat x, dat y, uldat Len, const tcell *cells);
+  byte (*TtyWriteCharset)(Twindow, uldat Len, const char *charset_bytes);
+  byte (*TtyWriteUtf8)(Twindow, uldat Len, const char *utf8_bytes);
+  byte (*TtyWriteTRune)(Twindow, uldat Len, const trune *runes);
+  byte (*TtyWriteTCell)(Twindow, dat x, dat y, uldat Len, const tcell *cells);
 
-  byte (*RowWriteCharset)(window, uldat Len, const char *charset_bytes);
-  byte (*RowWriteUtf8)(window, uldat Len, const char *utf8_bytes);
-  byte (*RowWriteTRune)(window, uldat Len, const trune *runes);
-  byte (*RowWriteTCell)(window, dat x, dat y, uldat Len, const tcell *cells);
+  byte (*RowWriteCharset)(Twindow, uldat Len, const char *charset_bytes);
+  byte (*RowWriteUtf8)(Twindow, uldat Len, const char *utf8_bytes);
+  byte (*RowWriteTRune)(Twindow, uldat Len, const trune *runes);
+  byte (*RowWriteTCell)(Twindow, dat x, dat y, uldat Len, const tcell *cells);
 
-  void (*GotoXY)(window, ldat X, ldat Y);
-  void (*SetTitle)(window, dat titlelen, char *title);
-  void (*SetColText)(window, tcolor ColText);
-  void (*SetColors)(window, udat Bitmap, tcolor ColGadgets, tcolor ColArrows, tcolor ColBars,
+  void (*GotoXY)(Twindow, ldat X, ldat Y);
+  void (*SetTitle)(Twindow, dat titlelen, char *title);
+  void (*SetColText)(Twindow, tcolor ColText);
+  void (*SetColors)(Twindow, udat Bitmap, tcolor ColGadgets, tcolor ColArrows, tcolor ColBars,
                     tcolor ColTabs, tcolor ColBorder, tcolor ColText, tcolor ColSelect,
                     tcolor ColDisabled, tcolor ColSelectDisabled);
-  void (*Configure)(window, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
+  void (*Configure)(Twindow, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
                     dat MaxXWidth, dat MaxYWidth);
-  window (*Create4Menu)(menu);
-  tpos (*FindBorder)(window, dat u, dat v, byte Border, tcell *PtrAttr);
-  row (*FindRow)(window, ldat RowN);
-  row (*FindRowByCode)(window, udat Code, ldat *NumRow);
+  Twindow (*Create4Menu)(menu);
+  tpos (*FindBorder)(Twindow, dat u, dat v, byte Border, tcell *PtrAttr);
+  row (*FindRow)(Twindow, ldat RowN);
+  row (*FindRowByCode)(Twindow, udat Code, ldat *NumRow);
 };
 
 struct Swindow : public Sobj {
   TwindowFn Fn;
   Twidget Prev, Next; /* list in the same parent */
-  Twidget Parent;     /* where this window sits */
+  Twidget Parent;     /* where this Twindow sits */
   /* Twidget */
   Twidget FirstW, LastW; /* list of children */
   Twidget SelectW;       /* selected child */
@@ -141,9 +141,9 @@ struct Swindow : public Sobj {
     struct s_WC C;
     struct s_wE E;
   } USE;
-  /* window */
+  /* Twindow */
   menu Menu;
-  Tmenuitem MenuItem; /* from which the window depends */
+  Tmenuitem MenuItem; /* from which the Twindow depends */
   dat NameLen;
   char *Name;
   tcolor *ColName;
@@ -157,17 +157,17 @@ struct Swindow : public Sobj {
   uldat CursorType;
   dat MinXWidth, MinYWidth;
   dat MaxXWidth, MaxYWidth;
-  ldat WLogic, HLogic;  /* window interior logic size */
+  ldat WLogic, HLogic;  /* Twindow interior logic size */
   trune const *Charset; /* the byte -> trune translation to use */
 
   /* obj */
-  static window Create(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle,
-                       menu menu, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
-                       dat xwidth, dat ywidth, dat scrollbacklines);
-  static window Create4Menu(menu);
-  window Init(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle, menu menu,
-              tcolor coltext, uldat cursortype, uldat attr, uldat flags, dat xwidth, dat ywidth,
-              dat scrollbacklines);
+  static Twindow Create(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle,
+                        menu menu, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
+                        dat xwidth, dat ywidth, dat scrollbacklines);
+  static Twindow Create4Menu(menu);
+  Twindow Init(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle, menu menu,
+               tcolor coltext, uldat cursortype, uldat attr, uldat flags, dat xwidth, dat ywidth,
+               dat scrollbacklines);
   uldat Magic() const {
     return Fn->Magic;
   }
@@ -239,7 +239,7 @@ struct Swindow : public Sobj {
   void RemoveHook(HookFn hook, HookFn *where) {
     Fn->RemoveHook(this, hook, where);
   }
-  /* window */
+  /* Twindow */
   byte TtyWriteCharset(uldat len, const char *charset_bytes) {
     return Fn->TtyWriteCharset(this, len, charset_bytes);
   }
@@ -367,7 +367,7 @@ enum window_cursor_type /*: byte*/ {
   SOLIDCURSOR = 8,
 };
 
-/* window size limits */
+/* Twindow size limits */
 #define MIN_XWIN 5
 #define MIN_YWIN 2
 

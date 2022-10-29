@@ -67,7 +67,7 @@ static void ScrollerH(Tmsgport MsgPort) {
   dat Limit;
   dat Mouse_delta_x, Mouse_delta_y;
   byte State, FlagDeskScroll, FlagWinScroll, WinScrolled = tfalse;
-  window FocusWindow;
+  Twindow FocusWindow;
 
   while ((Msg = Scroller_MsgPort->FirstMsg)) {
     Msg->Remove();
@@ -84,9 +84,9 @@ static void ScrollerH(Tmsgport MsgPort) {
 
   Mouse = &All->MouseHW->MouseState;
 
-  FocusWindow = (window)All->FirstScreen->FocusW;
+  FocusWindow = (Twindow)All->FirstScreen->FocusW;
   if (FocusWindow && !IS_WINDOW(FocusWindow))
-    FocusWindow = (window)0;
+    FocusWindow = (Twindow)0;
 
   if (FocusWindow) {
     Attr = FocusWindow->Attr;

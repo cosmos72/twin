@@ -27,7 +27,7 @@ struct exts {
     void (*MultiplexS)(uldat order, Span<s_tsfield> args);
   } Socket;
   struct {
-    window (*Open)(const char *arg0, const char *const *argv);
+    Twindow (*Open)(const char *arg0, const char *const *argv);
   } Term;
 };
 

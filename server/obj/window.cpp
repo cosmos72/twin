@@ -21,13 +21,13 @@
 #include <cstring>     // memset()
 #include <Tutf/Tutf.h> // Tutf_CP437_to_UTF_32[]
 
-static byte InitTtyDataWindow(window w, dat scrollbacklines);
+static byte InitTtyDataWindow(Twindow w, dat scrollbacklines);
 
-window Swindow::Create(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle,
-                       menu m, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
-                       dat xwidth, dat ywidth, dat scrollbacklines) {
+Twindow Swindow::Create(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle,
+                        menu m, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
+                        dat xwidth, dat ywidth, dat scrollbacklines) {
 
-  window w = NULL;
+  Twindow w = NULL;
   if (owner) {
     void *addr = AllocMem0(sizeof(Swindow));
     if (addr) {
@@ -43,9 +43,9 @@ window Swindow::Create(Tmsgport owner, dat titlelen, const char *title, const tc
   return w;
 }
 
-window Swindow::Init(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle,
-                     menu m, tcolor coltext, uldat cursortype, uldat attr, uldat flags, dat xwidth,
-                     dat ywidth, dat scrollbacklines) {
+Twindow Swindow::Init(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle,
+                      menu m, tcolor coltext, uldat cursortype, uldat attr, uldat flags, dat xwidth,
+                      dat ywidth, dat scrollbacklines) {
 
   byte hasborder = 2 * !(flags & WINDOWFL_BORDERLESS);
   /* overflow safety */
@@ -124,7 +124,7 @@ window Swindow::Init(Tmsgport owner, dat titlelen, const char *title, const tcol
 
 /* ttydata */
 
-static byte InitTtyDataWindow(window w, dat scrollbacklines) {
+static byte InitTtyDataWindow(Twindow w, dat scrollbacklines) {
   ttydata *Data = w->USE.C.TtyData;
   ldat count = w->WLogic * w->HLogic;
   tcell *p = w->USE.C.Contents, h;

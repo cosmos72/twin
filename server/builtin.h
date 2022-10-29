@@ -16,7 +16,7 @@ byte InitBuiltin(void);
 void FillButtonWin(void);
 void UpdateOptionWin(void);
 
-extern window WinList, MessagesWin;
+extern Twindow WinList, MessagesWin;
 extern Tmsgport Builtin_MsgPort;
 
 #endif /* TWIN_BUILTIN_H */

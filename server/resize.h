@@ -10,21 +10,21 @@
 #define TWIN_RESIZE_H
 
 byte EnsureLenRow(row r, uldat len, byte default_color);
-byte RowWriteCharset(window w, uldat Len, const char *charset_bytes);
-byte RowWriteUtf8(window w, uldat len, const char *utf8_bytes);
-byte RowWriteTRune(window w, uldat len, const trune *runes);
+byte RowWriteCharset(Twindow w, uldat Len, const char *charset_bytes);
+byte RowWriteUtf8(Twindow w, uldat len, const char *utf8_bytes);
+byte RowWriteTRune(Twindow w, uldat len, const trune *runes);
 
 void ExposeWidget2(Twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
                    const char *utf8_bytes, const trune *runes, const tcell *cells);
-void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
+void ExposeWindow2(Twindow W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
                    const char *utf8_bytes, const trune *runes, const tcell *cells);
 
 extern byte NeedUpdateCursor;
 #define UpdateCursor() (NeedUpdateCursor = ttrue)
 void FlushCursor(void);
 
-byte CheckResizeWindowContents(window Window);
-byte ResizeWindowContents(window Window);
+byte CheckResizeWindowContents(Twindow Window);
+byte ResizeWindowContents(Twindow Window);
 
 /*
 void SetNewFont(void);
@@ -43,20 +43,20 @@ void ResizeWidget(Twidget W, dat X, dat Y);
 void ResizeGadget(gadget G, dat X, dat Y);
 
 void DragFirstWindow(dat i, dat j);
-void DragWindow(window Window, dat i, dat j);
+void DragWindow(Twindow Window, dat i, dat j);
 void ResizeRelFirstWindow(dat i, dat j);
-void ResizeRelWindow(window Window, dat i, dat j);
-void CenterWindow(window Window);
+void ResizeRelWindow(Twindow Window, dat i, dat j);
+void CenterWindow(Twindow Window);
 
 byte ExecScrollFocusWindow(void);
 void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, ldat DeltaX, ldat DeltaY);
 void ScrollFirstWindow(ldat DeltaX, ldat DeltaY, byte byXYLogic);
-void ScrollWindow(window Window, ldat DeltaX, ldat DeltaY);
+void ScrollWindow(Twindow Window, ldat DeltaX, ldat DeltaY);
 
 void ScrollWidget(Twidget W, ldat DeltaX, ldat DeltaY);
 
 void UnFocusWidget(Twidget W);
-void RollUpWindow(window W, byte on_off);
+void RollUpWindow(Twindow W, byte on_off);
 
 void SetVisibleWidget(Twidget W, byte on_off);
 

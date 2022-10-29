@@ -371,7 +371,7 @@ private:
   uldat spaces;
 };
 
-bool SetSelectionFromWindow(window w) {
+bool SetSelectionFromWindow(Twindow w) {
   ldat y, slen, i;
   bool ok = true, w_useC = W_USE(w, USECONTENTS);
 
@@ -533,13 +533,13 @@ bool SetSelectionFromWindow(window w) {
 }
 
 byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, char *buf) {
-  window w;
+  Twindow w;
   udat Flags;
   udat Code = Event->Code;
   dat x = Event->X, y = Event->Y;
   byte len = 0;
 
-  if (!(w = (window)Event->W) || !IS_WINDOW(w) || !W_USE(w, USECONTENTS) || !w->USE.C.TtyData)
+  if (!(w = (Twindow)Event->W) || !IS_WINDOW(w) || !W_USE(w, USECONTENTS) || !w->USE.C.TtyData)
     return len;
 
   Flags = w->USE.C.TtyData->Flags;
@@ -647,7 +647,7 @@ void ResetBorderPattern(void) {
   for (MsgP = All->FirstMsgPort; MsgP; MsgP = MsgP->Next) {
     for (w = MsgP->FirstW; w; w = w->O_Next) {
       if (IS_WINDOW(w))
-        ((window)w)->BorderPattern[0] = ((window)w)->BorderPattern[1] = NULL;
+        ((Twindow)w)->BorderPattern[0] = ((Twindow)w)->BorderPattern[1] = NULL;
     }
   }
 }
@@ -671,7 +671,7 @@ static gadget _NextGadget(gadget G) {
 }
 
 /* handle common keyboard actions like cursor moving and button navigation */
-void FallBackKeyAction(window w, event_keyboard *EventK) {
+void FallBackKeyAction(Twindow w, event_keyboard *EventK) {
   ldat NumRow, OldNumRow;
   gadget G, H;
 

@@ -240,7 +240,7 @@ static byte sockStatGadget(gadget x, tsfield TSF) {
   return ttrue;
 }
 
-static byte sockStatWindow(window x, tsfield TSF) {
+static byte sockStatWindow(Twindow x, tsfield TSF) {
   switch (TSF->label) {
   case TWS_widget_Left:
   case TWS_widget_Up:
@@ -281,14 +281,14 @@ static byte sockStatWindow(window x, tsfield TSF) {
     TWScase(window, WLogic, ldat);
     TWScase(window, HLogic, ldat);
   default:
-    if (W_USE((window)x, USECONTENTS)) {
+    if (W_USE((Twindow)x, USECONTENTS)) {
       switch (TSF->label) {
         TWScasevecUSE(window, C, Contents, tcell, x->WLogic * x->HLogic);
         TWScaseUSE(window, C, HSplit, ldat);
       default:
         return tfalse;
       }
-    } else if (W_USE((window)x, USEROWS)) {
+    } else if (W_USE((Twindow)x, USEROWS)) {
       switch (TSF->label) {
         TWScaseUSE(window, R, FirstRow, obj);
         TWScaseUSE(window, R, LastRow, obj);
@@ -513,7 +513,7 @@ static void sockStat(obj x, udat n, const byte *in) {
              sockStatObj(x, TSF + i);
         break;
       case window_magic_byte:
-        ok = sockStatWindow((window)x, TSF + i) || sockStatWidget((Twidget)x, TSF + i) ||
+        ok = sockStatWindow((Twindow)x, TSF + i) || sockStatWidget((Twidget)x, TSF + i) ||
              sockStatObj(x, TSF + i);
         break;
       case screen_magic_byte:

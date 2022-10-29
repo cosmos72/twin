@@ -83,7 +83,7 @@ struct Sscreen : public Sobj {
   /* screen */
   dat NameLen;
   char *Name;
-  window MenuWindow, ClickWindow;
+  Twindow MenuWindow, ClickWindow;
   all All;
   HookFn FnHookW; /* allow hooks on children Map()/UnMap() inside this Twidget */
   Twidget HookW;

@@ -52,7 +52,7 @@ void FlushCursor(void) {
   draw_ctx d;
   uldat type = NOCURSOR;
   screen Screen;
-  window Window;
+  Twindow Window;
   Twidget w;
   ldat CurX, CurY;
   byte HasBorder;
@@ -76,7 +76,7 @@ void FlushCursor(void) {
       if (CurX >= 0 && CurX < (Window->XWidth - HasBorder) && CurY >= 0 &&
           CurY < (Window->YWidth - HasBorder) &&
           d.Init(w, (dat)CurX, (dat)CurY, (dat)CurX, (dat)CurY, false) &&
-          ((Window == (window)Screen->FirstW && !Window->FirstW) ||
+          ((Window == (Twindow)Screen->FirstW && !Window->FirstW) ||
 #if 1
            /* widgets and gadgets cannot contain cursor, but they can obscure it */
            w == RecursiveFindWidgetAt((Twidget)Screen, (dat)d.X1, (dat)d.Y1 - Screen->YLimit)
@@ -95,7 +95,7 @@ void FlushCursor(void) {
   }
 }
 
-static byte SendResizeSignal(window Window) {
+static byte SendResizeSignal(Twindow Window) {
   struct winsize wsiz;
 
   wsiz.ws_col = Window->USE.C.TtyData->SizeX;
@@ -112,7 +112,7 @@ static byte SendResizeSignal(window Window) {
 #endif
 }
 
-byte CheckResizeWindowContents(window Window) {
+byte CheckResizeWindowContents(Twindow Window) {
   if (W_USE(Window, USECONTENTS) && (Window->USE.C.TtyData->SizeY != Window->YWidth - 2 ||
                                      Window->USE.C.TtyData->SizeX != Window->XWidth - 2)) {
     return ResizeWindowContents(Window);
@@ -120,7 +120,7 @@ byte CheckResizeWindowContents(window Window) {
   return ttrue;
 }
 
-byte ResizeWindowContents(window Window) {
+byte ResizeWindowContents(Twindow Window) {
   tcell *NewCont, *saveNewCont, *OldCont, *max, h;
   ldat count, common, left;
   ttydata *Data = Window->USE.C.TtyData;
@@ -217,7 +217,7 @@ byte ResizeWindowContents(window Window) {
   return ttrue;
 }
 
-static row InsertRowsWindow(window Window, ldat NumRows) {
+static row InsertRowsWindow(Twindow Window, ldat NumRows) {
   row CurrRow;
 
   while (NumRows--) {
@@ -252,7 +252,7 @@ byte EnsureLenRow(row Row, uldat Len, byte DefaultCol) {
   return ttrue;
 }
 
-byte RowWriteCharset(window Window, uldat Len, const char *charset_bytes) {
+byte RowWriteCharset(Twindow Window, uldat Len, const char *charset_bytes) {
   row CurrRow;
   const char *_Text;
   byte ModeInsert;
@@ -342,7 +342,7 @@ byte RowWriteCharset(window Window, uldat Len, const char *charset_bytes) {
   return ttrue;
 }
 
-byte RowWriteUtf8(window w, uldat len, const char *utf8_bytes) {
+byte RowWriteUtf8(Twindow w, uldat len, const char *utf8_bytes) {
   Chars chars(utf8_bytes, len);
   Vector<trune> runes;
   Utf8 seq;
@@ -358,7 +358,7 @@ byte RowWriteUtf8(window w, uldat len, const char *utf8_bytes) {
   return RowWriteTRune(w, runes.size(), runes.data());
 }
 
-byte RowWriteTRune(window Window, uldat Len, const trune *runes) {
+byte RowWriteTRune(Twindow Window, uldat Len, const trune *runes) {
   row CurrRow;
   const trune *_Text;
   byte ModeInsert;
@@ -487,7 +487,7 @@ void ExposeWidget2(Twidget w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitc
   }
 }
 
-void ExposeWindow2(window w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
+void ExposeWindow2(Twindow w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
                    const char *utf8_bytes, const trune *runes, const tcell *cells) {
   ldat CurX, CurY;
 
@@ -536,7 +536,7 @@ void ExposeWindow2(window w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
     return;
 
   if (utf8_bytes) {
-    byte (*WriteUtf8)(window, uldat, const char *);
+    byte (*WriteUtf8)(Twindow, uldat, const char *);
     if (W_USE(w, USECONTENTS)) {
       WriteUtf8 = w->Fn->TtyWriteUtf8;
     } else
@@ -551,7 +551,7 @@ void ExposeWindow2(window w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
     Act(GotoXY, w)(w, CurX, CurY);
 
   } else if (runes) {
-    byte (*WriteTRune)(window, uldat, const trune *);
+    byte (*WriteTRune)(Twindow, uldat, const trune *);
     if (W_USE(w, USECONTENTS))
       WriteTRune = w->Fn->TtyWriteTRune;
     else
@@ -566,7 +566,7 @@ void ExposeWindow2(window w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
     Act(GotoXY, w)(w, CurX, CurY);
 
   } else if (cells) {
-    byte (*WriteTCell)(window, dat, dat, uldat, const tcell *);
+    byte (*WriteTCell)(Twindow, dat, dat, uldat, const tcell *);
     if (W_USE(w, USECONTENTS))
       WriteTCell = w->Fn->TtyWriteTCell;
     else
@@ -703,7 +703,7 @@ void ResizeFirstScreen(dat DeltaY) {
   UpdateCursor();
 }
 
-void CenterWindow(window Window) {
+void CenterWindow(Twindow Window) {
   screen Screen;
   ldat parz1, parz2;
   ldat DeltaX, DeltaY;
@@ -752,11 +752,11 @@ inline void DrawDeltaShadeFirstWindow(dat i, dat j) {
   ldat _Left, _Up, _Rgt, _Dwn;
   ldat Left_, Up_, Rgt_, Dwn_;
   screen Screen;
-  window Window;
+  Twindow Window;
   dat YLimit;
 
   Screen = All->FirstScreen;
-  if (!(Window = (window)Screen->FirstW) || !IS_WINDOW(Window))
+  if (!(Window = (Twindow)Screen->FirstW) || !IS_WINDOW(Window))
     return;
 
   YLimit = Screen->YLimit;
@@ -781,13 +781,13 @@ void DragFirstWindow(dat i, dat j) {
   ldat xLeft, xRgt, xUp, xDwn;
   screen Screen;
   setup *SetUp;
-  window Window;
+  Twindow Window;
   dat YLimit;
   dat DWidth, DHeight;
   byte Shade;
 
   Screen = All->FirstScreen;
-  if (!(Window = (window)Screen->FirstW) || !IS_WINDOW(Window) || !(Window->Attr & WINDOW_DRAG))
+  if (!(Window = (Twindow)Screen->FirstW) || !IS_WINDOW(Window) || !(Window->Attr & WINDOW_DRAG))
     return;
 
   YLimit = Screen->YLimit;
@@ -905,7 +905,7 @@ void DragFirstWindow(dat i, dat j) {
     UpdateCursor();
 }
 
-void DragWindow(window Window, dat i, dat j) {
+void DragWindow(Twindow Window, dat i, dat j) {
   ldat Left, Up, Rgt, Dwn;
   ldat Left1, Rgt1;
   screen Screen;
@@ -917,7 +917,7 @@ void DragWindow(window Window, dat i, dat j) {
   if (!Window || !(Window->Attr & WINDOW_DRAG))
     return;
 
-  if (Window == (window)All->FirstScreen->FirstW) {
+  if (Window == (Twindow)All->FirstScreen->FirstW) {
     DragFirstWindow(i, j);
     return;
   }
@@ -979,7 +979,7 @@ void DragWindow(window Window, dat i, dat j) {
     DrawArea2((screen)0, (Twidget)0, (Twidget)0, (dat)Left, (dat)Up, (dat)Rgt + DeltaXShade,
               (dat)Dwn, tfalse);
   }
-  if (Window == (window)All->FirstScreen->FocusW)
+  if (Window == (Twindow)All->FirstScreen->FocusW)
     UpdateCursor();
 }
 
@@ -987,7 +987,7 @@ void ResizeRelFirstWindow(dat i, dat j) {
   ldat Left, Up, Rgt, Dwn;
   screen Screen;
   setup *SetUp;
-  window Window;
+  Twindow Window;
   dat DeltaX, DeltaY;
   dat YLimit, XWidth, YWidth;
   dat MinXWidth, MinYWidth, MaxXWidth, MaxYWidth;
@@ -995,7 +995,7 @@ void ResizeRelFirstWindow(dat i, dat j) {
   byte Shade, DeltaXShade, DeltaYShade, HasBorder;
 
   Screen = All->FirstScreen;
-  if (!(Window = (window)Screen->FirstW) || !IS_WINDOW(Window) ||
+  if (!(Window = (Twindow)Screen->FirstW) || !IS_WINDOW(Window) ||
       (!i && !j)) /* || !(Window->Attr & WINDOW_RESIZE)) */
     return;
 
@@ -1105,7 +1105,7 @@ void ResizeRelFirstWindow(dat i, dat j) {
   }
   if (DeltaX || DeltaY) {
     DrawBorderWindow(Window, BORDER_ANY);
-    if (Window == (window)Screen->FocusW)
+    if (Window == (Twindow)Screen->FocusW)
       UpdateCursor();
 
     /* resize contents? for Interactive Resize, let the WM resize it
@@ -1117,7 +1117,7 @@ void ResizeRelFirstWindow(dat i, dat j) {
   }
 }
 
-void ResizeRelWindow(window Window, dat i, dat j) {
+void ResizeRelWindow(Twindow Window, dat i, dat j) {
   ldat Left, Up, Rgt, Dwn;
   Twidget Parent;
   setup *SetUp;
@@ -1185,7 +1185,7 @@ void ResizeRelWindow(window Window, dat i, dat j) {
         DrawShadeWindow(Window, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
     }
 
-    if (visible && Window == (window)All->FirstScreen->FocusW)
+    if (visible && Window == (Twindow)All->FirstScreen->FocusW)
       UpdateCursor();
 
     /* resize contents? for Interactive Resize, let the WM resize it
@@ -1205,14 +1205,14 @@ void ResizeRelWindow(window Window, dat i, dat j) {
 void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, ldat DeltaX, ldat DeltaY) {
   screen Screen;
   dat DWidth, DHeight;
-  window Window;
+  Twindow Window;
   ldat shLeft, shUp;
   dat Left, Up, Rgt, Dwn;
   dat Xstart, Ystart, Xend, Yend;
   dat XWidth, YWidth, YLimit;
 
   Screen = All->FirstScreen;
-  Window = (window)Screen->FirstW;
+  Window = (Twindow)Screen->FirstW;
 
   if (!Window || !IS_WINDOW(Window) || (Window->Attr & WINDOW_ROLLED_UP))
     return;
@@ -1286,11 +1286,11 @@ void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, ldat DeltaX, ldat Del
 }
 
 void ScrollFirstWindow(ldat DeltaX, ldat DeltaY, byte byXYLogic) {
-  window Window;
+  Twindow Window;
   ldat XLogic, YLogic;
   dat XWidth, YWidth;
 
-  Window = (window)All->FirstScreen->FirstW;
+  Window = (Twindow)All->FirstScreen->FirstW;
   if (!Window || !IS_WINDOW(Window))
     return;
 
@@ -1334,7 +1334,7 @@ void ScrollFirstWindow(ldat DeltaX, ldat DeltaY, byte byXYLogic) {
     UpdateCursor();
 }
 
-void ScrollWindow(window Window, ldat DeltaX, ldat DeltaY) {
+void ScrollWindow(Twindow Window, ldat DeltaX, ldat DeltaY) {
   ldat XLogic, YLogic;
   dat YWidth;
 
@@ -1397,7 +1397,7 @@ void ScrollWidget(Twidget w, ldat DeltaX, ldat DeltaY) {
     return;
 
   if (IS_WINDOW(w)) {
-    ScrollWindow((window)w, DeltaX, DeltaY);
+    ScrollWindow((Twindow)w, DeltaX, DeltaY);
     return;
   }
 
@@ -1432,7 +1432,7 @@ void ScrollWidget(Twidget w, ldat DeltaX, ldat DeltaY) {
 byte ExecScrollFocusWindow(void) {
   screen Screen;
   dat DWidth, DHeight;
-  window Window;
+  Twindow Window;
   uldat Attr, State, Scroll;
   dat XWidth, YWidth;
   dat DeltaX, DeltaY;
@@ -1440,7 +1440,7 @@ byte ExecScrollFocusWindow(void) {
   if ((All->State & state_any) != state_scroll)
     return tfalse;
 
-  if (!(Screen = All->FirstScreen) || !(Window = (window)Screen->FocusW) || !IS_WINDOW(Window))
+  if (!(Screen = All->FirstScreen) || !(Window = (Twindow)Screen->FocusW) || !IS_WINDOW(Window))
     return tfalse;
 
   Attr = Window->Attr;
@@ -1516,8 +1516,8 @@ void HideMenu(byte on_off) {
 }
 
 static void OpenSubMenuItem(menu M, Tmenuitem Item, byte ByMouse) {
-  window P = (window)Item->Parent;
-  window w = Item->Window;
+  Twindow P = (Twindow)Item->Parent;
+  Twindow w = Item->Window;
   screen S = All->FirstScreen;
   ldat y = P->CurY;
 
@@ -1546,7 +1546,7 @@ static void OpenSubMenuItem(menu M, Tmenuitem Item, byte ByMouse) {
 
 static void OpenTopMenuItem(menu M, Tmenuitem Item, byte ByMouse) {
   menu _M = (menu)Item->Parent; /* may either be M or All->CommonMenu */
-  window w = Item->Window;
+  Twindow w = Item->Window;
 
   if (!w->Parent) {
     w->Up = 1;
@@ -1600,7 +1600,7 @@ static void OpenMenu(Tmenuitem Item, byte ByMouse) {
       HideMenu(tfalse);
 
     if (!S->MenuWindow && w) {
-      S->MenuWindow = (window)w; /* so that it keeps `active' borders */
+      S->MenuWindow = (Twindow)w; /* so that it keeps `active' borders */
       S->FocusW = (Twidget)0;
     }
   }
@@ -1612,7 +1612,7 @@ static void OpenMenu(Tmenuitem Item, byte ByMouse) {
  * do NOT use to close the menu, CloseMenu() does that
  */
 static Tmenuitem CloseMenuItem(menu M, Tmenuitem Item, byte ByMouse) {
-  window P = (window)Item->Parent, w = Item->Window;
+  Twindow P = (Twindow)Item->Parent, w = Item->Window;
 
   if (w)
     Act(UnMap, w)(w);
@@ -1627,7 +1627,7 @@ static Tmenuitem CloseMenuItem(menu M, Tmenuitem Item, byte ByMouse) {
     }
     Item = P->MenuItem;
     if (Item) {
-      w = (window)Item->Parent;
+      w = (Twindow)Item->Parent;
       if (w && IS_WINDOW(w))
         w->Focus();
       else
@@ -1642,10 +1642,10 @@ static Tmenuitem CloseMenuItem(menu M, Tmenuitem Item, byte ByMouse) {
 }
 
 static dat DepthOfMenuItem(Tmenuitem I) {
-  window w;
+  Twindow w;
   dat d = 0;
 
-  while (I && (w = (window)I->Parent) && IS_WINDOW(w)) {
+  while (I && (w = (Twindow)I->Parent) && IS_WINDOW(w)) {
     I = w->MenuItem;
     d++;
   }
@@ -1677,7 +1677,7 @@ void CloseMenu(void) {
   screen S = All->FirstScreen;
   menu M = Act(FindMenu, S)(S);
   Tmenuitem Item;
-  window w;
+  Twindow w;
 
   if (M) {
     if ((w = S->MenuWindow)) {
@@ -1688,7 +1688,7 @@ void CloseMenu(void) {
 
     /* close whole currently open menu tree */
     Item = Act(GetSelectedItem, M)(M);
-    while (Item && IS_MENUITEM(Item) && (w = (window)Item->Window) && IS_WINDOW(w)) {
+    while (Item && IS_MENUITEM(Item) && (w = (Twindow)Item->Window) && IS_WINDOW(w)) {
       Item = (Tmenuitem)Act(FindRow, w)(w, w->CurY);
       Act(UnMap, w)(w);
     }
@@ -1727,7 +1727,7 @@ void UnFocusWidget(Twidget w) {
   if (w && w->Parent == (Twidget)All->FirstScreen && w == All->FirstScreen->FocusW) {
     if (IS_WINDOW(w)) {
       Act(KbdFocus, w)((Twidget)0);
-      DrawBorderWindow((window)w, BORDER_ANY);
+      DrawBorderWindow((Twindow)w, BORDER_ANY);
       Act(DrawMenu, (screen)w->Parent)((screen)w->Parent, 0, TW_MAXDAT);
       UpdateCursor();
     } else
@@ -1735,7 +1735,7 @@ void UnFocusWidget(Twidget w) {
   }
 }
 
-void RollUpWindow(window w, byte on_off) {
+void RollUpWindow(Twindow w, byte on_off) {
   if (w && !(w->Flags & WINDOWFL_BORDERLESS)) {
     /*
      * you cannot roll-up borderless windows...
@@ -1765,7 +1765,7 @@ void SetVisibleWidget(Twidget w, byte on_off) {
     if (on_off != visible) {
       w->Flags ^= WIDGETFL_NOTVISIBLE;
       if (IS_WINDOW(w))
-        DrawAreaWindow2((window)w);
+        DrawAreaWindow2((Twindow)w);
       else
         DrawAreaWidget(w);
     }
@@ -1780,7 +1780,7 @@ void RaiseWidget(Twidget w, byte alsoFocus) {
     if (Screen->FirstW != w) {
       MoveFirst(W, (Twidget)Screen, w);
       if (IS_WINDOW(w))
-        DrawAreaWindow2((window)w);
+        DrawAreaWindow2((Twindow)w);
       else
         DrawAreaWidget(w);
     }
@@ -1804,7 +1804,7 @@ void LowerWidget(Twidget w, byte alsoUnFocus) {
     if (Screen->LastW != w) {
       MoveLast(W, (Twidget)Screen, w);
       if (IS_WINDOW(w))
-        DrawAreaWindow2((window)w);
+        DrawAreaWindow2((Twindow)w);
       else
         DrawAreaWidget(w);
     }
@@ -1865,7 +1865,7 @@ void RestackRows(obj O, uldat N, const row *arrayR) {
         if (FR && CR != FR->Next) {
           /* restack after arrayR[0] */
           CR->Remove();
-          Act(Insert, CR)(CR, (window)O, FR, FR->Next);
+          Act(Insert, CR)(CR, (Twindow)O, FR, FR->Next);
           need_redraw = ttrue;
         }
         FR = CR;

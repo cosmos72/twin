@@ -251,53 +251,53 @@ case order_Create4MenuWindow:
 
 case order_WriteCharsetWindow:
     if (a.size() >= 3)
-        sockWriteCharsetWindow((window)a[1]_obj, (uldat)a[2]_any, (const char *)a[3]_vec);
+        sockWriteCharsetWindow((Twindow)a[1]_obj, (uldat)a[2]_any, (const char *)a[3]_vec);
     break;
 
 case order_WriteUtf8Window:
     if (a.size() >= 3)
-        sockWriteUtf8Window((window)a[1]_obj, (uldat)a[2]_any, (const char *)a[3]_vec);
+        sockWriteUtf8Window((Twindow)a[1]_obj, (uldat)a[2]_any, (const char *)a[3]_vec);
     break;
 
 case order_WriteTRuneWindow:
     if (a.size() >= 3)
-        sockWriteTRuneWindow((window)a[1]_obj, (uldat)a[2]_any, (const trune *)a[3]_vec);
+        sockWriteTRuneWindow((Twindow)a[1]_obj, (uldat)a[2]_any, (const trune *)a[3]_vec);
     break;
 
 case order_WriteTCellWindow:
     if (a.size() >= 5)
-        sockWriteTCellWindow((window)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (uldat)a[4]_any, (const tcell *)a[5]_vec);
+        sockWriteTCellWindow((Twindow)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (uldat)a[4]_any, (const tcell *)a[5]_vec);
     break;
 
 
 case order_GotoXYWindow:
     if (a.size() >= 3)
-        Act(GotoXY,(window)a[1]_obj)((window)a[1]_obj, (ldat)a[2]_any, (ldat)a[3]_any);
+        Act(GotoXY,(Twindow)a[1]_obj)((Twindow)a[1]_obj, (ldat)a[2]_any, (ldat)a[3]_any);
     break;
 
 case order_SetTitleWindow:
     if (a.size() >= 3)
-        sockSetTitleWindow((window)a[1]_obj, (dat)a[2]_any, (const char *)a[3]_vec);
+        sockSetTitleWindow((Twindow)a[1]_obj, (dat)a[2]_any, (const char *)a[3]_vec);
     break;
 
 case order_SetColTextWindow:
     if (a.size() >= 2)
-        Act(SetColText,(window)a[1]_obj)((window)a[1]_obj, (tcolor)a[2]_any);
+        Act(SetColText,(Twindow)a[1]_obj)((Twindow)a[1]_obj, (tcolor)a[2]_any);
     break;
 
 case order_SetColorsWindow:
     if (a.size() >= 11)
-        Act(SetColors,(window)a[1]_obj)((window)a[1]_obj, (udat)a[2]_any, (tcolor)a[3]_any, (tcolor)a[4]_any, (tcolor)a[5]_any, (tcolor)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (tcolor)a[10]_any, (tcolor)a[11]_any);
+        Act(SetColors,(Twindow)a[1]_obj)((Twindow)a[1]_obj, (udat)a[2]_any, (tcolor)a[3]_any, (tcolor)a[4]_any, (tcolor)a[5]_any, (tcolor)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (tcolor)a[10]_any, (tcolor)a[11]_any);
     break;
 
 case order_ConfigureWindow:
     if (a.size() >= 8)
-        Act(Configure,(window)a[1]_obj)((window)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (dat)a[5]_any, (dat)a[6]_any, (dat)a[7]_any, (dat)a[8]_any);
+        Act(Configure,(Twindow)a[1]_obj)((Twindow)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (dat)a[5]_any, (dat)a[6]_any, (dat)a[7]_any, (dat)a[8]_any);
     break;
 
 case order_FindRowByCodeWindow:
     if (a.size() >= 2)
-        a[0]_obj = (obj)sockFindRowByCodeWindow((window)a[1]_obj, (dat)a[2]_any);
+        a[0]_obj = (obj)sockFindRowByCodeWindow((Twindow)a[1]_obj, (dat)a[2]_any);
     break;
 
 
@@ -351,7 +351,7 @@ case order_CirculateChildrenRow:
 
 case order_Create4MenuAny:
     if (a.size() >= 6)
-        a[0]_obj = (obj)sockCreate4MenuAny((obj)a[1]_obj, (window)a[2]_obj, (udat)a[3]_any, (byte)a[4]_any, (ldat)a[5]_any, (const char *)a[6]_vec);
+        a[0]_obj = (obj)sockCreate4MenuAny((obj)a[1]_obj, (Twindow)a[2]_obj, (udat)a[3]_any, (byte)a[4]_any, (ldat)a[5]_any, (const char *)a[6]_vec);
     break;
 
 

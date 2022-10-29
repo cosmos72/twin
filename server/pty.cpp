@@ -241,7 +241,7 @@ static byte switchtoTty(void) {
 }
 
 /* exported API: fork() a program in a pseudo-teletype */
-byte spawnInWindow(window Window, const char *arg0, const char *const *argv) {
+byte spawnInWindow(Twindow Window, const char *arg0, const char *const *argv) {
   pid_t childpid;
   remotedata *data;
 

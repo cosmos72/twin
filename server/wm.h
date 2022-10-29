@@ -21,15 +21,15 @@ struct wm_ctx {
   udat Code; /* keyboard key / mouse buttons pressed */
   udat ShiftFlags;
   dat i, j;                /* mouse coordinates */
-  ldat Left, Up, Rgt, Dwn; /* window (W) corners */
+  ldat Left, Up, Rgt, Dwn; /* Twindow (W) corners */
 };
 
 byte InitWM(void);
 void QuitWM(void);
 
 void AskCloseWidget(Twidget W);
-void Check4Resize(window W);
-void MaximizeWindow(window W, byte full_screen);
+void Check4Resize(Twindow W);
+void MaximizeWindow(Twindow W, byte full_screen);
 void ShowWinList(wm_ctx *C);
 
 void FocusCtx(wm_ctx *C);

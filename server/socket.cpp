@@ -378,18 +378,18 @@ static gadget sockCreateGadget(Twidget Parent, dat XWidth, dat YWidth, const cha
                                tcolor ColTextSelect, tcolor ColTextDisabled,
                                tcolor ColTextSelectDisabled, dat Left, dat Up);
 
-static window sockCreateWindow(dat TitleLen, const char *Title, const tcolor *ColTitle, menu Menu,
-                               tcolor ColText, uldat CursorType, uldat Attr, uldat Flags,
-                               dat XWidth, dat YWidth, dat ScrollBackLines);
-static void sockWriteCharsetWindow(window Window, uldat Len, const char *charset_bytes);
-static void sockWriteUtf8Window(window Window, uldat Len, const char *utf8_bytes);
-static void sockWriteTRuneWindow(window Window, uldat Len, const trune *runes);
-static void sockWriteTCellWindow(window Window, dat x, dat y, uldat Len, const tcell *cells);
-static void sockSetTitleWindow(window Window, dat titlelen, const char *title);
+static Twindow sockCreateWindow(dat TitleLen, const char *Title, const tcolor *ColTitle, menu Menu,
+                                tcolor ColText, uldat CursorType, uldat Attr, uldat Flags,
+                                dat XWidth, dat YWidth, dat ScrollBackLines);
+static void sockWriteCharsetWindow(Twindow Window, uldat Len, const char *charset_bytes);
+static void sockWriteUtf8Window(Twindow Window, uldat Len, const char *utf8_bytes);
+static void sockWriteTRuneWindow(Twindow Window, uldat Len, const trune *runes);
+static void sockWriteTCellWindow(Twindow Window, dat x, dat y, uldat Len, const tcell *cells);
+static void sockSetTitleWindow(Twindow Window, dat titlelen, const char *title);
 
-static row sockFindRowByCodeWindow(window Window, dat Code);
+static row sockFindRowByCodeWindow(Twindow Window, dat Code);
 
-static Tmenuitem sockCreate4MenuAny(obj Parent, window Window, udat Code, byte Flags, ldat Len,
+static Tmenuitem sockCreate4MenuAny(obj Parent, Twindow Window, udat Code, byte Flags, ldat Len,
                                     const char *Name);
 
 #define sockRestackChildrenRow RestackRows
@@ -1082,7 +1082,7 @@ static void sockResizeWidget(Twidget W, dat X, dat Y) {
     if (IS_WINDOW(W)) {
       if (!(W->Flags & WINDOWFL_BORDERLESS))
         X += 2, Y += 2;
-      ResizeRelWindow((window)W, X - W->XWidth, Y - W->YWidth);
+      ResizeRelWindow((Twindow)W, X - W->XWidth, Y - W->YWidth);
     } else if (IS_GADGET(W)) {
       ResizeGadget((gadget)W, X, Y);
     } else {
@@ -1106,12 +1106,12 @@ static void sockCirculateChildrenWidget(Twidget W, byte up_or_down) {
 static void sockCirculateChildrenRow(obj O, byte up_or_down) {
   row R = (row)0;
   if (O) {
-    if (IS_WINDOW(O) && W_USE((window)O, USEROWS)) {
+    if (IS_WINDOW(O) && W_USE((Twindow)O, USEROWS)) {
 
       if (up_or_down == TW_CIRCULATE_RAISE_LAST)
-        R = ((window)O)->USE.R.LastRow;
+        R = ((Twindow)O)->USE.R.LastRow;
       else if (up_or_down == TW_CIRCULATE_LOWER_FIRST)
-        R = ((window)O)->USE.R.FirstRow;
+        R = ((Twindow)O)->USE.R.FirstRow;
 
     } else if (IS_MENU(O)) {
 
@@ -1141,17 +1141,17 @@ static gadget sockCreateGadget(Twidget Parent, dat XWidth, dat YWidth, const cha
   return (gadget)0;
 }
 
-static window sockCreateWindow(dat TitleLen, const char *Title, const tcolor *ColTitle, menu Menu,
-                               tcolor ColText, uldat CursorType, uldat Attr, uldat Flags,
-                               dat XWidth, dat YWidth, dat ScrollBackLines) {
+static Twindow sockCreateWindow(dat TitleLen, const char *Title, const tcolor *ColTitle, menu Menu,
+                                tcolor ColText, uldat CursorType, uldat Attr, uldat Flags,
+                                dat XWidth, dat YWidth, dat ScrollBackLines) {
   Tmsgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
     return New(window)(Owner, TitleLen, Title, ColTitle, Menu, ColText, CursorType, Attr, Flags,
                        XWidth, YWidth, ScrollBackLines);
-  return (window)0;
+  return (Twindow)0;
 }
 
-static void sockWriteCharsetWindow(window Window, uldat Len, const char *charset_bytes) {
+static void sockWriteCharsetWindow(Twindow Window, uldat Len, const char *charset_bytes) {
   if (Window) {
     if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
       Act(TtyWriteCharset, Window)(Window, Len, charset_bytes);
@@ -1160,7 +1160,7 @@ static void sockWriteCharsetWindow(window Window, uldat Len, const char *charset
   }
 }
 
-static void sockWriteUtf8Window(window Window, uldat Len, const char *utf8_bytes) {
+static void sockWriteUtf8Window(Twindow Window, uldat Len, const char *utf8_bytes) {
   if (Window) {
     if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
       Act(TtyWriteUtf8, Window)(Window, Len, utf8_bytes);
@@ -1169,7 +1169,7 @@ static void sockWriteUtf8Window(window Window, uldat Len, const char *utf8_bytes
   }
 }
 
-static void sockWriteTRuneWindow(window Window, uldat Len, const trune *runes) {
+static void sockWriteTRuneWindow(Twindow Window, uldat Len, const trune *runes) {
   if (Window) {
     if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
       Act(TtyWriteTRune, Window)(Window, Len, runes);
@@ -1178,7 +1178,7 @@ static void sockWriteTRuneWindow(window Window, uldat Len, const trune *runes) {
   }
 }
 
-static void sockWriteTCellWindow(window Window, dat x, dat y, uldat Len, const tcell *cells) {
+static void sockWriteTCellWindow(Twindow Window, dat x, dat y, uldat Len, const tcell *cells) {
   if (Window) {
     if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
       Act(TtyWriteTCell, Window)(Window, x, y, Len, cells);
@@ -1187,7 +1187,7 @@ static void sockWriteTCellWindow(window Window, dat x, dat y, uldat Len, const t
   }
 }
 
-static void sockSetTitleWindow(window Window, dat titlelen, const char *title) {
+static void sockSetTitleWindow(Twindow Window, dat titlelen, const char *title) {
   char *_title = NULL;
 
   if (Window) {
@@ -1196,14 +1196,14 @@ static void sockSetTitleWindow(window Window, dat titlelen, const char *title) {
   }
 }
 
-static row sockFindRowByCodeWindow(window Window, dat Code) {
+static row sockFindRowByCodeWindow(Twindow Window, dat Code) {
   if (Window) {
     return Act(FindRowByCode, Window)(Window, Code, NULL);
   }
   return (row)0;
 }
 
-static Tmenuitem sockCreate4MenuAny(obj Parent, window Window, udat Code, byte Flags, ldat Len,
+static Tmenuitem sockCreate4MenuAny(obj Parent, Twindow Window, udat Code, byte Flags, ldat Len,
                                     const char *Name) {
   return Do(Create4Menu, menuitem)(Parent, Window, Code, Flags, Len, Name);
 }
@@ -1559,7 +1559,7 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
 
         switch (tMsg->Type) {
         case TW_MSG_DISPLAY:
-          if (sizeof(struct event_display) == sizeof(window) + 4 * sizeof(dat) + sizeof(byte *) &&
+          if (sizeof(struct event_display) == sizeof(Twindow) + 4 * sizeof(dat) + sizeof(byte *) &&
               sizeof(struct s_tevent_display) ==
                   sizeof(twindow) + 4 * sizeof(dat) + sizeof(uldat)) {
 
@@ -1579,7 +1579,7 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
           break;
         case TW_MSG_WIDGET_KEY:
           if (sizeof(struct event_keyboard) ==
-                  sizeof(window) + 3 * sizeof(dat) + 2 * sizeof(byte) &&
+                  sizeof(Twindow) + 3 * sizeof(dat) + 2 * sizeof(byte) &&
               sizeof(struct s_tevent_keyboard) ==
                   sizeof(twindow) + 3 * sizeof(dat) + 2 * sizeof(byte)) {
 
@@ -1598,7 +1598,7 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
 
           break;
         case TW_MSG_WIDGET_MOUSE:
-          if (sizeof(struct event_mouse) == sizeof(window) + 4 * sizeof(dat) &&
+          if (sizeof(struct event_mouse) == sizeof(Twindow) + 4 * sizeof(dat) &&
               sizeof(struct s_tevent_mouse) == sizeof(twindow) + 4 * sizeof(dat)) {
 
             CopyMem(&tMsg->Event.EventMouse.Code, &Msg->Event.EventMouse.Code, 4 * sizeof(dat));
@@ -1610,7 +1610,7 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
           }
           break;
         case TW_MSG_SELECTIONCLEAR:
-          if (sizeof(struct event_common) == sizeof(window) + 2 * sizeof(dat) &&
+          if (sizeof(struct event_common) == sizeof(Twindow) + 2 * sizeof(dat) &&
               sizeof(struct s_tevent_common) == sizeof(twindow) + 2 * sizeof(dat)) {
 
             CopyMem(&tMsg->Event.EventCommon.Code, &Msg->Event.EventCommon.Code, 2 * sizeof(dat));
@@ -1639,7 +1639,7 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
                 break;
 #endif
         case TW_MSG_USER_CONTROL:
-          if (sizeof(struct event_control) == sizeof(window) + 4 * sizeof(dat) + sizeof(uldat) &&
+          if (sizeof(struct event_control) == sizeof(Twindow) + 4 * sizeof(dat) + sizeof(uldat) &&
               sizeof(struct s_tevent_control) ==
                   sizeof(twindow) + 4 * sizeof(dat) + sizeof(uldat)) {
 
@@ -2394,8 +2394,8 @@ static void SocketH(Tmsgport MsgPort) {
     Msg->Remove();
 
     if (Msg->Type == msg_widget_mouse && (W = Msg->Event.EventMouse.W) && IS_WINDOW(W) &&
-        (W->Flags & WINDOWFL_USECONTENTS) && ((window)W)->USE.C.TtyData &&
-        ((window)W)->USE.C.TtyData->Flags & (TTY_REPORTMOUSE_TWTERM | TTY_REPORTMOUSE_XTERM)) {
+        (W->Flags & WINDOWFL_USECONTENTS) && ((Twindow)W)->USE.C.TtyData &&
+        ((Twindow)W)->USE.C.TtyData->Flags & (TTY_REPORTMOUSE_TWTERM | TTY_REPORTMOUSE_XTERM)) {
 
       len = CreateXTermMouseEvent(&Msg->Event.EventMouse, 10, buf);
       /*

@@ -33,20 +33,20 @@ static char *default_args[3];
 static Tmsgport Term_MsgPort;
 
 static void TwinTermH(Tmsgport MsgPort);
-static void TwinTermIO(int Fd, window Window);
+static void TwinTermIO(int Fd, Twindow Window);
 
 static void termShutDown(Twidget W) {
-  window Window;
+  Twindow Window;
   if (IS_WINDOW(W)) {
-    Window = (window)W;
+    Window = (Twindow)W;
     if (Window->RemoteData.Fd != NOFD)
       close(Window->RemoteData.Fd);
     UnRegisterWindowFdIO(Window);
   }
 }
 
-static window newTermWindow(const char *title) {
-  window Window;
+static Twindow newTermWindow(const char *title) {
+  Twindow Window;
 
   Window = New(window)(Term_MsgPort, strlen(title), title, NULL, Term_Menu, TCOL(twhite, tblack),
                        LINECURSOR,
@@ -66,8 +66,8 @@ static window newTermWindow(const char *title) {
   return Window;
 }
 
-static window OpenTerm(const char *arg0, const char *const *argv) {
-  window Window;
+static Twindow OpenTerm(const char *arg0, const char *const *argv) {
+  Twindow Window;
   const char *title;
 
   /* if {arg0, argv} is {NULL, ...} or {"", ... } then start user's shell */
@@ -101,13 +101,13 @@ static void TwinTermH(Tmsgport MsgPort) {
   msg Msg;
   event_any *Event;
   udat Code /*, Repeat*/;
-  window Win;
+  Twindow Win;
 
   while ((Msg = Term_MsgPort->FirstMsg)) {
     Msg->Remove();
 
     Event = &Msg->Event;
-    Win = (window)Event->EventSelection.W;
+    Win = (Twindow)Event->EventSelection.W;
     if (Win && !IS_WINDOW(Win))
       Win = NULL;
 
@@ -123,7 +123,7 @@ static void TwinTermH(Tmsgport MsgPort) {
 
     } else if (Msg->Type == msg_selection_notify) {
 
-      if ((Win = (window)Id2Obj(window_magic_byte, Event->EventSelectionNotify.ReqPrivate))) {
+      if ((Win = (Twindow)Id2Obj(window_magic_byte, Event->EventSelectionNotify.ReqPrivate))) {
         (void)RemoteWindowWriteQueue(Win, Event->EventSelectionNotify.Len,
                                      Event->EventSelectionNotify.Data);
       }
@@ -166,7 +166,7 @@ static void TwinTermH(Tmsgport MsgPort) {
   }
 }
 
-static void TwinTermIO(int Fd, window Window) {
+static void TwinTermIO(int Fd, Twindow Window) {
   static char buf[TW_BIGBUFF];
   uldat got = 0, chunk = 0;
 
@@ -210,7 +210,7 @@ static void OverrideMethods(bool enter) {
 }
 
 EXTERN_C byte InitModule(module Module) {
-  window Window;
+  Twindow Window;
   const char *shellpath, *shell;
 
   if (((shellpath = getenv("SHELL")) || (shellpath = "/bin/sh")) &&

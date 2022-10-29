@@ -37,34 +37,34 @@ void DrawAreaWidget(Twidget w);
 
 void DrawScreen(screen s);
 
-void DrawBorderWindow(window w, byte Flags);
+void DrawBorderWindow(Twindow w, byte Flags);
 #define BORDER_LEFT (0x1)
 #define BORDER_UP (0x2)
 #define BORDER_RIGHT (0x4)
 #define BORDER_DOWN (0x8)
 #define BORDER_ANY (0xF)
 
-void DrawShadeWindow(window w, dat xstart, dat ystart, dat xend, dat yend, byte internal);
-void DrawAreaShadeWindow(screen s, window w, dat xstart, dat ystart, dat xend, dat yend,
+void DrawShadeWindow(Twindow w, dat xstart, dat ystart, dat xend, dat yend, byte internal);
+void DrawAreaShadeWindow(screen s, Twindow w, dat xstart, dat ystart, dat xend, dat yend,
                          ldat shleft, ldat shup, ldat shrgt, ldat shdwn, byte internal);
 /* this also draws the shadow: */
-void DrawAreaWindow2(window w);
+void DrawAreaWindow2(Twindow w);
 
 void DrawPartialWidget(Twidget w, dat x1, dat y1, dat x2, dat y2);
 void DrawLogicWidget(Twidget w, ldat x1, ldat y1, ldat x2, ldat y2);
 
-void ReDrawRolledUpAreaWindow(window w, bool shaded);
+void ReDrawRolledUpAreaWindow(Twindow w, bool shaded);
 
 void DrawMenuScreen(screen s, dat xstart, dat xend);
 
-void ClearHilight(window w);
-void StartHilight(window w, ldat xsel, ldat ysel);
-void ExtendHilight(window w, ldat xsel, ldat ysel);
+void ClearHilight(Twindow w);
+void StartHilight(Twindow w, ldat xsel, ldat ysel);
+void ExtendHilight(Twindow w, ldat xsel, ldat ysel);
 
 screen ScreenParent(Twidget w);
-window WindowParent(Twidget w);
+Twindow WindowParent(Twidget w);
 Twidget NonScreenParent(Twidget w);
-window FindCursorWindow(void);
+Twindow FindCursorWindow(void);
 byte ContainsCursor(Twidget w);
 Twidget RecursiveFindWidgetAt(Twidget Parent, dat X, dat Y);
 

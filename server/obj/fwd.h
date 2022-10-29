@@ -22,7 +22,7 @@ typedef struct s_remotedata remotedata;
 typedef struct Sobj *obj;
 typedef struct Swidget *Twidget;
 typedef struct Sgadget *gadget;
-typedef struct Swindow *window;
+typedef struct Swindow *Twindow;
 typedef struct Sscreen *screen;
 typedef struct Sgroup *ggroup;
 typedef struct Srow *row;

@@ -94,9 +94,9 @@ static menu Builtin_Menu;
 static Tmenuitem Builtin_File;
 static Tmenuitem Builtin_Modules;
 
-static window AboutWin, ClockWin, OptionWin, ButtonWin, DisplayWin, DisplaySubWin, ExecuteWin;
+static Twindow AboutWin, ClockWin, OptionWin, ButtonWin, DisplayWin, DisplaySubWin, ExecuteWin;
 
-window WinList, MessagesWin;
+Twindow WinList, MessagesWin;
 
 static gadget ButtonOK_About, ButtonRemove, ButtonThis;
 
@@ -118,7 +118,7 @@ static void Clock_Update(void) {
 }
 
 static void TweakMenuRows(Tmenuitem Item, udat code, byte flag) {
-  window Win;
+  Twindow Win;
   row Row;
 
   if ((Win = Item->Window) && (Row = Win->FindRowByCode(code, (ldat *)0)))
@@ -149,7 +149,7 @@ static void SelectWinList(void) {
 
   for (W = Screen->FirstW; W; W = W->Next) {
     if (W == (Twidget)WinList || !IS_WINDOW(W) ||
-        (((window)W)->Flags & (WINDOWFL_NOTVISIBLE | WINDOWFL_MENU)))
+        (((Twindow)W)->Flags & (WINDOWFL_NOTVISIBLE | WINDOWFL_MENU)))
       continue;
     if (!n)
       break;
@@ -157,7 +157,7 @@ static void SelectWinList(void) {
   }
   if (!n && W) {
     RaiseWidget(W, ttrue);
-    CenterWindow((window)W);
+    CenterWindow((Twindow)W);
   }
 }
 
@@ -343,7 +343,7 @@ void FillButtonWin(void) {
   }
   ResizeRelWindow(ButtonWin, 0, (dat)(3 + i * 2) - (dat)ButtonWin->YWidth);
 
-  /* clear the window: */
+  /* clear the Twindow: */
   ButtonWin->TtyWriteCharset(4, "\033[2J");
 
   for (j = BUTTON_MAX - 1; j >= 0; j--) {
@@ -443,7 +443,7 @@ static void UpdateDisplayWin(Twidget displayWin) {
   }
 }
 
-static void SelectRowWindow(window CurrWin, ldat newCurY) {
+static void SelectRowWindow(Twindow CurrWin, ldat newCurY) {
   ldat oldCurY = CurrWin->CurY;
 
   CurrWin->CurY = newCurY;
@@ -487,7 +487,7 @@ static void BuiltinH(Tmsgport MsgPort) {
   msg Msg;
   event_any *Event;
   screen Screen;
-  window NewWindow, tempWin;
+  Twindow NewWindow, tempWin;
   row Row;
   udat Code;
 
@@ -499,13 +499,13 @@ static void BuiltinH(Tmsgport MsgPort) {
 
     switch (Msg->Type) {
     case msg_widget_gadget:
-      tempWin = (window)Event->EventGadget.W;
+      tempWin = (Twindow)Event->EventGadget.W;
       Code = Event->EventGadget.Code;
       /*0 == Code Chiusura */
       if (!Code || Code == COD_CANCEL || Code == COD_OK) {
 
         tempWin->UnMap();
-        /* no window needs Delete() here */
+        /* no Twindow needs Delete() here */
 
         if (tempWin == ClockWin)
           Builtin_MsgPort->WakeUp = tfalse;
@@ -625,7 +625,7 @@ static void BuiltinH(Tmsgport MsgPort) {
       break;
 
     case msg_widget_key:
-      tempWin = (window)Msg->Event.EventCommon.W;
+      tempWin = (Twindow)Msg->Event.EventCommon.W;
       if (tempWin == WinList) {
         switch (Msg->Event.EventKeyboard.Code) {
         case TW_Escape:
@@ -669,7 +669,7 @@ static void BuiltinH(Tmsgport MsgPort) {
       break;
 
     case msg_widget_mouse:
-      tempWin = (window)Msg->Event.EventCommon.W;
+      tempWin = (Twindow)Msg->Event.EventCommon.W;
 
       if (tempWin == WinList || tempWin == DisplayWin) {
         dat EventMouseX, EventMouseY;
@@ -696,7 +696,7 @@ static void BuiltinH(Tmsgport MsgPort) {
       break;
 
     case msg_selection_notify:
-      tempWin = (window)Id2Obj(window_magic_byte, Msg->Event.EventSelectionNotify.ReqPrivate);
+      tempWin = (Twindow)Id2Obj(window_magic_byte, Msg->Event.EventSelectionNotify.ReqPrivate);
       if (tempWin && tempWin == ExecuteWin) {
         switch (Msg->Event.EventSelectionNotify.Magic) {
         case SEL_UTF8MAGIC:
@@ -761,9 +761,9 @@ void UpdateWinList(void) {
 
   for (W = Screen->FirstW; W; W = W->Next) {
     if (W == (Twidget)WinList || !IS_WINDOW(W) ||
-        (((window)W)->Flags & (WINDOWFL_NOTVISIBLE | WINDOWFL_MENU)))
+        (((Twindow)W)->Flags & (WINDOWFL_NOTVISIBLE | WINDOWFL_MENU)))
       continue;
-    (void)Row4Menu(WinList, (udat)0, ROW_ACTIVE, ((window)W)->NameLen, ((window)W)->Name);
+    (void)Row4Menu(WinList, (udat)0, ROW_ACTIVE, ((Twindow)W)->NameLen, ((Twindow)W)->Name);
   }
 }
 
@@ -808,7 +808,7 @@ static byte InitScreens(void) {
 }
 
 byte InitBuiltin(void) {
-  window W;
+  Twindow W;
   const char *greeting =
       "\n"
       "                TWIN              \n"

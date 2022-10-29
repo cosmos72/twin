@@ -205,7 +205,7 @@ uldat RegisterRemoteFd(int Fd, handler_io HandlerIO) {
   return RegisterRemote(Fd, NULL, (handler_obj)HandlerIO);
 }
 
-byte RegisterWindowFdIO(window Window, handler_window HandlerWindow) {
+byte RegisterWindowFdIO(Twindow Window, handler_window HandlerWindow) {
   return (Window->RemoteData.FdSlot = RegisterRemote(Window->RemoteData.Fd, (obj)Window,
                                                      (handler_obj)HandlerWindow)) != NOSLOT;
 }
@@ -257,7 +257,7 @@ void UnRegisterRemote(uldat Slot) {
   }
 }
 
-void UnRegisterWindowFdIO(window Window) {
+void UnRegisterWindowFdIO(Twindow Window) {
   if (Window && Window->RemoteData.FdSlot < FdTop) {
     UnRegisterRemote(Window->RemoteData.FdSlot);
     Window->RemoteData.FdSlot = NOSLOT;
@@ -300,7 +300,7 @@ void RemotePidIsDead(pid_t pid) {
 
     /* only windows can be directly attached to a child process! */
     if (LS.Fd != NOFD && (HData = LS.HandlerData) && IS_WINDOW(HData) &&
-        (RData = &((window)HData)->RemoteData, RData->ChildPid == pid)) {
+        (RData = &((Twindow)HData)->RemoteData, RData->ChildPid == pid)) {
 
       if ((Fd = LS.Fd) >= 0) /* might be specFD... */
         close(Fd);

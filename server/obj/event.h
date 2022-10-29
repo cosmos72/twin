@@ -187,7 +187,7 @@ struct event_gadget {
 #define SIZEOF_EVENT_GADGET (sizeof(event_gadget))
 
 struct event_menu {
-  window W;
+  Twindow W;
   udat Code, pad;
   menu Menu;
   row Row;
