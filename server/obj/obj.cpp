@@ -11,7 +11,7 @@
  */
 
 #include "alloc.h" // AllocMem0()
-#include "fn.h"    // Fn_obj
+#include "fn.h"    // Fn_Tobj
 #include "id.h"    // AssignId()
 #include "obj/obj.h"
 
@@ -22,7 +22,7 @@ obj Sobj::Create() {
   void *addr = AllocMem0(sizeof(s_obj_entry));
   if (addr) {
     o = new (addr) s_obj_entry();
-    o->Fn = Fn_obj;
+    o->Fn = Fn_Tobj;
     if (!o->Init()) {
       o->Delete();
       o = NULL;

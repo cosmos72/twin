@@ -15,10 +15,9 @@
 
 #include "obj/fwd.h"
 
-/* in the same order as the #defines above ! */
 struct SstructFn {
   TobjFn obj;
-  TwidgetFn Twidget;
+  TwidgetFn widget;
   TgadgetFn gadget;
   TwindowFn window;
   TscreenFn screen;
@@ -26,28 +25,28 @@ struct SstructFn {
   TrowFn row;
   TmenuitemFn menuitem;
   TmenuFn menu;
-  TmsgportFn msgport;
+  TmsgportFn Tmsgport;
   TmutexFn mutex;
   TmsgFn msg;
   TmoduleFn module;
-  TdisplayFn Tdisplay;
+  TdisplayFn display;
   TobjFn all;
 };
 
 extern TstructFn FnStruct;
-#define Fn_obj (FnStruct.obj)
-#define Fn_Twidget (FnStruct.Twidget)
-#define Fn_gadget (FnStruct.gadget)
-#define Fn_window (FnStruct.window)
-#define Fn_screen (FnStruct.screen)
-#define Fn_group (FnStruct.group)
-#define Fn_row (FnStruct.row)
-#define Fn_menuitem (FnStruct.menuitem)
-#define Fn_menu (FnStruct.menu)
-#define Fn_msgport (FnStruct.msgport)
-#define Fn_mutex (FnStruct.mutex)
-#define Fn_msg (FnStruct.msg)
-#define Fn_module (FnStruct.module)
-#define Fn_display_hw (FnStruct.Tdisplay)
+#define Fn_Tobj (FnStruct.obj)
+#define Fn_Twidget (FnStruct.widget)
+#define Fn_Tgadget (FnStruct.gadget)
+#define Fn_Twindow (FnStruct.window)
+#define Fn_Tscreen (FnStruct.screen)
+#define Fn_Tgroup (FnStruct.group)
+#define Fn_Trow (FnStruct.row)
+#define Fn_Tmenuitem (FnStruct.menuitem)
+#define Fn_Tmenu (FnStruct.menu)
+#define Fn_Tmsgport (FnStruct.Tmsgport)
+#define Fn_Tmutex (FnStruct.mutex)
+#define Fn_Tmsg (FnStruct.msg)
+#define Fn_Tmodule (FnStruct.module)
+#define Fn_Tdisplay (FnStruct.display)
 
 #endif /* TWIN_FN_H */

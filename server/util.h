@@ -45,9 +45,9 @@ timevalue *SumTime(timevalue *Result, timevalue *Time, timevalue *Incr);
 timevalue *SubTime(timevalue *Result, timevalue *Time, timevalue *Decr);
 timevalue *IncrTime(timevalue *Time, timevalue *Incr);
 timevalue *DecrTime(timevalue *Time, timevalue *Decr);
-void SortMsgPortByCallTime(msgport Port);
+void SortMsgPortByCallTime(Tmsgport Port);
 void SortAllMsgPortsByCallTime(void);
-byte SendControlMsg(msgport MsgPort, udat Code, udat Len, const char *Data);
+byte SendControlMsg(Tmsgport MsgPort, udat Code, udat Len, const char *Data);
 
 byte Minimum(byte MaxIndex, const ldat *Array);
 

@@ -19,24 +19,24 @@
 
 struct SmsgportFn {
   uldat Magic;
-  void (*Insert)(msgport, all, msgport Prev, msgport Next);
-  void (*Remove)(msgport);
-  void (*Delete)(msgport);
-  void (*ChangeField)(msgport, udat field, uldat CLEARMask, uldat XORMask);
-  /* msgport */
+  void (*Insert)(Tmsgport, all, Tmsgport Prev, Tmsgport Next);
+  void (*Remove)(Tmsgport);
+  void (*Delete)(Tmsgport);
+  void (*ChangeField)(Tmsgport, udat field, uldat CLEARMask, uldat XORMask);
+  /* Tmsgport */
   TobjFn Fn_Obj;
 };
 
 struct Smsgport : public Sobj {
   TmsgportFn Fn;
-  msgport Prev, Next; /* list in the same All */
+  Tmsgport Prev, Next; /* list in the same All */
   all All;
-  /* msgport */
+  /* Tmsgport */
   byte WakeUp, NameLen;
   char *Name;
   /* Note : a MsgPort is always woken up if it has pending messages. */
-  void (*Handler)(msgport);
-  void (*ShutDownHook)(msgport);
+  void (*Handler)(Tmsgport);
+  void (*ShutDownHook)(Tmsgport);
   timevalue CallTime, PauseDuration;
   remotedata RemoteData;
   msg FirstMsg, LastMsg;
@@ -46,16 +46,16 @@ struct Smsgport : public Sobj {
   mutex FirstMutex, LastMutex;  /* mutexes owned by this MsgPort */
   Tdisplay AttachHW;            /* that was attached as told by MsgPort */
 
-  static msgport Create(byte NameLen, const char *Name, tany PauseSec, tany PauseFraction,
-                        byte WakeUp, void (*Handler)(msgport));
-  msgport Init(byte NameLen, const char *Name, tany PauseSec, tany PauseFraction, byte WakeUp,
-               void (*Handler)(msgport));
+  static Tmsgport Create(byte NameLen, const char *Name, tany PauseSec, tany PauseFraction,
+                         byte WakeUp, void (*Handler)(Tmsgport));
+  Tmsgport Init(byte NameLen, const char *Name, tany PauseSec, tany PauseFraction, byte WakeUp,
+                void (*Handler)(Tmsgport));
 
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(all a, msgport prev, msgport next) {
+  void Insert(all a, Tmsgport prev, Tmsgport next) {
     Fn->Insert(this, a, prev, next);
   }
   void Remove() {
@@ -64,7 +64,7 @@ struct Smsgport : public Sobj {
   void Delete() {
     Fn->Delete(this);
   }
-  /* msgport */
+  /* Tmsgport */
 };
 
 /* MsgPort->WakeUp: */

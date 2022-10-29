@@ -78,7 +78,7 @@ typedef struct s_button_vec {
 
 struct Sselection {
   timevalue Time;
-  msgport Owner;
+  Tmsgport Owner;
   Tdisplay OwnerOnce;
   uldat Magic;
   String Data;
@@ -94,7 +94,7 @@ struct Sall : public Sobj {
 
   /* all */
   screen FirstScreen, LastScreen;
-  msgport FirstMsgPort, LastMsgPort, RunMsgPort;
+  Tmsgport FirstMsgPort, LastMsgPort, RunMsgPort;
   mutex FirstMutex, LastMutex;
 
   module FirstModule, LastModule;

@@ -12,7 +12,7 @@
 
 #include "algo.h"  // Max2()
 #include "alloc.h" // AllocMem0(), CloneStr2TRune()
-#include "fn.h"    // Fn_menuitem
+#include "fn.h"    // Fn_Tmenuitem
 #include "obj/menuitem.h"
 #include "resize.h" // SyncMenu()
 #include "twin.h"   // IS_WINDOW()
@@ -20,16 +20,16 @@
 #include <new>
 #include <Tw/datasizes.h> // TW_MAXLDAT
 
-menuitem Smenuitem::Create(obj parent, window w, udat code, byte flags, dat left, ldat len,
-                           dat shortcut, const char *name) {
-  menuitem item = NULL;
+Tmenuitem Smenuitem::Create(obj parent, window w, udat code, byte flags, dat left, ldat len,
+                            dat shortcut, const char *name) {
+  Tmenuitem item = NULL;
   if (parent && (IS_MENU(parent) || (IS_WINDOW(parent) && W_USE((window)parent, USEROWS))) &&
       (!w || IS_WINDOW(w)) && name) {
 
     void *addr = AllocMem0(sizeof(Smenuitem));
     if (addr) {
       item = new (addr) Smenuitem();
-      item->Fn = Fn_menuitem;
+      item->Fn = Fn_Tmenuitem;
       if (!item->Init(parent, w, code, flags, left, len, shortcut, name)) {
         item->Delete();
         item = NULL;
@@ -39,8 +39,8 @@ menuitem Smenuitem::Create(obj parent, window w, udat code, byte flags, dat left
   return item;
 }
 
-menuitem Smenuitem::Init(obj parent, window w, udat code, byte flags, dat left, ldat len,
-                         dat shortcut, const char *name) {
+Tmenuitem Smenuitem::Init(obj parent, window w, udat code, byte flags, dat left, ldat len,
+                          dat shortcut, const char *name) {
 
   if (parent && (IS_MENU(parent) || (IS_WINDOW(parent) && W_USE((window)parent, USEROWS))) &&
       (!w || IS_WINDOW(w)) && name && (this->Text = CloneStr2TRune(name, len)) &&
@@ -64,7 +64,7 @@ menuitem Smenuitem::Init(obj parent, window w, udat code, byte flags, dat left, 
       if ((ldat)w->YWidth < (len = Min2(TW_MAXDAT, w->HLogic + (ldat)3)))
         w->YWidth = len;
 
-      this->Insert((obj)w, (menuitem)w->USE.R.LastRow, NULL);
+      this->Insert((obj)w, (Tmenuitem)w->USE.R.LastRow, NULL);
     } else {
       this->Insert(parent, ((menu)parent)->LastI, NULL);
       SyncMenu((menu)parent);

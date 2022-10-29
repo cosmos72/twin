@@ -17,41 +17,41 @@
 
 struct SmenuFn {
   uldat Magic;
-  void (*Insert)(menu, msgport, menu Prev, menu Next);
+  void (*Insert)(menu, Tmsgport, menu Prev, menu Next);
   void (*Remove)(menu);
   void (*Delete)(menu);
   void (*ChangeField)(menu, udat field, uldat CLEARMask, uldat XORMask);
   /* menu */
   TobjFn Fn_Obj;
   row (*SetInfo)(menu, byte Flags, ldat Len, const char *Text, const tcolor *ColText);
-  menuitem (*FindItem)(menu, dat i);
-  menuitem (*GetSelectedItem)(menu);
-  menuitem (*RecursiveGetSelectedItem)(menu, dat *depth);
-  void (*SetSelectedItem)(menu, menuitem);
+  Tmenuitem (*FindItem)(menu, dat i);
+  Tmenuitem (*GetSelectedItem)(menu);
+  Tmenuitem (*RecursiveGetSelectedItem)(menu, dat *depth);
+  void (*SetSelectedItem)(menu, Tmenuitem);
 };
 
 struct Smenu : public Sobj {
   TmenuFn Fn;
-  menu Prev, Next; /* in the same msgport */
-  msgport MsgPort;
+  menu Prev, Next; /* in the same Tmsgport */
+  Tmsgport MsgPort;
   /* menu */
   tcolor ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut, ColSelShtCut;
   byte CommonItems;
   byte FlagDefColInfo;
   row Info;
-  menuitem FirstI, LastI, SelectI;
+  Tmenuitem FirstI, LastI, SelectI;
 
-  static menu Create(msgport port, tcolor colitem, tcolor colselect, tcolor coldisabled,
+  static menu Create(Tmsgport port, tcolor colitem, tcolor colselect, tcolor coldisabled,
                      tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
                      byte flagdefcolinfo);
-  menu Init(msgport port, tcolor colitem, tcolor colselect, tcolor coldisabled,
+  menu Init(Tmsgport port, tcolor colitem, tcolor colselect, tcolor coldisabled,
             tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut, byte flagdefcolinfo);
 
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(msgport owner, menu prev, menu next) {
+  void Insert(Tmsgport owner, menu prev, menu next) {
     Fn->Insert(this, owner, prev, next);
   }
   void Remove() {
@@ -64,16 +64,16 @@ struct Smenu : public Sobj {
   row SetInfo(byte flags, ldat len, const char *text, const tcolor *coltext) {
     return Fn->SetInfo(this, flags, len, text, coltext);
   }
-  menuitem FindItem(dat i) {
+  Tmenuitem FindItem(dat i) {
     return Fn->FindItem(this, i);
   }
-  menuitem GetSelectedItem() {
+  Tmenuitem GetSelectedItem() {
     return Fn->GetSelectedItem(this);
   }
-  menuitem RecursiveGetSelectedItem(dat *depth) {
+  Tmenuitem RecursiveGetSelectedItem(dat *depth) {
     return Fn->RecursiveGetSelectedItem(this, depth);
   }
-  void SetSelectedItem(menuitem item) {
+  void SetSelectedItem(Tmenuitem item) {
     Fn->SetSelectedItem(this, item);
   }
 };

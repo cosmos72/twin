@@ -21,7 +21,7 @@
 #include <sys/types.h> /* pid_t */
 #endif
 
-/* values returned by Fn_window->FindBorder (modeled after STATE_*) */
+/* values returned by Fn_Twindow->FindBorder (modeled after STATE_*) */
 enum tpos /*: byte*/ {
   POS_TITLE = 10,
   POS_SIDE_LEFT = 11,
@@ -85,9 +85,9 @@ struct SwindowFn {
   void (*MapTopReal)(window, screen);
   void (*Raise)(window);
   void (*Lower)(window);
-  void (*Own)(window, msgport);
+  void (*Own)(window, Tmsgport);
   void (*DisOwn)(window);
-  void (*RecursiveDelete)(window, msgport);
+  void (*RecursiveDelete)(window, Tmsgport);
   void (*Expose)(window, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
                  const tcell *);
   byte (*InstallHook)(window, HookFn, HookFn *Where);
@@ -129,8 +129,8 @@ struct Swindow : public Sobj {
   uldat Attr;
   uldat Flags;
   ldat XLogic, YLogic;
-  Twidget O_Prev, O_Next; /* list with the same msgport (owner) */
-  msgport Owner;
+  Twidget O_Prev, O_Next; /* list with the same Tmsgport (owner) */
+  Tmsgport Owner;
   HookFn ShutDownHook; /* hooks for this Twidget */
   HookFn Hook, *WhereHook;
   HookFn MapUnMapHook;
@@ -143,7 +143,7 @@ struct Swindow : public Sobj {
   } USE;
   /* window */
   menu Menu;
-  menuitem MenuItem; /* from which the window depends */
+  Tmenuitem MenuItem; /* from which the window depends */
   dat NameLen;
   char *Name;
   tcolor *ColName;
@@ -161,11 +161,11 @@ struct Swindow : public Sobj {
   trune const *Charset; /* the byte -> trune translation to use */
 
   /* obj */
-  static window Create(msgport owner, dat titlelen, const char *title, const tcolor *coltitle,
+  static window Create(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle,
                        menu menu, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
                        dat xwidth, dat ywidth, dat scrollbacklines);
   static window Create4Menu(menu);
-  window Init(msgport owner, dat titlelen, const char *title, const tcolor *coltitle, menu menu,
+  window Init(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle, menu menu,
               tcolor coltext, uldat cursortype, uldat attr, uldat flags, dat xwidth, dat ywidth,
               dat scrollbacklines);
   uldat Magic() const {
@@ -220,13 +220,13 @@ struct Swindow : public Sobj {
   void Lower() {
     Fn->Lower(this);
   }
-  void Own(msgport port) {
+  void Own(Tmsgport port) {
     Fn->Own(this, port);
   }
   void DisOwn() {
     Fn->DisOwn(this);
   }
-  void RecursiveDelete(msgport port) {
+  void RecursiveDelete(Tmsgport port) {
     Fn->RecursiveDelete(this, port);
   }
   void Expose(dat xwidth, dat ywidth, dat left, dat up, const char *ascii, const trune *runes,

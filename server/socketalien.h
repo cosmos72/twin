@@ -761,7 +761,7 @@ static void FlipMoveMem(byte *mem, uldat len, uldat chunk) {
  * this can be called in nasty places like detaching non-exclusive displays
  * when an exclusive one is started. Must preserve Slot, Fd and other globals!
  */
-static void alienSendMsg(msgport MsgPort, msg Msg) {
+static void alienSendMsg(Tmsgport MsgPort, msg Msg) {
   byte *t;
   char *Src;
   uldat save_Slot = Slot, Len = 0, Tot, N;

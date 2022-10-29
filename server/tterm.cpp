@@ -30,9 +30,9 @@ static menu Term_Menu;
 
 static char *default_args[3];
 
-static msgport Term_MsgPort;
+static Tmsgport Term_MsgPort;
 
-static void TwinTermH(msgport MsgPort);
+static void TwinTermH(Tmsgport MsgPort);
 static void TwinTermIO(int Fd, window Window);
 
 static void termShutDown(Twidget W) {
@@ -97,7 +97,7 @@ static window OpenTerm(const char *arg0, const char *const *argv) {
   return NULL;
 }
 
-static void TwinTermH(msgport MsgPort) {
+static void TwinTermH(Tmsgport MsgPort) {
   msg Msg;
   event_any *Event;
   udat Code /*, Repeat*/;
@@ -188,9 +188,9 @@ static void TwinTermIO(int Fd, window Window) {
 
 #include "tty.h"
 
-static void OverrideMethods(byte enter) {
+static void OverrideMethods(bool enter) {
   if (enter) {
-    OverrideMethod(Twidget, KbdFocus, FakeKbdFocus, TtyKbdFocus);
+    OverrideMethod(widget, KbdFocus, FakeKbdFocus, TtyKbdFocus);
     OverrideMethod(gadget, KbdFocus, FakeKbdFocus, TtyKbdFocus);
     OverrideMethod(window, KbdFocus, FakeKbdFocus, TtyKbdFocus);
     OverrideMethod(window, TtyWriteCharset, FakeWriteCharset, TtyWriteCharset);
@@ -205,7 +205,7 @@ static void OverrideMethods(byte enter) {
     OverrideMethod(window, TtyWriteCharset, TtyWriteCharset, FakeWriteCharset);
     OverrideMethod(window, KbdFocus, TtyKbdFocus, FakeKbdFocus);
     OverrideMethod(gadget, KbdFocus, TtyKbdFocus, FakeKbdFocus);
-    OverrideMethod(Twidget, KbdFocus, TtyKbdFocus, FakeKbdFocus);
+    OverrideMethod(widget, KbdFocus, TtyKbdFocus, FakeKbdFocus);
   }
 }
 
@@ -232,7 +232,7 @@ EXTERN_C byte InitModule(module Module) {
       Item4MenuCommon(Term_Menu)) {
 
     RegisterExt(Term, Open, OpenTerm);
-    OverrideMethods(ttrue);
+    OverrideMethods(true);
 
     if (default_args[1][0] == '/')
       default_args[1][0] = '-';
@@ -247,7 +247,7 @@ EXTERN_C byte InitModule(module Module) {
 
 EXTERN_C void QuitModule(module Module) {
   UnRegisterExt(Term, Open, OpenTerm);
-  OverrideMethods(tfalse);
+  OverrideMethods(false);
   if (Term_MsgPort) {
     Term_MsgPort->Delete();
   }

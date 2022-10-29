@@ -12,7 +12,7 @@
 
 #include "alloc.h" // AllocMem()
 #include "log.h"
-#include "fn.h"     // Fn_msg
+#include "fn.h"     // Fn_Tmsg
 #include "obj/id.h" // AssignId()
 #include "obj/msg.h"
 #include "stl/fmt.h"
@@ -75,7 +75,7 @@ msg Smsg::Create(udat type, size_t eventlen) {
   }
   msg m;
   if ((m = (msg)AllocMem0(headerlen + eventlen))) {
-    m->Fn = Fn_msg;
+    m->Fn = Fn_Tmsg;
     if (!m->Init(type, (uldat)eventlen)) {
       m->Delete();
       m = NULL;

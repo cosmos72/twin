@@ -18,7 +18,7 @@
 #include <new>
 #include <cstring> // memcmp()
 
-mutex Smutex::Create(msgport owner, byte namelen, const char *name, byte perm) {
+mutex Smutex::Create(Tmsgport owner, byte namelen, const char *name, byte perm) {
   byte mask = PERM_WRITE;
   mutex curr, x = NULL, old = NULL;
 
@@ -45,7 +45,7 @@ mutex Smutex::Create(msgport owner, byte namelen, const char *name, byte perm) {
       void *addr = AllocMem0(sizeof(Smutex));
       if (addr) {
         x = new (addr) Smutex();
-        x->Fn = Fn_mutex;
+        x->Fn = Fn_Tmutex;
         if (!x->Init(owner, namelen, name, perm)) {
           x->Delete();
           x = NULL;
@@ -56,7 +56,7 @@ mutex Smutex::Create(msgport owner, byte namelen, const char *name, byte perm) {
   return x;
 }
 
-mutex Smutex::Init(msgport owner, byte namelen, const char *name, byte perm) {
+mutex Smutex::Init(Tmsgport owner, byte namelen, const char *name, byte perm) {
   if (!((obj)this)->Init()) {
     return NULL;
   }

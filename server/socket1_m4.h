@@ -379,7 +379,7 @@ case order_CreateMsgPort:
 
 case order_FindMsgPort:
     if (a.size() >= 3)
-        a[0]_obj = (obj)sockFindMsgPort((msgport)a[1]_obj, (byte)a[2]_any, (const char *)a[3]_vec);
+        a[0]_obj = (obj)sockFindMsgPort((Tmsgport)a[1]_obj, (byte)a[2]_any, (const char *)a[3]_vec);
     break;
 
 
@@ -422,22 +422,22 @@ case order_FirstMsgPort:
 
 case order_FirstMenu:
     if (a.size() >= 1)
-        a[0]_obj = (obj)sockFirstMenu((msgport)a[1]_obj);
+        a[0]_obj = (obj)sockFirstMenu((Tmsgport)a[1]_obj);
     break;
 
 case order_FirstW:
     if (a.size() >= 1)
-        a[0]_obj = (obj)sockFirstW((msgport)a[1]_obj);
+        a[0]_obj = (obj)sockFirstW((Tmsgport)a[1]_obj);
     break;
 
 case order_FirstGroup:
     if (a.size() >= 1)
-        a[0]_obj = (obj)sockFirstGroup((msgport)a[1]_obj);
+        a[0]_obj = (obj)sockFirstGroup((Tmsgport)a[1]_obj);
     break;
 
 case order_FirstMutex:
     if (a.size() >= 1)
-        a[0]_obj = (obj)sockFirstMutex((msgport)a[1]_obj);
+        a[0]_obj = (obj)sockFirstMutex((Tmsgport)a[1]_obj);
     break;
 
 case order_FirstMenuItem:
@@ -469,12 +469,12 @@ case order_GetAll:
 
 case order_SendToMsgPort:
     if (a.size() >= 3)
-        a[0]_any = (tany)sockSendToMsgPort((msgport)a[1]_obj, (udat)a[2]_any, (const byte *)a[3]_vec);
+        a[0]_any = (tany)sockSendToMsgPort((Tmsgport)a[1]_obj, (udat)a[2]_any, (const byte *)a[3]_vec);
     break;
 
 case order_BlindSendToMsgPort:
     if (a.size() >= 3)
-        sockBlindSendToMsgPort((msgport)a[1]_obj, (udat)a[2]_any, (const byte *)a[3]_vec);
+        sockBlindSendToMsgPort((Tmsgport)a[1]_obj, (udat)a[2]_any, (const byte *)a[3]_vec);
     break;
 
 

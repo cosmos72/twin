@@ -57,7 +57,7 @@ int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfd
 
 static timevalue *Now;
 
-inline struct timeval *CalcSleepTime(struct timeval *sleeptime, msgport Port, timevalue *now) {
+inline struct timeval *CalcSleepTime(struct timeval *sleeptime, Tmsgport Port, timevalue *now) {
   byte got = 0;
   timevalue *call = &Port->CallTime;
 
@@ -91,8 +91,8 @@ inline struct timeval *CalcSleepTime(struct timeval *sleeptime, msgport Port, ti
   return got ? sleeptime : (struct timeval *)0;
 }
 
-static msgport RunMsgPort(msgport CurrPort) {
-  msgport NextPort;
+static Tmsgport RunMsgPort(Tmsgport CurrPort) {
+  Tmsgport NextPort;
 
   if ((CurrPort->WakeUp & (TIMER_ALWAYS | TIMER_ONCE)) && CmpTime(&CurrPort->CallTime, Now) <= 0)
     CurrPort->WakeUp &= ~TIMER_ONCE;
@@ -241,7 +241,7 @@ static void MergeHyphensArgv(int argc, char **argv) {
 #define MINDELAY 10000
 
 int main(int argc, char *argv[]) {
-  msgport CurrPort;
+  Tmsgport CurrPort;
   timevalue Old, Cut;
   fd_set read_fds, write_fds, *pwrite_fds;
   struct timeval sel_timeout, *this_timeout;
@@ -408,7 +408,7 @@ int main(int argc, char *argv[]) {
     while (CurrPort)
       CurrPort = RunMsgPort(CurrPort);
 
-    All->RunMsgPort = (msgport)0;
+    All->RunMsgPort = (Tmsgport)0;
   }
   /* NOTREACHED */
   return 0;

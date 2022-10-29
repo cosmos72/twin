@@ -37,7 +37,7 @@ void DragFirstScreen(ldat DeltaX, ldat DeltaY);
 
 void HideMenu(byte on_off);
 void CloseMenu(void);
-void SetMenuState(menuitem Item, byte ByMouse);
+void SetMenuState(Tmenuitem Item, byte ByMouse);
 
 void ResizeWidget(Twidget W, dat X, dat Y);
 void ResizeGadget(gadget G, dat X, dat Y);

@@ -73,7 +73,7 @@ enum {
 #define IS_ROW(O) (IS_OBJ(row, O) || IS_OBJ(menuitem, O))
 #define IS_MENUITEM(O) IS_OBJ(menuitem, O)
 #define IS_MENU(O) IS_OBJ(menu, O)
-#define IS_MSGPORT(O) IS_OBJ(msgport, O)
+#define IS_MSGPORT(O) IS_OBJ(Tmsgport, O)
 #define IS_MUTEX(O) IS_OBJ(mutex, O)
 #define IS_MSG(O) IS_OBJ(msg, O)
 #define IS_MODULE(O) IS_OBJ(module, O)

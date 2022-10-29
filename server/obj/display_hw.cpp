@@ -23,7 +23,7 @@ Tdisplay Sdisplay::Create(uldat namelen, const char *name) {
   void *addr = AllocMem0(sizeof(Sdisplay));
   if (addr) {
     d = new (addr) Sdisplay();
-    d->Fn = Fn_display_hw;
+    d->Fn = Fn_Tdisplay;
     if (!d->Init(namelen, name)) {
       d->Delete();
       d = NULL;

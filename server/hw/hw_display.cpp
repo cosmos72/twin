@@ -26,7 +26,7 @@
 #include "common.h"
 
 struct display_data {
-  msgport display, Helper;
+  Tmsgport display, Helper;
 };
 
 #define displaydata ((struct display_data *)HW->Private)
@@ -99,7 +99,7 @@ static void display_HandleEvent(Tdisplay hw) {
       /* selection now owned by some other client on the same display HW as twdisplay */
       HW->HWSelectionPrivate = (tany)0;
       /*
-       * DO NOT use (obj)display here instead of (obj)HW, as it is a msgport
+       * DO NOT use (obj)display here instead of (obj)HW, as it is a Tmsgport
        * and would bypass the OwnerOnce mechanism, often resulting in an infinite loop.
        */
       TwinSelectionSetOwner((obj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
@@ -166,7 +166,7 @@ static void display_HandleEvent(Tdisplay hw) {
   RestoreHW;
 }
 
-static void display_HelperH(msgport Port) {
+static void display_HelperH(Tmsgport Port) {
   display_HandleEvent(Port->AttachHW);
 }
 
@@ -353,7 +353,7 @@ static void display_SelectionExport_display(void) {
 static void display_SelectionRequest_display(obj Requestor, uldat ReqPrivate) {
   if (!HW->HWSelectionPrivate) {
     /*
-     * shortcut: since (display) is a msgport, use fail-safe TwinSelectionRequest()
+     * shortcut: since (display) is a Tmsgport, use fail-safe TwinSelectionRequest()
      * to send message to twdisplay.
      */
     TwinSelectionRequest(Requestor, ReqPrivate, (obj)display);
@@ -367,7 +367,7 @@ static void display_SelectionRequest_display(obj Requestor, uldat ReqPrivate) {
 static void display_SelectionNotify_display(uldat ReqPrivate, e_id Magic,
                                             const char MIME[MAX_MIMELEN], Chars Data) {
   /*
-   * shortcut: since (display) is a msgport, use fail-safe TwinSelectionNotify()
+   * shortcut: since (display) is a Tmsgport, use fail-safe TwinSelectionNotify()
    * to send message to twdisplay.
    */
   TwinSelectionNotify((obj)display, ReqPrivate, Magic, MIME, Data);
@@ -412,7 +412,7 @@ static void fix4display(void) {
 
 static bool display_InitHW(void) {
   Chars arg = HW->Name;
-  msgport Port;
+  Tmsgport Port;
 
   if (arg.size() > 4) {
     arg = arg.view(4, arg.size());

@@ -88,11 +88,11 @@
 
 #define COD_E_TTY (udat)70
 
-msgport Builtin_MsgPort;
+Tmsgport Builtin_MsgPort;
 
 static menu Builtin_Menu;
-static menuitem Builtin_File;
-static menuitem Builtin_Modules;
+static Tmenuitem Builtin_File;
+static Tmenuitem Builtin_Modules;
 
 static window AboutWin, ClockWin, OptionWin, ButtonWin, DisplayWin, DisplaySubWin, ExecuteWin;
 
@@ -117,7 +117,7 @@ static void Clock_Update(void) {
   Builtin_MsgPort->PauseDuration.Seconds = 0;
 }
 
-static void TweakMenuRows(menuitem Item, udat code, byte flag) {
+static void TweakMenuRows(Tmenuitem Item, udat code, byte flag) {
   window Win;
   row Row;
 
@@ -483,7 +483,7 @@ static void DisplayGadgetH(msg Msg) {
   }
 }
 
-static void BuiltinH(msgport MsgPort) {
+static void BuiltinH(Tmsgport MsgPort) {
   msg Msg;
   event_any *Event;
   screen Screen;

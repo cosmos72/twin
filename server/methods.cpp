@@ -188,7 +188,7 @@ Twidget FocusWidget(Twidget W) {
   if (W)
     oldW = W->KbdFocus();
   else
-    oldW = Do(KbdFocus, Twidget)(NULL);
+    oldW = Do(KbdFocus, widget)(NULL);
 
   if (W != oldW && (!W || W->Parent == (Twidget)All->FirstScreen)) {
     if (W && IS_WINDOW(W))
@@ -442,7 +442,7 @@ static void SetXYWidget(Twidget W, dat X, dat Y) {
   }
 }
 
-static void OwnWidget(Twidget Widget, msgport Owner) {
+static void OwnWidget(Twidget Widget, Tmsgport Owner) {
   if (!Widget->Owner) {
     if ((Widget->O_Next = Owner->FirstW))
       Owner->FirstW->O_Prev = Widget;
@@ -456,7 +456,7 @@ static void OwnWidget(Twidget Widget, msgport Owner) {
 }
 
 static void DisOwnWidget(Twidget W) {
-  msgport Owner;
+  Tmsgport Owner;
   if ((Owner = W->Owner)) {
     if (W->O_Prev)
       W->O_Prev->O_Next = W->O_Next;
@@ -469,11 +469,11 @@ static void DisOwnWidget(Twidget W) {
       Owner->LastW = W->O_Prev;
 
     W->O_Prev = W->O_Next = (Twidget)0;
-    W->Owner = (msgport)0;
+    W->Owner = (Tmsgport)0;
   }
 }
 
-static void RecursiveDeleteWidget(Twidget W, msgport maybeOwner) {
+static void RecursiveDeleteWidget(Twidget W, Tmsgport maybeOwner) {
   while (W->FirstW)
     W->FirstW->RecursiveDelete(maybeOwner);
 
@@ -573,7 +573,7 @@ static void ChangeFieldGadget(gadget G, udat field, uldat CLEARMask, uldat XORMa
     }
 }
 
-static gadget CreateEmptyButton(msgport Owner, dat XWidth, dat YWidth, tcolor BgCol) {
+static gadget CreateEmptyButton(Tmsgport Owner, dat XWidth, dat YWidth, tcolor BgCol) {
   gadget G = NULL;
   ldat Size;
   byte i;
@@ -584,7 +584,7 @@ static gadget CreateEmptyButton(msgport Owner, dat XWidth, dat YWidth, tcolor Bg
   void *addr = AllocMem0(sizeof(Sgadget));
   if (addr) {
     G = new (addr) Sgadget();
-    G->Fn = Fn_gadget;
+    G->Fn = Fn_Tgadget;
     if (!((Twidget)G)
              ->Init(Owner, ++XWidth, ++YWidth, 0, GADGETFL_USETEXT | GADGETFL_BUTTON, 0, 0,
                     (tcell)0)) {
@@ -688,8 +688,8 @@ static struct SgadgetFn _FnGadget = {
     (void (*)(gadget, tcell))SetFillWidget, (Twidget(*)(gadget))FocusWidget,
     (Twidget(*)(gadget))TtyKbdFocus, (void (*)(gadget, Twidget))MapWidget,
     (void (*)(gadget))UnMapWidget, (void (*)(gadget, screen))MapTopRealWidget,
-    (void (*)(gadget))RaiseW, (void (*)(gadget))LowerW, (void (*)(gadget, msgport))OwnWidget,
-    (void (*)(gadget))DisOwnWidget, (void (*)(gadget, msgport))RecursiveDeleteWidget,
+    (void (*)(gadget))RaiseW, (void (*)(gadget))LowerW, (void (*)(gadget, Tmsgport))OwnWidget,
+    (void (*)(gadget))DisOwnWidget, (void (*)(gadget, Tmsgport))RecursiveDeleteWidget,
     (void (*)(gadget, dat, dat, dat, dat, const char *, const trune *,
               const tcell *))ExposeWidget2, /* exported by resize.c */
     (byte (*)(gadget, HookFn, void (**)(Twidget)))InstallHookWidget,
@@ -1078,7 +1078,7 @@ static row FindRow(window Window, ldat Row) {
         k--;
   }
   if (CurrRow && IS_MENUITEM(CurrRow))
-    ((menuitem)CurrRow)->WCurY = Row;
+    ((Tmenuitem)CurrRow)->WCurY = Row;
   return CurrRow;
 }
 
@@ -1117,9 +1117,9 @@ static struct SwindowFn _FnWindow = {
     (void (*)(window, screen))MapTopRealWidget,
     (void (*)(window))RaiseW,
     (void (*)(window))LowerW,
-    (void (*)(window, msgport))OwnWidget,
+    (void (*)(window, Tmsgport))OwnWidget,
     (void (*)(window))DisOwnWidget,
-    (void (*)(window, msgport))RecursiveDeleteWidget,
+    (void (*)(window, Tmsgport))RecursiveDeleteWidget,
     (void (*)(window, dat, dat, dat, dat, const char *, const trune *,
               const tcell *))ExposeWindow2, /* exported by resize.c */
     (byte (*)(window, HookFn, void (**)(Twidget)))InstallHookWidget,
@@ -1256,7 +1256,7 @@ static Twidget FocusScreen(screen tScreen) {
   return (Twidget)Screen;
 }
 
-static void ActivateMenuScreen(screen Screen, menuitem Item, byte ByMouse) {
+static void ActivateMenuScreen(screen Screen, Tmenuitem Item, byte ByMouse) {
 
   if ((All->State & state_any) != state_default)
     return;
@@ -1292,9 +1292,9 @@ static struct SscreenFn _FnScreen = {
     (void (*)(screen, screen))NoOp,  /* MapTopRealWidget */
     (void (*)(screen))RaiseW,
     (void (*)(screen))LowerW,
-    (void (*)(screen, msgport))OwnWidget,
+    (void (*)(screen, Tmsgport))OwnWidget,
     (void (*)(screen))DisOwnWidget,
-    (void (*)(screen, msgport))RecursiveDeleteWidget,
+    (void (*)(screen, Tmsgport))RecursiveDeleteWidget,
     (void (*)(screen, dat, dat, dat, dat, const char *, const trune *,
               const tcell *))ExposeWidget2, /* exported by resize.c */
     (byte (*)(screen, HookFn, void (**)(Twidget)))InstallHookWidget,
@@ -1312,7 +1312,7 @@ static struct SscreenFn _FnScreen = {
 
 /* ggroup */
 
-static void InsertGroup(ggroup Group, msgport MsgPort, ggroup Prev, ggroup Next) {
+static void InsertGroup(ggroup Group, Tmsgport MsgPort, ggroup Prev, ggroup Next) {
   if (!Group->MsgPort && MsgPort) {
     InsertGeneric((obj_entry)Group, (obj_list)&MsgPort->FirstGroup, (obj_entry)Prev,
                   (obj_entry)Next, NULL);
@@ -1465,20 +1465,20 @@ static byte SetTRuneRow(row Row, uldat Len, const trune *TRune, byte DefaultCol)
  * this is used also for plain rows.
  * be careful to only access fields that even rows have
  */
-static void RaiseMenuItem(menuitem M) {
+static void RaiseMenuItem(Tmenuitem M) {
   obj Parent;
-  menuitem Next;
+  Tmenuitem Next;
 
   if (M && (Parent = (obj)M->Parent)) {
     if (IS_MENU(Parent))
       Next = ((menu)Parent)->FirstI;
     else if (IS_WINDOW(Parent) && W_USE((window)Parent, USEROWS))
-      Next = (menuitem)((window)Parent)->USE.R.FirstRow;
+      Next = (Tmenuitem)((window)Parent)->USE.R.FirstRow;
     else
       return;
 
     M->Remove();
-    M->Insert(Parent, (menuitem)0, Next);
+    M->Insert(Parent, (Tmenuitem)0, Next);
 
     if (IS_MENU(Parent))
       SyncMenu((menu)Parent);
@@ -1491,15 +1491,15 @@ static void RaiseMenuItem(menuitem M) {
  * this is used also for plain rows.
  * be careful to only access fields that even rows have
  */
-static void LowerMenuItem(menuitem M) {
+static void LowerMenuItem(Tmenuitem M) {
   obj Parent;
-  menuitem Prev;
+  Tmenuitem Prev;
 
   if (M && (Parent = (obj)M->Parent)) {
     if (IS_MENU(Parent))
       Prev = ((menu)Parent)->LastI;
     else if (IS_WINDOW(Parent) && W_USE((window)Parent, USEROWS))
-      Prev = (menuitem)((window)Parent)->USE.R.LastRow;
+      Prev = (Tmenuitem)((window)Parent)->USE.R.LastRow;
     else
       return;
 
@@ -1535,9 +1535,9 @@ byte FindInfo(menu Menu, dat i) {
   return tfalse;
 }
 
-/* menuitem */
+/* Tmenuitem */
 
-static void InsertMenuItem(menuitem MenuItem, obj Parent, menuitem Prev, menuitem Next) {
+static void InsertMenuItem(Tmenuitem MenuItem, obj Parent, Tmenuitem Prev, Tmenuitem Next) {
   if (!MenuItem->Parent && Parent) {
     if (IS_MENU(Parent)) {
       InsertGeneric((obj_entry)MenuItem, (obj_list) & ((menu)Parent)->FirstI, (obj_entry)Prev,
@@ -1549,7 +1549,7 @@ static void InsertMenuItem(menuitem MenuItem, obj Parent, menuitem Prev, menuite
   }
 }
 
-static void RemoveMenuItem(menuitem MenuItem) {
+static void RemoveMenuItem(Tmenuitem MenuItem) {
   if (MenuItem->Parent) {
     if (IS_MENU(MenuItem->Parent)) {
       RemoveGeneric((obj_entry)MenuItem, (obj_list) & ((menu)MenuItem->Parent)->FirstI, NULL);
@@ -1560,7 +1560,7 @@ static void RemoveMenuItem(menuitem MenuItem) {
   }
 }
 
-static void DeleteMenuItem(menuitem MenuItem) {
+static void DeleteMenuItem(Tmenuitem MenuItem) {
   if (MenuItem) {
     obj Parent = MenuItem->Parent;
 
@@ -1575,12 +1575,12 @@ static void DeleteMenuItem(menuitem MenuItem) {
   }
 }
 
-menuitem Create4MenuMenuItem(obj Parent, window Window, udat Code, byte Flags, ldat Len,
-                             const char *Name) {
+Tmenuitem Create4MenuMenuItem(obj Parent, window Window, udat Code, byte Flags, ldat Len,
+                              const char *Name) {
   dat Left, ShortCut;
 
   if (!Parent)
-    return (menuitem)0;
+    return (Tmenuitem)0;
 
   if (IS_MENU(Parent) && ((menu)Parent)->LastI)
     Left = ((menu)Parent)->LastI->Left + ((menu)Parent)->LastI->Len;
@@ -1612,7 +1612,7 @@ static struct SmenuitemFn _FnMenuItem = {
     InsertMenuItem,
     RemoveMenuItem,
     DeleteMenuItem,
-    (void (*)(menuitem, udat, uldat, uldat))NoOp,
+    (void (*)(Tmenuitem, udat, uldat, uldat))NoOp,
     &_FnObj,
     SetTextRow,
     SetTRuneRow,
@@ -1625,7 +1625,7 @@ static struct SmenuitemFn _FnMenuItem = {
 
 /* menu */
 
-static void InsertMenu(menu Menu, msgport MsgPort, menu Prev, menu Next) {
+static void InsertMenu(menu Menu, Tmsgport MsgPort, menu Prev, menu Next) {
   if (!Menu->MsgPort && MsgPort) {
     InsertGeneric((obj_entry)Menu, (obj_list)&MsgPort->FirstMenu, (obj_entry)Prev, (obj_entry)Next,
                   NULL);
@@ -1636,7 +1636,7 @@ static void InsertMenu(menu Menu, msgport MsgPort, menu Prev, menu Next) {
 static void RemoveMenu(menu Menu) {
   if (Menu->MsgPort) {
     RemoveGeneric((obj_entry)Menu, (obj_list)&Menu->MsgPort->FirstMenu, NULL);
-    Menu->MsgPort = (msgport)0;
+    Menu->MsgPort = (Tmsgport)0;
   }
 }
 
@@ -1644,7 +1644,7 @@ static void DeleteMenu(menu Menu) {
   uldat count = 30;
 
   if (Menu) {
-    msgport MsgPort = Menu->MsgPort;
+    Tmsgport MsgPort = Menu->MsgPort;
     Twidget W, WNext;
 
     /*
@@ -1704,8 +1704,8 @@ static row SetInfoMenu(menu Menu, byte Flags, ldat Len, const char *Text, const 
   return Row;
 }
 
-static menuitem FindItem(menu Menu, dat i) {
-  menuitem Item = (menuitem)0;
+static Tmenuitem FindItem(menu Menu, dat i) {
+  Tmenuitem Item = (Tmenuitem)0;
 
   if (Menu) {
     for (Item = Menu->FirstI; Item; Item = Item->Next) {
@@ -1726,24 +1726,24 @@ static menuitem FindItem(menu Menu, dat i) {
             break;
         }
       } else
-        Item = (menuitem)0;
+        Item = (Tmenuitem)0;
     }
   }
   return Item;
 }
 
-static menuitem GetSelectedItem(menu Menu) {
+static Tmenuitem GetSelectedItem(menu Menu) {
   if (Menu) {
     if (Menu->SelectI)
       return Menu->SelectI;
     if (Menu->CommonItems && All->CommonMenu)
       return All->CommonMenu->SelectI;
   }
-  return (menuitem)0;
+  return (Tmenuitem)0;
 }
 
-static menuitem RecursiveGetSelectedItem(menu Menu, dat *depth) {
-  menuitem I = NULL, _I = Menu->GetSelectedItem();
+static Tmenuitem RecursiveGetSelectedItem(menu Menu, dat *depth) {
+  Tmenuitem I = NULL, _I = Menu->GetSelectedItem();
   window W = (window)0, FW = (window)All->FirstScreen->FocusW;
   dat d = -1;
 
@@ -1753,7 +1753,7 @@ static menuitem RecursiveGetSelectedItem(menu Menu, dat *depth) {
     if (W == FW)
       break;
     if ((W = I->Window) && W->Parent)
-      _I = (menuitem)W->FindRow(W->CurY);
+      _I = (Tmenuitem)W->FindRow(W->CurY);
     else
       break;
   }
@@ -1762,15 +1762,15 @@ static menuitem RecursiveGetSelectedItem(menu Menu, dat *depth) {
   return I;
 }
 
-static void SetSelectedItem(menu Menu, menuitem Item) {
+static void SetSelectedItem(menu Menu, Tmenuitem Item) {
   if (Menu) {
     if (Item) {
       if (Item->Parent == (obj)Menu) {
         Menu->SelectI = Item;
         if (Menu->CommonItems && All->CommonMenu)
-          All->CommonMenu->SelectI = (menuitem)0;
+          All->CommonMenu->SelectI = (Tmenuitem)0;
       } else if (Menu->CommonItems && Item->Parent == (obj)All->CommonMenu) {
-        Menu->SelectI = (menuitem)0;
+        Menu->SelectI = (Tmenuitem)0;
         All->CommonMenu->SelectI = Item;
       }
       /* else Item is not a meaningful one! */
@@ -1801,10 +1801,10 @@ static struct SmenuFn _FnMenu = {
 
 /* msg */
 
-static void InsertMsg(msg Msg, msgport Parent, msg Prev, msg Next) {
+static void InsertMsg(msg Msg, Tmsgport Parent, msg Prev, msg Next) {
   if (!Msg->MsgPort && Parent) {
-    /* if adding the first msg, move the msgport to the head
-     * of msgport list, so that the scheduler will run it */
+    /* if adding the first msg, move the Tmsgport to the head
+     * of Tmsgport list, so that the scheduler will run it */
     if (!Parent->FirstMsg && Parent->All)
       MoveFirst(MsgPort, All, Parent);
 
@@ -1838,9 +1838,9 @@ static struct SmsgFn _FnMsg = {
     &_FnObj,
 };
 
-/* msgport */
+/* Tmsgport */
 
-static void InsertMsgPort(msgport MsgPort, all Parent, msgport Prev, msgport Next) {
+static void InsertMsgPort(Tmsgport MsgPort, all Parent, Tmsgport Prev, Tmsgport Next) {
   if (!MsgPort->All && Parent) {
     InsertGeneric((obj_entry)MsgPort, (obj_list)&Parent->FirstMsgPort, (obj_entry)Prev,
                   (obj_entry)Next, NULL);
@@ -1848,7 +1848,7 @@ static void InsertMsgPort(msgport MsgPort, all Parent, msgport Prev, msgport Nex
   }
 }
 
-static void RemoveMsgPort(msgport MsgPort) {
+static void RemoveMsgPort(Tmsgport MsgPort) {
   if (MsgPort->All) {
     if (All->RunMsgPort == MsgPort)
       All->RunMsgPort = MsgPort->Next;
@@ -1857,7 +1857,7 @@ static void RemoveMsgPort(msgport MsgPort) {
   }
 }
 
-static void DeleteMsgPort(msgport MsgPort) {
+static void DeleteMsgPort(Tmsgport MsgPort) {
   uldat count = 20;
   Twidget W;
 
@@ -1880,8 +1880,8 @@ static void DeleteMsgPort(msgport MsgPort) {
 
     /*
      * must delete the Menus first, as among widgets there are also
-     * menuitem windows, which cannot be deleted before deleting
-     * the corresponding menuitem.
+     * Tmenuitem windows, which cannot be deleted before deleting
+     * the corresponding Tmenuitem.
      */
     DeleteList(MsgPort->FirstMsg);
     DeleteList(MsgPort->FirstMenu);
@@ -1902,8 +1902,8 @@ static struct SmsgportFn _FnMsgPort = {
     InsertMsgPort,
     RemoveMsgPort,
     DeleteMsgPort,
-    (void (*)(msgport, udat, uldat, uldat))NoOp,
-    /* msgport */
+    (void (*)(Tmsgport, udat, uldat, uldat))NoOp,
+    /* Tmsgport */
     &_FnObj,
 };
 
@@ -1930,7 +1930,7 @@ static void DeleteMutex(mutex Mutex) {
   DeleteObj((obj)Mutex);
 }
 
-static void OwnMutex(mutex Mutex, msgport Parent) {
+static void OwnMutex(mutex Mutex, Tmsgport Parent) {
   if (!Mutex->Owner && Parent) {
 
     if ((Mutex->O_Prev = Parent->LastMutex))
@@ -1946,7 +1946,7 @@ static void OwnMutex(mutex Mutex, msgport Parent) {
 }
 
 static void DisOwnMutex(mutex Mutex) {
-  msgport Parent;
+  Tmsgport Parent;
   if ((Parent = Mutex->Owner)) {
     if (Mutex->O_Prev)
       Mutex->O_Prev->O_Next = Mutex->O_Next;
@@ -1960,7 +1960,7 @@ static void DisOwnMutex(mutex Mutex) {
 
     Mutex->O_Prev = Mutex->O_Next = (mutex)0;
 
-    Mutex->Owner = (msgport)0;
+    Mutex->Owner = (Tmsgport)0;
   }
 }
 

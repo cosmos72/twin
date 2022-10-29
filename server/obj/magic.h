@@ -26,7 +26,7 @@ enum e_magic_byte /*: unsigned char*/ {
   row_magic_byte = 6,
   menuitem_magic_byte = 7,
   menu_magic_byte = 8,
-  msgport_magic_byte = 9,
+  Tmsgport_magic_byte = 9,
   msg_magic_byte = 0xA,
   mutex_magic_byte = 0xB,
   module_magic_byte = 0xC,
@@ -52,7 +52,7 @@ enum e_magic_byte /*: unsigned char*/ {
 #define row_magic_STR "\x36"
 #define menuitem_magic_STR "\x37"
 #define menu_magic_STR "\x38"
-#define msgport_magic_STR "\x39"
+#define Tmsgport_magic_STR "\x39"
 #define msg_magic_STR "\x3A"
 #define mutex_magic_STR "\x3B"
 #define module_magic_STR "\x3C"

@@ -362,7 +362,7 @@ static byte sockStatRow(row x, tsfield TSF) {
   return ttrue;
 }
 
-static byte sockStatMenuItem(menuitem x, tsfield TSF) {
+static byte sockStatMenuItem(Tmenuitem x, tsfield TSF) {
   switch (TSF->label) {
     /* missing: */
 #if 0
@@ -402,7 +402,7 @@ static byte sockStatMenu(menu x, tsfield TSF) {
   return ttrue;
 }
 
-static byte sockStatMsgPort(msgport x, tsfield TSF) {
+static byte sockStatMsgPort(Tmsgport x, tsfield TSF) {
   switch (TSF->label) {
     TWScase(msgport, WakeUp, byte);
     TWScase(msgport, NameLen, byte);
@@ -524,14 +524,14 @@ static void sockStat(obj x, udat n, const byte *in) {
         ok = sockStatGroup((ggroup)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
       case menuitem_magic_byte:
-        ok = sockStatMenuItem((menuitem)x, TSF + i) || sockStatRow((row)x, TSF + i) ||
+        ok = sockStatMenuItem((Tmenuitem)x, TSF + i) || sockStatRow((row)x, TSF + i) ||
              sockStatObj(x, TSF + i);
         break;
       case menu_magic_byte:
         ok = sockStatMenu((menu)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
-      case msgport_magic_byte:
-        ok = sockStatMsgPort((msgport)x, TSF + i) || sockStatObj(x, TSF + i);
+      case Tmsgport_magic_byte:
+        ok = sockStatMsgPort((Tmsgport)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
       case mutex_magic_byte:
         ok = sockStatMutex((mutex)x, TSF + i) || sockStatObj(x, TSF + i);

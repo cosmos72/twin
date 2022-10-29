@@ -140,7 +140,7 @@ bool AssignId(const e_id class_magic_id, obj o) {
     case ggroup_magic_byte:
     case menuitem_magic_byte:
     case menu_magic_byte:
-    case msgport_magic_byte:
+    case Tmsgport_magic_byte:
     case mutex_magic_byte:
       return IdVec[magic_byte].assign_id(magic_byte, o);
     default:
@@ -174,7 +174,7 @@ void DropId(obj o) {
     case ggroup_magic_byte:
     case menuitem_magic_byte:
     case menu_magic_byte:
-    case msgport_magic_byte:
+    case Tmsgport_magic_byte:
     case mutex_magic_byte:
       if (magic_byte == e_magic_byte(o->Id >> magic_shift)) {
         IdVec[magic_byte].drop_id(magic_byte, o);

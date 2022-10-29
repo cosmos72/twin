@@ -40,16 +40,16 @@ struct SgadgetFn {
   void (*MapTopReal)(gadget, screen);
   void (*Raise)(gadget);
   void (*Lower)(gadget);
-  void (*Own)(gadget, msgport);
+  void (*Own)(gadget, Tmsgport);
   void (*DisOwn)(gadget);
-  void (*RecursiveDelete)(gadget, msgport);
+  void (*RecursiveDelete)(gadget, Tmsgport);
   void (*Expose)(gadget, dat xwidth, dat ywidth, dat Left, dat Up, const char *, const trune *,
                  const tcell *);
   byte (*InstallHook)(gadget, HookFn, HookFn *Where);
   void (*RemoveHook)(gadget, HookFn, HookFn *Where);
   /* gadget */
   TwidgetFn Fn_Widget;
-  gadget (*CreateEmptyButton)(msgport owner, dat xwidth, dat ywidth, tcolor BgCol);
+  gadget (*CreateEmptyButton)(Tmsgport owner, dat xwidth, dat ywidth, tcolor BgCol);
   byte (*FillButton)(gadget g, Twidget Parent, udat Code, dat Left, dat Up, udat Flags,
                      const char *Text, tcolor Color, tcolor ColorDisabled);
   gadget (*CreateButton)(Twidget Parent, dat xwidth, dat ywidth, const char *Text, uldat Flags,
@@ -71,8 +71,8 @@ struct Sgadget : public Sobj {
   uldat Attr;
   uldat Flags;
   ldat XLogic, YLogic;
-  Twidget O_Prev, O_Next; /* list in the same msgport (owner) */
-  msgport Owner;
+  Twidget O_Prev, O_Next; /* list in the same Tmsgport (owner) */
+  Tmsgport Owner;
   HookFn ShutDownHook; /* hooks for this Twidget */
   HookFn Hook, *WhereHook;
   HookFn MapUnMapHook;
@@ -88,11 +88,11 @@ struct Sgadget : public Sobj {
   gadget G_Prev, G_Next; /* list in the same ggroup */
   ggroup Group;
 
-  static gadget Create(msgport owner, Twidget Parent, dat xwidth, dat ywidth,
+  static gadget Create(Tmsgport owner, Twidget Parent, dat xwidth, dat ywidth,
                        const char *TextNormal, uldat Attr, uldat Flags, udat Code, tcolor ColText,
                        tcolor ColTextSelect, tcolor ColTextDisabled, tcolor ColTextSelectDisabled,
                        dat Left, dat Up);
-  gadget Init(msgport owner, Twidget Parent, dat xwidth, dat ywidth, const char *TextNormal,
+  gadget Init(Tmsgport owner, Twidget Parent, dat xwidth, dat ywidth, const char *TextNormal,
               uldat Attr, uldat Flags, udat Code, tcolor ColText, tcolor ColTextSelect,
               tcolor ColTextDisabled, tcolor ColTextSelectDisabled, dat Left, dat Up);
 
@@ -144,13 +144,13 @@ struct Sgadget : public Sobj {
   void Lower() {
     Fn->Lower(this);
   }
-  void Own(msgport port) {
+  void Own(Tmsgport port) {
     Fn->Own(this, port);
   }
   void DisOwn() {
     Fn->DisOwn(this);
   }
-  void RecursiveDelete(msgport port) {
+  void RecursiveDelete(Tmsgport port) {
     Fn->RecursiveDelete(this, port);
   }
   void Expose(dat xwidth, dat ywidth, dat left, dat up, const char *ascii, const trune *runes,
@@ -168,7 +168,7 @@ struct Sgadget : public Sobj {
                   tcolor color, tcolor colordisabled) {
     return Fn->FillButton(this, parent, code, left, up, flags, text, color, colordisabled);
   }
-  gadget CreateEmptyButton(msgport owner, dat xwidth, dat ywidth, tcolor bgcol) {
+  gadget CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolor bgcol) {
     return Fn->CreateEmptyButton(owner, xwidth, ywidth, bgcol);
   }
   gadget CreateButton(Twidget parent, dat xwidth, dat ywidth, const char *text, uldat flags,

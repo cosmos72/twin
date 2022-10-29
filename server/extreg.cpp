@@ -20,7 +20,7 @@
 exts Exts = {{NULL},
              {remoteKillSlot},
              {
-                 (void (*)(msgport, msg))NoOp,
+                 (void (*)(Tmsgport, msg))NoOp,
                  AlwaysTrue,
                  (void (*)(uldat, Span<s_tsfield>))NoOp,
              },
@@ -28,7 +28,7 @@ exts Exts = {{NULL},
 const exts OrigExts = {{NULL},
                        {remoteKillSlot},
                        {
-                           (void (*)(msgport, msg))NoOp,
+                           (void (*)(Tmsgport, msg))NoOp,
                            AlwaysTrue,
                            (void (*)(uldat, Span<s_tsfield>))NoOp,
                        },

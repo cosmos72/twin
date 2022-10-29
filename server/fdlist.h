@@ -28,8 +28,8 @@ struct fdlist {               /* the uncompressed one has                       
     handler_io_s S;
     handler_io_d D;
   } HandlerIO;
-  msgport MsgPort; /* other sockets just have                        */
-  byte *WQueue;    /* Fd == real fd and pairSlot == NOSLOT;          */
+  Tmsgport MsgPort; /* other sockets just have                        */
+  byte *WQueue;     /* Fd == real fd and pairSlot == NOSLOT;          */
   byte *RQueue;
   uldat WQlen, WQmax;
   uldat RQstart, RQlen, RQmax;

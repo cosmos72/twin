@@ -30,11 +30,11 @@ static setup _SetUp = {
     (byte)3,     (byte)2 /* DeltaXShade, DeltaYShade */
 };
 
-static Sselection _Selection = {{(tany)0, (tany)0}, (msgport)0, (Tdisplay)0,
-                                SEL_UTF8MAGIC,      String(),   ""};
+static Sselection _Selection = {{(tany)0, (tany)0}, (Tmsgport)0, (Tdisplay)0,
+                                SEL_UTF8MAGIC,      String(),    ""};
 
-static Sselection _Clipboard = {{(tany)0, (tany)0}, (msgport)0, (Tdisplay)0,
-                                SEL_UTF8MAGIC,      String(),   ""};
+static Sselection _Clipboard = {{(tany)0, (tany)0}, (Tmsgport)0, (Tdisplay)0,
+                                SEL_UTF8MAGIC,      String(),    ""};
 
 void Sselection::dup(const selection other) {
   Time = other->Time;

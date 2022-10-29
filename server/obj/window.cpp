@@ -14,7 +14,7 @@
 #include "algo.h"  // Max2()
 #include "alloc.h" // AllocMem0(), CloneStrL()
 #include "data.h"  // DEFAULT_Col*
-#include "fn.h"    // Fn_window
+#include "fn.h"    // Fn_Twindow
 #include "twin.h"  // NOFD, NOPID, NOSLOT
 
 #include <new>
@@ -23,7 +23,7 @@
 
 static byte InitTtyDataWindow(window w, dat scrollbacklines);
 
-window Swindow::Create(msgport owner, dat titlelen, const char *title, const tcolor *coltitle,
+window Swindow::Create(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle,
                        menu m, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
                        dat xwidth, dat ywidth, dat scrollbacklines) {
 
@@ -32,7 +32,7 @@ window Swindow::Create(msgport owner, dat titlelen, const char *title, const tco
     void *addr = AllocMem0(sizeof(Swindow));
     if (addr) {
       w = new (addr) Swindow();
-      w->Fn = Fn_window;
+      w->Fn = Fn_Twindow;
       if (!w->Init(owner, titlelen, title, coltitle, m, coltext, cursortype, attr, flags, xwidth,
                    ywidth, scrollbacklines)) {
         w->Delete();
@@ -43,8 +43,8 @@ window Swindow::Create(msgport owner, dat titlelen, const char *title, const tco
   return w;
 }
 
-window Swindow::Init(msgport owner, dat titlelen, const char *title, const tcolor *coltitle, menu m,
-                     tcolor coltext, uldat cursortype, uldat attr, uldat flags, dat xwidth,
+window Swindow::Init(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle,
+                     menu m, tcolor coltext, uldat cursortype, uldat attr, uldat flags, dat xwidth,
                      dat ywidth, dat scrollbacklines) {
 
   byte hasborder = 2 * !(flags & WINDOWFL_BORDERLESS);

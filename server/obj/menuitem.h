@@ -17,27 +17,27 @@
 
 struct SmenuitemFn {
   uldat Magic;
-  void (*Insert)(menuitem, obj, menuitem Prev, menuitem Next);
-  void (*Remove)(menuitem);
-  void (*Delete)(menuitem);
-  void (*ChangeField)(menuitem, udat field, uldat CLEARMask, uldat XORMask);
+  void (*Insert)(Tmenuitem, obj, Tmenuitem Prev, Tmenuitem Next);
+  void (*Remove)(Tmenuitem);
+  void (*Delete)(Tmenuitem);
+  void (*ChangeField)(Tmenuitem, udat field, uldat CLEARMask, uldat XORMask);
   /* row */
   TobjFn Fn_Obj;
   byte (*SetText)(row, uldat Len, const char *Text, byte DefaultCol);
   byte (*SetTRune)(row, uldat Len, const trune *TRune, byte DefaultCol);
-  /* menuitem */
-  void (*Raise)(menuitem);
-  void (*Lower)(menuitem);
+  /* Tmenuitem */
+  void (*Raise)(Tmenuitem);
+  void (*Lower)(Tmenuitem);
   TrowFn Fn_Row;
-  menuitem (*Create4Menu)(obj Parent, window Window, udat Code, byte Flags, ldat Len,
-                          const char *Name);
+  Tmenuitem (*Create4Menu)(obj Parent, window Window, udat Code, byte Flags, ldat Len,
+                           const char *Name);
   uldat (*Create4MenuCommon)(menu);
   /* for compatibility this must return a non-zero value. */
 };
 
 struct Smenuitem : public Sobj {
   TmenuitemFn Fn;
-  menuitem Prev, Next;
+  Tmenuitem Prev, Next;
   obj Parent;
   /* row */
   udat Code;
@@ -46,21 +46,21 @@ struct Smenuitem : public Sobj {
   uldat Gap, LenGap;
   trune *Text;
   tcolor *ColText;
-  /* menuitem */
+  /* Tmenuitem */
   window Window;
   dat Left, ShortCut;
   ldat WCurY;
 
-  static menuitem Create(obj Parent, window Window, udat Code, byte Flags, dat Left, ldat Len,
-                         dat ShortCut, const char *Name);
-  menuitem Init(obj Parent, window Window, udat Code, byte Flags, dat Left, ldat Len, dat ShortCut,
-                const char *Name);
+  static Tmenuitem Create(obj Parent, window Window, udat Code, byte Flags, dat Left, ldat Len,
+                          dat ShortCut, const char *Name);
+  Tmenuitem Init(obj Parent, window Window, udat Code, byte Flags, dat Left, ldat Len, dat ShortCut,
+                 const char *Name);
 
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(obj parent, menuitem prev, menuitem next) {
+  void Insert(obj parent, Tmenuitem prev, Tmenuitem next) {
     Fn->Insert(this, parent, prev, next);
   }
   void Remove() {
@@ -71,7 +71,7 @@ struct Smenuitem : public Sobj {
   }
 };
 
-/* Some common menuitem codes: */
+/* Some common Tmenuitem codes: */
 #define COD_CANCEL 0xF700
 #define COD_OK 0xF701
 #define COD_HELP 0xF702

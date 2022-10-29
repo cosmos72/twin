@@ -17,7 +17,7 @@
 #include <new>
 #include <cstring> // memset()
 
-Twidget Swidget::Create(msgport owner, dat xwidth, dat ywidth, uldat attr, uldat flags, dat left,
+Twidget Swidget::Create(Tmsgport owner, dat xwidth, dat ywidth, uldat attr, uldat flags, dat left,
                         dat up, tcell fill) {
   Twidget w = NULL;
   if (owner) {
@@ -34,7 +34,7 @@ Twidget Swidget::Create(msgport owner, dat xwidth, dat ywidth, uldat attr, uldat
   return w;
 }
 
-Twidget Swidget::Init(msgport owner, dat xwidth, dat ywidth, uldat attr, uldat flags, dat left,
+Twidget Swidget::Init(Tmsgport owner, dat xwidth, dat ywidth, uldat attr, uldat flags, dat left,
                       dat up, tcell fill) {
   if (owner && ((obj)this)->Init()) {
     Left = left;

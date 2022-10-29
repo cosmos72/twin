@@ -17,6 +17,6 @@ void FillButtonWin(void);
 void UpdateOptionWin(void);
 
 extern window WinList, MessagesWin;
-extern msgport Builtin_MsgPort;
+extern Tmsgport Builtin_MsgPort;
 
 #endif /* TWIN_BUILTIN_H */

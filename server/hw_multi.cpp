@@ -241,7 +241,7 @@ byte InitDisplayHW(Tdisplay D_HW) {
 }
 
 void QuitDisplayHW(Tdisplay D_HW) {
-  msgport MsgPort;
+  Tmsgport MsgPort;
   uldat slot;
   SaveHW;
 
@@ -632,7 +632,7 @@ obj TwinSelectionGetOwner(void) {
   return Owner;
 }
 
-static void SelectionClear(msgport Owner) {
+static void SelectionClear(Tmsgport Owner) {
   msg Msg;
 
   if ((Msg = New(msg)(msg_selection_clear, 0)))
@@ -656,7 +656,7 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
 
       NeedHW |= NEEDSelectionExport;
 
-      All->Selection->Owner = (msgport)Owner;
+      All->Selection->Owner = (Tmsgport)Owner;
       All->Selection->OwnerOnce = NULL;
       CopyMem(&T, &All->Selection->Time, sizeof(timevalue));
     } else if (Owner->Id >> magic_shift == display_hw_magic >> magic_shift) {
@@ -692,7 +692,7 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, e_id Magic, const char
         memset(Event->EventSelectionNotify.MIME, '\0', MAX_MIMELEN);
       Event->EventSelectionNotify.Len = len;
       CopyMem(Data.data(), Event->EventSelectionNotify.Data, len);
-      SendMsg((msgport)Requestor, NewMsg);
+      SendMsg((Tmsgport)Requestor, NewMsg);
     }
   } else if (Requestor->Id >> magic_shift == display_hw_magic >> magic_shift) {
     SaveHW;
@@ -719,7 +719,7 @@ void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
         Event->EventSelectionRequest.pad = 0;
         Event->EventSelectionRequest.Requestor = Requestor;
         Event->EventSelectionRequest.ReqPrivate = ReqPrivate;
-        SendMsg((msgport)Owner, NewMsg);
+        SendMsg((Tmsgport)Owner, NewMsg);
       }
     } else if (Owner->Id >> magic_shift == display_hw_magic >> magic_shift) {
       SaveHW;

@@ -20,7 +20,7 @@
 
 struct SgroupFn {
   uldat Magic;
-  void (*Insert)(ggroup, msgport MsgPort, ggroup Prev, ggroup Next);
+  void (*Insert)(ggroup, Tmsgport MsgPort, ggroup Prev, ggroup Next);
   void (*Remove)(ggroup);
   void (*Delete)(ggroup);
   void (*ChangeField)(ggroup, udat field, uldat CLEARMask, uldat XORMask);
@@ -34,20 +34,20 @@ struct SgroupFn {
 
 struct Sgroup : public Sobj {
   TgroupFn Fn;
-  ggroup Prev, Next; /* list in the same msgport */
-  msgport MsgPort;
+  ggroup Prev, Next; /* list in the same Tmsgport */
+  Tmsgport MsgPort;
   /* ggroup */
   gadget FirstG, LastG; /* list in this ggroup */
   gadget SelectG;
 
-  static ggroup Create(msgport Parent);
-  ggroup Init(msgport Parent);
+  static ggroup Create(Tmsgport Parent);
+  ggroup Init(Tmsgport Parent);
 
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(msgport owner, ggroup prev, ggroup next) {
+  void Insert(Tmsgport owner, ggroup prev, ggroup next) {
     Fn->Insert(this, owner, prev, next);
   }
   void Remove() {

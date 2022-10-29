@@ -11,14 +11,14 @@
  */
 
 #include "alloc.h"   // AllocMem0()
-#include "fn.h"      // Fn_menu
+#include "fn.h"      // Fn_Tmenu
 #include "methods.h" // InsertLast()
 #include "obj/menu.h"
 #include "obj/msgport.h"
 
 #include <new>
 
-menu Smenu::Create(msgport owner, tcolor colitem, tcolor colselect, tcolor coldisabled,
+menu Smenu::Create(Tmsgport owner, tcolor colitem, tcolor colselect, tcolor coldisabled,
                    tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
                    byte flagdefcolinfo) {
   menu m = NULL;
@@ -26,7 +26,7 @@ menu Smenu::Create(msgport owner, tcolor colitem, tcolor colselect, tcolor coldi
     void *addr = AllocMem0(sizeof(Smenu));
     if (addr) {
       m = new (addr) Smenu();
-      m->Fn = Fn_menu;
+      m->Fn = Fn_Tmenu;
       if (!m->Init(owner, colitem, colselect, coldisabled, colselectdisabled, colshtcut,
                    colselshtcut, flagdefcolinfo)) {
         m->Delete();
@@ -37,7 +37,7 @@ menu Smenu::Create(msgport owner, tcolor colitem, tcolor colselect, tcolor coldi
   return m;
 }
 
-menu Smenu::Init(msgport owner, tcolor colitem, tcolor colselect, tcolor coldisabled,
+menu Smenu::Init(Tmsgport owner, tcolor colitem, tcolor colselect, tcolor coldisabled,
                  tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
                  byte flagdefcolinfo) {
   if (!owner || !((obj)this)->Init()) {

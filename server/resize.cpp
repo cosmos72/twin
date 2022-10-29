@@ -1515,7 +1515,7 @@ void HideMenu(byte on_off) {
   }
 }
 
-static void OpenSubMenuItem(menu M, menuitem Item, byte ByMouse) {
+static void OpenSubMenuItem(menu M, Tmenuitem Item, byte ByMouse) {
   window P = (window)Item->Parent;
   window w = Item->Window;
   screen S = All->FirstScreen;
@@ -1544,7 +1544,7 @@ static void OpenSubMenuItem(menu M, menuitem Item, byte ByMouse) {
     Act(Focus, P)(P);
 }
 
-static void OpenTopMenuItem(menu M, menuitem Item, byte ByMouse) {
+static void OpenTopMenuItem(menu M, Tmenuitem Item, byte ByMouse) {
   menu _M = (menu)Item->Parent; /* may either be M or All->CommonMenu */
   window w = Item->Window;
 
@@ -1571,11 +1571,11 @@ static void OpenTopMenuItem(menu M, menuitem Item, byte ByMouse) {
 
   Act(MapTopReal, w)(w, All->FirstScreen);
 
-  if (w->CurY != TW_MAXLDAT && (Item = (menuitem)Act(FindRow, w)(w, w->CurY)))
+  if (w->CurY != TW_MAXLDAT && (Item = (Tmenuitem)Act(FindRow, w)(w, w->CurY)))
     OpenSubMenuItem(M, Item, ByMouse);
 }
 
-static void OpenMenuItem(menu M, menuitem Item, byte ByMouse) {
+static void OpenMenuItem(menu M, Tmenuitem Item, byte ByMouse) {
   if (Item) {
     obj O = Item->Parent;
     if (O && IS_WINDOW(O))
@@ -1583,11 +1583,11 @@ static void OpenMenuItem(menu M, menuitem Item, byte ByMouse) {
     else
       OpenTopMenuItem(M, Item, ByMouse);
   } else
-    Act(SetSelectedItem, M)(M, (menuitem)0);
+    Act(SetSelectedItem, M)(M, (Tmenuitem)0);
 }
 
 /* this activates the menu bar */
-static void OpenMenu(menuitem Item, byte ByMouse) {
+static void OpenMenu(Tmenuitem Item, byte ByMouse) {
   screen S = All->FirstScreen;
   Twidget w = S->FocusW;
   menu M = Act(FindMenu, S)(S);
@@ -1611,7 +1611,7 @@ static void OpenMenu(menuitem Item, byte ByMouse) {
  * up one level; return new selected item;
  * do NOT use to close the menu, CloseMenu() does that
  */
-static menuitem CloseMenuItem(menu M, menuitem Item, byte ByMouse) {
+static Tmenuitem CloseMenuItem(menu M, Tmenuitem Item, byte ByMouse) {
   window P = (window)Item->Parent, w = Item->Window;
 
   if (w)
@@ -1635,13 +1635,13 @@ static menuitem CloseMenuItem(menu M, menuitem Item, byte ByMouse) {
     }
     return Item;
   } else {
-    Item = (menuitem)0;
+    Item = (Tmenuitem)0;
     Act(SetSelectedItem, M)(M, Item);
     return Item;
   }
 }
 
-static dat DepthOfMenuItem(menuitem I) {
+static dat DepthOfMenuItem(Tmenuitem I) {
   window w;
   dat d = 0;
 
@@ -1653,7 +1653,7 @@ static dat DepthOfMenuItem(menuitem I) {
 }
 
 /* this traverses the menu bar as needed */
-static void TraverseMenu(menu M, menuitem OldItem, dat Odepth, menuitem NewItem, dat Ndepth,
+static void TraverseMenu(menu M, Tmenuitem OldItem, dat Odepth, Tmenuitem NewItem, dat Ndepth,
                          byte ByMouse) {
   while (Odepth > Ndepth && OldItem) {
     Odepth--;
@@ -1676,7 +1676,7 @@ static void TraverseMenu(menu M, menuitem OldItem, dat Odepth, menuitem NewItem,
 void CloseMenu(void) {
   screen S = All->FirstScreen;
   menu M = Act(FindMenu, S)(S);
-  menuitem Item;
+  Tmenuitem Item;
   window w;
 
   if (M) {
@@ -1689,7 +1689,7 @@ void CloseMenu(void) {
     /* close whole currently open menu tree */
     Item = Act(GetSelectedItem, M)(M);
     while (Item && IS_MENUITEM(Item) && (w = (window)Item->Window) && IS_WINDOW(w)) {
-      Item = (menuitem)Act(FindRow, w)(w, w->CurY);
+      Item = (Tmenuitem)Act(FindRow, w)(w, w->CurY);
       Act(UnMap, w)(w);
     }
   }
@@ -1704,10 +1704,10 @@ void CloseMenu(void) {
  * exported interface to open and interact with the menu.
  * do NOT use to close the menu, CloseMenu() does that
  */
-void SetMenuState(menuitem Item, byte ByMouse) {
+void SetMenuState(Tmenuitem Item, byte ByMouse) {
   screen S = All->FirstScreen;
   menu M = Act(FindMenu, S)(S);
-  menuitem OldItem = (menuitem)0;
+  Tmenuitem OldItem = (Tmenuitem)0;
   dat Odepth = 0;
 
   if (M && (Item || ByMouse)) {
@@ -2079,7 +2079,7 @@ void WriteTRunesGadget(gadget G, byte bitmap, dat TW, dat TH, const trune *TRune
 }
 
 void SyncMenu(menu Menu) {
-  menuitem I, PrevI = (menuitem)0;
+  Tmenuitem I, PrevI = (Tmenuitem)0;
   screen Screen;
 
   if (Menu) {

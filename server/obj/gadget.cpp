@@ -11,13 +11,13 @@
  */
 
 #include "alloc.h"    // AllocMem0(), CloneStr2TRune()
-#include "fn.h"       // Fn_gadget
+#include "fn.h"       // Fn_Tgadget
 #include "menuitem.h" // COD_RESERVED
 #include "obj/gadget.h"
 
 #include <new>
 
-gadget Sgadget::Create(msgport owner, Twidget parent, dat xwidth, dat ywidth,
+gadget Sgadget::Create(Tmsgport owner, Twidget parent, dat xwidth, dat ywidth,
                        const char *textnormal, uldat attr, uldat flags, udat code, tcolor coltext,
                        tcolor coltextselect, tcolor coltextdisabled, tcolor coltextselectdisabled,
                        dat left, dat up) {
@@ -27,7 +27,7 @@ gadget Sgadget::Create(msgport owner, Twidget parent, dat xwidth, dat ywidth,
     void *addr = AllocMem0(sizeof(Sgadget));
     if (addr) {
       g = new (addr) Sgadget();
-      g->Fn = Fn_gadget;
+      g->Fn = Fn_Tgadget;
       if (!g->Init(owner, parent, xwidth, ywidth, textnormal, attr, flags, code, coltext,
                    coltextselect, coltextdisabled, coltextselectdisabled, left, up)) {
         g->Delete();
@@ -38,7 +38,7 @@ gadget Sgadget::Create(msgport owner, Twidget parent, dat xwidth, dat ywidth,
   return g;
 }
 
-gadget Sgadget::Init(msgport owner, Twidget parent, dat xwidth, dat ywidth, const char *textnormal,
+gadget Sgadget::Init(Tmsgport owner, Twidget parent, dat xwidth, dat ywidth, const char *textnormal,
                      uldat attr, uldat flags, udat code, tcolor coltext, tcolor coltextselect,
                      tcolor coltextdisabled, tcolor coltextselectdisabled, dat left, dat up) {
   ldat Size;

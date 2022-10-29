@@ -659,7 +659,7 @@ static byte RCSteps(run *r) {
       case KILL:
         /* BRUTAL! */
         if (W) {
-          msgport M = W->Owner;
+          Tmsgport M = W->Owner;
           /*
            * try not to exagerate with brutality:
            * allow deleting remote clients msgports only
@@ -1038,7 +1038,7 @@ void QuitRC(void) {
 
 static byte USEDefaultCommonMenu(void) {
   menu Menu;
-  menuitem Item;
+  Tmenuitem Item;
   window W;
   row Row;
 

@@ -24,7 +24,7 @@ uldat RemoteWriteQueue(uldat Slot, uldat len, const void *data);
 byte RemoteFlush(uldat Slot);
 #define RemoteWindowFlush(Window) RemoteFlush((Window)->RemoteData.FdSlot)
 
-msgport RemoteGetMsgPort(uldat Slot);
+Tmsgport RemoteGetMsgPort(uldat Slot);
 
 void RemoteFlushAll(void);
 void RemoteEvent(int FdNum, fd_set *FdSet);
@@ -45,8 +45,8 @@ void RemoteCouldWrite(uldat Slot);
 
 extern uldat FdWQueued;
 
-void RegisterMsgPort(msgport MsgPort, uldat Slot);
-void UnRegisterMsgPort(msgport MsgPort);
+void RegisterMsgPort(Tmsgport MsgPort, uldat Slot);
+void UnRegisterMsgPort(Tmsgport MsgPort);
 
 void remoteKillSlot(uldat slot);
 

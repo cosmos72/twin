@@ -24,8 +24,8 @@
 
 /* FIXME: Fix screen scrolling during Interactive Drag/Resize */
 
-msgport Scroller_MsgPort;
-static void ScrollerH(msgport MsgPort);
+Tmsgport Scroller_MsgPort;
+static void ScrollerH(Tmsgport MsgPort);
 
 /*
  * just dummy msgs that we receive when we are called
@@ -60,7 +60,7 @@ inline void ScrollerDelayRepeat(void) {
   Scroller_MsgPort->PauseDuration.Fraction = 333 MilliSECs + 1;
 }
 
-static void ScrollerH(msgport MsgPort) {
+static void ScrollerH(Tmsgport MsgPort) {
   msg Msg, saveMsg;
   mouse_state *Mouse;
   uldat Attr, WState;

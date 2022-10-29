@@ -199,9 +199,9 @@
     "2" "v" TWS_void_STR"x" menu_magic_STR"_" TWS_byte_STR"_" TWS_ldat_STR"V" TWS_char_STR"W" TWS_tcolor_STR },
 
 { 0, 0, "CreateMsgPort",
-    "0" "x" msgport_magic_STR"_" TWS_byte_STR"V" TWS_char_STR },
+    "0" "x" Tmsgport_magic_STR"_" TWS_byte_STR"V" TWS_char_STR },
 { 0, 0, "FindMsgPort",
-    "0" "x" msgport_magic_STR"x" msgport_magic_STR"_" TWS_byte_STR"V" TWS_char_STR },
+    "0" "x" Tmsgport_magic_STR"x" Tmsgport_magic_STR"_" TWS_byte_STR"V" TWS_char_STR },
 
 { 0, 0, "BgImageScreen",
     "2" "v" TWS_void_STR"x" screen_magic_STR"_" TWS_dat_STR"_" TWS_dat_STR"V" TWS_tcell_STR },
@@ -218,15 +218,15 @@
 { 0, 0, "FirstWidget",
     "0" "x" widget_magic_STR"x" widget_magic_STR },
 { 0, 0, "FirstMsgPort",
-    "0" "x" msgport_magic_STR },
+    "0" "x" Tmsgport_magic_STR },
 { 0, 0, "FirstMenu",
-    "0" "x" menu_magic_STR"x" msgport_magic_STR },
+    "0" "x" menu_magic_STR"x" Tmsgport_magic_STR },
 { 0, 0, "FirstW",
-    "0" "x" widget_magic_STR"x" msgport_magic_STR },
+    "0" "x" widget_magic_STR"x" Tmsgport_magic_STR },
 { 0, 0, "FirstGroup",
-    "0" "x" ggroup_magic_STR"x" msgport_magic_STR },
+    "0" "x" ggroup_magic_STR"x" Tmsgport_magic_STR },
 { 0, 0, "FirstMutex",
-    "0" "x" mutex_magic_STR"x" msgport_magic_STR },
+    "0" "x" mutex_magic_STR"x" Tmsgport_magic_STR },
 { 0, 0, "FirstMenuItem",
     "0" "x" menuitem_magic_STR"x" menu_magic_STR },
 { 0, 0, "FirstGadget",
@@ -240,9 +240,9 @@
     "0" "x" all_magic_STR },
 
 { 0, 0, "SendToMsgPort",
-    "0" "_" TWS_byte_STR"x" msgport_magic_STR"_" TWS_udat_STR"V" TWS_byte_STR },
+    "0" "_" TWS_byte_STR"x" Tmsgport_magic_STR"_" TWS_udat_STR"V" TWS_byte_STR },
 { 0, 0, "BlindSendToMsgPort",
-    "0" "v" TWS_void_STR"x" msgport_magic_STR"_" TWS_udat_STR"V" TWS_byte_STR },
+    "0" "v" TWS_void_STR"x" Tmsgport_magic_STR"_" TWS_udat_STR"V" TWS_byte_STR },
 
 { 0, 0, "GetOwnerSelection",
     "0" "x" obj_magic_STR },
@@ -255,4 +255,3 @@
 
 { 0, 0, "SetServerUid",
     "0" "_" TWS_byte_STR"_" TWS_uldat_STR"_" TWS_byte_STR },
-

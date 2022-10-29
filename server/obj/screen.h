@@ -40,9 +40,9 @@ struct SscreenFn {
   void (*MapTopReal)(screen, screen);
   void (*Raise)(screen);
   void (*Lower)(screen);
-  void (*Own)(screen, msgport);
+  void (*Own)(screen, Tmsgport);
   void (*DisOwn)(screen);
-  void (*RecursiveDelete)(screen, msgport);
+  void (*RecursiveDelete)(screen, Tmsgport);
   void (*Expose)(screen, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
                  const tcell *);
   byte (*InstallHook)(screen, HookFn, HookFn *Where);
@@ -54,7 +54,7 @@ struct SscreenFn {
   screen (*CreateSimple)(dat NameLen, const char *Name, tcell Bg);
   void (*BgImage)(screen, dat BgWidth, dat BgHeight, const tcell *Bg);
   void (*DrawMenu)(screen, dat Xstart, dat Xend);
-  void (*ActivateMenu)(screen, menuitem, byte ByMouse);
+  void (*ActivateMenu)(screen, Tmenuitem, byte ByMouse);
   void (*DeActivateMenu)(screen);
 };
 
@@ -69,8 +69,8 @@ struct Sscreen : public Sobj {
   uldat Attr;
   uldat Flags;
   ldat XLogic, YLogic;
-  Twidget O_Prev, O_Next; /* list with the same msgport (owner) */
-  msgport Owner;
+  Twidget O_Prev, O_Next; /* list with the same Tmsgport (owner) */
+  Tmsgport Owner;
   HookFn ShutDownHook; /* hooks for this Twidget */
   HookFn Hook, *WhereHook;
   HookFn MapUnMapHook;
@@ -141,13 +141,13 @@ struct Sscreen : public Sobj {
   void Lower() {
     Fn->Lower(this);
   }
-  void Own(msgport port) {
+  void Own(Tmsgport port) {
     Fn->Own(this, port);
   }
   void DisOwn() {
     Fn->DisOwn(this);
   }
-  void RecursiveDelete(msgport port) {
+  void RecursiveDelete(Tmsgport port) {
     Fn->RecursiveDelete(this, port);
   }
   void Expose(dat xwidth, dat ywidth, dat left, dat up, const char *ascii, const trune *runes,
@@ -176,7 +176,7 @@ struct Sscreen : public Sobj {
   void DrawMenu(dat xstart, dat xend) {
     Fn->DrawMenu(this, xstart, xend);
   }
-  void ActivateMenu(menuitem item, byte bymouse) {
+  void ActivateMenu(Tmenuitem item, byte bymouse) {
     Fn->ActivateMenu(this, item, bymouse);
   }
   void DeActivateMenu() {

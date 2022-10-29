@@ -12,7 +12,7 @@
 
 #include "alloc.h"   // AllocMem0(), AllocMem(), CloneStrL(), CopyMem()
 #include "builtin.h" // Builtin_MsgPort
-#include "fn.h"      // Fn_screen
+#include "fn.h"      // Fn_Tscreen
 #include "obj/screen.h"
 
 #include <new>
@@ -24,7 +24,7 @@ screen Sscreen::Create(dat namelen, const char *name, dat bgwidth, dat bgheight,
     void *addr = AllocMem0(sizeof(Sscreen));
     if (addr) {
       S = new (addr) Sscreen();
-      S->Fn = Fn_screen;
+      S->Fn = Fn_Tscreen;
       if (!S->Init(namelen, name, bgwidth, bgheight, bg)) {
         S->Delete();
         S = NULL;

@@ -1,5 +1,5 @@
 /*
- *  msgport.cpp  --  define methods of server class Smsgport
+ *  Tmsgport.cpp  --  define methods of server class Smsgport
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -20,14 +20,14 @@
 
 #include <new>
 
-msgport Smsgport::Create(byte namelen, const char *name, tany pausesec, tany pausefraction,
-                         byte wakeup, void (*handler)(msgport)) {
-  msgport p = NULL;
+Tmsgport Smsgport::Create(byte namelen, const char *name, tany pausesec, tany pausefraction,
+                          byte wakeup, void (*handler)(Tmsgport)) {
+  Tmsgport p = NULL;
   if (name) {
     void *addr = AllocMem0(sizeof(Smsgport));
     if (addr) {
       p = new (addr) Smsgport();
-      p->Fn = Fn_msgport;
+      p->Fn = Fn_Tmsgport;
       if (!p->Init(namelen, name, pausesec, pausefraction, wakeup, handler)) {
         p->Delete();
         p = NULL;
@@ -37,8 +37,8 @@ msgport Smsgport::Create(byte namelen, const char *name, tany pausesec, tany pau
   return p;
 }
 
-msgport Smsgport::Init(byte namelen, const char *name, tany pausesec, tany pausefraction,
-                       byte wakeup, void (*handler)(msgport)) {
+Tmsgport Smsgport::Init(byte namelen, const char *name, tany pausesec, tany pausefraction,
+                        byte wakeup, void (*handler)(Tmsgport)) {
 
   if (!handler || !((obj)this)->Init()) {
     return NULL;
@@ -49,7 +49,7 @@ msgport Smsgport::Init(byte namelen, const char *name, tany pausesec, tany pause
   this->WakeUp = wakeup;
   this->NameLen = namelen;
   this->Handler = handler;
-  // this->ShutDownHook = (void (*)(msgport))0;
+  // this->ShutDownHook = (void (*)(Tmsgport))0;
   this->PauseDuration.Seconds = pausesec;
   this->PauseDuration.Fraction = pausefraction;
   (void)SumTime(&this->CallTime, &::All->Now, &this->PauseDuration);
@@ -66,8 +66,8 @@ msgport Smsgport::Init(byte namelen, const char *name, tany pausesec, tany pause
   this->Es = NULL;
   this->AttachHW = NULL;
   */
-  InsertMiddle(MsgPort, this, ::All, WakeUp ? (msgport)0 : ::All->LastMsgPort,
-               WakeUp ? ::All->FirstMsgPort : (msgport)0);
+  InsertMiddle(MsgPort, this, ::All, WakeUp ? (Tmsgport)0 : ::All->LastMsgPort,
+               WakeUp ? ::All->FirstMsgPort : (Tmsgport)0);
   SortMsgPortByCallTime(this);
   return this;
 }

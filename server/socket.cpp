@@ -83,7 +83,7 @@ static byte *alienPush(const void *src, uldat len, byte *dst, uldat alien_len);
 #define alienPUSH(dst, type, lval)                                                                 \
   (dst = alienPush(&(lval), sizeof(type), (dst), AlienSizeof(type, Slot)))
 
-static void alienSendMsg(msgport MsgPort, msg Msg);
+static void alienSendMsg(Tmsgport MsgPort, msg Msg);
 static void AlienIO(int fd, uldat slot);
 
 #endif
@@ -332,9 +332,9 @@ static void ShutdownGzip(uldat Slot);
 
 #endif /* CONF_SOCKET_GZ */
 
-static void SocketH(msgport MsgPort);
+static void SocketH(Tmsgport MsgPort);
 
-static void sockShutDown(msgport MsgPort) {
+static void sockShutDown(Tmsgport MsgPort) {
   if (MsgPort->RemoteData.FdSlot < FdTop) {
     UnRegisterMsgPort(MsgPort);
   }
@@ -389,8 +389,8 @@ static void sockSetTitleWindow(window Window, dat titlelen, const char *title);
 
 static row sockFindRowByCodeWindow(window Window, dat Code);
 
-static menuitem sockCreate4MenuAny(obj Parent, window Window, udat Code, byte Flags, ldat Len,
-                                   const char *Name);
+static Tmenuitem sockCreate4MenuAny(obj Parent, window Window, udat Code, byte Flags, ldat Len,
+                                    const char *Name);
 
 #define sockRestackChildrenRow RestackRows
 static void sockCirculateChildrenRow(obj O, byte up_or_down);
@@ -401,8 +401,8 @@ static menu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
                            tcolor ColSelectDisabled, tcolor ColShtCut, tcolor ColSelShtCut,
                            byte FlagDefColInfo);
 
-static msgport sockCreateMsgPort(byte NameLen, const char *Name);
-static msgport sockFindMsgPort(msgport Prev, byte NameLen, const char *Name);
+static Tmsgport sockCreateMsgPort(byte NameLen, const char *Name);
+static Tmsgport sockFindMsgPort(Tmsgport Prev, byte NameLen, const char *Name);
 
 static ggroup sockCreateGroup(void);
 
@@ -412,16 +412,16 @@ static obj sockParentObj(obj o);
 
 static screen sockFirstScreen(void);
 static Twidget sockFirstWidget(Twidget W);
-static msgport sockFirstMsgPort(void);
-static menu sockFirstMenu(msgport MsgPort);
-static Twidget sockFirstW(msgport MsgPort);
-static ggroup sockFirstGroup(msgport MsgPort);
-static mutex sockFirstMutex(msgport MsgPort);
-static menuitem sockFirstMenuItem(menu Menu);
+static Tmsgport sockFirstMsgPort(void);
+static menu sockFirstMenu(Tmsgport MsgPort);
+static Twidget sockFirstW(Tmsgport MsgPort);
+static ggroup sockFirstGroup(Tmsgport MsgPort);
+static mutex sockFirstMutex(Tmsgport MsgPort);
+static Tmenuitem sockFirstMenuItem(menu Menu);
 static gadget sockFirstGadget(ggroup Group);
 
-static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data);
-static void sockBlindSendToMsgPort(msgport MsgPort, udat Len, const byte *Data);
+static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data);
+static void sockBlindSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data);
 
 static obj sockGetOwnerSelection(void);
 static void sockSetOwnerSelection(tany Time, tany Frac);
@@ -999,11 +999,11 @@ static void sockSetTRuneTranslation(const trune trans[0x80]) {
   }
 }
 
-static msgport sockGetMsgPortObj(obj p) {
+static Tmsgport sockGetMsgPortObj(obj p) {
   obj_entry e = (obj_entry)p;
   while (e) {
     if (IS_MSGPORT(e)) {
-      return (msgport)e;
+      return (Tmsgport)e;
     }
     switch (e->Id >> magic_shift) {
     case row_magic_byte:
@@ -1022,12 +1022,12 @@ static msgport sockGetMsgPortObj(obj p) {
       break;
     }
   }
-  return (msgport)e;
+  return (Tmsgport)e;
 }
 
 static void sockDeleteObj(void *V) {
   obj O = (obj)V;
-  msgport MsgPort = RemoteGetMsgPort(Slot);
+  Tmsgport MsgPort = RemoteGetMsgPort(Slot);
 
   if (MsgPort && MsgPort == sockGetMsgPortObj(O))
     O->Delete();
@@ -1035,13 +1035,13 @@ static void sockDeleteObj(void *V) {
 
 static Twidget sockCreateWidget(dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left, dat Up,
                                 tcell Fill) {
-  msgport Owner;
+  Tmsgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
     return New(widget)(Owner, XWidth, YWidth, Attr, Flags, Left, Up, Fill);
   return (Twidget)0;
 }
 static void sockRecursiveDeleteWidget(Twidget W) {
-  msgport MsgPort = RemoteGetMsgPort(Slot);
+  Tmsgport MsgPort = RemoteGetMsgPort(Slot);
 
   /* avoid too much visual activity... UnMap top-level Twidget immediately */
   Act(UnMap, W)(W);
@@ -1134,7 +1134,7 @@ static gadget sockCreateGadget(Twidget Parent, dat XWidth, dat YWidth, const cha
                                uldat Attr, uldat Flags, udat Code, tcolor ColText,
                                tcolor ColTextSelect, tcolor ColTextDisabled,
                                tcolor ColTextSelectDisabled, dat Left, dat Up) {
-  msgport Owner;
+  Tmsgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
     return New(gadget)(Owner, Parent, XWidth, YWidth, TextNormal, Attr, Flags, Code, ColText,
                        ColTextSelect, ColTextDisabled, ColTextSelectDisabled, Left, Up);
@@ -1144,7 +1144,7 @@ static gadget sockCreateGadget(Twidget Parent, dat XWidth, dat YWidth, const cha
 static window sockCreateWindow(dat TitleLen, const char *Title, const tcolor *ColTitle, menu Menu,
                                tcolor ColText, uldat CursorType, uldat Attr, uldat Flags,
                                dat XWidth, dat YWidth, dat ScrollBackLines) {
-  msgport Owner;
+  Tmsgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
     return New(window)(Owner, TitleLen, Title, ColTitle, Menu, ColText, CursorType, Attr, Flags,
                        XWidth, YWidth, ScrollBackLines);
@@ -1203,15 +1203,15 @@ static row sockFindRowByCodeWindow(window Window, dat Code) {
   return (row)0;
 }
 
-static menuitem sockCreate4MenuAny(obj Parent, window Window, udat Code, byte Flags, ldat Len,
-                                   const char *Name) {
+static Tmenuitem sockCreate4MenuAny(obj Parent, window Window, udat Code, byte Flags, ldat Len,
+                                    const char *Name) {
   return Do(Create4Menu, menuitem)(Parent, Window, Code, Flags, Len, Name);
 }
 
 static menu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
                            tcolor ColSelectDisabled, tcolor ColShtCut, tcolor ColSelShtCut,
                            byte FlagDefColInfo) {
-  msgport Owner;
+  Tmsgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
     return New(menu)(Owner, ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut,
                      ColSelShtCut, FlagDefColInfo);
@@ -1219,8 +1219,8 @@ static menu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
 }
 
 /* last 3 args are currently useless for remote clients */
-static msgport sockCreateMsgPort(byte NameLen, const char *Name) {
-  msgport MsgPort;
+static Tmsgport sockCreateMsgPort(byte NameLen, const char *Name) {
+  Tmsgport MsgPort;
 
   if ((MsgPort = New(msgport)(NameLen, Name, 0, 0, 0, SocketH))) {
     RegisterMsgPort(MsgPort, Slot);
@@ -1228,8 +1228,8 @@ static msgport sockCreateMsgPort(byte NameLen, const char *Name) {
   }
   return MsgPort;
 }
-static msgport sockFindMsgPort(msgport Prev, byte NameLen, const char *Name) {
-  msgport M;
+static Tmsgport sockFindMsgPort(Tmsgport Prev, byte NameLen, const char *Name) {
+  Tmsgport M;
   if (!(M = Prev))
     M = All->FirstMsgPort;
   while (M) {
@@ -1241,7 +1241,7 @@ static msgport sockFindMsgPort(msgport Prev, byte NameLen, const char *Name) {
 }
 
 static ggroup sockCreateGroup(void) {
-  msgport Owner;
+  Tmsgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
     return New(group)(Owner);
   return (ggroup)0;
@@ -1266,23 +1266,23 @@ static screen sockFirstScreen(void) {
 static Twidget sockFirstWidget(Twidget W) {
   return W ? W->FirstW : W;
 }
-static msgport sockFirstMsgPort(void) {
+static Tmsgport sockFirstMsgPort(void) {
   return All->FirstMsgPort;
 }
-static menu sockFirstMenu(msgport MsgPort) {
+static menu sockFirstMenu(Tmsgport MsgPort) {
   return MsgPort ? MsgPort->FirstMenu : (menu)0;
 }
-static Twidget sockFirstW(msgport MsgPort) {
+static Twidget sockFirstW(Tmsgport MsgPort) {
   return MsgPort ? MsgPort->FirstW : (Twidget)0;
 }
-static ggroup sockFirstGroup(msgport MsgPort) {
+static ggroup sockFirstGroup(Tmsgport MsgPort) {
   return MsgPort ? MsgPort->FirstGroup : (ggroup)0;
 }
-static mutex sockFirstMutex(msgport MsgPort) {
+static mutex sockFirstMutex(Tmsgport MsgPort) {
   return MsgPort ? MsgPort->FirstMutex : (mutex)0;
 }
-static menuitem sockFirstMenuItem(menu Menu) {
-  return Menu ? Menu->FirstI : (menuitem)0;
+static Tmenuitem sockFirstMenuItem(menu Menu) {
+  return Menu ? Menu->FirstI : (Tmenuitem)0;
 }
 static gadget sockFirstGadget(ggroup Group) {
   return Group ? Group->FirstG : (gadget)0;
@@ -1298,7 +1298,7 @@ static all sockGetAll(void) {
  * this can be called in nasty places like detaching non-exclusive displays
  * when an exclusive one is started. Must preserve Slot, Fd and other globals!
  */
-static void sockSendMsg(msgport MsgPort, msg Msg) {
+static void sockSendMsg(Tmsgport MsgPort, msg Msg) {
   uldat Len, Tot;
   byte *t;
   uldat save_Slot;
@@ -1475,9 +1475,9 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 #define tmsgEventOffset(x) ((udat)(size_t) & (((tmsg)0)->Event.x))
 
 /* extract the (tmsg) from Data, turn it into a (msg) and send it to MsgPort */
-static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
+static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
   tmsg tMsg;
-  msgport Sender;
+  Tmsgport Sender;
   msg Msg;
   uldat dstSlot;
   udat _Len, minType;
@@ -1691,7 +1691,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
 #undef tmsgEventDelta
 #undef tmsgEventOffset
 
-static void sockBlindSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
+static void sockBlindSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
   (void)sockSendToMsgPort(MsgPort, Len, Data);
 }
 
@@ -2260,7 +2260,7 @@ static void inetSocketIO(int fd, uldat slot) {
 }
 
 static void sockKillSlot(uldat slot) {
-  msgport MsgPort;
+  Tmsgport MsgPort;
   Tdisplay D_HW;
 
   if (slot != NOSLOT) {
@@ -2384,7 +2384,7 @@ static void SocketIO(int fd, uldat slot) {
   }
 }
 
-static void SocketH(msgport MsgPort) {
+static void SocketH(Tmsgport MsgPort) {
   msg Msg;
   Twidget W;
   char buf[10];

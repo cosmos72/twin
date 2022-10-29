@@ -11,7 +11,7 @@
  */
 
 #include "alloc.h"        // AllocMem0()
-#include "fn.h"           // Fn_row
+#include "fn.h"           // Fn_Trow
 #include "obj/menuitem.h" // COD_RESERVED
 #include "obj/row.h"
 
@@ -23,7 +23,7 @@ row Srow::Create(udat code, byte flags) {
     void *addr = AllocMem0(sizeof(Srow));
     if (addr) {
       r = new (addr) Srow();
-      r->Fn = Fn_row;
+      r->Fn = Fn_Trow;
       if (!r->Init(code, flags)) {
         r->Delete();
         r = NULL;

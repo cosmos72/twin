@@ -39,7 +39,7 @@ inline tcolor DoShadowColor(tcolor Color, bool Fg, bool Bg) NOTHROW {
  * warning: DrawMenu() can cheat and give us a user Menu
  * while MenuItem is from All->CommonMenu
  */
-static void FindFontMenuItem(menu Menu, menuitem MenuItem, dat i, bool select,
+static void FindFontMenuItem(menu Menu, Tmenuitem MenuItem, dat i, bool select,
                              tcell *PtrAttr) NOTHROW {
   tcolor Color;
   byte ShortCutFound;
@@ -823,7 +823,7 @@ void DrawSelfWindow(draw_ctx *d) {
 
           absent = !CurrRow || (PosInRow >= 0 && (uldat)PosInRow >= CurrRow->Len);
 
-          if (CurrRow && IS_MENUITEM(CurrRow) && ((menuitem)CurrRow)->Window && i == rgt) {
+          if (CurrRow && IS_MENUITEM(CurrRow) && ((Tmenuitem)CurrRow)->Window && i == rgt) {
             Font = T_UTF_32_BLACK_RIGHT_POINTING_TRIANGLE;
           } else if (absent)
             Font = ' ';
@@ -1762,7 +1762,7 @@ void ReDrawRolledUpAreaWindow(window w, bool shaded) {
 void DrawMenuScreen(screen scr, dat Xstart, dat Xend) {
   screen fScreen;
   menu Menu;
-  menuitem Item;
+  Tmenuitem Item;
   dat dwidth, dheight, i, j, x;
   tcell Attr;
   trune Font;

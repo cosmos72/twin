@@ -1258,7 +1258,7 @@ static byte NewCommonMenu(void *const *shm_M, menu *res_CommonMenu, node **res_M
   uldat new_MenuBindsMax;
 
   menu Menu = (menu)0;
-  menuitem Item;
+  Tmenuitem Item;
   window W;
   row Row;
   node N, M;

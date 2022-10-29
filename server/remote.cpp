@@ -154,10 +154,10 @@ void RemoteCouldWrite(uldat Slot) {
   FD_CLR(LS.Fd, &save_wfds);
 }
 
-msgport RemoteGetMsgPort(uldat Slot) {
+Tmsgport RemoteGetMsgPort(uldat Slot) {
   if (Slot < FdTop && LS.Fd != NOFD)
     return LS.MsgPort;
-  return (msgport)0;
+  return (Tmsgport)0;
 }
 
 /* Register a Fd, its HandlerIO and eventually its HandlerData arg */
@@ -190,7 +190,7 @@ uldat RegisterRemote(int Fd, obj HandlerData, handler_obj HandlerObj) {
     LS.HandlerIO.D = HandlerObj;
   else
     LS.HandlerIO.S = (handler_io)HandlerObj;
-  LS.MsgPort = (msgport)0;
+  LS.MsgPort = (Tmsgport)0;
   LS.WQueue = LS.RQueue = (byte *)0;
   LS.WQlen = LS.WQmax = LS.RQlen = LS.RQmax = (uldat)0;
   LS.PrivateAfterFlush = NULL;
@@ -265,7 +265,7 @@ void UnRegisterWindowFdIO(window Window) {
 }
 
 void remoteKillSlot(uldat slot) {
-  msgport MsgPort;
+  Tmsgport MsgPort;
   Tdisplay D_HW;
 
   if (slot != NOSLOT) {
@@ -472,7 +472,7 @@ uldat RemoteWriteQueue(uldat Slot, uldat len, const void *data) {
   return len;
 }
 
-void RegisterMsgPort(msgport MsgPort, uldat Slot) {
+void RegisterMsgPort(Tmsgport MsgPort, uldat Slot) {
   if (MsgPort && MsgPort->RemoteData.FdSlot == NOSLOT && Slot < FdTop && LS.Fd != NOFD &&
       !LS.MsgPort) {
 
@@ -482,12 +482,12 @@ void RegisterMsgPort(msgport MsgPort, uldat Slot) {
   }
 }
 
-void UnRegisterMsgPort(msgport MsgPort) {
+void UnRegisterMsgPort(Tmsgport MsgPort) {
   uldat Slot;
   if (MsgPort && (Slot = MsgPort->RemoteData.FdSlot) < FdTop && LS.Fd != NOFD &&
       LS.MsgPort == MsgPort) {
 
     MsgPort->RemoteData.FdSlot = NOSLOT;
-    LS.MsgPort = (msgport)0;
+    LS.MsgPort = (Tmsgport)0;
   }
 }

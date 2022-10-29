@@ -23,7 +23,7 @@ struct SmutexFn {
   void (*ChangeField)(mutex, udat field, uldat CLEARMask, uldat XORMask);
   /* mutex */
   TobjFn Fn_Obj;
-  void (*Own)(mutex, msgport);
+  void (*Own)(mutex, Tmsgport);
   void (*DisOwn)(mutex);
 };
 
@@ -33,12 +33,12 @@ struct Smutex : public Sobj {
   all All;
   /* mutex */
   mutex O_Prev, O_Next; /* owned by the same MsgPort */
-  msgport Owner;
+  Tmsgport Owner;
   byte Perm, NameLen;
   char *Name;
 
-  static mutex Create(msgport owner, byte namelen, const char *name, byte perm);
-  mutex Init(msgport owner, byte namelen, const char *name, byte perm);
+  static mutex Create(Tmsgport owner, byte namelen, const char *name, byte perm);
+  mutex Init(Tmsgport owner, byte namelen, const char *name, byte perm);
 
   /* obj */
   uldat Magic() const {
@@ -54,7 +54,7 @@ struct Smutex : public Sobj {
     Fn->Delete(this);
   }
   /* mutex */
-  void Own(msgport owner) {
+  void Own(Tmsgport owner) {
     Fn->Own(this, owner);
   }
   void DisOwn() {

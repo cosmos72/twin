@@ -13,7 +13,7 @@ struct wm_ctx {
   Twidget W; /* top level Twidget user is interacting with */
   screen Screen;
   menu Menu;
-  menuitem Item;
+  Tmenuitem Item;
   Twidget DW; /* deepest Twidget user is interacting with */
   udat Type;  /* Msg->Type: MSG_* */
   byte Pos;   /* POS_* relative to (W) */

@@ -137,7 +137,7 @@ dat CmpTime(timevalue *T1, timevalue *T2) {
   return (dat)0;
 }
 
-static dat CmpCallTime(msgport m1, msgport m2) {
+static dat CmpCallTime(Tmsgport m1, Tmsgport m2) {
   if ((!m1->FirstMsg) != (!m2->FirstMsg))
     /* one of the two doesn't have msgs */
     return m1->FirstMsg ? (dat)-1 : (dat)1;
@@ -224,11 +224,11 @@ void SetArgv0(char *const *argv, uldat argv_usable_len, const char *src) {
 }
 
 /*
- * move a msgport to the right place in an already sorted list,
+ * move a Tmsgport to the right place in an already sorted list,
  * ordering by CallTime
  */
-void SortMsgPortByCallTime(msgport Port) {
-  msgport other;
+void SortMsgPortByCallTime(Tmsgport Port) {
+  Tmsgport other;
   if ((other = Port->Next) && CmpCallTime(Port, other) > 0) {
     Port->Remove();
     do {
@@ -251,15 +251,15 @@ void SortMsgPortByCallTime(msgport Port) {
 }
 
 /*
- * sort the msgport list by growing CallTime
+ * sort the Tmsgport list by growing CallTime
  *
  * we use a bubble sort... no need to optimize to death this
  */
 void SortAllMsgPortsByCallTime(void) {
-  msgport Max, This, Port = All->FirstMsgPort;
-  msgport Start, End;
+  Tmsgport Max, This, Port = All->FirstMsgPort;
+  Tmsgport Start, End;
 
-  Start = End = (msgport)0;
+  Start = End = (Tmsgport)0;
 
   while (Port) {
     Max = This = Port;
@@ -288,7 +288,7 @@ void SortAllMsgPortsByCallTime(void) {
   All->LastMsgPort = End;
 }
 
-byte SendControlMsg(msgport MsgPort, udat Code, udat Len, const char *Data) {
+byte SendControlMsg(Tmsgport MsgPort, udat Code, udat Len, const char *Data) {
   msg Msg;
   event_control *Event;
 
@@ -641,7 +641,7 @@ void closeAllFds(int tty_fd_to_dup) {
 }
 
 void ResetBorderPattern(void) {
-  msgport MsgP;
+  Tmsgport MsgP;
   Twidget w;
 
   for (MsgP = All->FirstMsgPort; MsgP; MsgP = MsgP->Next) {
@@ -1184,7 +1184,7 @@ static bool SetEnvs(struct passwd *p) {
 }
 
 byte SetServerUid(uldat uid, byte privileges) {
-  msgport WM_MsgPort;
+  Tmsgport WM_MsgPort;
   struct passwd *p;
   byte ok = tfalse;
 

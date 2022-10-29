@@ -23,7 +23,7 @@ module Smodule::Create(uldat namelen, const char *name) {
     void *addr = AllocMem0(sizeof(Smodule));
     if (addr) {
       m = new (addr) Smodule();
-      m->Fn = Fn_module;
+      m->Fn = Fn_Tmodule;
       if (!m->Init(namelen, name)) {
         m->Delete();
         m = NULL;

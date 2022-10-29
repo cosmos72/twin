@@ -40,8 +40,8 @@ static void DetailCtx(wm_ctx *C);
 
 byte ClickWindowPos = TW_MAXBYTE;
 
-static msgport WM_MsgPort;
-static msgport MapQueue;
+static Tmsgport WM_MsgPort;
+static Tmsgport MapQueue;
 
 #define XBarSize (Window->XWidth - (udat)5)
 #define YBarSize (Window->YWidth - (udat)4)
@@ -824,7 +824,7 @@ static byte ActivateMenu(wm_ctx *C) {
     if (C->j == C->Screen->YLimit)
       C->Item = Act(FindItem, C->Menu)(C->Menu, C->i);
     else
-      C->Item = (menuitem)0;
+      C->Item = (Tmenuitem)0;
   } else {
     if (!(C->Item = Act(GetSelectedItem, C->Menu)(C->Menu)) && !(C->Item = C->Menu->FirstI))
 
@@ -846,12 +846,12 @@ static void ContinueMenu(wm_ctx *C) {
     SetMenuState(C->Item, ttrue);
   else if (C->Pos == POS_INSIDE && (W = (window)C->W) && (W->Flags & WINDOWFL_MENU)) {
     y = (ldat)C->j - C->Up - (ldat)1 + W->YLogic;
-    if ((C->Item = (menuitem)Act(FindRow, W)(W, y))) {
+    if ((C->Item = (Tmenuitem)Act(FindRow, W)(W, y))) {
       SetMenuState(C->Item, ttrue);
       return;
     }
   } else if ((W = (window)All->FirstScreen->FocusW) && (W->Flags & WINDOWFL_MENU) &&
-             (C->Item = (menuitem)Act(FindRow, W)(W, W->CurY)) && IS_MENUITEM(C->Item) &&
+             (C->Item = (Tmenuitem)Act(FindRow, W)(W, W->CurY)) && IS_MENUITEM(C->Item) &&
              !C->Item->Window) {
 
     if ((W = (window)C->Item->Parent) && IS_WINDOW(W))
@@ -865,7 +865,7 @@ static void ReleaseMenu(wm_ctx *C) {
   window MW = All->FirstScreen->MenuWindow;
   window FW = (window)All->FirstScreen->FocusW;
   menu Menu;
-  menuitem Item;
+  Tmenuitem Item;
   row Row;
   msg Msg;
   event_menu *Event;
@@ -1418,8 +1418,8 @@ static void ContinueReleaseMouseState(wm_ctx *C, byte State) {
   }
 }
 
-static menuitem PrevItem(menuitem Item, menu Menu) {
-  menuitem Prev;
+static Tmenuitem PrevItem(Tmenuitem Item, menu Menu) {
+  Tmenuitem Prev;
 
   if (!(Prev = Item->Prev)) {
     if (Item->Parent == (obj)Menu) {
@@ -1434,8 +1434,8 @@ static menuitem PrevItem(menuitem Item, menu Menu) {
   return Item;
 }
 
-static menuitem NextItem(menuitem Item, menu Menu) {
-  menuitem Next;
+static Tmenuitem NextItem(Tmenuitem Item, menu Menu) {
+  Tmenuitem Next;
 
   if (!(Next = Item->Next)) {
     if (Item->Parent == (obj)Menu) {
@@ -1450,10 +1450,10 @@ static menuitem NextItem(menuitem Item, menu Menu) {
   return Item;
 }
 
-static void EnterItem(menuitem Item) {
+static void EnterItem(Tmenuitem Item) {
   window W = Item->Window;
-  if (!(Item = (menuitem)Act(FindRow, W)(W, W->CurY)))
-    Item = (menuitem)Act(FindRow, W)(W, 0);
+  if (!(Item = (Tmenuitem)Act(FindRow, W)(W, W->CurY)))
+    Item = (Tmenuitem)Act(FindRow, W)(W, 0);
   if (Item && IS_MENUITEM(Item))
     SetMenuState(Item, tfalse);
 }
@@ -1466,7 +1466,7 @@ static byte ActivateKeyState(wm_ctx *C, byte State) {
   dat XDelta = 0, YDelta = 0, depth;
   udat Key = C->Code;
   byte used = tfalse;
-  menuitem M;
+  Tmenuitem M;
 
   if (!W || !IS_WINDOW(W))
     return used;
@@ -1576,7 +1576,7 @@ static byte ActivateKeyState(wm_ctx *C, byte State) {
         NumRow--;
       else
         NumRow = W->HLogic - 1;
-      M = (menuitem)Act(FindRow, W)(W, NumRow);
+      M = (Tmenuitem)Act(FindRow, W)(W, NumRow);
       if (M && IS_MENUITEM(M))
         SetMenuState(M, tfalse);
       used = ttrue;
@@ -1589,7 +1589,7 @@ static byte ActivateKeyState(wm_ctx *C, byte State) {
         NumRow++;
       else
         NumRow = 0;
-      M = (menuitem)Act(FindRow, W)(W, NumRow);
+      M = (Tmenuitem)Act(FindRow, W)(W, NumRow);
       if (M && IS_MENUITEM(M))
         SetMenuState(M, tfalse);
       used = ttrue;
@@ -1662,7 +1662,7 @@ static void TryAutoFocus(wm_ctx *C) {
 }
 
 /* the Window Manager built into Twin */
-static void WManagerH(msgport MsgPort) {
+static void WManagerH(Tmsgport MsgPort) {
   static wm_ctx _C;
   wm_ctx *C = &_C;
   msg Msg;
@@ -1931,7 +1931,7 @@ byte InitWM(void) {
 
     if (RegisterExt(WM, MsgPort, WM_MsgPort)) {
 
-      if ((MapQueue = New(msgport)(11, "WM MapQueue", 0, 0, 0, (void (*)(msgport))NoOp))) {
+      if ((MapQueue = New(msgport)(11, "WM MapQueue", 0, 0, 0, (void (*)(Tmsgport))NoOp))) {
 
         MapQueue->Remove();
 

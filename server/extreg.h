@@ -16,13 +16,13 @@ typedef struct exts exts;
 
 struct exts {
   struct {
-    msgport MsgPort;
+    Tmsgport MsgPort;
   } WM;
   struct {
     void (*KillSlot)(uldat slot);
   } Remote;
   struct {
-    void (*SendMsg)(msgport MsgPort, msg Msg);
+    void (*SendMsg)(Tmsgport MsgPort, msg Msg);
     byte (*InitAuth)(void);
     void (*MultiplexS)(uldat order, Span<s_tsfield> args);
   } Socket;

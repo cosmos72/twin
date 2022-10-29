@@ -21,7 +21,7 @@
 
 struct SmsgFn {
   uldat Magic;
-  void (*Insert)(msg, msgport, msg Prev, msg Next);
+  void (*Insert)(msg, Tmsgport, msg Prev, msg Next);
   void (*Remove)(msg);
   void (*Delete)(msg);
   void (*ChangeField)(msg, udat field, uldat CLEARMask, uldat XORMask);
@@ -32,7 +32,7 @@ struct SmsgFn {
 struct Smsg : public Sobj {
   TmsgFn Fn;
   msg Prev, Next;
-  msgport MsgPort;
+  Tmsgport MsgPort;
   /* msg */
   udat Type; /* See note above */
   uldat Len; /* length of Event, in bytes */
@@ -45,7 +45,7 @@ struct Smsg : public Sobj {
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(msgport port, msg prev, msg next) {
+  void Insert(Tmsgport port, msg prev, msg next) {
     Fn->Insert(this, port, prev, next);
   }
   void Remove() {

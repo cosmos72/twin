@@ -95,9 +95,9 @@ struct SwidgetFn {
   void (*MapTopReal)(Twidget self, screen scr);
   void (*Raise)(Twidget self);
   void (*Lower)(Twidget self);
-  void (*Own)(Twidget self, msgport port);
+  void (*Own)(Twidget self, Tmsgport port);
   void (*DisOwn)(Twidget self);
-  void (*RecursiveDelete)(Twidget self, msgport port);
+  void (*RecursiveDelete)(Twidget self, Tmsgport port);
   void (*Expose)(Twidget self, dat xwidth, dat ywidth, dat left, dat up, dat pitch, const char *,
                  const trune *, const tcell *);
   byte (*InstallHook)(Twidget, HookFn, HookFn *where);
@@ -115,8 +115,8 @@ struct Swidget : public Sobj {
   uldat Attr;
   uldat Flags;
   ldat XLogic, YLogic;
-  Twidget O_Prev, O_Next; /* list with the same msgport (owner) */
-  msgport Owner;
+  Twidget O_Prev, O_Next; /* list with the same Tmsgport (owner) */
+  Tmsgport Owner;
   HookFn ShutDownHook; /* hooks for this Twidget */
   HookFn Hook, *WhereHook;
   HookFn MapUnMapHook;
@@ -130,9 +130,9 @@ struct Swidget : public Sobj {
   uldat Magic() const {
     return Fn->Magic;
   }
-  static Twidget Create(msgport Owner, dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left,
+  static Twidget Create(Tmsgport Owner, dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left,
                         dat Up, tcell USE_Fill);
-  Twidget Init(msgport Owner, dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left, dat Up,
+  Twidget Init(Tmsgport Owner, dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left, dat Up,
                tcell USE_Fill);
   void Insert(Twidget parent, Twidget prev, Twidget next) {
     Fn->Insert(this, parent, prev, next);
@@ -183,13 +183,13 @@ struct Swidget : public Sobj {
   void Lower() {
     Fn->Lower(this);
   }
-  void Own(msgport port) {
+  void Own(Tmsgport port) {
     Fn->Own(this, port);
   }
   void DisOwn() {
     Fn->DisOwn(this);
   }
-  void RecursiveDelete(msgport port) {
+  void RecursiveDelete(Tmsgport port) {
     Fn->RecursiveDelete(this, port);
   }
   void Expose(dat xwidth, dat ywidth, dat left, dat up, dat pitch, const char *ascii,
