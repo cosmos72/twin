@@ -66,7 +66,7 @@ enum {
 
 #define IS_OBJ(type, O) (((O)->Id >> magic_shift) == type##_magic_byte)
 #define IS_WIDGET(O)                                                                               \
-  (IS_OBJ(widget, O) || IS_OBJ(gadget, O) || IS_OBJ(window, O) || IS_OBJ(screen, O))
+  (IS_OBJ(Twidget, O) || IS_OBJ(gadget, O) || IS_OBJ(window, O) || IS_OBJ(screen, O))
 #define IS_GADGET(O) IS_OBJ(gadget, O)
 #define IS_WINDOW(O) IS_OBJ(window, O)
 #define IS_SCREEN(O) IS_OBJ(screen, O)

@@ -14,7 +14,7 @@
 
 byte FindInfo(menu Menu, dat i);
 window FakeOpenTerm(const char *arg0, const char *const *argv);
-widget FakeKbdFocus(widget W);
+Twidget FakeKbdFocus(Twidget W);
 byte FakeWriteCharset(window Window, uldat Len, const char *charset_bytes);
 byte FakeWriteUtf8(window Window, uldat Len, const char *utf8_bytes);
 byte FakeWriteTRune(window Window, uldat Len, const trune *runes);

@@ -133,7 +133,7 @@ bool AssignId(const e_id class_magic_id, obj o) {
       // Remote access to module and display_hw is unsafe, so no Ids for them too.
       o->Id = class_magic_id;
       return true;
-    case widget_magic_byte:
+    case Twidget_magic_byte:
     case gadget_magic_byte:
     case window_magic_byte:
     case screen_magic_byte:
@@ -167,7 +167,7 @@ void DropId(obj o) {
       /* it's unsafe to allow modules access remotely, so no Ids for them too */
       o->Id = NOID;
       break;
-    case widget_magic_byte:
+    case Twidget_magic_byte:
     case gadget_magic_byte:
     case window_magic_byte:
     case screen_magic_byte:
@@ -194,7 +194,7 @@ obj Id2Obj(e_magic_byte expected_magic_byte, uldat id) {
     /* gadgets, windows, screens are valid (widget) */
     /* menuitems are valid (row) */
     if (expected_magic_byte == magic_byte || expected_magic_byte == obj_magic_byte ||
-        (expected_magic_byte == widget_magic_byte &&
+        (expected_magic_byte == Twidget_magic_byte &&
          (magic_byte == gadget_magic_byte || magic_byte == window_magic_byte ||
           magic_byte == screen_magic_byte)) ||
         (expected_magic_byte == row_magic_byte && magic_byte == menuitem_magic_byte)) {

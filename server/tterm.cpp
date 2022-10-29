@@ -35,7 +35,7 @@ static msgport Term_MsgPort;
 static void TwinTermH(msgport MsgPort);
 static void TwinTermIO(int Fd, window Window);
 
-static void termShutDown(widget W) {
+static void termShutDown(Twidget W) {
   window Window;
   if (IS_WINDOW(W)) {
     Window = (window)W;
@@ -87,7 +87,7 @@ static window OpenTerm(const char *arg0, const char *const *argv) {
     if (spawnInWindow(Window, arg0, argv)) {
       if (RegisterWindowFdIO(Window, TwinTermIO)) {
         Window->ShutDownHook = termShutDown;
-        Window->Map((widget)All->FirstScreen);
+        Window->Map((Twidget)All->FirstScreen);
         return Window;
       }
       close(Window->RemoteData.Fd);
@@ -190,7 +190,7 @@ static void TwinTermIO(int Fd, window Window) {
 
 static void OverrideMethods(byte enter) {
   if (enter) {
-    OverrideMethod(widget, KbdFocus, FakeKbdFocus, TtyKbdFocus);
+    OverrideMethod(Twidget, KbdFocus, FakeKbdFocus, TtyKbdFocus);
     OverrideMethod(gadget, KbdFocus, FakeKbdFocus, TtyKbdFocus);
     OverrideMethod(window, KbdFocus, FakeKbdFocus, TtyKbdFocus);
     OverrideMethod(window, TtyWriteCharset, FakeWriteCharset, TtyWriteCharset);
@@ -205,7 +205,7 @@ static void OverrideMethods(byte enter) {
     OverrideMethod(window, TtyWriteCharset, TtyWriteCharset, FakeWriteCharset);
     OverrideMethod(window, KbdFocus, TtyKbdFocus, FakeKbdFocus);
     OverrideMethod(gadget, KbdFocus, TtyKbdFocus, FakeKbdFocus);
-    OverrideMethod(widget, KbdFocus, TtyKbdFocus, FakeKbdFocus);
+    OverrideMethod(Twidget, KbdFocus, TtyKbdFocus, FakeKbdFocus);
   }
 }
 

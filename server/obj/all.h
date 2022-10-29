@@ -99,11 +99,11 @@ struct s_all : public s_obj {
 
   module FirstModule, LastModule;
   fn_hook FnHookModule;
-  widget HookModule;
+  Twidget HookModule;
 
   display_hw FirstDisplayHW, LastDisplayHW, MouseHW, ExclusiveHW;
   fn_hook FnHookDisplayHW;
-  widget HookDisplayHW;
+  Twidget HookDisplayHW;
 
   dat DisplayWidth, DisplayHeight;
   byte State;

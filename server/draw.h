@@ -9,31 +9,31 @@
 #ifndef TWIN_DRAW_H
 #define TWIN_DRAW_H
 
-widget FindWidgetAt(widget Parent, dat X, dat Y);
+Twidget FindWidgetAt(Twidget Parent, dat X, dat Y);
 
 void DrawSelfWidget(draw_ctx *d);
 void DrawSelfGadget(draw_ctx *d);
 void DrawSelfWindow(draw_ctx *d);
 void DrawSelfScreen(draw_ctx *d);
 
-void TranslateCoordsWidget(widget w1, widget w2, dat *x, dat *y, byte *inside);
+void TranslateCoordsWidget(Twidget w1, Twidget w2, dat *x, dat *y, byte *inside);
 
 void DrawDesktop(screen s, dat xstart, dat ystart, dat xend, dat yend, bool shaded);
 
-void DrawArea2(screen FirstScreen, widget Top, widget OnlyW, dat X1, dat Y1, dat X2, dat Y2,
+void DrawArea2(screen FirstScreen, Twidget Top, Twidget OnlyW, dat X1, dat Y1, dat X2, dat Y2,
                bool Shaded);
-#define FULL_SCREEN (screen)0, (widget)0, (widget)0, (dat)0, (dat)0, TW_MAXDAT, TW_MAXDAT, tfalse
+#define FULL_SCREEN (screen)0, (Twidget)0, (Twidget)0, (dat)0, (dat)0, TW_MAXDAT, TW_MAXDAT, tfalse
 
 /*
- * DrawWidget() ASSUMES the specified part of the widget is unobscured.
+ * DrawWidget() ASSUMES the specified part of the Twidget is unobscured.
  * xstart,ystart,xend,yend are absolute screen coordinates.
  */
-void DrawWidget(widget w, dat xstart, dat ystart, dat xend, dat yend, bool shaded);
+void DrawWidget(Twidget w, dat xstart, dat ystart, dat xend, dat yend, bool shaded);
 #define DrawFirstWidget(w) DrawWidget((w), 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse)
-void DrawAreaWidget(widget w);
+void DrawAreaWidget(Twidget w);
 
 /* like DrawAreaWindow2, but does not draw the shadow: */
-#define DrawFullWindow2(w) DrawAreaWidget((widget)w)
+#define DrawFullWindow2(w) DrawAreaWidget((Twidget)w)
 
 void DrawScreen(screen s);
 
@@ -50,8 +50,8 @@ void DrawAreaShadeWindow(screen s, window w, dat xstart, dat ystart, dat xend, d
 /* this also draws the shadow: */
 void DrawAreaWindow2(window w);
 
-void DrawPartialWidget(widget w, dat x1, dat y1, dat x2, dat y2);
-void DrawLogicWidget(widget w, ldat x1, ldat y1, ldat x2, ldat y2);
+void DrawPartialWidget(Twidget w, dat x1, dat y1, dat x2, dat y2);
+void DrawLogicWidget(Twidget w, ldat x1, ldat y1, ldat x2, ldat y2);
 
 void ReDrawRolledUpAreaWindow(window w, bool shaded);
 
@@ -61,11 +61,11 @@ void ClearHilight(window w);
 void StartHilight(window w, ldat xsel, ldat ysel);
 void ExtendHilight(window w, ldat xsel, ldat ysel);
 
-screen ScreenParent(widget w);
-window WindowParent(widget w);
-widget NonScreenParent(widget w);
+screen ScreenParent(Twidget w);
+window WindowParent(Twidget w);
+Twidget NonScreenParent(Twidget w);
 window FindCursorWindow(void);
-byte ContainsCursor(widget w);
-widget RecursiveFindWidgetAt(widget Parent, dat X, dat Y);
+byte ContainsCursor(Twidget w);
+Twidget RecursiveFindWidgetAt(Twidget Parent, dat X, dat Y);
 
 #endif /* TWIN_DRAW_H */

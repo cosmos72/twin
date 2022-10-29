@@ -1,5 +1,5 @@
 /*
- *  widget.cpp  --  define methods of server class s_window
+ *  Twidget.cpp  --  define methods of server class s_window
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -55,7 +55,7 @@ window s_window::Init(msgport owner, dat titlelen, const char *title, const tcol
     if ((dat)(ywidth + hasborder) > 0)
       ywidth += hasborder;
   }
-  if (!((widget)this)
+  if (!((Twidget)this)
            ->Init(owner, xwidth, ywidth, attr, flags, 0, TW_MAXDAT, TCELL(coltext, ' '))) {
     return NULL;
   }

@@ -7,7 +7,6 @@
  *
  */
 
-
 /* This file was automatically generated from m4/socket1.m4, do not edit! */
 
 /* clang-format off */
@@ -143,88 +142,88 @@ case order_CreateWidget:
 
 case order_RecursiveDeleteWidget:
     if (a.size() >= 1)
-        sockRecursiveDeleteWidget((widget)a[1]_obj);
+        sockRecursiveDeleteWidget((Twidget)a[1]_obj);
     break;
 
 case order_MapWidget:
     if (a.size() >= 2)
-        Act(Map,(widget)a[1]_obj)((widget)a[1]_obj, (widget)a[2]_obj);
+        Act(Map,(Twidget)a[1]_obj)((Twidget)a[1]_obj, (Twidget)a[2]_obj);
     break;
 
 case order_UnMapWidget:
     if (a.size() >= 1)
-        Act(UnMap,(widget)a[1]_obj)((widget)a[1]_obj);
+        Act(UnMap,(Twidget)a[1]_obj)((Twidget)a[1]_obj);
     break;
 
 case order_SetXYWidget:
     if (a.size() >= 3)
-        sockSetXYWidget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any);
+        sockSetXYWidget((Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any);
     break;
 
 case order_ResizeWidget:
     if (a.size() >= 3)
-        sockResizeWidget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any);
+        sockResizeWidget((Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any);
     break;
 
 case order_ScrollWidget:
     if (a.size() >= 3)
-        sockScrollWidget((widget)a[1]_obj, (ldat)a[2]_any, (ldat)a[3]_any);
+        sockScrollWidget((Twidget)a[1]_obj, (ldat)a[2]_any, (ldat)a[3]_any);
     break;
 
 case order_DrawWidget:
     if (a.size() >= 8)
-        sockDrawWidget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (dat)a[5]_any, (const char *)a[6]_vec, (const trune *)a[7]_vec, (const tcell *)a[8]_vec);
+        sockDrawWidget((Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (dat)a[5]_any, (const char *)a[6]_vec, (const trune *)a[7]_vec, (const tcell *)a[8]_vec);
     break;
 
 
 case order_SetVisibleWidget:
     if (a.size() >= 2)
-        sockSetVisibleWidget((widget)a[1]_obj, (byte)a[2]_any);
+        sockSetVisibleWidget((Twidget)a[1]_obj, (byte)a[2]_any);
     break;
 
 
 case order_FocusSubWidget:
     if (a.size() >= 1)
-        sockFocusSubWidget((widget)a[1]_obj);
+        sockFocusSubWidget((Twidget)a[1]_obj);
     break;
 
 case order_FindWidgetAtWidget:
     if (a.size() >= 3)
-        a[0]_obj = (obj)Act(FindWidgetAt,(widget)a[1]_obj)((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any);
+        a[0]_obj = (obj)Act(FindWidgetAt,(Twidget)a[1]_obj)((Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any);
     break;
 
 
 case order_RaiseWidget:
     if (a.size() >= 1)
-        Act(Raise,(widget)a[1]_obj)((widget)a[1]_obj);
+        Act(Raise,(Twidget)a[1]_obj)((Twidget)a[1]_obj);
     break;
 
 case order_LowerWidget:
     if (a.size() >= 1)
-        Act(Lower,(widget)a[1]_obj)((widget)a[1]_obj);
+        Act(Lower,(Twidget)a[1]_obj)((Twidget)a[1]_obj);
     break;
 
 case order_RestackChildrenWidget:
     if (a.size() >= 3)
-        sockRestackChildrenWidget((widget)a[1]_obj, (uldat)a[2]_any, (const widget *)a[3]_vec);
+        sockRestackChildrenWidget((Twidget)a[1]_obj, (uldat)a[2]_any, (const Twidget *)a[3]_vec);
     break;
 
 case order_CirculateChildrenWidget:
     if (a.size() >= 2)
-        sockCirculateChildrenWidget((widget)a[1]_obj, (byte)a[2]_any);
+        sockCirculateChildrenWidget((Twidget)a[1]_obj, (byte)a[2]_any);
     break;
 
 
 
 case order_CreateGadget:
     if (a.size() >= 13)
-        a[0]_obj = (obj)sockCreateGadget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (uldat)a[6]_any, (udat)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (tcolor)a[10]_any, (tcolor)a[11]_any, (dat)a[12]_any, (dat)a[13]_any);
+        a[0]_obj = (obj)sockCreateGadget((Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (uldat)a[6]_any, (udat)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (tcolor)a[10]_any, (tcolor)a[11]_any, (dat)a[12]_any, (dat)a[13]_any);
     break;
 
 
 case order_CreateButtonGadget:
     if (a.size() >= 11)
-        a[0]_obj = (obj)Do(CreateButton,gadget)((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (udat)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
+        a[0]_obj = (obj)Do(CreateButton,gadget)((Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (udat)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
     break;
 
 
@@ -413,7 +412,7 @@ case order_FirstScreen:
 
 case order_FirstWidget:
     if (a.size() >= 1)
-        a[0]_obj = (obj)sockFirstWidget((widget )a[1]_obj);
+        a[0]_obj = (obj)sockFirstWidget((Twidget )a[1]_obj);
     break;
 
 case order_FirstMsgPort:
@@ -504,5 +503,3 @@ case order_SetServerUid:
     if (a.size() >= 2)
         a[0]_any = (tany)sockSetServerUid((uldat)a[1]_any, (byte)a[2]_any);
     break;
-
-

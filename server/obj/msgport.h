@@ -41,7 +41,7 @@ struct s_msgport : public s_obj {
   remotedata RemoteData;
   msg FirstMsg, LastMsg;
   menu FirstMenu, LastMenu;     /* menus created by this MsgPort */
-  widget FirstW, LastW;         /* widgets owned by this MsgPort */
+  Twidget FirstW, LastW;        /* widgets owned by this MsgPort */
   ggroup FirstGroup, LastGroup; /* groups owned by this MsgPort */
   mutex FirstMutex, LastMutex;  /* mutexes owned by this MsgPort */
   display_hw AttachHW;          /* that was attached as told by MsgPort */

@@ -74,14 +74,14 @@ enum e_msg {
  */
 
 struct event_common {
-  widget W;
+  Twidget W;
   udat Code, pad;
 };
 
 #define SIZEOF_EVENT_COMMON (sizeof(event_common))
 
 struct event_map {
-  widget W;
+  Twidget W;
   udat Code, pad; /* unused */
   screen Screen;
 };
@@ -89,7 +89,7 @@ struct event_map {
 #define SIZEOF_EVENT_MAP (sizeof(event_map))
 
 struct event_keyboard {
-  widget W;
+  Twidget W;
   udat Code, ShiftFlags, SeqLen;
   byte pad;
   char AsciiSeq[1]; /* [SeqLen+1] bytes actually. AsciiSeq[SeqLen] == '\0' */
@@ -98,7 +98,7 @@ struct event_keyboard {
 #define SIZEOF_EVENT_KEYBOARD (1 + offsetof(event_keyboard, AsciiSeq))
 
 struct event_mouse {
-  widget W;
+  Twidget W;
   udat Code, ShiftFlags;
   dat X, Y;
 };
@@ -106,7 +106,7 @@ struct event_mouse {
 #define SIZEOF_EVENT_MOUSE (sizeof(event_mouse))
 
 struct event_control {
-  widget W;
+  Twidget W;
   udat Code, Len;
   dat X, Y;
   char Data[sizeof(uldat)]; /* [Len] bytes actually */
@@ -122,7 +122,7 @@ struct event_control {
 
 /* use for free-format messages between clients */
 struct event_clientmsg {
-  widget W;
+  Twidget W;
   udat Code, Format;
   uldat Len;
   union {
@@ -135,7 +135,7 @@ struct event_clientmsg {
 #define SIZEOF_EVENT_CLIENTMSG (offsetof(event_clientmsg, Data))
 
 struct event_display {
-  widget W; /* not used here */
+  Twidget W; /* not used here */
   udat Code, Len;
   dat X, Y;
   void *Data; /* [Len] bytes actually */
@@ -164,7 +164,7 @@ enum e_event_display_code {
 };
 
 struct event_widget {
-  widget W;
+  Twidget W;
   udat Code, Flags;
   dat XWidth, YWidth;
   dat X, Y;
@@ -180,7 +180,7 @@ struct event_widget {
 #define MSG_WIDGETFL_SHADED 1
 
 struct event_gadget {
-  widget W;
+  Twidget W;
   udat Code, Flags; /* the Flags of the gadget */
 };
 
@@ -196,7 +196,7 @@ struct event_menu {
 #define SIZEOF_EVENT_MENU (sizeof(event_menu))
 
 struct event_selection {
-  widget W;
+  Twidget W;
   udat Code, pad; /* unused */
   dat X, Y;
 };
@@ -206,7 +206,7 @@ struct event_selection {
 #define MAX_MIMELEN 64
 
 struct event_selectionnotify {
-  widget W;
+  Twidget W;
   udat Code, pad; /* unused */
   uldat ReqPrivate;
   uldat Magic;
@@ -218,7 +218,7 @@ struct event_selectionnotify {
 #define SIZEOF_EVENT_SELECTIONNOTIFY (offsetof(event_selectionnotify, Data))
 
 struct event_selectionrequest {
-  widget W;
+  Twidget W;
   udat Code, pad; /* unused */
   obj Requestor;
   uldat ReqPrivate;

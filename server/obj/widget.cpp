@@ -12,19 +12,19 @@
 
 #include "obj/widget.h"
 #include "alloc.h" // AllocMem0()
-#include "fn.h"    // Fn_widget
+#include "fn.h"    // Fn_Twidget
 
 #include <new>
 #include <cstring> // memset()
 
-widget s_widget::Create(msgport owner, dat xwidth, dat ywidth, uldat attr, uldat flags, dat left,
-                        dat up, tcell fill) {
-  widget w = NULL;
+Twidget s_widget::Create(msgport owner, dat xwidth, dat ywidth, uldat attr, uldat flags, dat left,
+                         dat up, tcell fill) {
+  Twidget w = NULL;
   if (owner) {
     void *addr = AllocMem0(sizeof(s_widget));
     if (addr) {
       w = new (addr) s_widget();
-      w->Fn = Fn_widget;
+      w->Fn = Fn_Twidget;
       if (!w->Init(owner, xwidth, ywidth, attr, flags, left, up, fill)) {
         w->Delete();
         w = NULL;
@@ -34,8 +34,8 @@ widget s_widget::Create(msgport owner, dat xwidth, dat ywidth, uldat attr, uldat
   return w;
 }
 
-widget s_widget::Init(msgport owner, dat xwidth, dat ywidth, uldat attr, uldat flags, dat left,
-                      dat up, tcell fill) {
+Twidget s_widget::Init(msgport owner, dat xwidth, dat ywidth, uldat attr, uldat flags, dat left,
+                       dat up, tcell fill) {
   if (owner && ((obj)this)->Init()) {
     Left = left;
     Up = up;

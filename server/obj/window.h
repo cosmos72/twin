@@ -67,20 +67,20 @@ struct s_WC { /* for WINDOWFL_USECONTENTS windows */
 
 struct s_fn_window {
   uldat Magic;
-  void (*Insert)(window, widget Parent, widget Prev, widget Next);
+  void (*Insert)(window, Twidget Parent, Twidget Prev, Twidget Next);
   void (*Remove)(window);
   void (*Delete)(window);
   void (*ChangeField)(window, udat field, uldat CLEARMask, uldat XORMask);
-  /* widget */
+  /* Twidget */
   fn_obj Fn_Obj;
   void (*DrawSelf)(draw_ctx *D);
-  widget (*FindWidgetAt)(window Parent, dat X, dat Y);
+  Twidget (*FindWidgetAt)(window Parent, dat X, dat Y);
   gadget (*FindGadgetByCode)(window Parent, udat Code);
   void (*SetXY)(window, dat X, dat Y);
   void (*SetFill)(window, tcell Fill);
-  widget (*Focus)(window);
-  widget (*KbdFocus)(window);
-  void (*Map)(window, widget Parent);
+  Twidget (*Focus)(window);
+  Twidget (*KbdFocus)(window);
+  void (*Map)(window, Twidget Parent);
   void (*UnMap)(window);
   void (*MapTopReal)(window, screen);
   void (*Raise)(window);
@@ -120,18 +120,18 @@ struct s_fn_window {
 
 struct s_window : public s_obj {
   fn_window Fn;
-  widget Prev, Next; /* list in the same parent */
-  widget Parent;     /* where this window sits */
-  /* widget */
-  widget FirstW, LastW; /* list of children */
-  widget SelectW;       /* selected child */
+  Twidget Prev, Next; /* list in the same parent */
+  Twidget Parent;     /* where this window sits */
+  /* Twidget */
+  Twidget FirstW, LastW; /* list of children */
+  Twidget SelectW;       /* selected child */
   dat Left, Up, XWidth, YWidth;
   uldat Attr;
   uldat Flags;
   ldat XLogic, YLogic;
-  widget O_Prev, O_Next; /* list with the same msgport (owner) */
+  Twidget O_Prev, O_Next; /* list with the same msgport (owner) */
   msgport Owner;
-  fn_hook ShutDownHook; /* hooks for this widget */
+  fn_hook ShutDownHook; /* hooks for this Twidget */
   fn_hook Hook, *WhereHook;
   fn_hook MapUnMapHook;
   msg MapQueueMsg;
@@ -171,7 +171,7 @@ struct s_window : public s_obj {
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(widget parent, widget prev, widget next) {
+  void Insert(Twidget parent, Twidget prev, Twidget next) {
     Fn->Insert(this, parent, prev, next);
   }
   void Remove() {
@@ -183,11 +183,11 @@ struct s_window : public s_obj {
   void ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
     Fn->ChangeField(this, field, clear_mask, xor_mask);
   }
-  /* widget */
+  /* Twidget */
   void DrawSelf(draw_ctx *D) {
     Fn->DrawSelf(D);
   }
-  widget FindWidgetAt(dat x, dat y) {
+  Twidget FindWidgetAt(dat x, dat y) {
     return Fn->FindWidgetAt(this, x, y);
   }
   gadget FindGadgetByCode(udat code) {
@@ -199,13 +199,13 @@ struct s_window : public s_obj {
   void SetFill(tcell fill) {
     Fn->SetFill(this, fill);
   }
-  widget Focus() {
+  Twidget Focus() {
     return Fn->Focus(this);
   }
-  widget KbdFocus() {
+  Twidget KbdFocus() {
     return Fn->KbdFocus(this);
   }
-  void Map(widget parent) {
+  void Map(Twidget parent) {
     Fn->Map(this, parent);
   }
   void UnMap() {

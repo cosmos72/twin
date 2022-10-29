@@ -37,7 +37,7 @@ screen s_screen::Create(dat namelen, const char *name, dat bgwidth, dat bgheight
 screen s_screen::Init(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg) {
   size_t size = (size_t)bgwidth * bgheight * sizeof(tcell);
 
-  if (!size || !((widget)this)
+  if (!size || !((Twidget)this)
                     ->Init(Builtin_MsgPort, TW_MAXDAT, TW_MAXDAT, 0, SCREENFL_USEBG, 0, 0, bg[0])) {
     return NULL;
   }

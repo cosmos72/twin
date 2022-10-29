@@ -106,7 +106,7 @@ byte TtyWriteUtf8(window Window, uldat Len, const char *utf8_bytes);
 byte TtyWriteTRune(window Window, uldat Len, const trune *runes);
 byte TtyWriteTCell(window Window, dat x, dat y, uldat Len, const tcell *cells);
 
-widget TtyKbdFocus(widget Window);
+Twidget TtyKbdFocus(Twidget Window);
 void ForceKbdFocus(void);
 
 #endif /* TWIN_TTY_H */

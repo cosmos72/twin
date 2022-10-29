@@ -26,16 +26,16 @@ struct s_fn_screen {
   void (*Remove)(screen);
   void (*Delete)(screen);
   void (*ChangeField)(screen, udat field, uldat CLEARMask, uldat XORMask);
-  /* widget */
+  /* Twidget */
   fn_obj Fn_Obj;
   void (*DrawSelf)(draw_ctx *D);
-  widget (*FindWidgetAt)(screen Parent, dat X, dat Y);
+  Twidget (*FindWidgetAt)(screen Parent, dat X, dat Y);
   gadget (*FindGadgetByCode)(screen Parent, udat Code);
   void (*SetXY)(screen, dat X, dat Y);
   void (*SetFill)(screen, tcell Fill);
-  widget (*Focus)(screen);
-  widget (*KbdFocus)(screen);
-  void (*Map)(screen, widget Parent);
+  Twidget (*Focus)(screen);
+  Twidget (*KbdFocus)(screen);
+  void (*Map)(screen, Twidget Parent);
   void (*UnMap)(screen);
   void (*MapTopReal)(screen, screen);
   void (*Raise)(screen);
@@ -60,18 +60,18 @@ struct s_fn_screen {
 
 struct s_screen : public s_obj {
   fn_screen Fn;
-  screen Prev, Next;  /* list in the same All */
-  widget dummyParent; /* NULL */
-  /* widget */
-  widget FirstW, LastW; /* list of children */
-  widget FocusW;        /* same as SelectW : focused child */
+  screen Prev, Next;   /* list in the same All */
+  Twidget dummyParent; /* NULL */
+  /* Twidget */
+  Twidget FirstW, LastW; /* list of children */
+  Twidget FocusW;        /* same as SelectW : focused child */
   dat dummyLeft, YLimit, dummyXWidth, dummyYWidth;
   uldat Attr;
   uldat Flags;
   ldat XLogic, YLogic;
-  widget O_Prev, O_Next; /* list with the same msgport (owner) */
+  Twidget O_Prev, O_Next; /* list with the same msgport (owner) */
   msgport Owner;
-  fn_hook ShutDownHook; /* hooks for this widget */
+  fn_hook ShutDownHook; /* hooks for this Twidget */
   fn_hook Hook, *WhereHook;
   fn_hook MapUnMapHook;
   msg MapQueueMsg;
@@ -85,8 +85,8 @@ struct s_screen : public s_obj {
   char *Name;
   window MenuWindow, ClickWindow;
   all All;
-  fn_hook FnHookW; /* allow hooks on children Map()/UnMap() inside this widget */
-  widget HookW;
+  fn_hook FnHookW; /* allow hooks on children Map()/UnMap() inside this Twidget */
+  Twidget HookW;
 
   static screen Create(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
   screen Init(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
@@ -104,11 +104,11 @@ struct s_screen : public s_obj {
   void Delete() {
     Fn->Delete(this);
   }
-  /* widget */
+  /* Twidget */
   void DrawSelf(draw_ctx *D) {
     Fn->DrawSelf(D);
   }
-  widget FindWidgetAt(dat x, dat y) {
+  Twidget FindWidgetAt(dat x, dat y) {
     return Fn->FindWidgetAt(this, x, y);
   }
   gadget FindGadgetByCode(udat code) {
@@ -120,13 +120,13 @@ struct s_screen : public s_obj {
   void SetFill(tcell fill) {
     Fn->SetFill(this, fill);
   }
-  widget Focus() {
+  Twidget Focus() {
     return Fn->Focus(this);
   }
-  widget KbdFocus() {
+  Twidget KbdFocus() {
     return Fn->KbdFocus(this);
   }
-  void Map(widget parent) {
+  void Map(Twidget parent) {
     Fn->Map(this, parent);
   }
   void UnMap() {

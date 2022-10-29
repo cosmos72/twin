@@ -125,7 +125,7 @@ static void TweakMenuRows(menuitem Item, udat code, byte flag) {
     Row->Flags = flag;
 }
 
-static void UpdateMenuRows(widget dummy) {
+static void UpdateMenuRows(Twidget dummy) {
   if (DlIsLoaded(TermSo)) {
     TweakMenuRows(Builtin_Modules, COD_TERM_ON, ROW_INACTIVE);
     TweakMenuRows(Builtin_Modules, COD_TERM_OFF, ROW_ACTIVE);
@@ -145,10 +145,10 @@ static void UpdateMenuRows(widget dummy) {
 static void SelectWinList(void) {
   screen Screen = All->FirstScreen;
   uldat n = WinList->CurY;
-  widget W;
+  Twidget W;
 
   for (W = Screen->FirstW; W; W = W->Next) {
-    if (W == (widget)WinList || !IS_WINDOW(W) ||
+    if (W == (Twidget)WinList || !IS_WINDOW(W) ||
         (((window)W)->Flags & (WINDOWFL_NOTVISIBLE | WINDOWFL_MENU)))
       continue;
     if (!n)
@@ -171,7 +171,7 @@ static void ExecuteGadgetH(event_gadget *EventG) {
     else
       G->USE.T.Text[0][1] = ' ';
 
-    DrawAreaWidget((widget)G);
+    DrawAreaWidget((Twidget)G);
   }
 }
 
@@ -367,10 +367,10 @@ void FillButtonWin(void) {
 
       ButtonWin->TtyWriteTCell(15, 1 + i * 2, 2, h);
     }
-    New(gadget)(Builtin_MsgPort, (widget)ButtonWin, 3, 1, "[+]", 0, GADGETFL_TEXT_DEFCOL,
+    New(gadget)(Builtin_MsgPort, (Twidget)ButtonWin, 3, 1, "[+]", 0, GADGETFL_TEXT_DEFCOL,
                 3 | (j << 2), TCOL(tblack, twhite), TCOL(thigh | twhite, tgreen),
                 TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack), 22, 1 + i * 2);
-    New(gadget)(Builtin_MsgPort, (widget)ButtonWin, 3, 1, "[-]", 0, GADGETFL_TEXT_DEFCOL,
+    New(gadget)(Builtin_MsgPort, (Twidget)ButtonWin, 3, 1, "[-]", 0, GADGETFL_TEXT_DEFCOL,
                 2 | (j << 2), TCOL(tblack, twhite), TCOL(thigh | twhite, tgreen),
                 TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack), 19, 1 + i * 2);
   }
@@ -424,11 +424,11 @@ static void BordersH(msg Msg) {
   UpdateButtonWin();
 }
 
-static void UpdateDisplayWin(widget displayWin) {
+static void UpdateDisplayWin(Twidget displayWin) {
   display_hw hw;
   uldat x = 12, y = 0;
 
-  if (displayWin == (widget)DisplayWin) {
+  if (displayWin == (Twidget)DisplayWin) {
     DeleteList(DisplayWin->USE.R.FirstRow);
 
     for (hw = All->FirstDisplayHW; hw; hw = hw->Next) {
@@ -449,8 +449,8 @@ static void SelectRowWindow(window CurrWin, ldat newCurY) {
   CurrWin->CurY = newCurY;
 
   if (oldCurY != newCurY) {
-    DrawLogicWidget((widget)CurrWin, 0, oldCurY, CurrWin->XWidth + CurrWin->XLogic, oldCurY);
-    DrawLogicWidget((widget)CurrWin, 0, newCurY, CurrWin->XWidth + CurrWin->XLogic, newCurY);
+    DrawLogicWidget((Twidget)CurrWin, 0, oldCurY, CurrWin->XWidth + CurrWin->XLogic, oldCurY);
+    DrawLogicWidget((Twidget)CurrWin, 0, newCurY, CurrWin->XWidth + CurrWin->XLogic, newCurY);
   }
 }
 
@@ -548,7 +548,7 @@ static void BuiltinH(msgport MsgPort) {
             NewWindow = ButtonWin;
             break;
           case COD_DISPLAY_WIN:
-            UpdateDisplayWin((widget)DisplayWin);
+            UpdateDisplayWin((Twidget)DisplayWin);
             NewWindow = DisplayWin;
             break;
           case COD_MESSAGES_WIN:
@@ -562,7 +562,7 @@ static void BuiltinH(msgport MsgPort) {
           }
           if (NewWindow->Parent)
             NewWindow->UnMap();
-          NewWindow->Map((widget)Screen);
+          NewWindow->Map((Twidget)Screen);
           break;
 
         case COD_QUIT:
@@ -649,7 +649,7 @@ static void BuiltinH(msgport MsgPort) {
             UpdateCursor();
             if ((Row = ExecuteWin->FindRow(ExecuteWin->CurY)) && Row->Len) {
               Row->Len--;
-              DrawLogicWidget((widget)ExecuteWin, Row->Len, ExecuteWin->CurY, Row->Len + 1,
+              DrawLogicWidget((Twidget)ExecuteWin, Row->Len, ExecuteWin->CurY, Row->Len + 1,
                               ExecuteWin->CurY);
             }
           }
@@ -691,7 +691,7 @@ static void BuiltinH(msgport MsgPort) {
 
     case msg_selection:
       /* user wants to paste. ask for selection contents */
-      if (Msg->Event.EventSelection.W == (widget)ExecuteWin)
+      if (Msg->Event.EventSelection.W == (Twidget)ExecuteWin)
         TwinSelectionRequest((obj)Builtin_MsgPort, ExecuteWin->Id, TwinSelectionGetOwner());
       break;
 
@@ -737,10 +737,10 @@ static void BuiltinH(msgport MsgPort) {
     Clock_Update();
 }
 
-void FullUpdateWinList(widget listWin);
+void FullUpdateWinList(Twidget listWin);
 
-void InstallRemoveWinListHook(widget listWin) {
-  if (listWin == (widget)WinList) {
+void InstallRemoveWinListHook(Twidget listWin) {
+  if (listWin == (Twidget)WinList) {
     if (WinList->Parent && IS_SCREEN(WinList->Parent))
       WinList->InstallHook(FullUpdateWinList, &((screen)WinList->Parent)->FnHookW);
     else
@@ -750,7 +750,7 @@ void InstallRemoveWinListHook(widget listWin) {
 
 void UpdateWinList(void) {
   screen Screen = All->FirstScreen;
-  widget W;
+  Twidget W;
 
   DeleteList(WinList->USE.R.FirstRow);
   WinList->CurX = WinList->CurY = 0;
@@ -760,15 +760,15 @@ void UpdateWinList(void) {
   WinList->YWidth = WinList->MinYWidth;
 
   for (W = Screen->FirstW; W; W = W->Next) {
-    if (W == (widget)WinList || !IS_WINDOW(W) ||
+    if (W == (Twidget)WinList || !IS_WINDOW(W) ||
         (((window)W)->Flags & (WINDOWFL_NOTVISIBLE | WINDOWFL_MENU)))
       continue;
     (void)Row4Menu(WinList, (udat)0, ROW_ACTIVE, ((window)W)->NameLen, ((window)W)->Name);
   }
 }
 
-void FullUpdateWinList(widget listWin) {
-  if (listWin == (widget)WinList && WinList->Parent) {
+void FullUpdateWinList(Twidget listWin) {
+  if (listWin == (Twidget)WinList && WinList->Parent) {
     ResizeRelWindow(WinList, WinList->MinXWidth - WinList->XWidth,
                     WinList->MinYWidth - WinList->YWidth);
 
@@ -912,50 +912,51 @@ byte InitBuiltin(void) {
       (ButtonRemove = Do(CreateEmptyButton, gadget)(Builtin_MsgPort, 8, 1, TCOL(tblack, twhite))) &&
       (ButtonThis = Do(CreateEmptyButton, gadget)(Builtin_MsgPort, 8, 1, TCOL(tblack, twhite))) &&
 
-      New(gadget)(Builtin_MsgPort, (widget)OptionWin, 27, 1, "[ ] Enable Screen Scrolling", 0,
+      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 27, 1, "[ ] Enable Screen Scrolling", 0,
                   GADGETFL_TEXT_DEFCOL, COD_O_SCREEN_SCROLL, TCOL(tblack, twhite),
                   TCOL(thigh | twhite, tgreen), TCOL(thigh | tblack, twhite),
                   TCOL(thigh | tblack, tblack), 2, 16) &&
-      New(gadget)(Builtin_MsgPort, (widget)OptionWin, 23, 1, "[ ] Menu Relaxed Arrows", 0,
+      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 23, 1, "[ ] Menu Relaxed Arrows", 0,
                   GADGETFL_TEXT_DEFCOL, COD_O_MENU_RELAX, TCOL(tblack, twhite),
                   TCOL(thigh | twhite, tgreen), TCOL(thigh | tblack, twhite),
                   TCOL(thigh | tblack, tblack), 2, 14) &&
-      New(gadget)(Builtin_MsgPort, (widget)OptionWin, 25, 1, "[ ] Menu Information Line", 0,
+      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 25, 1, "[ ] Menu Information Line", 0,
                   GADGETFL_TEXT_DEFCOL, COD_O_MENU_INFO, TCOL(tblack, twhite),
                   TCOL(thigh | twhite, tgreen), TCOL(thigh | tblack, twhite),
                   TCOL(thigh | tblack, tblack), 2, 12) &&
-      New(gadget)(Builtin_MsgPort, (widget)OptionWin, 15, 1, "[ ] Hidden Menu", 0,
+      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 15, 1, "[ ] Hidden Menu", 0,
                   GADGETFL_TEXT_DEFCOL, COD_O_MENU_HIDE, TCOL(tblack, twhite),
                   TCOL(thigh | twhite, tgreen), TCOL(thigh | tblack, twhite),
                   TCOL(thigh | tblack, tblack), 2, 10) &&
-      New(gadget)(Builtin_MsgPort, (widget)OptionWin, 32, 1, "[ ] Enable Blink/High Background", 0,
+      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 32, 1, "[ ] Enable Blink/High Background", 0,
                   GADGETFL_TEXT_DEFCOL, COD_O_BLINK, TCOL(tblack, twhite),
                   TCOL(thigh | twhite, tgreen), TCOL(thigh | tblack, twhite),
                   TCOL(thigh | tblack, tblack), 2, 8) &&
-      New(gadget)(Builtin_MsgPort, (widget)OptionWin, 22, 1, "[ ] Always Show Cursor", 0,
+      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 22, 1, "[ ] Always Show Cursor", 0,
                   GADGETFL_TEXT_DEFCOL, COD_O_CURSOR_ALWAYS, TCOL(tblack, twhite),
                   TCOL(thigh | twhite, tgreen), TCOL(thigh | tblack, twhite),
                   TCOL(thigh | tblack, tblack), 2, 6) &&
-      New(gadget)(Builtin_MsgPort, (widget)OptionWin, 37, 1,
+      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 37, 1,
                   "[ ] New terminals start in UTF-8 mode", 0, GADGETFL_TEXT_DEFCOL,
                   COD_O_TERMINALS_UTF8, TCOL(tblack, twhite), TCOL(thigh | twhite, tgreen),
                   TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack), 2, 4) &&
-      New(gadget)(Builtin_MsgPort, (widget)OptionWin, 3, 1, "[+]", 0, GADGETFL_TEXT_DEFCOL,
+      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 3, 1, "[+]", 0, GADGETFL_TEXT_DEFCOL,
                   COD_O_Yp_SHADE, TCOL(tblack, twhite), TCOL(thigh | twhite, tgreen),
                   TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack), 21, 2) &&
-      New(gadget)(Builtin_MsgPort, (widget)OptionWin, 3, 1, "[-]", 0, GADGETFL_TEXT_DEFCOL,
+      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 3, 1, "[-]", 0, GADGETFL_TEXT_DEFCOL,
                   COD_O_Yn_SHADE, TCOL(tblack, twhite), TCOL(thigh | twhite, tgreen),
                   TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack), 18, 2) &&
-      New(gadget)(Builtin_MsgPort, (widget)OptionWin, 3, 1, "[+]", 0, GADGETFL_TEXT_DEFCOL,
+      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 3, 1, "[+]", 0, GADGETFL_TEXT_DEFCOL,
                   COD_O_Xp_SHADE, TCOL(tblack, twhite), TCOL(thigh | twhite, tgreen),
                   TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack), 21, 1) &&
-      New(gadget)(Builtin_MsgPort, (widget)OptionWin, 3, 1, "[-]", 0, GADGETFL_TEXT_DEFCOL,
+      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 3, 1, "[-]", 0, GADGETFL_TEXT_DEFCOL,
                   COD_O_Xn_SHADE, TCOL(tblack, twhite), TCOL(thigh | twhite, tgreen),
                   TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack), 18, 1) &&
-      New(gadget)(Builtin_MsgPort, (widget)OptionWin, 11, 1, "[ ] Shadows", 0, GADGETFL_TEXT_DEFCOL,
-                  COD_O_SHADOWS, TCOL(tblack, twhite), TCOL(thigh | twhite, tgreen),
-                  TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack), 2, 1) &&
-      New(gadget)(Builtin_MsgPort, (widget)ExecuteWin, 19, 1, "[ ] Run in Terminal", 0,
+      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 11, 1, "[ ] Shadows", 0,
+                  GADGETFL_TEXT_DEFCOL, COD_O_SHADOWS, TCOL(tblack, twhite),
+                  TCOL(thigh | twhite, tgreen), TCOL(thigh | tblack, twhite),
+                  TCOL(thigh | tblack, tblack), 2, 1) &&
+      New(gadget)(Builtin_MsgPort, (Twidget)ExecuteWin, 19, 1, "[ ] Run in Terminal", 0,
                   GADGETFL_TEXT_DEFCOL, COD_E_TTY, TCOL(thigh | tyellow, tblue),
                   TCOL(thigh | twhite, tgreen), TCOL(thigh | tblack, tblue),
                   TCOL(thigh | tblack, tblue), 10, 1)
@@ -988,17 +989,17 @@ byte InitBuiltin(void) {
                                   TCOL(thigh | tblack, twhite), 0, 0, 0);
 
     Act(Configure, DisplaySubWin)(DisplaySubWin, 1 << 0 | 1 << 1, -1, -1, 0, 0, 0, 0);
-    Act(Map, DisplaySubWin)(DisplaySubWin, (widget)DisplayWin);
+    Act(Map, DisplaySubWin)(DisplaySubWin, (Twidget)DisplayWin);
 
     Act(InstallHook, DisplayWin)(DisplayWin, UpdateDisplayWin, &All->FnHookDisplayHW);
     WinList->MapUnMapHook = InstallRemoveWinListHook;
 
-    Act(FillButton, ButtonOK_About)(ButtonOK_About, (widget)AboutWin, COD_OK, 15, 11, 0, "   OK   ",
-                                    (byte)0x2F, (byte)0x28);
+    Act(FillButton, ButtonOK_About)(ButtonOK_About, (Twidget)AboutWin, COD_OK, 15, 11, 0,
+                                    "   OK   ", (byte)0x2F, (byte)0x28);
 
-    Act(FillButton, ButtonRemove)(ButtonRemove, (widget)DisplaySubWin, COD_D_REMOVE, 1, 2, 0,
+    Act(FillButton, ButtonRemove)(ButtonRemove, (Twidget)DisplaySubWin, COD_D_REMOVE, 1, 2, 0,
                                   " Remove ", (byte)0x2F, (byte)0x28);
-    Act(FillButton, ButtonThis)(ButtonThis, (widget)DisplaySubWin, COD_D_THIS, 1, 5, 0, "  This  ",
+    Act(FillButton, ButtonThis)(ButtonThis, (Twidget)DisplaySubWin, COD_D_THIS, 1, 5, 0, "  This  ",
                                 (byte)0x2F, (byte)0x28);
 
     OptionWin->CurX = 25;

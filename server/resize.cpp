@@ -53,7 +53,7 @@ void FlushCursor(void) {
   uldat type = NOCURSOR;
   screen Screen;
   window Window;
-  widget w;
+  Twidget w;
   ldat CurX, CurY;
   byte HasBorder;
 
@@ -66,7 +66,7 @@ void FlushCursor(void) {
     if (Window &&
         ((Window->Flags & WINDOWFL_CURSOR_ON) || (All->SetUp->Flags & setup_cursor_always))) {
 
-      w = (widget)Window;
+      w = (Twidget)Window;
 
       HasBorder = !(Window->Flags & WINDOWFL_BORDERLESS);
 
@@ -79,9 +79,9 @@ void FlushCursor(void) {
           ((Window == (window)Screen->FirstW && !Window->FirstW) ||
 #if 1
            /* widgets and gadgets cannot contain cursor, but they can obscure it */
-           w == RecursiveFindWidgetAt((widget)Screen, (dat)d.X1, (dat)d.Y1 - Screen->YLimit)
+           w == RecursiveFindWidgetAt((Twidget)Screen, (dat)d.X1, (dat)d.Y1 - Screen->YLimit)
 #else
-           Window == WindowParent(RecursiveFindWidgetAt((widget)Screen, (dat)d.X1,
+           Window == WindowParent(RecursiveFindWidgetAt((Twidget)Screen, (dat)d.X1,
                                                         (dat)d.Y1 - Screen->YLimit))
 #endif
                )) {
@@ -208,9 +208,9 @@ byte ResizeWindowContents(window Window) {
   if (Window->Parent) {
     DrawBorderWindow(Window, BORDER_RIGHT);
 
-    DrawLogicWidget((widget)Window, 0, 0, Window->WLogic - 1, Window->HLogic - 1);
+    DrawLogicWidget((Twidget)Window, 0, 0, Window->WLogic - 1, Window->HLogic - 1);
 
-    if (ContainsCursor((widget)Window))
+    if (ContainsCursor((Twidget)Window))
       UpdateCursor();
   }
 
@@ -322,7 +322,7 @@ byte RowWriteCharset(window Window, uldat Len, const char *charset_bytes) {
       if (CurrRow->Len < x + RowLen)
         CurrRow->Len = x + RowLen;
 
-      DrawLogicWidget((widget)Window, x, y, x + RowLen - (ldat)1, y);
+      DrawLogicWidget((Twidget)Window, x, y, x + RowLen - (ldat)1, y);
 
       charset_bytes += RowLen;
       Len -= RowLen;
@@ -434,7 +434,7 @@ byte RowWriteTRune(window Window, uldat Len, const trune *runes) {
       if (CurrRow->Len < x + RowLen)
         CurrRow->Len = x + RowLen;
 
-      DrawLogicWidget((widget)Window, x, y, x + RowLen - (ldat)1, y);
+      DrawLogicWidget((Twidget)Window, x, y, x + RowLen - (ldat)1, y);
 
       runes += RowLen;
       Len -= RowLen;
@@ -454,7 +454,7 @@ byte RowWriteTRune(window Window, uldat Len, const trune *runes) {
   return ttrue;
 }
 
-void ExposeWidget2(widget w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
+void ExposeWidget2(Twidget w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
                    const char *utf8_bytes, const trune *runes, const tcell *cells) {
   if (w_USE(w, USEEXPOSE)) {
     if (utf8_bytes || runes || cells) {
@@ -492,7 +492,7 @@ void ExposeWindow2(window w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
   ldat CurX, CurY;
 
   if (W_USE(w, USEEXPOSE)) {
-    ExposeWidget2((widget)w, XWidth, YWidth, Left, Up, Pitch, utf8_bytes, runes, cells);
+    ExposeWidget2((Twidget)w, XWidth, YWidth, Left, Up, Pitch, utf8_bytes, runes, cells);
     return;
   }
 
@@ -579,7 +579,7 @@ void ExposeWindow2(window w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
 
 /***************/
 
-void ResizeWidget(widget w, dat X, dat Y) {
+void ResizeWidget(Twidget w, dat X, dat Y) {
   if (w) {
     X = Max2(1, X);
     Y = Max2(1, Y);
@@ -599,7 +599,7 @@ void ResizeGadget(gadget G, dat X, dat Y) {
     if (G_USE(G, USETEXT)) {
       /* FIXME: finish this */
     } else {
-      ResizeWidget((widget)G, X, Y);
+      ResizeWidget((Twidget)G, X, Y);
     }
   }
 }
@@ -645,22 +645,23 @@ void DragFirstScreen(ldat DeltaX, ldat DeltaY) {
   YLimit++;
 
   if (Abs(DeltaX) >= DWidth || Abs(DeltaY) >= DHeight - YLimit)
-    DrawArea2((screen)0, (widget)0, (widget)0, 0, YLimit, DWidth - 1, DHeight - 1, tfalse);
+    DrawArea2((screen)0, (Twidget)0, (Twidget)0, 0, YLimit, DWidth - 1, DHeight - 1, tfalse);
   else if (DeltaY < 0) {
-    DrawArea2((screen)0, (widget)0, (widget)0, 0, YLimit, DWidth - 1, YLimit - DeltaY, tfalse);
+    DrawArea2((screen)0, (Twidget)0, (Twidget)0, 0, YLimit, DWidth - 1, YLimit - DeltaY, tfalse);
     if (DeltaX <= 0)
-      DrawArea2((screen)0, (widget)0, (widget)0, 0, YLimit - DeltaY, -DeltaX - 1, DHeight - 1,
+      DrawArea2((screen)0, (Twidget)0, (Twidget)0, 0, YLimit - DeltaY, -DeltaX - 1, DHeight - 1,
                 tfalse);
     else if (DeltaX > 0)
-      DrawArea2((screen)0, (widget)0, (widget)0, DWidth - DeltaX, YLimit - DeltaY, DWidth - 1,
+      DrawArea2((screen)0, (Twidget)0, (Twidget)0, DWidth - DeltaX, YLimit - DeltaY, DWidth - 1,
                 DHeight - 1, tfalse);
   } else {
-    DrawArea2((screen)0, (widget)0, (widget)0, 0, DHeight - DeltaY, DWidth - 1, DHeight - 1,
+    DrawArea2((screen)0, (Twidget)0, (Twidget)0, 0, DHeight - DeltaY, DWidth - 1, DHeight - 1,
               tfalse);
     if (DeltaX <= 0)
-      DrawArea2((screen)0, (widget)0, (widget)0, 0, YLimit, -DeltaX - 1, DHeight - DeltaY, tfalse);
+      DrawArea2((screen)0, (Twidget)0, (Twidget)0, 0, YLimit, -DeltaX - 1, DHeight - DeltaY,
+                tfalse);
     else if (DeltaX >= 0)
-      DrawArea2((screen)0, (widget)0, (widget)0, DWidth - DeltaX, YLimit, DWidth - 1,
+      DrawArea2((screen)0, (Twidget)0, (Twidget)0, DWidth - DeltaX, YLimit, DWidth - 1,
                 DHeight - DeltaY, tfalse);
   }
   UpdateCursor();
@@ -691,12 +692,12 @@ void ResizeFirstScreen(dat DeltaY) {
   if (DeltaY < 0) {
     if (Up <= Dwn)
       DragArea((dat)Left, (dat)Up, (dat)Rgt, (dat)Dwn, (dat)Left, (dat)Up + DeltaY);
-    DrawArea2(Screen, (widget)0, (widget)0, (dat)Left, (dat)Dwn + 1 + DeltaY, (dat)Rgt, (dat)Dwn,
+    DrawArea2(Screen, (Twidget)0, (Twidget)0, (dat)Left, (dat)Dwn + 1 + DeltaY, (dat)Rgt, (dat)Dwn,
               tfalse);
   } else if (DeltaY > (dat)0) {
     if (Up <= Dwn)
       DragArea((dat)Left, (dat)Up, (dat)Rgt, (dat)Dwn, (dat)Left, (dat)Up + (dat)DeltaY);
-    DrawArea2((screen)0, (widget)0, (widget)0, (dat)Left, (dat)Up, (dat)Rgt, (dat)Up + DeltaY - 1,
+    DrawArea2((screen)0, (Twidget)0, (Twidget)0, (dat)Left, (dat)Up, (dat)Rgt, (dat)Up + DeltaY - 1,
               tfalse);
   }
   UpdateCursor();
@@ -843,7 +844,7 @@ void DragFirstWindow(dat i, dat j) {
         xRgt = Min2(_Left + i - 1, _Rgt);
       else
         xLeft = Max2(_Left, _Rgt + i + 1);
-      DrawArea2(Screen, (widget)0, (widget)0, (dat)xLeft, (dat)_Up, (dat)xRgt, (dat)_Dwn, tfalse);
+      DrawArea2(Screen, (Twidget)0, (Twidget)0, (dat)xLeft, (dat)_Up, (dat)xRgt, (dat)_Dwn, tfalse);
     }
     xUp = _Up;
     xDwn = _Dwn;
@@ -861,7 +862,7 @@ void DragFirstWindow(dat i, dat j) {
         xLeft = _Left;
       }
 
-      DrawArea2(Screen, (widget)0, (widget)0, (dat)xLeft, (dat)xUp, (dat)xRgt, (dat)xDwn, tfalse);
+      DrawArea2(Screen, (Twidget)0, (Twidget)0, (dat)xLeft, (dat)xUp, (dat)xRgt, (dat)xDwn, tfalse);
     }
   }
 
@@ -882,25 +883,25 @@ void DragFirstWindow(dat i, dat j) {
   if (_Left <= _Rgt && _Up <= _Dwn) {
     if (Left_ > _Left) {
       xLeft = Min2(Left_ - (ldat)1, _Rgt);
-      DrawWidget((widget)Window, (dat)_Left, (dat)_Up, (dat)xLeft, (dat)_Dwn, tfalse);
+      DrawWidget((Twidget)Window, (dat)_Left, (dat)_Up, (dat)xLeft, (dat)_Dwn, tfalse);
     } else
       xLeft = _Left;
     if (Rgt_ < _Rgt) {
       xRgt = Max2(Rgt_ + (ldat)1, _Left);
-      DrawWidget((widget)Window, (dat)xRgt, (dat)_Up, (dat)_Rgt, (dat)_Dwn, tfalse);
+      DrawWidget((Twidget)Window, (dat)xRgt, (dat)_Up, (dat)_Rgt, (dat)_Dwn, tfalse);
     } else
       xRgt = _Rgt;
     if (Up_ > _Up) {
       xUp = Min2(Up_ - (ldat)1, _Dwn);
-      DrawWidget((widget)Window, (dat)xLeft, (dat)_Up, (dat)xRgt, (dat)xUp, tfalse);
+      DrawWidget((Twidget)Window, (dat)xLeft, (dat)_Up, (dat)xRgt, (dat)xUp, tfalse);
     }
     if (Dwn_ < _Dwn) {
       xDwn = Max2(Dwn_ + (ldat)1, _Up);
-      DrawWidget((widget)Window, (dat)xLeft, (dat)xDwn, (dat)xRgt, (dat)_Dwn, tfalse);
+      DrawWidget((Twidget)Window, (dat)xLeft, (dat)xDwn, (dat)xRgt, (dat)_Dwn, tfalse);
     }
   }
 
-  if (ContainsCursor((widget)Window))
+  if (ContainsCursor((Twidget)Window))
     UpdateCursor();
 }
 
@@ -953,7 +954,7 @@ void DragWindow(window Window, dat i, dat j) {
   }
   Window->Left += i;
   Window->Up += j;
-  DrawArea2((screen)0, (widget)0, (widget)0, Left + i, Up + j, Rgt + i + DeltaXShade,
+  DrawArea2((screen)0, (Twidget)0, (Twidget)0, Left + i, Up + j, Rgt + i + DeltaXShade,
             Dwn + j + DeltaYShade, tfalse);
 
   if (Left < (ldat)DWidth && Up < (ldat)DHeight && Rgt + DeltaXShade >= (ldat)0 &&
@@ -965,7 +966,7 @@ void DragWindow(window Window, dat i, dat j) {
       Left1 = Max2(Rgt + DeltaXShade + i, Left);
       Rgt1 = Min2((ldat)DWidth - (ldat)1, Rgt + DeltaXShade);
     }
-    DrawArea2((screen)0, (widget)0, (widget)0, (dat)Left1, (dat)Up, (dat)Rgt1,
+    DrawArea2((screen)0, (Twidget)0, (Twidget)0, (dat)Left1, (dat)Up, (dat)Rgt1,
               (dat)Dwn + DeltaYShade, tfalse);
 
     if (j > 0) {
@@ -975,8 +976,8 @@ void DragWindow(window Window, dat i, dat j) {
       Up = Max2(Dwn + DeltaYShade + j, Up);
       Dwn = Min2((ldat)DHeight - (ldat)1, Dwn + DeltaYShade);
     }
-    DrawArea2((screen)0, (widget)0, (widget)0, (dat)Left, (dat)Up, (dat)Rgt + DeltaXShade, (dat)Dwn,
-              tfalse);
+    DrawArea2((screen)0, (Twidget)0, (Twidget)0, (dat)Left, (dat)Up, (dat)Rgt + DeltaXShade,
+              (dat)Dwn, tfalse);
   }
   if (Window == (window)All->FirstScreen->FocusW)
     UpdateCursor();
@@ -1026,14 +1027,14 @@ void ResizeRelFirstWindow(dat i, dat j) {
     if (Left < (ldat)DWidth && Up < (ldat)DHeight && Rgt + (ldat)DeltaXShade >= (ldat)0 &&
         Dwn + (ldat)DeltaYShade >= (ldat)YLimit) {
 
-      DrawArea2((screen)0, (widget)Window, (widget)0, (dat)Rgt - DeltaX + 1,
+      DrawArea2((screen)0, (Twidget)Window, (Twidget)0, (dat)Rgt - DeltaX + 1,
                 (dat)Max2(Up, (ldat)YLimit), (dat)Rgt, (dat)Max2((ldat)YLimit, Dwn), tfalse);
       if (Shade) {
-        DrawArea2(Screen, (widget)0, (widget)0, (dat)Rgt + Max2((dat)DeltaXShade - DeltaX - 1, 1),
+        DrawArea2(Screen, (Twidget)0, (Twidget)0, (dat)Rgt + Max2((dat)DeltaXShade - DeltaX - 1, 1),
                   (dat)Max2((ldat)YLimit, Up), (dat)Rgt + (dat)DeltaXShade,
                   (dat)Dwn + (dat)DeltaYShade, tfalse);
         if (DeltaX > (dat)DeltaXShade)
-          DrawArea2(Screen, (widget)0, (widget)0, (dat)Rgt + (dat)DeltaXShade - DeltaX + 1,
+          DrawArea2(Screen, (Twidget)0, (Twidget)0, (dat)Rgt + (dat)DeltaXShade - DeltaX + 1,
                     (dat)Max2((ldat)YLimit, Dwn + 1), (dat)Rgt, (dat)Dwn + (dat)DeltaYShade,
                     tfalse);
       }
@@ -1046,15 +1047,15 @@ void ResizeRelFirstWindow(dat i, dat j) {
     if (Left < (ldat)DWidth && Up < (ldat)DHeight && Rgt + (ldat)DeltaXShade >= -(ldat)DeltaX &&
         Dwn + (ldat)DeltaYShade >= (ldat)YLimit) {
 
-      DrawArea2((screen)0, (widget)Window, (widget)0, (dat)Rgt,
+      DrawArea2((screen)0, (Twidget)Window, (Twidget)0, (dat)Rgt,
                 (dat)Max2(Up + HasBorder, (ldat)YLimit), (dat)Rgt + DeltaX - HasBorder,
                 (dat)Max2((ldat)YLimit, Dwn - HasBorder), tfalse);
       if (Shade) {
-        DrawArea2(Screen, (widget)0, (widget)0, (dat)Rgt + 1 + Max2((dat)DeltaXShade, DeltaX),
+        DrawArea2(Screen, (Twidget)0, (Twidget)0, (dat)Rgt + 1 + Max2((dat)DeltaXShade, DeltaX),
                   (dat)Max2((ldat)YLimit, Up + (dat)DeltaYShade),
                   (dat)Rgt + DeltaX + (dat)DeltaXShade, (dat)Dwn + (dat)DeltaYShade, tfalse);
         if (DeltaX > (dat)DeltaXShade)
-          DrawArea2(Screen, (widget)0, (widget)0, (dat)Rgt + (dat)DeltaXShade + 1,
+          DrawArea2(Screen, (Twidget)0, (Twidget)0, (dat)Rgt + (dat)DeltaXShade + 1,
                     (dat)Max2((ldat)YLimit, Dwn + 1), (dat)Rgt + DeltaX,
                     (dat)Dwn + (dat)DeltaYShade, tfalse);
       }
@@ -1068,15 +1069,15 @@ void ResizeRelFirstWindow(dat i, dat j) {
     if (Left < (ldat)DWidth && Up < (ldat)DHeight && Rgt + (ldat)DeltaXShade >= (ldat)0 &&
         Dwn + (ldat)DeltaYShade >= (ldat)YLimit) {
 
-      DrawArea2(Screen, (widget)0, (widget)0, (dat)Left,
+      DrawArea2(Screen, (Twidget)0, (Twidget)0, (dat)Left,
                 (dat)Max2(Dwn - (ldat)DeltaY + (ldat)1, (ldat)YLimit), (dat)Rgt,
                 (dat)Max2((ldat)YLimit, Dwn), tfalse);
       if (Shade) {
-        DrawArea2(Screen, (widget)0, (widget)0, (dat)Left,
+        DrawArea2(Screen, (Twidget)0, (Twidget)0, (dat)Left,
                   (dat)Max2((ldat)YLimit, Dwn + 1 + Max2((dat)DeltaYShade - DeltaY, (dat)0)),
                   (dat)Rgt + (dat)DeltaXShade, (dat)Dwn + (dat)DeltaYShade, tfalse);
         if (DeltaY > (dat)DeltaYShade)
-          DrawArea2(Screen, (widget)0, (widget)0, (dat)Rgt + 1,
+          DrawArea2(Screen, (Twidget)0, (Twidget)0, (dat)Rgt + 1,
                     (dat)Max2((ldat)YLimit, Dwn + 1 + (dat)DeltaYShade - DeltaY),
                     (dat)Rgt + (dat)DeltaXShade, (dat)Max2((ldat)YLimit, Dwn), tfalse);
       }
@@ -1089,14 +1090,14 @@ void ResizeRelFirstWindow(dat i, dat j) {
     if (Left < (ldat)DWidth && Up < (ldat)DHeight && Rgt + (ldat)DeltaXShade >= (ldat)0 &&
         Dwn + (ldat)DeltaYShade >= -(ldat)DeltaY + (ldat)YLimit) {
 
-      DrawArea2((screen)0, (widget)Window, (widget)0, (dat)Left, (dat)Max2((ldat)YLimit, Dwn),
+      DrawArea2((screen)0, (Twidget)Window, (Twidget)0, (dat)Left, (dat)Max2((ldat)YLimit, Dwn),
                 (dat)Rgt - HasBorder, (dat)Max2((ldat)YLimit, Dwn + DeltaY - HasBorder), tfalse);
       if (Shade) {
-        DrawArea2(Screen, (widget)0, (widget)0, (dat)Left + (dat)DeltaXShade,
+        DrawArea2(Screen, (Twidget)0, (Twidget)0, (dat)Left + (dat)DeltaXShade,
                   (dat)Dwn + 1 + Max2(DeltaY, (dat)DeltaYShade), (dat)Rgt + (dat)DeltaXShade,
                   (dat)Dwn + (dat)DeltaYShade + DeltaY, tfalse);
         if (DeltaY > (dat)DeltaYShade)
-          DrawArea2(Screen, (widget)0, (widget)0, (dat)Rgt + 1, (dat)Dwn + (dat)DeltaYShade + 1,
+          DrawArea2(Screen, (Twidget)0, (Twidget)0, (dat)Rgt + 1, (dat)Dwn + (dat)DeltaYShade + 1,
                     (dat)Rgt + (dat)DeltaXShade, (dat)Max2((ldat)YLimit, Dwn + DeltaY), tfalse);
       }
     }
@@ -1118,7 +1119,7 @@ void ResizeRelFirstWindow(dat i, dat j) {
 
 void ResizeRelWindow(window Window, dat i, dat j) {
   ldat Left, Up, Rgt, Dwn;
-  widget Parent;
+  Twidget Parent;
   setup *SetUp;
   dat DeltaX, DeltaY;
   dat YLimit, XWidth, YWidth;
@@ -1130,7 +1131,7 @@ void ResizeRelWindow(window Window, dat i, dat j) {
 
   visible = !(Window->Flags & WIDGETFL_NOTVISIBLE);
 
-  if (visible && (widget)Window == All->FirstScreen->FirstW) {
+  if (visible && (Twidget)Window == All->FirstScreen->FirstW) {
     ResizeRelFirstWindow(i, j);
     return;
   }
@@ -1178,7 +1179,7 @@ void ResizeRelWindow(window Window, dat i, dat j) {
   if (DeltaX || DeltaY) {
     if (visible && Parent && IS_SCREEN(Parent)) {
       Up = (dat)Max2(Up, (ldat)YLimit);
-      DrawArea2((screen)Parent, (widget)0, (widget)0, (dat)Left, (dat)Up, (dat)Rgt, (dat)Dwn,
+      DrawArea2((screen)Parent, (Twidget)0, (Twidget)0, (dat)Left, (dat)Up, (dat)Rgt, (dat)Dwn,
                 tfalse);
       if (Shade)
         DrawShadeWindow(Window, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
@@ -1223,7 +1224,7 @@ void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, ldat DeltaX, ldat Del
     return;
 
   if (DeltaX >= XWidth || -DeltaX >= XWidth || DeltaY >= YWidth || -DeltaY >= YWidth) {
-    DrawWidget((widget)Window, (dat)0, (dat)0, TW_MAXDAT, TW_MAXDAT, tfalse);
+    DrawWidget((Twidget)Window, (dat)0, (dat)0, TW_MAXDAT, TW_MAXDAT, tfalse);
     return;
   }
 
@@ -1271,16 +1272,16 @@ void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, ldat DeltaX, ldat Del
     if (Xend >= Xstart)
       DragArea(Xstart, Ystart, Xend, Yend, Xstart + DeltaX, Ystart);
     if (DeltaX > (dat)0)
-      DrawWidget((widget)Window, Left, Up, Left + DeltaX - 1, Dwn, tfalse);
+      DrawWidget((Twidget)Window, Left, Up, Left + DeltaX - 1, Dwn, tfalse);
     else
-      DrawWidget((widget)Window, Rgt + DeltaX + 1, Up, Rgt, Dwn, tfalse);
+      DrawWidget((Twidget)Window, Rgt + DeltaX + 1, Up, Rgt, Dwn, tfalse);
   } else if (DeltaY) {
     if (Yend >= Ystart)
       DragArea(Xstart, Ystart, Xend, Yend, Xstart, Ystart + DeltaY);
     if (DeltaY > (dat)0)
-      DrawWidget((widget)Window, Left, Up, Rgt, Up + DeltaY - 1, tfalse);
+      DrawWidget((Twidget)Window, Left, Up, Rgt, Up + DeltaY - 1, tfalse);
     else
-      DrawWidget((widget)Window, Left, Dwn + DeltaY + 1, Rgt, Dwn, tfalse);
+      DrawWidget((Twidget)Window, Left, Dwn + DeltaY + 1, Rgt, Dwn, tfalse);
   }
 }
 
@@ -1329,7 +1330,7 @@ void ScrollFirstWindow(ldat DeltaX, ldat DeltaY, byte byXYLogic) {
 
   ScrollFirstWindowArea(0, 0, XWidth - 3, YWidth - 3, -DeltaX, -DeltaY);
 
-  if (byXYLogic && ContainsCursor((widget)Window))
+  if (byXYLogic && ContainsCursor((Twidget)Window))
     UpdateCursor();
 }
 
@@ -1349,7 +1350,7 @@ void ScrollWindow(window Window, ldat DeltaX, ldat DeltaY) {
   if (!DeltaX && !DeltaY)
     return;
 
-  if ((widget)Window == All->FirstScreen->FirstW) {
+  if ((Twidget)Window == All->FirstScreen->FirstW) {
     ScrollFirstWindow(DeltaX, DeltaY, ttrue);
     return;
   }
@@ -1384,11 +1385,11 @@ void ScrollWindow(window Window, ldat DeltaX, ldat DeltaY) {
 
   DrawFullWindow2(Window);
 
-  if (ContainsCursor((widget)Window))
+  if (ContainsCursor((Twidget)Window))
     UpdateCursor();
 }
 
-void ScrollWidget(widget w, ldat DeltaX, ldat DeltaY) {
+void ScrollWidget(Twidget w, ldat DeltaX, ldat DeltaY) {
   ldat XLogic, YLogic;
   dat YWidth;
 
@@ -1479,7 +1480,7 @@ byte ExecScrollFocusWindow(void) {
   } else if (Scroll == TAB_SELECT)
     return tfalse;
 
-  if ((widget)Window == Screen->FirstW)
+  if ((Twidget)Window == Screen->FirstW)
     ScrollFirstWindow(DeltaX, DeltaY, ttrue);
   else
     ScrollWindow(Window, DeltaX, DeltaY);
@@ -1496,7 +1497,7 @@ void HideMenu(byte on_off) {
       if (Screen->YLogic > TW_MINDAT) {
         Screen->YLogic--;
         Screen->YLimit--;
-        DrawArea2(Screen, (widget)0, (widget)0, 0, 0, TW_MAXDAT, 0, tfalse);
+        DrawArea2(Screen, (Twidget)0, (Twidget)0, 0, 0, TW_MAXDAT, 0, tfalse);
         UpdateCursor();
       } else
         ResizeFirstScreen(-1);
@@ -1522,11 +1523,11 @@ static void OpenSubMenuItem(menu M, menuitem Item, byte ByMouse) {
 
   P->CurY = Item->WCurY;
   if (y != TW_MAXLDAT)
-    DrawLogicWidget((widget)P, 0, y, TW_MAXLDAT, y);
+    DrawLogicWidget((Twidget)P, 0, y, TW_MAXLDAT, y);
   if ((y = P->CurY) == TW_MAXLDAT)
     (void)Act(FindRowByCode, P)(P, Item->Code, &P->CurY);
   if ((y = P->CurY) != TW_MAXLDAT)
-    DrawLogicWidget((widget)P, 0, y, TW_MAXLDAT, y);
+    DrawLogicWidget((Twidget)P, 0, y, TW_MAXLDAT, y);
 
   if (w) {
     if (!w->Parent) {
@@ -1539,7 +1540,7 @@ static void OpenSubMenuItem(menu M, menuitem Item, byte ByMouse) {
       w->CurY = 0;
     Act(MapTopReal, w)(w, S);
   }
-  if ((widget)P != S->FocusW)
+  if ((Twidget)P != S->FocusW)
     Act(Focus, P)(P);
 }
 
@@ -1588,7 +1589,7 @@ static void OpenMenuItem(menu M, menuitem Item, byte ByMouse) {
 /* this activates the menu bar */
 static void OpenMenu(menuitem Item, byte ByMouse) {
   screen S = All->FirstScreen;
-  widget w = S->FocusW;
+  Twidget w = S->FocusW;
   menu M = Act(FindMenu, S)(S);
 
   if ((All->State & state_any) == state_default) {
@@ -1600,7 +1601,7 @@ static void OpenMenu(menuitem Item, byte ByMouse) {
 
     if (!S->MenuWindow && w) {
       S->MenuWindow = (window)w; /* so that it keeps `active' borders */
-      S->FocusW = (widget)0;
+      S->FocusW = (Twidget)0;
     }
   }
   OpenMenuItem(M, Item, ByMouse);
@@ -1622,7 +1623,7 @@ static menuitem CloseMenuItem(menu M, menuitem Item, byte ByMouse) {
       P->CurY = TW_MAXLDAT;
 
       if (y != TW_MAXLDAT)
-        DrawLogicWidget((widget)P, 0, y, TW_MAXLDAT, y);
+        DrawLogicWidget((Twidget)P, 0, y, TW_MAXLDAT, y);
     }
     Item = P->MenuItem;
     if (Item) {
@@ -1722,15 +1723,15 @@ void SetMenuState(menuitem Item, byte ByMouse) {
 
 /* ---------------- */
 
-void UnFocusWidget(widget w) {
-  if (w && w->Parent == (widget)All->FirstScreen && w == All->FirstScreen->FocusW) {
+void UnFocusWidget(Twidget w) {
+  if (w && w->Parent == (Twidget)All->FirstScreen && w == All->FirstScreen->FocusW) {
     if (IS_WINDOW(w)) {
-      Act(KbdFocus, w)((widget)0);
+      Act(KbdFocus, w)((Twidget)0);
       DrawBorderWindow((window)w, BORDER_ANY);
       Act(DrawMenu, (screen)w->Parent)((screen)w->Parent, 0, TW_MAXDAT);
       UpdateCursor();
     } else
-      All->FirstScreen->FocusW = (widget)0;
+      All->FirstScreen->FocusW = (Twidget)0;
   }
 }
 
@@ -1748,14 +1749,14 @@ void RollUpWindow(window w, byte on_off) {
       w->Attr &= ~WINDOW_ROLLED_UP;
       DrawAreaWindow2(w);
     }
-    if (w->Parent == (widget)All->FirstScreen)
+    if (w->Parent == (Twidget)All->FirstScreen)
       UpdateCursor();
   }
 }
 
 /* ---------------- */
 
-void SetVisibleWidget(widget w, byte on_off) {
+void SetVisibleWidget(Twidget w, byte on_off) {
   byte visible;
   if (w) {
     on_off = !!on_off;
@@ -1771,13 +1772,13 @@ void SetVisibleWidget(widget w, byte on_off) {
   }
 }
 
-void RaiseWidget(widget w, byte alsoFocus) {
+void RaiseWidget(Twidget w, byte alsoFocus) {
   screen Screen;
 
   if (w && (Screen = (screen)w->Parent) && IS_SCREEN(Screen)) {
 
     if (Screen->FirstW != w) {
-      MoveFirst(W, (widget)Screen, w);
+      MoveFirst(W, (Twidget)Screen, w);
       if (IS_WINDOW(w))
         DrawAreaWindow2((window)w);
       else
@@ -1794,14 +1795,14 @@ void RaiseWidget(widget w, byte alsoFocus) {
   }
 }
 
-void LowerWidget(widget w, byte alsoUnFocus) {
+void LowerWidget(Twidget w, byte alsoUnFocus) {
   screen Screen;
-  widget _W;
+  Twidget _W;
 
   if (w && (Screen = (screen)w->Parent) && IS_SCREEN(Screen)) {
 
     if (Screen->LastW != w) {
-      MoveLast(W, (widget)Screen, w);
+      MoveLast(W, (Twidget)Screen, w);
       if (IS_WINDOW(w))
         DrawAreaWindow2((window)w);
       else
@@ -1823,12 +1824,12 @@ void LowerWidget(widget w, byte alsoUnFocus) {
   }
 }
 
-void RestackWidgets(widget w, uldat N, const widget *arrayW) {
-  widget FW, CW;
+void RestackWidgets(Twidget w, uldat N, const Twidget *arrayW) {
+  Twidget FW, CW;
   byte need_redraw = tfalse;
 
   if (w && N && arrayW) {
-    for (FW = (widget)0; N; N--, arrayW++) {
+    for (FW = (Twidget)0; N; N--, arrayW++) {
       /*
        * Allow only children that really have the given parent.
        * Also deny WINDOFL_MENU windows
@@ -1875,7 +1876,7 @@ void RestackRows(obj O, uldat N, const row *arrayR) {
       if (IS_MENU(O))
         SyncMenu((menu)O);
       else
-        DrawAreaWidget((widget)O);
+        DrawAreaWidget((Twidget)O);
     }
   }
 }
@@ -1900,20 +1901,20 @@ static void realUnPressGadget(gadget G) {
   G->Flags &= ~GADGETFL_PRESSED;
   if (G->Group && G->Group->SelectG == G)
     G->Group->SelectG = (gadget)0;
-  if ((widget)G == All->FirstScreen->FirstW)
-    DrawWidget((widget)G, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
+  if ((Twidget)G == All->FirstScreen->FirstW)
+    DrawWidget((Twidget)G, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
   else
-    DrawAreaWidget((widget)G);
+    DrawAreaWidget((Twidget)G);
 }
 
 static void realPressGadget(gadget G) {
   G->Flags |= GADGETFL_PRESSED;
   if (G->Group)
     G->Group->SelectG = G;
-  if ((widget)G == All->FirstScreen->FirstW)
-    DrawWidget((widget)G, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
+  if ((Twidget)G == All->FirstScreen->FirstW)
+    DrawWidget((Twidget)G, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
   else
-    DrawAreaWidget((widget)G);
+    DrawAreaWidget((Twidget)G);
 }
 
 void PressGadget(gadget G) {
@@ -2003,7 +2004,7 @@ void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, const char *charset
         }
       }
     }
-    DrawAreaWidget((widget)G);
+    DrawAreaWidget((Twidget)G);
   }
 }
 
@@ -2073,7 +2074,7 @@ void WriteTRunesGadget(gadget G, byte bitmap, dat TW, dat TH, const trune *TRune
         }
       }
     }
-    DrawAreaWidget((widget)G);
+    DrawAreaWidget((Twidget)G);
   }
 }
 

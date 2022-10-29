@@ -155,10 +155,10 @@ static void flush_tty(void) {
   /* first, draw on screen whatever changed in the window */
   if (dirtyN) {
     if (dirtyN == TW_MAXBYTE)
-      DrawLogicWidget((widget)Win, 0, ScrollBack, SizeX - 1, SizeY - 1 + ScrollBack);
+      DrawLogicWidget((Twidget)Win, 0, ScrollBack, SizeX - 1, SizeY - 1 + ScrollBack);
     else
       for (i = 0; i < dirtyN; i++)
-        DrawLogicWidget((widget)Win, dirty[i][0], dirty[i][1] + ScrollBack, dirty[i][2],
+        DrawLogicWidget((Twidget)Win, dirty[i][0], dirty[i][1] + ScrollBack, dirty[i][2],
                         dirty[i][3] + ScrollBack);
     dirtyN = 0;
   }
@@ -176,7 +176,7 @@ static void flush_tty(void) {
   } else
     doupdate = tfalse;
 
-  if ((doupdate || (*Flags & TTY_UPDATECURSOR)) && ContainsCursor((widget)Win))
+  if ((doupdate || (*Flags & TTY_UPDATECURSOR)) && ContainsCursor((Twidget)Win))
     UpdateCursor();
 
   *Flags &= ~TTY_UPDATECURSOR;
@@ -358,7 +358,7 @@ static void scrollup(dat t, dat b, dat nr) {
     return;
 
   /* try to accelerate this */
-  if ((widget)Win == All->FirstScreen->FirstW) {
+  if ((Twidget)Win == All->FirstScreen->FirstW) {
     accel = ttrue;
     flush_tty();
   } else
@@ -406,7 +406,7 @@ static void scrolldown(dat t, dat b, dat nr) {
     return;
 
   /* try to accelerate this */
-  if ((widget)Win == All->FirstScreen->FirstW) {
+  if ((Twidget)Win == All->FirstScreen->FirstW) {
     accel = ttrue;
     flush_tty();
   } else
@@ -700,7 +700,7 @@ static void respond_string(const char *p) {
     if ((Msg = New(msg)(msg_widget_key, len))) {
       /* this is the same code as in KeyboardEvent() in hw.c */
       Event = &Msg->Event.EventKeyboard;
-      Event->W = (widget)Win;
+      Event->W = (Twidget)Win;
       if (len == 1 && (p[0] == ENTER || p[0] == ESCAPE))
         Event->Code = p[0];
       else
@@ -1430,17 +1430,17 @@ static inline void write_ctrl(byte c) {
   DState = ESnormal;
 }
 
-widget TtyKbdFocus(widget newW) {
+Twidget TtyKbdFocus(Twidget newW) {
   udat newFlags;
-  widget oldW;
-  widget P;
+  Twidget oldW;
+  Twidget P;
   screen Screen = newW && (P = newW->Parent) && IS_SCREEN(P) ? (screen)P : All->FirstScreen;
 
   if (Screen) {
     oldW = Screen->FocusW;
     Screen->FocusW = newW;
   } else
-    oldW = newW = (widget)0;
+    oldW = newW = (Twidget)0;
 
   if (Screen == All->FirstScreen) {
     if (!newW || !IS_WINDOW(newW) || !W_USE((window)newW, USECONTENTS) ||
@@ -1477,7 +1477,7 @@ static void common(window w) {
 
   /* scroll YLogic to bottom */
   if (Win->YLogic < ScrollBack) {
-    if ((widget)Win == All->FirstScreen->FirstW)
+    if ((Twidget)Win == All->FirstScreen->FirstW)
       ScrollFirstWindow(0, ScrollBack - Win->YLogic, ttrue);
     else {
       dirty_tty(0, 0, SizeX - 1, SizeY - 1);
@@ -1686,7 +1686,7 @@ byte TtyWriteTCell(window w, dat x, dat y, uldat len, const tcell *text) {
 
   /* scroll YLogic to bottom */
   if (Win->YLogic < ScrollBack) {
-    if ((widget)Win == All->FirstScreen->FirstW)
+    if ((Twidget)Win == All->FirstScreen->FirstW)
       ScrollFirstWindow(0, ScrollBack - Win->YLogic, ttrue);
     else {
       dirty_tty(0, 0, SizeX - 1, SizeY - 1);

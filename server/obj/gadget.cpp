@@ -17,7 +17,7 @@
 
 #include <new>
 
-gadget s_gadget::Create(msgport owner, widget parent, dat xwidth, dat ywidth,
+gadget s_gadget::Create(msgport owner, Twidget parent, dat xwidth, dat ywidth,
                         const char *textnormal, uldat attr, uldat flags, udat code, tcolor coltext,
                         tcolor coltextselect, tcolor coltextdisabled, tcolor coltextselectdisabled,
                         dat left, dat up) {
@@ -38,7 +38,7 @@ gadget s_gadget::Create(msgport owner, widget parent, dat xwidth, dat ywidth,
   return g;
 }
 
-gadget s_gadget::Init(msgport owner, widget parent, dat xwidth, dat ywidth, const char *textnormal,
+gadget s_gadget::Init(msgport owner, Twidget parent, dat xwidth, dat ywidth, const char *textnormal,
                       uldat attr, uldat flags, udat code, tcolor coltext, tcolor coltextselect,
                       tcolor coltextdisabled, tcolor coltextselectdisabled, dat left, dat up) {
   ldat Size;
@@ -46,7 +46,7 @@ gadget s_gadget::Init(msgport owner, widget parent, dat xwidth, dat ywidth, cons
   if (code >= COD_RESERVED || xwidth <= 0 || ywidth <= 0) {
     return NULL;
   }
-  if (!((widget)this)->Init(owner, xwidth, ywidth, attr, flags, left, up, TCELL(coltext, ' '))) {
+  if (!((Twidget)this)->Init(owner, xwidth, ywidth, attr, flags, left, up, TCELL(coltext, ' '))) {
     return NULL;
   }
 

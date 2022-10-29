@@ -18,7 +18,7 @@
 
 enum e_magic_byte /*: unsigned char*/ {
   obj_magic_byte = 0,
-  widget_magic_byte = 1,
+  Twidget_magic_byte = 1,
   gadget_magic_byte = 2,
   window_magic_byte = 3,
   screen_magic_byte = 4,

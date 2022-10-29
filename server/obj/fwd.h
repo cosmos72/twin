@@ -20,7 +20,7 @@ struct ttydata;
 typedef struct s_remotedata remotedata;
 
 typedef struct s_obj *obj;
-typedef struct s_widget *widget;
+typedef struct s_widget *Twidget;
 typedef struct s_gadget *gadget;
 typedef struct s_window *window;
 typedef struct s_screen *screen;
@@ -54,6 +54,6 @@ typedef struct s_setup setup;
 typedef struct s_selection *selection;
 typedef struct s_all *all;
 
-typedef void (*fn_hook)(widget);
+typedef void (*fn_hook)(Twidget);
 
 #endif /* TWIN_FWD_H */

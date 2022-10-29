@@ -51,14 +51,14 @@ typedef struct run run;
 
 struct run {
   run *next;
-  uldat W;     /* the current widget (id) */
+  uldat W;     /* the current Twidget (id) */
   uldat depth; /* index of last used stack element;
                 * stack[depth] is the current instruction */
   uldat cycle;
   union {
     timevalue WakeUp;
     cstr Name;
-  } SW; /* what we are waiting for: sleep timeout or widget map */
+  } SW; /* what we are waiting for: sleep timeout or Twidget map */
 
   wm_ctx C; /* event that generated the run queue */
   node stack[MAX_RUNSTACK];
@@ -377,9 +377,9 @@ static screen RCFindScreenName(cstr name) {
   return S;
 }
 
-inline widget RCCheck4WidgetId(run *r) {
-  widget W;
-  if (!(W = (widget)Id2Obj(widget_magic_byte, r->W)) || !W->Parent || !IS_SCREEN(W->Parent))
+inline Twidget RCCheck4WidgetId(run *r) {
+  Twidget W;
+  if (!(W = (Twidget)Id2Obj(Twidget_magic_byte, r->W)) || !W->Parent || !IS_SCREEN(W->Parent))
 
     r->W = NOID;
   return W;
@@ -393,7 +393,7 @@ inline widget RCCheck4WidgetId(run *r) {
 #define Sinter 5
 #define Serr 6
 
-inline widget ForwardWindow(widget W) {
+inline Twidget ForwardWindow(Twidget W) {
   while (W) {
     if (IS_WINDOW(W))
       return W;
@@ -402,7 +402,7 @@ inline widget ForwardWindow(widget W) {
   return W;
 }
 
-inline widget BackwardWindow(widget W) {
+inline Twidget BackwardWindow(Twidget W) {
   while (W) {
     if (IS_WINDOW(W))
       return W;
@@ -411,14 +411,14 @@ inline widget BackwardWindow(widget W) {
   return W;
 }
 
-inline screen ScreenOf(widget W) {
-  widget P;
+inline screen ScreenOf(Twidget W) {
+  Twidget P;
   return W && (P = W->Parent) && IS_SCREEN(P) ? (screen)P : (screen)0;
 }
 
 /* run the specified queue */
 static byte RCSteps(run *r) {
-  widget W, SkipW;
+  Twidget W, SkipW;
   screen S;
   wm_ctx *C;
   node n, f;
@@ -554,7 +554,7 @@ static byte RCSteps(run *r) {
           screen Screen = RCFindScreenName(n->name);
           if (S != Screen) {
             W->UnMap();
-            W->Map((widget)Screen);
+            W->Map((Twidget)Screen);
           }
         }
         break;
@@ -582,7 +582,7 @@ static byte RCSteps(run *r) {
         break;
       case WINDOW:
         if (n->name)
-          W = (widget)RCFindWindowName(n->name);
+          W = (Twidget)RCFindWindowName(n->name);
         else {
           ldat i = applyflagx(n);
           flag = n->x.f.plus_minus;
@@ -602,7 +602,7 @@ static byte RCSteps(run *r) {
             if (i == 0) {
               W = All->FirstScreen->FocusW;
               if (W && !IS_WINDOW(W))
-                W = (widget)0;
+                W = (Twidget)0;
             } else {
               if (i > 0)
                 i--;
@@ -689,7 +689,7 @@ static byte RCSteps(run *r) {
         if (W && S) {
           flag = n->x.f.flag;
           if (flag == FL_TOGGLE)
-            flag = (S->FocusW == (widget)W) ? FL_OFF : FL_ON;
+            flag = (S->FocusW == (Twidget)W) ? FL_OFF : FL_ON;
 
           if (flag == FL_ON && S != All->FirstScreen)
             S->Focus();
@@ -716,7 +716,7 @@ static byte RCSteps(run *r) {
         break;
       case RAISELOWER:
         if (W && S) {
-          if ((widget)W == S->FirstW)
+          if ((Twidget)W == S->FirstW)
             LowerWidget(W, ttrue);
           else
             RaiseWidget(W, ttrue);
@@ -921,7 +921,7 @@ static byte MouseClickReleaseSameCtx(uldat W1, uldat W2, ldat clickCtx, ldat rel
 /* handle incoming messages */
 byte RC_VMQueue(const wm_ctx *C) {
   uldat ClickWinId = All->FirstScreen->ClickWindow ? All->FirstScreen->ClickWindow->Id : NOID;
-  widget W;
+  Twidget W;
   ldat ctx;
   node n;
   run *r;

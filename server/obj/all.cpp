@@ -46,7 +46,7 @@ void s_selection::dup(const selection other) {
 }
 
 void s_selection::paste() {
-  widget w;
+  Twidget w;
   if (Data && (w = All->FirstScreen->FocusW) && w->Owner) {
     TwinSelectionNotify(w->Owner, w->Id, e_id(Magic), MIME, Data);
   }

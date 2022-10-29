@@ -356,24 +356,24 @@ static void sockSetTRuneTranslation(const trune trans[0x80]);
 
 static void sockDeleteObj(void *V);
 
-static widget sockCreateWidget(dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left, dat Up,
-                               tcell Fill);
-static void sockRecursiveDeleteWidget(widget W);
-static void sockSetXYWidget(widget W, dat x, dat y);
-static void sockResizeWidget(widget W, dat XWidth, dat YWidth);
+static Twidget sockCreateWidget(dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left, dat Up,
+                                tcell Fill);
+static void sockRecursiveDeleteWidget(Twidget W);
+static void sockSetXYWidget(Twidget W, dat x, dat y);
+static void sockResizeWidget(Twidget W, dat XWidth, dat YWidth);
 #define sockScrollWidget ScrollWidget
-static void sockDrawWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up,
+static void sockDrawWidget(Twidget W, dat XWidth, dat YWidth, dat Left, dat Up,
                            const char *utf8_bytes, const trune *runes, const tcell *cells);
 
 #define sockSetVisibleWidget SetVisibleWidget
-static void sockFocusSubWidget(widget W);
+static void sockFocusSubWidget(Twidget W);
 
 #define sockRestackChildrenWidget RestackWidgets
-static void sockCirculateChildrenWidget(widget W, byte up_or_down);
+static void sockCirculateChildrenWidget(Twidget W, byte up_or_down);
 #define TW_CIRCULATE_RAISE_LAST 0
 #define TW_CIRCULATE_LOWER_FIRST 1
 
-static gadget sockCreateGadget(widget Parent, dat XWidth, dat YWidth, const char *TextNormal,
+static gadget sockCreateGadget(Twidget Parent, dat XWidth, dat YWidth, const char *TextNormal,
                                uldat Attr, uldat Flags, udat Code, tcolor ColText,
                                tcolor ColTextSelect, tcolor ColTextDisabled,
                                tcolor ColTextSelectDisabled, dat Left, dat Up);
@@ -411,10 +411,10 @@ static obj sockNextObj(obj o);
 static obj sockParentObj(obj o);
 
 static screen sockFirstScreen(void);
-static widget sockFirstWidget(widget W);
+static Twidget sockFirstWidget(Twidget W);
 static msgport sockFirstMsgPort(void);
 static menu sockFirstMenu(msgport MsgPort);
-static widget sockFirstW(msgport MsgPort);
+static Twidget sockFirstW(msgport MsgPort);
 static ggroup sockFirstGroup(msgport MsgPort);
 static mutex sockFirstMutex(msgport MsgPort);
 static menuitem sockFirstMenuItem(menu Menu);
@@ -1016,7 +1016,7 @@ static msgport sockGetMsgPortObj(obj p) {
       break;
     default:
       if (IS_WIDGET(e))
-        e = (obj_entry)((widget)e)->Owner;
+        e = (obj_entry)((Twidget)e)->Owner;
       else
         e = NULL;
       break;
@@ -1033,22 +1033,22 @@ static void sockDeleteObj(void *V) {
     O->Delete();
 }
 
-static widget sockCreateWidget(dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left, dat Up,
-                               tcell Fill) {
+static Twidget sockCreateWidget(dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left, dat Up,
+                                tcell Fill) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
     return New(widget)(Owner, XWidth, YWidth, Attr, Flags, Left, Up, Fill);
-  return (widget)0;
+  return (Twidget)0;
 }
-static void sockRecursiveDeleteWidget(widget W) {
+static void sockRecursiveDeleteWidget(Twidget W) {
   msgport MsgPort = RemoteGetMsgPort(Slot);
 
-  /* avoid too much visual activity... UnMap top-level widget immediately */
+  /* avoid too much visual activity... UnMap top-level Twidget immediately */
   Act(UnMap, W)(W);
 
   Act(RecursiveDelete, W)(W, MsgPort);
 }
-static void sockSetXYWidget(widget W, dat x, dat y) {
+static void sockSetXYWidget(Twidget W, dat x, dat y) {
   if (W) {
     if (W->Parent && IS_SCREEN(W->Parent)) {
       x += W->Parent->XLogic;
@@ -1057,27 +1057,27 @@ static void sockSetXYWidget(widget W, dat x, dat y) {
     Act(SetXY, W)(W, x, y);
   }
 }
-static void sockDrawWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up, const char *Text,
+static void sockDrawWidget(Twidget W, dat XWidth, dat YWidth, dat Left, dat Up, const char *Text,
                            const trune *Font, const tcell *Attr) {
   if (W) {
     Act(Expose, W)(W, XWidth, YWidth, Left, Up, XWidth, Text, Font, Attr);
   }
 }
 
-static void sockFocusSubWidget(widget W) {
-  widget P;
+static void sockFocusSubWidget(Twidget W) {
+  Twidget P;
   if (W && !IS_SCREEN(W) && W->Parent && !IS_SCREEN(W->Parent)) {
     W->SelectW = NULL;
     while ((P = W->Parent) && !IS_SCREEN(P)) {
       P->SelectW = W;
       W = P;
     }
-    if (ContainsCursor((widget)WindowParent(W)))
+    if (ContainsCursor((Twidget)WindowParent(W)))
       UpdateCursor();
   }
 }
 
-static void sockResizeWidget(widget W, dat X, dat Y) {
+static void sockResizeWidget(Twidget W, dat X, dat Y) {
   if (W) {
     if (IS_WINDOW(W)) {
       if (!(W->Flags & WINDOWFL_BORDERLESS))
@@ -1086,12 +1086,12 @@ static void sockResizeWidget(widget W, dat X, dat Y) {
     } else if (IS_GADGET(W)) {
       ResizeGadget((gadget)W, X, Y);
     } else {
-      ResizeWidget((widget)W, X, Y);
+      ResizeWidget((Twidget)W, X, Y);
     }
   }
 }
 
-static void sockCirculateChildrenWidget(widget W, byte up_or_down) {
+static void sockCirculateChildrenWidget(Twidget W, byte up_or_down) {
   if (W) {
     if (up_or_down == TW_CIRCULATE_RAISE_LAST) {
       if ((W = W->LastW))
@@ -1130,7 +1130,7 @@ static void sockCirculateChildrenRow(obj O, byte up_or_down) {
   }
 }
 
-static gadget sockCreateGadget(widget Parent, dat XWidth, dat YWidth, const char *TextNormal,
+static gadget sockCreateGadget(Twidget Parent, dat XWidth, dat YWidth, const char *TextNormal,
                                uldat Attr, uldat Flags, udat Code, tcolor ColText,
                                tcolor ColTextSelect, tcolor ColTextDisabled,
                                tcolor ColTextSelectDisabled, dat Left, dat Up) {
@@ -1263,7 +1263,7 @@ static obj sockParentObj(obj o) {
 static screen sockFirstScreen(void) {
   return All->FirstScreen;
 }
-static widget sockFirstWidget(widget W) {
+static Twidget sockFirstWidget(Twidget W) {
   return W ? W->FirstW : W;
 }
 static msgport sockFirstMsgPort(void) {
@@ -1272,8 +1272,8 @@ static msgport sockFirstMsgPort(void) {
 static menu sockFirstMenu(msgport MsgPort) {
   return MsgPort ? MsgPort->FirstMenu : (menu)0;
 }
-static widget sockFirstW(msgport MsgPort) {
-  return MsgPort ? MsgPort->FirstW : (widget)0;
+static Twidget sockFirstW(msgport MsgPort) {
+  return MsgPort ? MsgPort->FirstW : (Twidget)0;
 }
 static ggroup sockFirstGroup(msgport MsgPort) {
   return MsgPort ? MsgPort->FirstGroup : (ggroup)0;
@@ -1555,7 +1555,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
 
       if ((Msg = New(msg)(tMsg->Type, _Len))) {
 
-        Msg->Event.EventCommon.W = (widget)Id2Obj(widget_magic_byte, tMsg->Event.EventCommon.W);
+        Msg->Event.EventCommon.W = (Twidget)Id2Obj(Twidget_magic_byte, tMsg->Event.EventCommon.W);
 
         switch (tMsg->Type) {
         case TW_MSG_DISPLAY:
@@ -2386,7 +2386,7 @@ static void SocketIO(int fd, uldat slot) {
 
 static void SocketH(msgport MsgPort) {
   msg Msg;
-  widget W;
+  Twidget W;
   char buf[10];
   byte len;
 

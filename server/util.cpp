@@ -642,7 +642,7 @@ void closeAllFds(int tty_fd_to_dup) {
 
 void ResetBorderPattern(void) {
   msgport MsgP;
-  widget w;
+  Twidget w;
 
   for (MsgP = All->FirstMsgPort; MsgP; MsgP = MsgP->Next) {
     for (w = MsgP->FirstW; w; w = w->O_Next) {
@@ -679,7 +679,7 @@ void FallBackKeyAction(window w, event_keyboard *EventK) {
     switch (EventK->Code) {
     case TW_Escape:
       UnPressGadget(G, tfalse);
-      w->SelectW = (widget)0;
+      w->SelectW = (Twidget)0;
       break;
     case TW_Return:
       UnPressGadget(G, ttrue);
@@ -690,7 +690,7 @@ void FallBackKeyAction(window w, event_keyboard *EventK) {
       if ((H = _PrevGadget(G))) {
         if (!(G->Flags & GADGETFL_TOGGLE))
           UnPressGadget(G, tfalse);
-        w->SelectW = (widget)H;
+        w->SelectW = (Twidget)H;
         PressGadget(H);
       }
       break;
@@ -700,7 +700,7 @@ void FallBackKeyAction(window w, event_keyboard *EventK) {
       if ((H = _NextGadget(G))) {
         if (!(G->Flags & GADGETFL_TOGGLE))
           UnPressGadget(G, tfalse);
-        w->SelectW = (widget)H;
+        w->SelectW = (Twidget)H;
         PressGadget(H);
       }
       break;
@@ -709,7 +709,7 @@ void FallBackKeyAction(window w, event_keyboard *EventK) {
     }
   else if ((G = (gadget)w->FirstW) && IS_GADGET(G)) {
     PressGadget(G);
-    w->SelectW = (widget)G;
+    w->SelectW = (Twidget)G;
   } else
     switch (EventK->Code) {
     case TW_Up:
@@ -723,11 +723,11 @@ void FallBackKeyAction(window w, event_keyboard *EventK) {
           NumRow = OldNumRow - (ldat)1;
         w->CurY = NumRow;
         if (w->Flags & WINDOWFL_ROWS_SELCURRENT)
-          DrawLogicWidget((widget)w, (ldat)0, OldNumRow, (ldat)TW_MAXDAT - (ldat)2, OldNumRow);
+          DrawLogicWidget((Twidget)w, (ldat)0, OldNumRow, (ldat)TW_MAXDAT - (ldat)2, OldNumRow);
       } else
         w->CurY = NumRow = w->HLogic - (ldat)1;
       if (w->Flags & WINDOWFL_ROWS_SELCURRENT)
-        DrawLogicWidget((widget)w, (ldat)0, NumRow, (ldat)TW_MAXDAT - (ldat)2, NumRow);
+        DrawLogicWidget((Twidget)w, (ldat)0, NumRow, (ldat)TW_MAXDAT - (ldat)2, NumRow);
       UpdateCursor();
       break;
     case TW_Down:
@@ -741,11 +741,11 @@ void FallBackKeyAction(window w, event_keyboard *EventK) {
           NumRow = OldNumRow + (ldat)1;
         w->CurY = NumRow;
         if (w->Flags & WINDOWFL_ROWS_SELCURRENT)
-          DrawLogicWidget((widget)w, (ldat)0, OldNumRow, (ldat)TW_MAXDAT - (ldat)2, OldNumRow);
+          DrawLogicWidget((Twidget)w, (ldat)0, OldNumRow, (ldat)TW_MAXDAT - (ldat)2, OldNumRow);
       } else
         w->CurY = NumRow = (ldat)0;
       if (w->Flags & WINDOWFL_ROWS_SELCURRENT)
-        DrawLogicWidget((widget)w, (ldat)0, NumRow, (ldat)TW_MAXDAT - (ldat)2, NumRow);
+        DrawLogicWidget((Twidget)w, (ldat)0, NumRow, (ldat)TW_MAXDAT - (ldat)2, NumRow);
       UpdateCursor();
       break;
     case TW_Left:

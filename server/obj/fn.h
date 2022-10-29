@@ -18,7 +18,7 @@
 /* in the same order as the #defines above ! */
 struct s_fn_struct {
   fn_obj obj;
-  fn_widget widget;
+  fn_widget Twidget;
   fn_gadget gadget;
   fn_window window;
   fn_screen screen;
@@ -36,7 +36,7 @@ struct s_fn_struct {
 
 extern fn_struct FnStruct;
 #define Fn_obj (FnStruct.obj)
-#define Fn_widget (FnStruct.widget)
+#define Fn_Twidget (FnStruct.Twidget)
 #define Fn_gadget (FnStruct.gadget)
 #define Fn_window (FnStruct.window)
 #define Fn_screen (FnStruct.screen)

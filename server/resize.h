@@ -14,7 +14,7 @@ byte RowWriteCharset(window w, uldat Len, const char *charset_bytes);
 byte RowWriteUtf8(window w, uldat len, const char *utf8_bytes);
 byte RowWriteTRune(window w, uldat len, const trune *runes);
 
-void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
+void ExposeWidget2(Twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
                    const char *utf8_bytes, const trune *runes, const tcell *cells);
 void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
                    const char *utf8_bytes, const trune *runes, const tcell *cells);
@@ -39,7 +39,7 @@ void HideMenu(byte on_off);
 void CloseMenu(void);
 void SetMenuState(menuitem Item, byte ByMouse);
 
-void ResizeWidget(widget W, dat X, dat Y);
+void ResizeWidget(Twidget W, dat X, dat Y);
 void ResizeGadget(gadget G, dat X, dat Y);
 
 void DragFirstWindow(dat i, dat j);
@@ -53,16 +53,16 @@ void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, ldat DeltaX, ldat Del
 void ScrollFirstWindow(ldat DeltaX, ldat DeltaY, byte byXYLogic);
 void ScrollWindow(window Window, ldat DeltaX, ldat DeltaY);
 
-void ScrollWidget(widget W, ldat DeltaX, ldat DeltaY);
+void ScrollWidget(Twidget W, ldat DeltaX, ldat DeltaY);
 
-void UnFocusWidget(widget W);
+void UnFocusWidget(Twidget W);
 void RollUpWindow(window W, byte on_off);
 
-void SetVisibleWidget(widget W, byte on_off);
+void SetVisibleWidget(Twidget W, byte on_off);
 
-void RaiseWidget(widget W, byte alsoFocus);
-void LowerWidget(widget W, byte alsoDeFocus);
-void RestackWidgets(widget P, uldat N, const widget *arrayW);
+void RaiseWidget(Twidget W, byte alsoFocus);
+void LowerWidget(Twidget W, byte alsoDeFocus);
+void RestackWidgets(Twidget P, uldat N, const Twidget *arrayW);
 
 void RestackRows(obj O, uldat N, const row *arrayR);
 
