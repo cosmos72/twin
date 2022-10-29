@@ -1,5 +1,5 @@
 /*
- *  obj.h  --  declare server class s_obj
+ *  obj.h  --  declare server class Sobj
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -20,12 +20,12 @@
 
 #include <Tw/datatypes.h>
 
-typedef struct s_obj *obj;
-typedef struct s_fn_obj *fn_obj;
+typedef struct Sobj *obj;
+typedef struct SobjFn *TobjFn;
 typedef struct s_obj_entry *obj_entry;
 typedef struct s_obj_list *obj_list;
 
-struct s_fn_obj {
+struct SobjFn {
   uldat Magic;
   void (*Insert)(obj self, obj parent, obj prev, obj next);
   void (*Remove)(obj self);
@@ -33,16 +33,16 @@ struct s_fn_obj {
   void (*ChangeField)(obj self, udat field, uldat clear_mask, uldat xor_mask);
 };
 
-struct s_obj {
+struct Sobj {
 protected:
-  s_obj() {
+  Sobj() {
   }
-  virtual ~s_obj() {
+  virtual ~Sobj() {
   }
 
 public:
   uldat Id;
-  //  fn_obj Fn;
+  //  TobjFn Fn;
 
   static obj Create();
   obj Init();
@@ -65,8 +65,8 @@ inline uldat Obj2Id(obj o) {
   return o ? o->Id : NOID;
 }
 
-struct s_obj_entry : public s_obj {
-  fn_obj Fn;
+struct s_obj_entry : public Sobj {
+  TobjFn Fn;
   obj_entry Prev, Next, Parent;
 };
 

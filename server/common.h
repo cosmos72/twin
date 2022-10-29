@@ -22,7 +22,7 @@ char *CloneStrL(const char *s, uldat len) NOTHROW;
 byte AllHWCanDragAreaNow(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
 void DragAreaHW(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
 
-void ResizeDisplayPrefer(display_hw);
+void ResizeDisplayPrefer(Tdisplay);
 
 void PanicHW(void);
 void FlushHW(void);

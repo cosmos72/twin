@@ -1,5 +1,5 @@
 /*
- *  screen.cpp  --  define methods of server class s_widget
+ *  screen.cpp  --  define methods of server class Swidget
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -18,12 +18,12 @@
 #include <new>
 #include <Tw/datasizes.h> // TW_MAXDAT
 
-screen s_screen::Create(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg) {
+screen Sscreen::Create(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg) {
   screen S = NULL;
   if (bgwidth && bgheight) {
-    void *addr = AllocMem0(sizeof(s_screen));
+    void *addr = AllocMem0(sizeof(Sscreen));
     if (addr) {
-      S = new (addr) s_screen();
+      S = new (addr) Sscreen();
       S->Fn = Fn_screen;
       if (!S->Init(namelen, name, bgwidth, bgheight, bg)) {
         S->Delete();
@@ -34,7 +34,7 @@ screen s_screen::Create(dat namelen, const char *name, dat bgwidth, dat bgheight
   return S;
 }
 
-screen s_screen::Init(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg) {
+screen Sscreen::Init(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg) {
   size_t size = (size_t)bgwidth * bgheight * sizeof(tcell);
 
   if (!size || !((Twidget)this)

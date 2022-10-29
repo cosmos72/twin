@@ -10,7 +10,7 @@
 #include "kbd_raw1.h"
 
 /* only one display at time can be in raw-keyboard mode... results in much simpler code */
-static display_hw lrawkbd_HW;
+static Tdisplay lrawkbd_HW;
 
 static int lrawkbd_mode_save;
 
@@ -18,7 +18,7 @@ static void lrawkbd_QuitKeyboard(void);
 static void lrawkbd_ConfigureKeyboard(udat resource, byte todefault, udat value);
 
 static udat lrawkbd_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen, char **ret);
-static void lrawkbd_KeyboardEvent(int fd, display_hw hw);
+static void lrawkbd_KeyboardEvent(int fd, Tdisplay hw);
 
 static bool lrawkbd_GetKeyboard(void);
 static bool lrawkbd_SetKeyboard(void);
@@ -173,7 +173,7 @@ static void dump_bytes(byte *s, uldat len) {
 }
 #endif // DEBUG_HW_TTY_LRAWKBD
 
-static void lrawkbd_KeyboardEvent(int fd, display_hw hw) {
+static void lrawkbd_KeyboardEvent(int fd, Tdisplay hw) {
   char buf[16], *s, *ret;
   udat Code, ShiftFlags;
   byte got, chunk, retlen;

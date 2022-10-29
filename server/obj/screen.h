@@ -1,5 +1,5 @@
 /*
- *  window.h  --  declare server class s_window
+ *  window.h  --  declare server class Swindow
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -20,14 +20,14 @@ struct s_sB { /* for SCREENFL_USEBG screens */
   tcell *Bg;
 };
 
-struct s_fn_screen {
+struct SscreenFn {
   uldat Magic;
   void (*Insert)(screen, all, screen Prev, screen Next);
   void (*Remove)(screen);
   void (*Delete)(screen);
   void (*ChangeField)(screen, udat field, uldat CLEARMask, uldat XORMask);
   /* Twidget */
-  fn_obj Fn_Obj;
+  TobjFn Fn_Obj;
   void (*DrawSelf)(draw_ctx *D);
   Twidget (*FindWidgetAt)(screen Parent, dat X, dat Y);
   gadget (*FindGadgetByCode)(screen Parent, udat Code);
@@ -45,10 +45,10 @@ struct s_fn_screen {
   void (*RecursiveDelete)(screen, msgport);
   void (*Expose)(screen, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
                  const tcell *);
-  byte (*InstallHook)(screen, fn_hook, fn_hook *Where);
-  void (*RemoveHook)(screen, fn_hook, fn_hook *Where);
+  byte (*InstallHook)(screen, HookFn, HookFn *Where);
+  void (*RemoveHook)(screen, HookFn, HookFn *Where);
   /* screen */
-  fn_widget Fn_Widget;
+  TwidgetFn Fn_Widget;
   menu (*FindMenu)(screen);
   screen (*Find)(dat j);
   screen (*CreateSimple)(dat NameLen, const char *Name, tcell Bg);
@@ -58,8 +58,8 @@ struct s_fn_screen {
   void (*DeActivateMenu)(screen);
 };
 
-struct s_screen : public s_obj {
-  fn_screen Fn;
+struct Sscreen : public Sobj {
+  TscreenFn Fn;
   screen Prev, Next;   /* list in the same All */
   Twidget dummyParent; /* NULL */
   /* Twidget */
@@ -71,9 +71,9 @@ struct s_screen : public s_obj {
   ldat XLogic, YLogic;
   Twidget O_Prev, O_Next; /* list with the same msgport (owner) */
   msgport Owner;
-  fn_hook ShutDownHook; /* hooks for this Twidget */
-  fn_hook Hook, *WhereHook;
-  fn_hook MapUnMapHook;
+  HookFn ShutDownHook; /* hooks for this Twidget */
+  HookFn Hook, *WhereHook;
+  HookFn MapUnMapHook;
   msg MapQueueMsg;
   tcell USE_Fill;
   union {
@@ -85,7 +85,7 @@ struct s_screen : public s_obj {
   char *Name;
   window MenuWindow, ClickWindow;
   all All;
-  fn_hook FnHookW; /* allow hooks on children Map()/UnMap() inside this Twidget */
+  HookFn FnHookW; /* allow hooks on children Map()/UnMap() inside this Twidget */
   Twidget HookW;
 
   static screen Create(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
@@ -154,10 +154,10 @@ struct s_screen : public s_obj {
               const tcell *cells) {
     Fn->Expose(this, xwidth, ywidth, left, up, ascii, runes, cells);
   }
-  byte InstallHook(fn_hook hook, fn_hook *where) {
+  byte InstallHook(HookFn hook, HookFn *where) {
     return Fn->InstallHook(this, hook, where);
   }
-  void RemoveHook(fn_hook hook, fn_hook *where) {
+  void RemoveHook(HookFn hook, HookFn *where) {
     Fn->RemoveHook(this, hook, where);
   }
   /* screen */

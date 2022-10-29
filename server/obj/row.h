@@ -1,5 +1,5 @@
 /*
- *  group.h  --  declare server class s_group
+ *  group.h  --  declare server class Sgroup
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -17,22 +17,22 @@
 
 /* row */
 
-struct s_fn_row {
+struct SrowFn {
   uldat Magic;
   void (*Insert)(row, window, row prev, row next);
   void (*Remove)(row);
   void (*Delete)(row);
   void (*ChangeField)(row, udat field, uldat clearmask, uldat xormask);
   /* row */
-  fn_obj Fn_Obj;
+  TobjFn Fn_Obj;
   byte (*SetText)(row, uldat len, const char *text, byte defaultcol);
   byte (*SetTRune)(row, uldat len, const trune *runes, byte defaultcol);
   void (*Raise)(row);
   void (*Lower)(row);
 };
 
-struct s_row : public s_obj {
-  fn_row Fn;
+struct Srow : public Sobj {
+  TrowFn Fn;
   row Prev, Next;
   window Window;
   /* row */

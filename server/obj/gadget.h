@@ -1,5 +1,5 @@
 /*
- *  gadget.h  --  declare server class s_gadget
+ *  gadget.h  --  declare server class Sgadget
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -20,14 +20,14 @@ struct s_gT { /* for GADGETFL_USETEXT gadgets */
   tcolor *Color[4];
 };
 
-struct s_fn_gadget {
+struct SgadgetFn {
   uldat Magic;
   void (*Insert)(gadget, Twidget Parent, Twidget Prev, Twidget Next);
   void (*Remove)(gadget);
   void (*Delete)(gadget);
   void (*ChangeField)(gadget, udat field, uldat CLEARMask, uldat XORMask);
   /* Twidget */
-  fn_obj Fn_Obj;
+  TobjFn Fn_Obj;
   void (*DrawSelf)(draw_ctx *D);
   Twidget (*FindWidgetAt)(gadget Parent, dat X, dat Y);
   gadget (*FindGadgetByCode)(gadget Parent, udat Code);
@@ -45,10 +45,10 @@ struct s_fn_gadget {
   void (*RecursiveDelete)(gadget, msgport);
   void (*Expose)(gadget, dat xwidth, dat ywidth, dat Left, dat Up, const char *, const trune *,
                  const tcell *);
-  byte (*InstallHook)(gadget, fn_hook, fn_hook *Where);
-  void (*RemoveHook)(gadget, fn_hook, fn_hook *Where);
+  byte (*InstallHook)(gadget, HookFn, HookFn *Where);
+  void (*RemoveHook)(gadget, HookFn, HookFn *Where);
   /* gadget */
-  fn_widget Fn_Widget;
+  TwidgetFn Fn_Widget;
   gadget (*CreateEmptyButton)(msgport owner, dat xwidth, dat ywidth, tcolor BgCol);
   byte (*FillButton)(gadget g, Twidget Parent, udat Code, dat Left, dat Up, udat Flags,
                      const char *Text, tcolor Color, tcolor ColorDisabled);
@@ -60,8 +60,8 @@ struct s_fn_gadget {
                       dat Up);
 };
 
-struct s_gadget : public s_obj {
-  fn_gadget Fn;
+struct Sgadget : public Sobj {
+  TgadgetFn Fn;
   Twidget Prev, Next;
   Twidget Parent;
   /* Twidget */
@@ -73,9 +73,9 @@ struct s_gadget : public s_obj {
   ldat XLogic, YLogic;
   Twidget O_Prev, O_Next; /* list in the same msgport (owner) */
   msgport Owner;
-  fn_hook ShutDownHook; /* hooks for this Twidget */
-  fn_hook Hook, *WhereHook;
-  fn_hook MapUnMapHook;
+  HookFn ShutDownHook; /* hooks for this Twidget */
+  HookFn Hook, *WhereHook;
+  HookFn MapUnMapHook;
   msg MapQueueMsg;
   tcell USE_Fill;
   union {
@@ -157,10 +157,10 @@ struct s_gadget : public s_obj {
               const tcell *cells) {
     Fn->Expose(this, xwidth, ywidth, left, up, ascii, runes, cells);
   }
-  byte InstallHook(fn_hook hook, fn_hook *where) {
+  byte InstallHook(HookFn hook, HookFn *where) {
     return Fn->InstallHook(this, hook, where);
   }
-  void RemoveHook(fn_hook hook, fn_hook *where) {
+  void RemoveHook(HookFn hook, HookFn *where) {
     Fn->RemoveHook(this, hook, where);
   }
   /* gadget */

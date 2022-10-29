@@ -77,7 +77,7 @@ enum {
 #define IS_MUTEX(O) IS_OBJ(mutex, O)
 #define IS_MSG(O) IS_OBJ(msg, O)
 #define IS_MODULE(O) IS_OBJ(module, O)
-#define IS_DISPLAY_HW(O) IS_OBJ(display_hw, O)
+#define IS_DISPLAY_HW(O) IS_OBJ(Tdisplay, O)
 #define IS_ALL(O) IS_OBJ(all, O)
 
 /************** Keys **************/

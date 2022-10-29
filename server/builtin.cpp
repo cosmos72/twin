@@ -425,7 +425,7 @@ static void BordersH(msg Msg) {
 }
 
 static void UpdateDisplayWin(Twidget displayWin) {
-  display_hw hw;
+  Tdisplay hw;
   uldat x = 12, y = 0;
 
   if (displayWin == (Twidget)DisplayWin) {
@@ -455,7 +455,7 @@ static void SelectRowWindow(window CurrWin, ldat newCurY) {
 }
 
 static void DisplayGadgetH(msg Msg) {
-  display_hw hw;
+  Tdisplay hw;
   ldat i;
 
   switch (Msg->Event.EventGadget.Code) {

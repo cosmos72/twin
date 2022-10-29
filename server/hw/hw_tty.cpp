@@ -170,7 +170,7 @@ static void tty_QuitHW(void);
 static void null_InitMouse(void) {
   HW->mouse_slot = NOSLOT; /* no mouse at all :( */
   HW->ConfigureMouse = (void (*)(udat, byte, udat))NoOp;
-  HW->MouseEvent = (void (*)(int, display_hw))NoOp;
+  HW->MouseEvent = (void (*)(int, Tdisplay))NoOp;
   HW->QuitMouse = NoOp;
 
   HW->FlagsHW &= ~FlHWSoftMouse;        /* no need to Hide/Show it */

@@ -1,5 +1,5 @@
 /*
- *  module.cpp  --  define methods of server class s_module
+ *  module.cpp  --  define methods of server class Smodule
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -17,12 +17,12 @@
 
 #include <new>
 
-module s_module::Create(uldat namelen, const char *name) {
+module Smodule::Create(uldat namelen, const char *name) {
   module m = NULL;
   if (name) {
-    void *addr = AllocMem0(sizeof(s_module));
+    void *addr = AllocMem0(sizeof(Smodule));
     if (addr) {
-      m = new (addr) s_module();
+      m = new (addr) Smodule();
       m->Fn = Fn_module;
       if (!m->Init(namelen, name)) {
         m->Delete();
@@ -33,7 +33,7 @@ module s_module::Create(uldat namelen, const char *name) {
   return m;
 }
 
-module s_module::Init(uldat namelen, const char *name) {
+module Smodule::Init(uldat namelen, const char *name) {
   if (!name || !((obj)this)->Init()) {
     return NULL;
   }

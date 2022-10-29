@@ -6,9 +6,9 @@
 #include "util.h" /* for SetAlarm(), AlarmReceived */
 
 static void stdin_QuitKeyboard(void);
-static void stdin_KeyboardEvent(int fd, display_hw hw);
+static void stdin_KeyboardEvent(int fd, Tdisplay hw);
 static udat linux_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen, const char **ret);
-static void xterm_MouseEvent(int, display_hw);
+static void xterm_MouseEvent(int, Tdisplay);
 
 static byte stdin_TestTty(void) {
   struct termios ttyb;
@@ -300,7 +300,7 @@ static udat linux_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen,
   return TW_Null;
 }
 
-static void stdin_KeyboardEvent(int fd, display_hw hw) {
+static void stdin_KeyboardEvent(int fd, Tdisplay hw) {
   static char buf[TW_SMALLBUFF];
   static fd_set rfds;
   static struct timeval t;

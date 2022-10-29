@@ -21,9 +21,9 @@ byte FakeWriteTRune(window Window, uldat Len, const trune *runes);
 byte FakeWriteTCell(window Window, dat x, dat y, uldat Len, const tcell *cells);
 tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr);
 
-#define Do(Command, obj_type) (Fn_##obj_type->Command)
+#define Do(Command, objtype) (Fn_##objtype->Command)
 
-#define New(obj_type) s_##obj_type::Create
+#define New(objtype) S##objtype::Create
 
 #define SKIP_FIRST_ARG(arg, ...) (__VA_ARGS__)
 #define Act(Command, Obj) (Obj)->Command SKIP_FIRST_ARG
@@ -64,7 +64,7 @@ tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr);
 
 void *OverrideMth(void **where, void *OldMethod, void *NewMethod);
 
-#define OverrideMethod(obj_type, Command, ExpectedMethod, NewMethod)                               \
-  OverrideMth((void **)&(Fn_##obj_type->Command), (void *)ExpectedMethod, (void *)NewMethod)
+#define OverrideMethod(objtype, Command, ExpectedMethod, NewMethod)                                \
+  OverrideMth((void **)&(Fn_##objtype->Command), (void *)ExpectedMethod, (void *)NewMethod)
 
 #endif /* TWIN_METHODS_H */

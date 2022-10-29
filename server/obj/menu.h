@@ -1,5 +1,5 @@
 /*
- *  menu.h  --  declare server class s_menu
+ *  menu.h  --  declare server class Smenu
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -15,14 +15,14 @@
 
 #include "obj/obj.h"
 
-struct s_fn_menu {
+struct SmenuFn {
   uldat Magic;
   void (*Insert)(menu, msgport, menu Prev, menu Next);
   void (*Remove)(menu);
   void (*Delete)(menu);
   void (*ChangeField)(menu, udat field, uldat CLEARMask, uldat XORMask);
   /* menu */
-  fn_obj Fn_Obj;
+  TobjFn Fn_Obj;
   row (*SetInfo)(menu, byte Flags, ldat Len, const char *Text, const tcolor *ColText);
   menuitem (*FindItem)(menu, dat i);
   menuitem (*GetSelectedItem)(menu);
@@ -30,8 +30,8 @@ struct s_fn_menu {
   void (*SetSelectedItem)(menu, menuitem);
 };
 
-struct s_menu : public s_obj {
-  fn_menu Fn;
+struct Smenu : public Sobj {
+  TmenuFn Fn;
   menu Prev, Next; /* in the same msgport */
   msgport MsgPort;
   /* menu */

@@ -167,7 +167,7 @@ static void TW_HandleMsg(tmsg Msg) {
   }
 }
 
-static void TW_KeyboardEvent(int fd, display_hw hw) {
+static void TW_KeyboardEvent(int fd, Tdisplay hw) {
   tmsg Msg;
   byte firstloop = ttrue;
   SaveHW;
@@ -409,7 +409,7 @@ static void TW_QuitHW(void) {
   UnRegisterRemote(HW->keyboard_slot);
   HW->keyboard_slot = NOSLOT;
 
-  HW->KeyboardEvent = (void (*)(int, display_hw))NoOp;
+  HW->KeyboardEvent = (void (*)(int, Tdisplay))NoOp;
 
   HW->QuitHW = NoOp;
 }
@@ -540,7 +540,7 @@ static bool TW_InitHW(void) {
 
       HW->KeyboardEvent = TW_KeyboardEvent;
       /* mouse events handled by TW_KeyboardEvent */
-      HW->MouseEvent = (void (*)(int, display_hw))NoOp;
+      HW->MouseEvent = (void (*)(int, Tdisplay))NoOp;
 
       HW->XY[0] = HW->XY[1] = 0;
       HW->TT = (uldat)-1; /* force updating cursor */

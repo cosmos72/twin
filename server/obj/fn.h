@@ -16,25 +16,25 @@
 #include "obj/fwd.h"
 
 /* in the same order as the #defines above ! */
-struct s_fn_struct {
-  fn_obj obj;
-  fn_widget Twidget;
-  fn_gadget gadget;
-  fn_window window;
-  fn_screen screen;
-  fn_group group;
-  fn_row row;
-  fn_menuitem menuitem;
-  fn_menu menu;
-  fn_msgport msgport;
-  fn_mutex mutex;
-  fn_msg msg;
-  fn_module module;
-  fn_display_hw display_hw;
-  fn_obj all;
+struct SstructFn {
+  TobjFn obj;
+  TwidgetFn Twidget;
+  TgadgetFn gadget;
+  TwindowFn window;
+  TscreenFn screen;
+  TgroupFn group;
+  TrowFn row;
+  TmenuitemFn menuitem;
+  TmenuFn menu;
+  TmsgportFn msgport;
+  TmutexFn mutex;
+  TmsgFn msg;
+  TmoduleFn module;
+  TdisplayFn Tdisplay;
+  TobjFn all;
 };
 
-extern fn_struct FnStruct;
+extern TstructFn FnStruct;
 #define Fn_obj (FnStruct.obj)
 #define Fn_Twidget (FnStruct.Twidget)
 #define Fn_gadget (FnStruct.gadget)
@@ -48,6 +48,6 @@ extern fn_struct FnStruct;
 #define Fn_mutex (FnStruct.mutex)
 #define Fn_msg (FnStruct.msg)
 #define Fn_module (FnStruct.module)
-#define Fn_display_hw (FnStruct.display_hw)
+#define Fn_display_hw (FnStruct.Tdisplay)
 
 #endif /* TWIN_FN_H */

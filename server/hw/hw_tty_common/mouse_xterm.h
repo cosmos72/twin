@@ -8,7 +8,7 @@
  */
 
 static void xterm_QuitMouse(void);
-static void xterm_MouseEvent(int fd, display_hw hw);
+static void xterm_MouseEvent(int fd, Tdisplay hw);
 static void xterm_ConfigureMouse(udat resource, byte todefault, udat value);
 
 /* return tfalse if failed */
@@ -142,7 +142,7 @@ static udat xterm_ParseBase10(const char **s_ptr, byte *len_ptr) {
   return val;
 }
 
-static void xterm_MouseEvent(int fd, display_hw hw) {
+static void xterm_MouseEvent(int fd, Tdisplay hw) {
   udat buttons = 0, id;
   dat x, y, dx, dy;
   dat prev_x = xterm_prev_x, prev_y = xterm_prev_y;

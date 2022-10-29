@@ -1,5 +1,5 @@
 /*
- *  all.cpp  --  define server class s_all
+ *  all.cpp  --  define server class Sall
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -30,13 +30,13 @@ static setup _SetUp = {
     (byte)3,     (byte)2 /* DeltaXShade, DeltaYShade */
 };
 
-static s_selection _Selection = {{(tany)0, (tany)0}, (msgport)0, (display_hw)0,
-                                 SEL_UTF8MAGIC,      String(),   ""};
+static Sselection _Selection = {{(tany)0, (tany)0}, (msgport)0, (Tdisplay)0,
+                                SEL_UTF8MAGIC,      String(),   ""};
 
-static s_selection _Clipboard = {{(tany)0, (tany)0}, (msgport)0, (display_hw)0,
-                                 SEL_UTF8MAGIC,      String(),   ""};
+static Sselection _Clipboard = {{(tany)0, (tany)0}, (msgport)0, (Tdisplay)0,
+                                SEL_UTF8MAGIC,      String(),   ""};
 
-void s_selection::dup(const selection other) {
+void Sselection::dup(const selection other) {
   Time = other->Time;
   Owner = other->Owner;
   OwnerOnce = other->OwnerOnce;
@@ -45,14 +45,14 @@ void s_selection::dup(const selection other) {
   memcpy(MIME, other->MIME, sizeof(MIME));
 }
 
-void s_selection::paste() {
+void Sselection::paste() {
   Twidget w;
   if (Data && (w = All->FirstScreen->FocusW) && w->Owner) {
     TwinSelectionNotify(w->Owner, w->Id, e_id(Magic), MIME, Data);
   }
 }
 
-all s_all::Init() {
+all Sall::Init() {
   State = state_default;
   Selection = &_Selection;
   Clipboard = &_Clipboard;
@@ -64,6 +64,6 @@ all s_all::Init() {
   return this;
 };
 
-static struct s_all _All;
+static struct Sall _All;
 
 all const All = _All.Init();

@@ -1,5 +1,5 @@
 /*
- *  all.h  --  declare server class s_all
+ *  all.h  --  declare server class Sall
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -19,7 +19,7 @@
 #include "tty.h"        /* USER_MAP */
 #include "stl_types.h"  /* String */
 
-struct s_setup {
+struct Ssetup {
   dat MaxMouseSnap;
   udat MinAllocSize;
   byte Flags;
@@ -76,10 +76,10 @@ typedef struct s_button_vec {
   byte changed;
 } button_vec;
 
-struct s_selection {
+struct Sselection {
   timevalue Time;
   msgport Owner;
-  display_hw OwnerOnce;
+  Tdisplay OwnerOnce;
   uldat Magic;
   String Data;
   char MIME[MAX_MIMELEN];
@@ -88,8 +88,8 @@ struct s_selection {
   void paste();
 };
 
-struct s_all : public s_obj {
-  fn_obj Fn;
+struct Sall : public Sobj {
+  TobjFn Fn;
   obj Prev, Next, Parent;
 
   /* all */
@@ -98,11 +98,11 @@ struct s_all : public s_obj {
   mutex FirstMutex, LastMutex;
 
   module FirstModule, LastModule;
-  fn_hook FnHookModule;
+  HookFn FnHookModule;
   Twidget HookModule;
 
-  display_hw FirstDisplayHW, LastDisplayHW, MouseHW, ExclusiveHW;
-  fn_hook FnHookDisplayHW;
+  Tdisplay FirstDisplayHW, LastDisplayHW, MouseHW, ExclusiveHW;
+  HookFn FnHookDisplayHW;
   Twidget HookDisplayHW;
 
   dat DisplayWidth, DisplayHeight;

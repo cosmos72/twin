@@ -1,5 +1,5 @@
 /*
- *  display_hw.cpp  --  define methods of server class s_display_hw
+ *  Tdisplay.cpp  --  define methods of server class Sdisplay
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -18,11 +18,11 @@
 
 #include <new>
 
-display_hw s_display_hw::Create(uldat namelen, const char *name) {
-  display_hw d = NULL;
-  void *addr = AllocMem0(sizeof(s_display_hw));
+Tdisplay Sdisplay::Create(uldat namelen, const char *name) {
+  Tdisplay d = NULL;
+  void *addr = AllocMem0(sizeof(Sdisplay));
   if (addr) {
-    d = new (addr) s_display_hw();
+    d = new (addr) Sdisplay();
     d->Fn = Fn_display_hw;
     if (!d->Init(namelen, name)) {
       d->Delete();
@@ -32,7 +32,7 @@ display_hw s_display_hw::Create(uldat namelen, const char *name) {
   return d;
 }
 
-display_hw s_display_hw::Init(uldat namelen, const char *name) {
+Tdisplay Sdisplay::Init(uldat namelen, const char *name) {
   if (!((obj)this)->Init()) {
     return NULL;
   }

@@ -1,5 +1,5 @@
 /*
- *  widget.h  --  declare server class s_widget
+ *  widget.h  --  declare server class Swidget
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -75,14 +75,14 @@ struct s_draw_ctx {
   void DrawArea();
 };
 
-struct s_fn_widget {
+struct SwidgetFn {
   uldat Magic;
   void (*Insert)(Twidget self, Twidget parent, Twidget Prev, Twidget Next);
   void (*Remove)(Twidget self);
   void (*Delete)(Twidget self);
   void (*ChangeField)(Twidget self, udat field, uldat CLEARMask, uldat XORMask);
   /* Twidget */
-  fn_obj Fn_Obj; /* backup of overloaded functions */
+  TobjFn Fn_Obj; /* backup of overloaded functions */
   void (*DrawSelf)(draw_ctx *d);
   Twidget (*FindWidgetAt)(Twidget self, dat x, dat y);
   gadget (*FindGadgetByCode)(Twidget self, udat code);
@@ -100,12 +100,12 @@ struct s_fn_widget {
   void (*RecursiveDelete)(Twidget self, msgport port);
   void (*Expose)(Twidget self, dat xwidth, dat ywidth, dat left, dat up, dat pitch, const char *,
                  const trune *, const tcell *);
-  byte (*InstallHook)(Twidget, fn_hook, fn_hook *where);
-  void (*RemoveHook)(Twidget, fn_hook, fn_hook *where);
+  byte (*InstallHook)(Twidget, HookFn, HookFn *where);
+  void (*RemoveHook)(Twidget, HookFn, HookFn *where);
 };
 
-struct s_widget : public s_obj {
-  fn_widget Fn;
+struct Swidget : public Sobj {
+  TwidgetFn Fn;
   Twidget Prev, Next; /* list in the same parent */
   Twidget Parent;     /* where this Twidget sits */
   /* Twidget */
@@ -117,9 +117,9 @@ struct s_widget : public s_obj {
   ldat XLogic, YLogic;
   Twidget O_Prev, O_Next; /* list with the same msgport (owner) */
   msgport Owner;
-  fn_hook ShutDownHook; /* hooks for this Twidget */
-  fn_hook Hook, *WhereHook;
-  fn_hook MapUnMapHook;
+  HookFn ShutDownHook; /* hooks for this Twidget */
+  HookFn Hook, *WhereHook;
+  HookFn MapUnMapHook;
   msg MapQueueMsg;
   tcell USE_Fill;
   union {
@@ -196,10 +196,10 @@ struct s_widget : public s_obj {
               const trune *runes, const tcell *cells) {
     Fn->Expose(this, xwidth, ywidth, left, up, pitch, ascii, runes, cells);
   }
-  byte InstallHook(fn_hook hook, fn_hook *where) {
+  byte InstallHook(HookFn hook, HookFn *where) {
     return Fn->InstallHook(this, hook, where);
   }
-  void RemoveHook(fn_hook hook, fn_hook *where) {
+  void RemoveHook(HookFn hook, HookFn *where) {
     Fn->RemoveHook(this, hook, where);
   }
 };

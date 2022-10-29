@@ -1,5 +1,5 @@
 /*
- *  mutex.h  --  declare server class s_mutex
+ *  mutex.h  --  declare server class Smutex
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -15,20 +15,20 @@
 
 #include "obj/obj.h"
 
-struct s_fn_mutex {
+struct SmutexFn {
   uldat Magic;
   void (*Insert)(mutex, all, mutex Prev, mutex Next);
   void (*Remove)(mutex);
   void (*Delete)(mutex);
   void (*ChangeField)(mutex, udat field, uldat CLEARMask, uldat XORMask);
   /* mutex */
-  fn_obj Fn_Obj;
+  TobjFn Fn_Obj;
   void (*Own)(mutex, msgport);
   void (*DisOwn)(mutex);
 };
 
-struct s_mutex : public s_obj {
-  fn_mutex Fn;
+struct Smutex : public Sobj {
+  TmutexFn Fn;
   mutex Prev, Next; /* in the same All */
   all All;
   /* mutex */

@@ -1,5 +1,5 @@
 /*
- *  menu.h  --  declare server class s_menu
+ *  menu.h  --  declare server class Smenu
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *

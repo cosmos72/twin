@@ -1,5 +1,5 @@
 /*
- *  gadget.cpp  --  define methods of server class s_gadget
+ *  gadget.cpp  --  define methods of server class Sgadget
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -17,16 +17,16 @@
 
 #include <new>
 
-gadget s_gadget::Create(msgport owner, Twidget parent, dat xwidth, dat ywidth,
-                        const char *textnormal, uldat attr, uldat flags, udat code, tcolor coltext,
-                        tcolor coltextselect, tcolor coltextdisabled, tcolor coltextselectdisabled,
-                        dat left, dat up) {
+gadget Sgadget::Create(msgport owner, Twidget parent, dat xwidth, dat ywidth,
+                       const char *textnormal, uldat attr, uldat flags, udat code, tcolor coltext,
+                       tcolor coltextselect, tcolor coltextdisabled, tcolor coltextselectdisabled,
+                       dat left, dat up) {
   gadget g = NULL;
 
   if (owner) {
-    void *addr = AllocMem0(sizeof(s_gadget));
+    void *addr = AllocMem0(sizeof(Sgadget));
     if (addr) {
-      g = new (addr) s_gadget();
+      g = new (addr) Sgadget();
       g->Fn = Fn_gadget;
       if (!g->Init(owner, parent, xwidth, ywidth, textnormal, attr, flags, code, coltext,
                    coltextselect, coltextdisabled, coltextselectdisabled, left, up)) {
@@ -38,9 +38,9 @@ gadget s_gadget::Create(msgport owner, Twidget parent, dat xwidth, dat ywidth,
   return g;
 }
 
-gadget s_gadget::Init(msgport owner, Twidget parent, dat xwidth, dat ywidth, const char *textnormal,
-                      uldat attr, uldat flags, udat code, tcolor coltext, tcolor coltextselect,
-                      tcolor coltextdisabled, tcolor coltextselectdisabled, dat left, dat up) {
+gadget Sgadget::Init(msgport owner, Twidget parent, dat xwidth, dat ywidth, const char *textnormal,
+                     uldat attr, uldat flags, udat code, tcolor coltext, tcolor coltextselect,
+                     tcolor coltextdisabled, tcolor coltextselectdisabled, dat left, dat up) {
   ldat Size;
 
   if (code >= COD_RESERVED || xwidth <= 0 || ywidth <= 0) {

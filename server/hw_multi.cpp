@@ -175,7 +175,7 @@ static bool module_InitHW(Chars arg) {
   return false;
 }
 
-static byte set_hw_name(display_hw D_HW, const Chars name) {
+static byte set_hw_name(Tdisplay D_HW, const Chars name) {
   String alloc_name;
   if (D_HW && alloc_name.format(name)) {
     D_HW->Name.swap(alloc_name);
@@ -195,7 +195,7 @@ static void warn_NoHW(const char *arg, uldat len) {
  * InitDisplayHW runs HW specific InitXXX() functions, starting from best setup
  * and falling back in case some of them fails.
  */
-byte InitDisplayHW(display_hw D_HW) {
+byte InitDisplayHW(Tdisplay D_HW) {
   Chars arg = D_HW->Name;
   byte success;
 
@@ -240,7 +240,7 @@ byte InitDisplayHW(display_hw D_HW) {
   return success;
 }
 
-void QuitDisplayHW(display_hw D_HW) {
+void QuitDisplayHW(Tdisplay D_HW) {
   msgport MsgPort;
   uldat slot;
   SaveHW;
@@ -254,7 +254,7 @@ void QuitDisplayHW(display_hw D_HW) {
     if ((slot = D_HW->AttachSlot) != NOSLOT) {
       /* avoid KillSlot <-> DeleteDisplayHW infinite recursion */
       if ((MsgPort = RemoteGetMsgPort(slot)))
-        MsgPort->AttachHW = (display_hw)0;
+        MsgPort->AttachHW = (Tdisplay)0;
       Ext(Remote, KillSlot)(slot);
     }
 
@@ -290,8 +290,8 @@ static byte IsValidHW(Chars carg) {
   return ttrue;
 }
 
-display_hw AttachDisplayHW(Chars arg, uldat slot, byte flags) {
-  display_hw D_HW = NULL;
+Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
+  Tdisplay D_HW = NULL;
 
   if (arg && !arg.starts_with(Chars("-hw="))) {
     log(ERROR) << "twin: specified `" << arg
@@ -305,13 +305,13 @@ display_hw AttachDisplayHW(Chars arg, uldat slot, byte flags) {
     return D_HW;
   }
 
-  if (IsValidHW(arg) && (D_HW = New(display_hw)(arg.size(), arg.data()))) {
+  if (IsValidHW(arg) && (D_HW = New(display)(arg.size(), arg.data()))) {
     D_HW->AttachSlot = slot;
     if (D_HW->DoInit()) {
 
       if (flags & TW_ATTACH_HW_EXCLUSIVE) {
         /* started exclusive display, kill all others */
-        display_hw s_HW, n_HW;
+        Tdisplay s_HW, n_HW;
 
         All->ExclusiveHW = D_HW;
 
@@ -342,7 +342,7 @@ bool DetachDisplayHW(Chars arg, byte flags) {
   if (All->ExclusiveHW && !(flags & TW_ATTACH_HW_EXCLUSIVE))
     return false;
 
-  display_hw s_HW;
+  Tdisplay s_HW;
   bool done = false;
   if (arg) {
     safeforHW(s_HW) {
@@ -432,7 +432,7 @@ void QuitHW(void) {
 }
 
 byte RestartHW(byte verbose) {
-  display_hw s_HW;
+  Tdisplay s_HW;
   byte ret = tfalse;
 
   if (All->FirstDisplayHW) {
@@ -458,7 +458,7 @@ byte RestartHW(byte verbose) {
 }
 
 void SuspendHW(byte verbose) {
-  display_hw s_HW;
+  Tdisplay s_HW;
   safeforHW(s_HW) {
     if (HW->AttachSlot != NOSLOT && HW->NeedHW & NEEDPersistentSlot)
       /* we will not be able to restart it */
@@ -474,7 +474,7 @@ void SuspendHW(byte verbose) {
 }
 
 void PanicHW(void) {
-  display_hw s_HW;
+  Tdisplay s_HW;
 
   if (NeedHW & NEEDPanicHW) {
     safeforHW(s_HW) {
@@ -485,7 +485,7 @@ void PanicHW(void) {
   }
 }
 
-void ResizeDisplayPrefer(display_hw D_HW) {
+void ResizeDisplayPrefer(Tdisplay D_HW) {
   SaveHW;
   SetHW(D_HW);
   D_HW->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
@@ -661,7 +661,7 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
       CopyMem(&T, &All->Selection->Time, sizeof(timevalue));
     } else if (Owner->Id >> magic_shift == display_hw_magic >> magic_shift) {
       /* don't NEEDSelectionExport here! */
-      All->Selection->OwnerOnce = (display_hw)0;
+      All->Selection->OwnerOnce = (Tdisplay)0;
     }
   }
 }
@@ -696,7 +696,7 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, e_id Magic, const char
     }
   } else if (Requestor->Id >> magic_shift == display_hw_magic >> magic_shift) {
     SaveHW;
-    SetHW((display_hw)Requestor);
+    SetHW((Tdisplay)Requestor);
     HW->HWSelectionNotify(ReqPrivate, Magic, MIME, Data);
     RestoreHW;
   }
@@ -723,7 +723,7 @@ void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
       }
     } else if (Owner->Id >> magic_shift == display_hw_magic >> magic_shift) {
       SaveHW;
-      SetHW((display_hw)Owner);
+      SetHW((Tdisplay)Owner);
       HW->HWSelectionRequest(Requestor, ReqPrivate);
       RestoreHW;
     }

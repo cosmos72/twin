@@ -266,7 +266,7 @@ void UnRegisterWindowFdIO(window Window) {
 
 void remoteKillSlot(uldat slot) {
   msgport MsgPort;
-  display_hw D_HW;
+  Tdisplay D_HW;
 
   if (slot != NOSLOT) {
     if ((MsgPort = RemoteGetMsgPort(slot))) {
@@ -277,7 +277,7 @@ void remoteKillSlot(uldat slot) {
 
       if ((D_HW = MsgPort->AttachHW)) {
         /* avoid KillSlot <-> DeleteDisplayHW infinite recursion */
-        MsgPort->AttachHW = (display_hw)0;
+        MsgPort->AttachHW = (Tdisplay)0;
         D_HW->Delete();
       }
 

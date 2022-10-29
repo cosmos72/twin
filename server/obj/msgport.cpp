@@ -1,5 +1,5 @@
 /*
- *  msgport.cpp  --  define methods of server class s_msgport
+ *  msgport.cpp  --  define methods of server class Smsgport
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -20,13 +20,13 @@
 
 #include <new>
 
-msgport s_msgport::Create(byte namelen, const char *name, tany pausesec, tany pausefraction,
-                          byte wakeup, void (*handler)(msgport)) {
+msgport Smsgport::Create(byte namelen, const char *name, tany pausesec, tany pausefraction,
+                         byte wakeup, void (*handler)(msgport)) {
   msgport p = NULL;
   if (name) {
-    void *addr = AllocMem0(sizeof(s_msgport));
+    void *addr = AllocMem0(sizeof(Smsgport));
     if (addr) {
-      p = new (addr) s_msgport();
+      p = new (addr) Smsgport();
       p->Fn = Fn_msgport;
       if (!p->Init(namelen, name, pausesec, pausefraction, wakeup, handler)) {
         p->Delete();
@@ -37,8 +37,8 @@ msgport s_msgport::Create(byte namelen, const char *name, tany pausesec, tany pa
   return p;
 }
 
-msgport s_msgport::Init(byte namelen, const char *name, tany pausesec, tany pausefraction,
-                        byte wakeup, void (*handler)(msgport)) {
+msgport Smsgport::Init(byte namelen, const char *name, tany pausesec, tany pausefraction,
+                       byte wakeup, void (*handler)(msgport)) {
 
   if (!handler || !((obj)this)->Init()) {
     return NULL;

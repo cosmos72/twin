@@ -1,5 +1,5 @@
 /*
- *  Twidget.cpp  --  define methods of server class s_window
+ *  Twidget.cpp  --  define methods of server class Swindow
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -23,15 +23,15 @@
 
 static byte InitTtyDataWindow(window w, dat scrollbacklines);
 
-window s_window::Create(msgport owner, dat titlelen, const char *title, const tcolor *coltitle,
-                        menu m, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
-                        dat xwidth, dat ywidth, dat scrollbacklines) {
+window Swindow::Create(msgport owner, dat titlelen, const char *title, const tcolor *coltitle,
+                       menu m, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
+                       dat xwidth, dat ywidth, dat scrollbacklines) {
 
   window w = NULL;
   if (owner) {
-    void *addr = AllocMem0(sizeof(s_window));
+    void *addr = AllocMem0(sizeof(Swindow));
     if (addr) {
-      w = new (addr) s_window();
+      w = new (addr) Swindow();
       w->Fn = Fn_window;
       if (!w->Init(owner, titlelen, title, coltitle, m, coltext, cursortype, attr, flags, xwidth,
                    ywidth, scrollbacklines)) {
@@ -43,9 +43,9 @@ window s_window::Create(msgport owner, dat titlelen, const char *title, const tc
   return w;
 }
 
-window s_window::Init(msgport owner, dat titlelen, const char *title, const tcolor *coltitle,
-                      menu m, tcolor coltext, uldat cursortype, uldat attr, uldat flags, dat xwidth,
-                      dat ywidth, dat scrollbacklines) {
+window Swindow::Init(msgport owner, dat titlelen, const char *title, const tcolor *coltitle, menu m,
+                     tcolor coltext, uldat cursortype, uldat attr, uldat flags, dat xwidth,
+                     dat ywidth, dat scrollbacklines) {
 
   byte hasborder = 2 * !(flags & WINDOWFL_BORDERLESS);
   /* overflow safety */

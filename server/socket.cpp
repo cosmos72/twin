@@ -922,7 +922,7 @@ static void sockNeedResizeDisplay(void) {
  * so it bypasses any compression.
  */
 static void sockAttachHW(uldat len, const char *arg, byte flags) {
-  display_hw D_HW;
+  Tdisplay D_HW;
   fd_set set;
   struct timeval tv = {2, 0};
   int realFd;
@@ -2261,7 +2261,7 @@ static void inetSocketIO(int fd, uldat slot) {
 
 static void sockKillSlot(uldat slot) {
   msgport MsgPort;
-  display_hw D_HW;
+  Tdisplay D_HW;
 
   if (slot != NOSLOT) {
 

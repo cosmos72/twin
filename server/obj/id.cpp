@@ -1,5 +1,5 @@
 /*
- *  obj.cpp  --  define methods of server class s_obj
+ *  obj.cpp  --  define methods of server class Sobj
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -130,7 +130,7 @@ bool AssignId(const e_id class_magic_id, obj o) {
     case msg_magic_byte:
       // We don't use Ids for rows and msgs as we expect to create *lots* of them.
       //
-      // Remote access to module and display_hw is unsafe, so no Ids for them too.
+      // Remote access to module and Tdisplay is unsafe, so no Ids for them too.
       o->Id = class_magic_id;
       return true;
     case Twidget_magic_byte:

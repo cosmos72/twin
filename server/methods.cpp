@@ -36,7 +36,7 @@
 #include <Tutf/Tutf.h>
 #include <Tutf/Tutf_defs.h>
 
-/* some object-oriented ones not included in fn_obj */
+/* some object-oriented ones not included in TobjFn */
 
 void *OverrideMth(void **where, void *OrigMth, void *NewMth) {
   if (*where == OrigMth) {
@@ -97,7 +97,7 @@ inline void RemoveGeneric(obj_entry Obj, obj_list Parent, ldat *ObjCount) {
     (*ObjCount)--;
 }
 
-/* fn_obj and others fn_XXX functions */
+/* TobjFn and others fn_XXX functions */
 
 /* obj */
 
@@ -115,7 +115,7 @@ static void DeleteObj(obj Obj) {
   FreeMem(Obj);
 }
 
-static struct s_fn_obj _FnObj = {
+static struct SobjFn _FnObj = {
     obj_magic, InsertObj, RemoveObj, DeleteObj, (void (*)(obj, udat, uldat, uldat))NoOp,
 };
 
@@ -483,28 +483,28 @@ static void RecursiveDeleteWidget(Twidget W, msgport maybeOwner) {
     W->UnMap();
 }
 
-static byte InstallHookWidget(Twidget W, fn_hook Hook, fn_hook *WhereHook) {
+static byte InstallHookWidget(Twidget W, HookFn Hook, HookFn *WhereHook) {
   if (W && !W->Hook && !W->WhereHook && Hook && WhereHook && !WhereHook[0] && !WhereHook[1]) {
 
     W->Hook = WhereHook[0] = Hook;
     W->WhereHook = WhereHook;
-    WhereHook[1] = (fn_hook)W;
+    WhereHook[1] = (HookFn)W;
     return ttrue;
   }
   return tfalse;
 }
 
-static void RemoveHookWidget(Twidget W, fn_hook Hook, fn_hook *WhereHook) {
+static void RemoveHookWidget(Twidget W, HookFn Hook, HookFn *WhereHook) {
   if (W && Hook && W->Hook == Hook && WhereHook && W->WhereHook == WhereHook &&
       WhereHook[0] == Hook && WhereHook[1] == (void *)W) {
 
-    W->Hook = *WhereHook = (fn_hook)0;
-    W->WhereHook = (fn_hook *)0;
-    WhereHook[1] = (fn_hook)0;
+    W->Hook = *WhereHook = (HookFn)0;
+    W->WhereHook = (HookFn *)0;
+    WhereHook[1] = (HookFn)0;
   }
 }
 
-static struct s_fn_widget _FnWidget = {
+static struct SwidgetFn _FnWidget = {
     widget_magic,      InsertWidget,     RemoveWidget,          DeleteWidget,  ChangeFieldWidget,
     &_FnObj,           DrawSelfWidget, /* exported by draw.c */
     FindWidgetAt,                      /* exported by draw.c */
@@ -581,9 +581,9 @@ static gadget CreateEmptyButton(msgport Owner, dat XWidth, dat YWidth, tcolor Bg
 #define _FULL T_UTF_32_FULL_BLOCK
 #define _LOWER T_UTF_32_LOWER_HALF_BLOCK
 #define _UPPER T_UTF_32_UPPER_HALF_BLOCK
-  void *addr = AllocMem0(sizeof(s_gadget));
+  void *addr = AllocMem0(sizeof(Sgadget));
   if (addr) {
-    G = new (addr) s_gadget();
+    G = new (addr) Sgadget();
     G->Fn = Fn_gadget;
     if (!((Twidget)G)
              ->Init(Owner, ++XWidth, ++YWidth, 0, GADGETFL_USETEXT | GADGETFL_BUTTON, 0, 0,
@@ -677,7 +677,7 @@ static gadget CreateButton(Twidget Parent, dat XWidth, dat YWidth, const char *T
   return G;
 }
 
-static struct s_fn_gadget _FnGadget = {
+static struct SgadgetFn _FnGadget = {
     gadget_magic,                                              //
     (void (*)(gadget, Twidget, Twidget, Twidget))InsertWidget, //
     (void (*)(gadget))RemoveWidget, DeleteGadget, ChangeFieldGadget,
@@ -692,8 +692,8 @@ static struct s_fn_gadget _FnGadget = {
     (void (*)(gadget))DisOwnWidget, (void (*)(gadget, msgport))RecursiveDeleteWidget,
     (void (*)(gadget, dat, dat, dat, dat, const char *, const trune *,
               const tcell *))ExposeWidget2, /* exported by resize.c */
-    (byte (*)(gadget, fn_hook, void (**)(Twidget)))InstallHookWidget,
-    (void (*)(gadget, fn_hook, void (**)(Twidget)))RemoveHookWidget,
+    (byte (*)(gadget, HookFn, void (**)(Twidget)))InstallHookWidget,
+    (void (*)(gadget, HookFn, void (**)(Twidget)))RemoveHookWidget,
     /* gadget */
     &_FnWidget, CreateEmptyButton, FillButton, CreateButton,
     WriteTextsGadget,  /* exported by resize.c */
@@ -1097,7 +1097,7 @@ static row FindRowByCode(window Window, udat Code, ldat *NumRow) {
   return Row;
 }
 
-static struct s_fn_window _FnWindow = {
+static struct SwindowFn _FnWindow = {
     window_magic,
     (void (*)(window, Twidget, Twidget, Twidget))InsertWidget,
     (void (*)(window))RemoveWidget,
@@ -1122,8 +1122,8 @@ static struct s_fn_window _FnWindow = {
     (void (*)(window, msgport))RecursiveDeleteWidget,
     (void (*)(window, dat, dat, dat, dat, const char *, const trune *,
               const tcell *))ExposeWindow2, /* exported by resize.c */
-    (byte (*)(window, fn_hook, void (**)(Twidget)))InstallHookWidget,
-    (void (*)(window, fn_hook, void (**)(Twidget)))RemoveHookWidget,
+    (byte (*)(window, HookFn, void (**)(Twidget)))InstallHookWidget,
+    (void (*)(window, HookFn, void (**)(Twidget)))RemoveHookWidget,
     /* window */
     &_FnWidget,
     FakeWriteCharset,
@@ -1272,7 +1272,7 @@ static void DeActivateMenuScreen(screen Screen) {
     CloseMenu();
 }
 
-static struct s_fn_screen _FnScreen = {
+static struct SscreenFn _FnScreen = {
     screen_magic,
     InsertScreen,
     RemoveScreen,
@@ -1297,8 +1297,8 @@ static struct s_fn_screen _FnScreen = {
     (void (*)(screen, msgport))RecursiveDeleteWidget,
     (void (*)(screen, dat, dat, dat, dat, const char *, const trune *,
               const tcell *))ExposeWidget2, /* exported by resize.c */
-    (byte (*)(screen, fn_hook, void (**)(Twidget)))InstallHookWidget,
-    (void (*)(screen, fn_hook, void (**)(Twidget)))RemoveHookWidget,
+    (byte (*)(screen, HookFn, void (**)(Twidget)))InstallHookWidget,
+    (void (*)(screen, HookFn, void (**)(Twidget)))RemoveHookWidget,
     /* screen */
     &_FnWidget,
     FindMenuScreen,
@@ -1377,7 +1377,7 @@ static void SetSelectedGadget(ggroup Group, gadget G) {
   }
 }
 
-static struct s_fn_group _FnGroup = {
+static struct SgroupFn _FnGroup = {
     ggroup_magic,
     InsertGroup,
     RemoveGroup,
@@ -1513,7 +1513,7 @@ static void LowerMenuItem(menuitem M) {
   }
 }
 
-static struct s_fn_row _FnRow = {
+static struct SrowFn _FnRow = {
     row_magic,
     InsertRow,
     RemoveRow,
@@ -1607,7 +1607,7 @@ static uldat Create4MenuCommonMenuItem(menu Menu) {
   return (uldat)0;
 }
 
-static struct s_fn_menuitem _FnMenuItem = {
+static struct SmenuitemFn _FnMenuItem = {
     menuitem_magic,
     InsertMenuItem,
     RemoveMenuItem,
@@ -1784,7 +1784,7 @@ static void SetSelectedItem(menu Menu, menuitem Item) {
   }
 }
 
-static struct s_fn_menu _FnMenu = {
+static struct SmenuFn _FnMenu = {
     menu_magic,
     InsertMenu,
     RemoveMenu,
@@ -1828,7 +1828,7 @@ static void DeleteMsg(msg Msg) {
   }
 }
 
-static struct s_fn_msg _FnMsg = {
+static struct SmsgFn _FnMsg = {
     msg_magic,
     InsertMsg,
     RemoveMsg,
@@ -1897,7 +1897,7 @@ static void DeleteMsgPort(msgport MsgPort) {
   }
 }
 
-static struct s_fn_msgport _FnMsgPort = {
+static struct SmsgportFn _FnMsgPort = {
     msgport_magic,
     InsertMsgPort,
     RemoveMsgPort,
@@ -1964,7 +1964,7 @@ static void DisOwnMutex(mutex Mutex) {
   }
 }
 
-static struct s_fn_mutex _FnMutex = {
+static struct SmutexFn _FnMutex = {
     mutex_magic,
     InsertMutex,
     RemoveMutex,
@@ -2005,7 +2005,7 @@ static void DeleteModule(module Module) {
   }
 }
 
-static struct s_fn_module _FnModule = {
+static struct SmoduleFn _FnModule = {
     module_magic,
     InsertModule,
     RemoveModule,
@@ -2017,9 +2017,9 @@ static struct s_fn_module _FnModule = {
     DlClose,
 };
 
-/* display_hw */
+/* Tdisplay */
 
-static void InsertDisplayHW(display_hw DisplayHW, all Parent, display_hw Prev, display_hw Next) {
+static void InsertDisplayHW(Tdisplay DisplayHW, all Parent, Tdisplay Prev, Tdisplay Next) {
   if (!DisplayHW->All && Parent) {
     InsertGeneric((obj_entry)DisplayHW, (obj_list)&Parent->FirstDisplayHW, (obj_entry)Prev,
                   (obj_entry)Next, NULL);
@@ -2035,7 +2035,7 @@ static void InsertDisplayHW(display_hw DisplayHW, all Parent, display_hw Prev, d
   }
 }
 
-static void RemoveDisplayHW(display_hw DisplayHW) {
+static void RemoveDisplayHW(Tdisplay DisplayHW) {
   if (DisplayHW->All) {
     RemoveGeneric((obj_entry)DisplayHW, (obj_list)&DisplayHW->All->FirstDisplayHW, NULL);
     DisplayHW->All = (all)0;
@@ -2045,7 +2045,7 @@ static void RemoveDisplayHW(display_hw DisplayHW) {
   }
 }
 
-static void DeleteDisplayHW(display_hw DisplayHW) {
+static void DeleteDisplayHW(Tdisplay DisplayHW) {
   byte isCTTY = DisplayHW->DisplayIsCTTY && DisplayHW == DisplayHWCTTY;
   byte Quitted = DisplayHW->Quitted;
 
@@ -2072,19 +2072,19 @@ static void DeleteDisplayHW(display_hw DisplayHW) {
   }
 }
 
-static struct s_fn_display_hw _FnDisplayHW = {
+static struct SdisplayFn _FnDisplayHW = {
     display_hw_magic,
     InsertDisplayHW,
     RemoveDisplayHW,
     DeleteDisplayHW,
-    (void (*)(display_hw, udat, uldat, uldat))NoOp,
-    /* display_hw */
+    (void (*)(Tdisplay, udat, uldat, uldat))NoOp,
+    /* Tdisplay */
     &_FnObj,
     InitDisplayHW,
     QuitDisplayHW,
 };
 
-fn_struct FnStruct = {
+TstructFn FnStruct = {
     &_FnObj,      &_FnWidget, &_FnGadget,  &_FnWindow, &_FnScreen, &_FnGroup,  &_FnRow,
     &_FnMenuItem, &_FnMenu,   &_FnMsgPort, &_FnMutex,  &_FnMsg,    &_FnModule, &_FnDisplayHW,
 };

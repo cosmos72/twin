@@ -19,8 +19,8 @@
 #define HW_MOUSEMOTIONEVENTS 0x0005
 #define HW_CONFIGURE_MAX 0x0006
 
-extern display_hw DisplayHWCTTY;
-#define HWCTTY_DETACHED ((display_hw)1)
+extern Tdisplay DisplayHWCTTY;
+#define HWCTTY_DETACHED ((Tdisplay)1)
 
 extern tcell *Video, *OldVideo;
 extern bool NeedOldVideo, ValidOldVideo;

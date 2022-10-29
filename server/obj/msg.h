@@ -1,5 +1,5 @@
 /*
- *  msg.h  --  declare server class s_msg
+ *  msg.h  --  declare server class Smsg
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -19,18 +19,18 @@
 
 #include <Tw/datatypes.h>
 
-struct s_fn_msg {
+struct SmsgFn {
   uldat Magic;
   void (*Insert)(msg, msgport, msg Prev, msg Next);
   void (*Remove)(msg);
   void (*Delete)(msg);
   void (*ChangeField)(msg, udat field, uldat CLEARMask, uldat XORMask);
   /* msg */
-  fn_obj Fn_Obj;
+  TobjFn Fn_Obj;
 };
 
-struct s_msg : public s_obj {
-  fn_msg Fn;
+struct Smsg : public Sobj {
+  TmsgFn Fn;
   msg Prev, Next;
   msgport MsgPort;
   /* msg */

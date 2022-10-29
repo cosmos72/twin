@@ -61,7 +61,7 @@ static void display_Configure(udat resource, byte todefault, udat value) {
 }
 
 /* handle messages from twdisplay */
-static void display_HandleEvent(display_hw hw) {
+static void display_HandleEvent(Tdisplay hw) {
   msg hMsg;
   event_any *Event;
   dat x, y, dx, dy;
@@ -381,7 +381,7 @@ static void display_QuitHW(void) {
 
   /* then cleanup */
 
-  Helper->AttachHW = (display_hw)0; /* to avoid infinite loop */
+  Helper->AttachHW = (Tdisplay)0; /* to avoid infinite loop */
   Helper->Delete();
 
   if (!--Used && Msg) {
@@ -395,7 +395,7 @@ static void display_QuitHW(void) {
    * to shutdown its display and quit
    */
 
-  HW->KeyboardEvent = (void (*)(int, display_hw))NoOp;
+  HW->KeyboardEvent = (void (*)(int, Tdisplay))NoOp;
   HW->QuitHW = NoOp;
 }
 
@@ -468,9 +468,9 @@ static bool display_InitHW(void) {
   HW->FlushHW = display_FlushHW;
 
   /* we must go through display_HelperH */
-  HW->KeyboardEvent = (void (*)(int, display_hw))NoOp;
+  HW->KeyboardEvent = (void (*)(int, Tdisplay))NoOp;
   /* mouse events handled by display_HelperH */
-  HW->MouseEvent = (void (*)(int, display_hw))NoOp;
+  HW->MouseEvent = (void (*)(int, Tdisplay))NoOp;
 
   HW->XY[0] = HW->XY[1] = 0;
   HW->TT = (uldat)-1; /* force updating cursor */

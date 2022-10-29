@@ -1,5 +1,5 @@
 /*
- *  window.h  --  declare server class s_window
+ *  window.h  --  declare server class Swindow
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -65,14 +65,14 @@ struct s_WC { /* for WINDOWFL_USECONTENTS windows */
   ldat HSplit;
 };
 
-struct s_fn_window {
+struct SwindowFn {
   uldat Magic;
   void (*Insert)(window, Twidget Parent, Twidget Prev, Twidget Next);
   void (*Remove)(window);
   void (*Delete)(window);
   void (*ChangeField)(window, udat field, uldat CLEARMask, uldat XORMask);
   /* Twidget */
-  fn_obj Fn_Obj;
+  TobjFn Fn_Obj;
   void (*DrawSelf)(draw_ctx *D);
   Twidget (*FindWidgetAt)(window Parent, dat X, dat Y);
   gadget (*FindGadgetByCode)(window Parent, udat Code);
@@ -90,10 +90,10 @@ struct s_fn_window {
   void (*RecursiveDelete)(window, msgport);
   void (*Expose)(window, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
                  const tcell *);
-  byte (*InstallHook)(window, fn_hook, fn_hook *Where);
-  void (*RemoveHook)(window, fn_hook, fn_hook *Where);
+  byte (*InstallHook)(window, HookFn, HookFn *Where);
+  void (*RemoveHook)(window, HookFn, HookFn *Where);
   /* window */
-  fn_widget Fn_Widget;
+  TwidgetFn Fn_Widget;
   byte (*TtyWriteCharset)(window, uldat Len, const char *charset_bytes);
   byte (*TtyWriteUtf8)(window, uldat Len, const char *utf8_bytes);
   byte (*TtyWriteTRune)(window, uldat Len, const trune *runes);
@@ -118,8 +118,8 @@ struct s_fn_window {
   row (*FindRowByCode)(window, udat Code, ldat *NumRow);
 };
 
-struct s_window : public s_obj {
-  fn_window Fn;
+struct Swindow : public Sobj {
+  TwindowFn Fn;
   Twidget Prev, Next; /* list in the same parent */
   Twidget Parent;     /* where this window sits */
   /* Twidget */
@@ -131,9 +131,9 @@ struct s_window : public s_obj {
   ldat XLogic, YLogic;
   Twidget O_Prev, O_Next; /* list with the same msgport (owner) */
   msgport Owner;
-  fn_hook ShutDownHook; /* hooks for this Twidget */
-  fn_hook Hook, *WhereHook;
-  fn_hook MapUnMapHook;
+  HookFn ShutDownHook; /* hooks for this Twidget */
+  HookFn Hook, *WhereHook;
+  HookFn MapUnMapHook;
   msg MapQueueMsg;
   tcell USE_Fill;
   union {
@@ -233,10 +233,10 @@ struct s_window : public s_obj {
               const tcell *cells) {
     Fn->Expose(this, xwidth, ywidth, left, up, ascii, runes, cells);
   }
-  byte InstallHook(fn_hook hook, fn_hook *where) {
+  byte InstallHook(HookFn hook, HookFn *where) {
     return Fn->InstallHook(this, hook, where);
   }
-  void RemoveHook(fn_hook hook, fn_hook *where) {
+  void RemoveHook(HookFn hook, HookFn *where) {
     Fn->RemoveHook(this, hook, where);
   }
   /* window */

@@ -1,5 +1,5 @@
 /*
- *  menu.cpp  --  define methods of server class s_menu
+ *  menu.cpp  --  define methods of server class Smenu
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -18,14 +18,14 @@
 
 #include <new>
 
-menu s_menu::Create(msgport owner, tcolor colitem, tcolor colselect, tcolor coldisabled,
-                    tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
-                    byte flagdefcolinfo) {
+menu Smenu::Create(msgport owner, tcolor colitem, tcolor colselect, tcolor coldisabled,
+                   tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
+                   byte flagdefcolinfo) {
   menu m = NULL;
   if (owner) {
-    void *addr = AllocMem0(sizeof(s_menu));
+    void *addr = AllocMem0(sizeof(Smenu));
     if (addr) {
-      m = new (addr) s_menu();
+      m = new (addr) Smenu();
       m->Fn = Fn_menu;
       if (!m->Init(owner, colitem, colselect, coldisabled, colselectdisabled, colshtcut,
                    colselshtcut, flagdefcolinfo)) {
@@ -37,9 +37,9 @@ menu s_menu::Create(msgport owner, tcolor colitem, tcolor colselect, tcolor cold
   return m;
 }
 
-menu s_menu::Init(msgport owner, tcolor colitem, tcolor colselect, tcolor coldisabled,
-                  tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
-                  byte flagdefcolinfo) {
+menu Smenu::Init(msgport owner, tcolor colitem, tcolor colselect, tcolor coldisabled,
+                 tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
+                 byte flagdefcolinfo) {
   if (!owner || !((obj)this)->Init()) {
     return NULL;
   }

@@ -217,7 +217,7 @@ static void RemoteEvent(int FdCount, fd_set *FdSet) {
   }
 }
 
-static struct s_fn_module _FnModule = {
+static struct SmoduleFn _FnModule = {
     module_magic,
     (void (*)(module, all, module, module))NoOp, /* InsertModule */
     (void (*)(module))NoOp,                      /* RemoveModule */
@@ -228,17 +228,17 @@ static struct s_fn_module _FnModule = {
     (void (*)(module))NoOp,                      /* DlClose      */
 };
 
-obj s_obj::Init() {
+obj Sobj::Init() {
   return this;
 }
 
-module s_module::Init(uldat /*namelen*/, const char * /*name*/) {
+module Smodule::Init(uldat /*namelen*/, const char * /*name*/) {
   Fn = &_FnModule;
-  s_obj::Init();
+  Sobj::Init();
   return this;
 }
 
-static s_module _Module;
+static Smodule _Module;
 static module const GModule = (_Module.Fn = &_FnModule, _Module.Init(0, NULL));
 
 static module DlLoadAny(Chars name) {
@@ -314,25 +314,25 @@ static bool module_InitHW(Chars arg) {
   return false;
 }
 
-static display_hw CreateDisplayHW(Chars name);
-static byte InitDisplayHW(display_hw);
-static void QuitDisplayHW(display_hw);
+static Tdisplay CreateDisplayHW(Chars name);
+static byte InitDisplayHW(Tdisplay);
+static void QuitDisplayHW(Tdisplay);
 
-static struct s_fn_display_hw _FnDisplayHW = {
+static struct SdisplayFn _FnDisplayHW = {
     /*-------------------*/
     display_hw_magic,
-    (void (*)(display_hw, all, display_hw, display_hw))NoOp, /* InsertDisplayHW */
-    (void (*)(display_hw))NoOp,                              /* RemoveDisplayHW */
-    (void (*)(display_hw))NoOp,                              /* DeleteDisplayHW */
-    (void (*)(display_hw, udat, uldat, uldat))NoOp,          /* ChangeFieldDisplayHW */
-    NULL,                                                    /* Fn_Obj */
+    (void (*)(Tdisplay, all, Tdisplay, Tdisplay))NoOp, /* InsertDisplayHW */
+    (void (*)(Tdisplay))NoOp,                          /* RemoveDisplayHW */
+    (void (*)(Tdisplay))NoOp,                          /* DeleteDisplayHW */
+    (void (*)(Tdisplay, udat, uldat, uldat))NoOp,      /* ChangeFieldDisplayHW */
+    NULL,                                              /* Fn_Obj */
     InitDisplayHW,
     QuitDisplayHW,
 };
 
-display_hw s_display_hw::Init(uldat namelen, const char *name) {
+Tdisplay Sdisplay::Init(uldat namelen, const char *name) {
   Fn = &_FnDisplayHW;
-  if (!s_obj::Init()) {
+  if (!Sobj::Init()) {
     return NULL;
   }
   if (!this->Name.assign(name, namelen)) {
@@ -348,7 +348,7 @@ display_hw s_display_hw::Init(uldat namelen, const char *name) {
   return this;
 }
 
-static s_display_hw _HW;
+static Sdisplay _HW;
 
 void warn_NoHW(uldat len, const char *arg, uldat tried) {
   log(ERROR) << "twdisplay: All display drivers failed";
@@ -370,7 +370,7 @@ static void UpdateFlagsHW(void) NOTHROW {
  * InitDisplayHW runs HW specific InitXXX() functions, starting from best setup
  * and falling back in case some of them fails.
  */
-static byte InitDisplayHW(display_hw D_HW) {
+static byte InitDisplayHW(Tdisplay D_HW) {
   Chars arg = D_HW->Name;
   uldat tried = 0;
   byte success;
@@ -409,14 +409,14 @@ static byte InitDisplayHW(display_hw D_HW) {
   return success;
 }
 
-static void QuitDisplayHW(display_hw D_HW) {
+static void QuitDisplayHW(Tdisplay D_HW) {
   if (D_HW && D_HW->QuitHW) {
     HW = D_HW;
     D_HW->QuitHW();
   }
 }
 
-static display_hw CreateDisplayHW(Chars name) {
+static Tdisplay CreateDisplayHW(Chars name) {
   return HW = _HW.Init(name.size(), name.data());
 }
 
@@ -442,7 +442,7 @@ static byte IsValidHW(Chars carg) NOTHROW {
   return ttrue;
 }
 
-static display_hw AttachDisplayHW(Chars arg, uldat slot, byte flags) {
+static Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
   if (arg && !arg.starts_with(Chars("-hw="))) {
     log(ERROR) << "twdisplay: specified `" << arg << "' is not `--hw=<display>'\n";
     return NULL;
@@ -555,7 +555,7 @@ void FlushHW(void) {
   ValidOldVideo = ttrue;
 }
 
-void ResizeDisplayPrefer(display_hw D_HW) {
+void ResizeDisplayPrefer(Tdisplay D_HW) {
   SaveHW;
   SetHW(D_HW);
   D_HW->DetectSize(&TryDisplayWidth, &TryDisplayHeight);

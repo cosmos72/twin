@@ -126,7 +126,7 @@ static void XSYM(QuitHW)(void) {
   if (HW->keyboard_slot != NOSLOT)
     UnRegisterRemote(HW->keyboard_slot);
   HW->keyboard_slot = NOSLOT;
-  HW->KeyboardEvent = (void (*)(int, display_hw))NoOp;
+  HW->KeyboardEvent = (void (*)(int, Tdisplay))NoOp;
 
   HW->QuitHW = NoOp;
 
@@ -390,7 +390,7 @@ static bool XSYM(InitHW)(void) {
 
         HW->KeyboardEvent = XSYM(KeyboardEvent);
         /* mouse events handled by XSYM(KeyboardEvent) */
-        HW->MouseEvent = (void (*)(int, display_hw))NoOp;
+        HW->MouseEvent = (void (*)(int, Tdisplay))NoOp;
 
         HW->XY[0] = HW->XY[1] = 0;
         HW->TT = NOCURSOR;

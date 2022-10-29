@@ -1,5 +1,5 @@
 /*
- *  fwd.h  --  forward declaration of server class s_obj and subclasses
+ *  fwd.h  --  forward declaration of server class Sobj and subclasses
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -19,41 +19,41 @@ typedef struct s_obj_entry *obj_entry;
 struct ttydata;
 typedef struct s_remotedata remotedata;
 
-typedef struct s_obj *obj;
-typedef struct s_widget *Twidget;
-typedef struct s_gadget *gadget;
-typedef struct s_window *window;
-typedef struct s_screen *screen;
-typedef struct s_group *ggroup;
-typedef struct s_row *row;
-typedef struct s_menuitem *menuitem;
-typedef struct s_menu *menu;
-typedef struct s_msg *msg;
-typedef struct s_msgport *msgport;
-typedef struct s_mutex *mutex;
-typedef struct s_module *module;
-typedef struct s_display_hw *display_hw;
+typedef struct Sobj *obj;
+typedef struct Swidget *Twidget;
+typedef struct Sgadget *gadget;
+typedef struct Swindow *window;
+typedef struct Sscreen *screen;
+typedef struct Sgroup *ggroup;
+typedef struct Srow *row;
+typedef struct Smenuitem *menuitem;
+typedef struct Smenu *menu;
+typedef struct Smsg *msg;
+typedef struct Smsgport *msgport;
+typedef struct Smutex *mutex;
+typedef struct Smodule *module;
+typedef struct Sdisplay *Tdisplay;
 
-typedef struct s_fn_obj *fn_obj;
-typedef struct s_fn_widget *fn_widget;
-typedef struct s_fn_gadget *fn_gadget;
-typedef struct s_fn_window *fn_window;
-typedef struct s_fn_screen *fn_screen;
-typedef struct s_fn_group *fn_group;
-typedef struct s_fn_row *fn_row;
-typedef struct s_fn_menuitem *fn_menuitem;
-typedef struct s_fn_menu *fn_menu;
-typedef struct s_fn_msg *fn_msg;
-typedef struct s_fn_msgport *fn_msgport;
-typedef struct s_fn_mutex *fn_mutex;
-typedef struct s_fn_module *fn_module;
-typedef struct s_fn_display_hw *fn_display_hw;
+typedef struct SobjFn *TobjFn;
+typedef struct SwidgetFn *TwidgetFn;
+typedef struct SgadgetFn *TgadgetFn;
+typedef struct SwindowFn *TwindowFn;
+typedef struct SscreenFn *TscreenFn;
+typedef struct SgroupFn *TgroupFn;
+typedef struct SrowFn *TrowFn;
+typedef struct SmenuitemFn *TmenuitemFn;
+typedef struct SmenuFn *TmenuFn;
+typedef struct SmsgFn *TmsgFn;
+typedef struct SmsgportFn *TmsgportFn;
+typedef struct SmutexFn *TmutexFn;
+typedef struct SmoduleFn *TmoduleFn;
+typedef struct SdisplayFn *TdisplayFn;
 
-typedef struct s_fn_struct fn_struct;
-typedef struct s_setup setup;
-typedef struct s_selection *selection;
-typedef struct s_all *all;
+typedef struct SstructFn TstructFn;
+typedef struct Ssetup setup;
+typedef struct Sselection *selection;
+typedef struct Sall *all;
 
-typedef void (*fn_hook)(Twidget);
+typedef void (*HookFn)(Twidget);
 
 #endif /* TWIN_FWD_H */

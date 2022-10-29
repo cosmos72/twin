@@ -1,5 +1,5 @@
 /*
- *  row.cpp  --  define methods of server class s_row
+ *  row.cpp  --  define methods of server class Srow
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -17,12 +17,12 @@
 
 #include <new>
 
-row s_row::Create(udat code, byte flags) {
+row Srow::Create(udat code, byte flags) {
   row r = NULL;
   if (code < COD_RESERVED) {
-    void *addr = AllocMem0(sizeof(s_row));
+    void *addr = AllocMem0(sizeof(Srow));
     if (addr) {
-      r = new (addr) s_row();
+      r = new (addr) Srow();
       r->Fn = Fn_row;
       if (!r->Init(code, flags)) {
         r->Delete();
@@ -33,7 +33,7 @@ row s_row::Create(udat code, byte flags) {
   return r;
 }
 
-row s_row::Init(udat code, byte flags) {
+row Srow::Init(udat code, byte flags) {
   if (code < COD_RESERVED && ((obj)this)->Init()) {
     this->Code = code;
     this->Flags = flags;

@@ -1,5 +1,5 @@
 /*
- *  msg.h  --  declare server class s_msg
+ *  msg.h  --  declare server class Smsg
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -17,18 +17,18 @@
 #include "obj/window.h" // struct s_remotedata
 #include <Tw/datatypes.h>
 
-struct s_fn_msgport {
+struct SmsgportFn {
   uldat Magic;
   void (*Insert)(msgport, all, msgport Prev, msgport Next);
   void (*Remove)(msgport);
   void (*Delete)(msgport);
   void (*ChangeField)(msgport, udat field, uldat CLEARMask, uldat XORMask);
   /* msgport */
-  fn_obj Fn_Obj;
+  TobjFn Fn_Obj;
 };
 
-struct s_msgport : public s_obj {
-  fn_msgport Fn;
+struct Smsgport : public Sobj {
+  TmsgportFn Fn;
   msgport Prev, Next; /* list in the same All */
   all All;
   /* msgport */
@@ -44,7 +44,7 @@ struct s_msgport : public s_obj {
   Twidget FirstW, LastW;        /* widgets owned by this MsgPort */
   ggroup FirstGroup, LastGroup; /* groups owned by this MsgPort */
   mutex FirstMutex, LastMutex;  /* mutexes owned by this MsgPort */
-  display_hw AttachHW;          /* that was attached as told by MsgPort */
+  Tdisplay AttachHW;            /* that was attached as told by MsgPort */
 
   static msgport Create(byte NameLen, const char *Name, tany PauseSec, tany PauseFraction,
                         byte WakeUp, void (*Handler)(msgport));

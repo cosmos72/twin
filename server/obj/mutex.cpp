@@ -1,5 +1,5 @@
 /*
- *  row.cpp  --  define methods of server class s_row
+ *  row.cpp  --  define methods of server class Srow
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -18,7 +18,7 @@
 #include <new>
 #include <cstring> // memcmp()
 
-mutex s_mutex::Create(msgport owner, byte namelen, const char *name, byte perm) {
+mutex Smutex::Create(msgport owner, byte namelen, const char *name, byte perm) {
   byte mask = PERM_WRITE;
   mutex curr, x = NULL, old = NULL;
 
@@ -42,9 +42,9 @@ mutex s_mutex::Create(msgport owner, byte namelen, const char *name, byte perm) 
       old->Perm = perm;
       x = old;
     } else {
-      void *addr = AllocMem0(sizeof(s_mutex));
+      void *addr = AllocMem0(sizeof(Smutex));
       if (addr) {
-        x = new (addr) s_mutex();
+        x = new (addr) Smutex();
         x->Fn = Fn_mutex;
         if (!x->Init(owner, namelen, name, perm)) {
           x->Delete();
@@ -56,7 +56,7 @@ mutex s_mutex::Create(msgport owner, byte namelen, const char *name, byte perm) 
   return x;
 }
 
-mutex s_mutex::Init(msgport owner, byte namelen, const char *name, byte perm) {
+mutex Smutex::Init(msgport owner, byte namelen, const char *name, byte perm) {
   if (!((obj)this)->Init()) {
     return NULL;
   }

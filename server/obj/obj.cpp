@@ -1,5 +1,5 @@
 /*
- *  obj.cpp  --  define methods of server class s_obj
+ *  obj.cpp  --  define methods of server class Sobj
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -17,7 +17,7 @@
 
 #include <new>
 
-obj s_obj::Create() {
+obj Sobj::Create() {
   obj_entry o = NULL;
   void *addr = AllocMem0(sizeof(s_obj_entry));
   if (addr) {
@@ -31,16 +31,16 @@ obj s_obj::Create() {
   return o;
 }
 
-obj s_obj::Init() {
+obj Sobj::Init() {
   if (AssignId(e_id(((obj_entry)this)->Fn->Magic), this)) {
     return this;
   }
   return NULL;
 }
 
-void s_obj::Delete() {
+void Sobj::Delete() {
   ((obj_entry)this)->Fn->Delete(this);
 }
-void s_obj::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
+void Sobj::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
   ((obj_entry)this)->Fn->ChangeField(this, field, clear_mask, xor_mask);
 }

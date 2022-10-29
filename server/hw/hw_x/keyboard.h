@@ -402,7 +402,7 @@ static void XSYM(HandleEvent)(XEvent *event) {
     }
 }
 
-static void XSYM(KeyboardEvent)(int fd, display_hw D_HW) {
+static void XSYM(KeyboardEvent)(int fd, Tdisplay D_HW) {
   XEvent event;
   SaveHW;
   SetHW(D_HW);

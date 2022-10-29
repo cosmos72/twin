@@ -1,5 +1,5 @@
 /*
- *  msg.cpp  --  define methods of server class s_msg
+ *  msg.cpp  --  define methods of server class Smsg
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -17,7 +17,7 @@
 #include "obj/msg.h"
 #include "stl/fmt.h"
 
-msg s_msg::Create(udat type, size_t eventlen) {
+msg Smsg::Create(udat type, size_t eventlen) {
   size_t headerlen = (size_t) & ((msg)NULL)->Event;
 
   switch (type) {
@@ -84,7 +84,7 @@ msg s_msg::Create(udat type, size_t eventlen) {
   return m;
 }
 
-msg s_msg::Init(udat type, uldat eventlen) {
+msg Smsg::Init(udat type, uldat eventlen) {
   if (AssignId(e_id(Fn->Magic), (obj)this)) {
     // this->Prev = this->Next = NULL;
     // this->MsgPort = NULL;

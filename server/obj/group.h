@@ -1,5 +1,5 @@
 /*
- *  group.h  --  declare server class s_group
+ *  group.h  --  declare server class Sgroup
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -18,22 +18,22 @@
 
 /* ggroup -- gadget group */
 
-struct s_fn_group {
+struct SgroupFn {
   uldat Magic;
   void (*Insert)(ggroup, msgport MsgPort, ggroup Prev, ggroup Next);
   void (*Remove)(ggroup);
   void (*Delete)(ggroup);
   void (*ChangeField)(ggroup, udat field, uldat CLEARMask, uldat XORMask);
   /* ggroup */
-  fn_obj Fn_Obj; /* backup of overloaded functions */
+  TobjFn Fn_Obj; /* backup of overloaded functions */
   void (*InsertGadget)(ggroup, gadget);
   void (*RemoveGadget)(ggroup, gadget);
   gadget (*GetSelectedGadget)(ggroup);
   void (*SetSelectedGadget)(ggroup, gadget);
 };
 
-struct s_group : public s_obj {
-  fn_group Fn;
+struct Sgroup : public Sobj {
+  TgroupFn Fn;
   ggroup Prev, Next; /* list in the same msgport */
   msgport MsgPort;
   /* ggroup */

@@ -1,5 +1,5 @@
 /*
- *  module.h  --  declare server class s_module
+ *  module.h  --  declare server class Smodule
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -19,20 +19,20 @@
 
 /* module */
 
-struct s_fn_module {
+struct SmoduleFn {
   uldat Magic;
   void (*Insert)(module, all, module Prev, module Next);
   void (*Remove)(module);
   void (*Delete)(module);
   void (*ChangeField)(module, udat field, uldat CLEARMask, uldat XORMask);
   /* module */
-  fn_obj Fn_Obj;
+  TobjFn Fn_Obj;
   bool (*DlOpen)(module);
   void (*DlClose)(module);
 };
 
-struct s_module : public s_obj {
-  fn_module Fn;
+struct Smodule : public Sobj {
+  TmoduleFn Fn;
   module Prev, Next; /* in the same All */
   all All;
   /* module */

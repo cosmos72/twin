@@ -1,5 +1,5 @@
 /*
- *  module.h  --  declare server class s_module
+ *  module.h  --  declare server class Smodule
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -18,16 +18,16 @@
 #include "obj/obj.h"
 #include "stl_types.h"
 
-struct s_fn_display_hw {
+struct SdisplayFn {
   uldat Magic;
-  void (*Insert)(display_hw, all, display_hw Prev, display_hw Next);
-  void (*Remove)(display_hw);
-  void (*Delete)(display_hw);
-  void (*ChangeField)(display_hw, udat field, uldat CLEARMask, uldat XORMask);
-  /* display_hw */
-  fn_obj Fn_Obj;
-  byte (*DoInit)(display_hw);
-  void (*DoQuit)(display_hw);
+  void (*Insert)(Tdisplay, all, Tdisplay Prev, Tdisplay Next);
+  void (*Remove)(Tdisplay);
+  void (*Delete)(Tdisplay);
+  void (*ChangeField)(Tdisplay, udat field, uldat CLEARMask, uldat XORMask);
+  /* Tdisplay */
+  TobjFn Fn_Obj;
+  byte (*DoInit)(Tdisplay);
+  void (*DoQuit)(Tdisplay);
 };
 
 struct mouse_state {
@@ -36,12 +36,12 @@ struct mouse_state {
   byte keys;
 };
 
-struct s_display_hw : public s_obj {
-  fn_display_hw Fn;
-  display_hw Prev, Next; /* in the same All */
+struct Sdisplay : public Sobj {
+  TdisplayFn Fn;
+  Tdisplay Prev, Next; /* in the same All */
   all All;
 
-  /* display_hw */
+  /* Tdisplay */
   String Name;
   module Module;
 
@@ -50,8 +50,8 @@ struct s_display_hw : public s_obj {
   void (*FlushVideo)(void);
   void (*FlushHW)(void);
 
-  void (*KeyboardEvent)(int fd, display_hw hw);
-  void (*MouseEvent)(int fd, display_hw hw);
+  void (*KeyboardEvent)(int fd, Tdisplay hw);
+  void (*MouseEvent)(int fd, Tdisplay hw);
 
   void (*ShowMouse)(void);
   void (*HideMouse)(void);
@@ -159,14 +159,14 @@ struct s_display_hw : public s_obj {
   dat XY[2]; /* hw-dependent cursor position */
   uldat TT;  /* hw-dependent cursor type */
 
-  static display_hw Create(uldat namelen, const char *name);
-  display_hw Init(uldat namelen, const char *name);
+  static Tdisplay Create(uldat namelen, const char *name);
+  Tdisplay Init(uldat namelen, const char *name);
 
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(all a, display_hw prev, display_hw next) {
+  void Insert(all a, Tdisplay prev, Tdisplay next) {
     Fn->Insert(this, a, prev, next);
   }
   void Remove() {
@@ -175,7 +175,7 @@ struct s_display_hw : public s_obj {
   void Delete() {
     Fn->Delete(this);
   }
-  /* display_hw */
+  /* Tdisplay */
   byte DoInit() {
     return Fn->DoInit(this);
   }

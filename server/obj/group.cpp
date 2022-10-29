@@ -1,5 +1,5 @@
 /*
- *  group.cpp  --  define methods of server class s_group
+ *  group.cpp  --  define methods of server class Sgroup
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -18,12 +18,12 @@
 
 #include <new>
 
-ggroup s_group::Create(msgport owner) {
+ggroup Sgroup::Create(msgport owner) {
   ggroup g = NULL;
   if (owner) {
-    void *addr = AllocMem0(sizeof(s_group));
+    void *addr = AllocMem0(sizeof(Sgroup));
     if (addr) {
-      g = new (addr) s_group();
+      g = new (addr) Sgroup();
       g->Fn = Fn_group;
       if (!g->Init(owner)) {
         g->Delete();
@@ -34,7 +34,7 @@ ggroup s_group::Create(msgport owner) {
   return g;
 }
 
-ggroup s_group::Init(msgport owner) {
+ggroup Sgroup::Init(msgport owner) {
   if (!owner || !((obj)this)->Init()) {
     return NULL;
   }

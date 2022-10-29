@@ -13,7 +13,7 @@ static byte GPM_InUse;
  */
 
 static void GPM_QuitMouse(void);
-static void GPM_MouseEvent(int fd, display_hw hw);
+static void GPM_MouseEvent(int fd, Tdisplay hw);
 static void GPM_ConfigureMouse(udat resource, byte todefault, udat value);
 
 static int wrap_Gpm_Open(void) {
@@ -112,7 +112,7 @@ static void GPM_ConfigureMouse(udat resource, byte todefault, udat value) {
   }
 }
 
-static void GPM_MouseEvent(int fd, display_hw hw) {
+static void GPM_MouseEvent(int fd, Tdisplay hw) {
   int left = 0;
   udat IdButtons, Buttons = 0;
   Gpm_Event GPM_EV;

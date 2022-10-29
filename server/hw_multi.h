@@ -25,8 +25,8 @@ extern tany StrategyDelay;
 void StrategyReset(void) NOTHROW;
 byte Strategy4Video(dat Xstart, dat Ystart, dat Xend, dat Yend) NOTHROW;
 
-byte InitDisplayHW(display_hw);
-void QuitDisplayHW(display_hw);
+byte InitDisplayHW(Tdisplay);
+void QuitDisplayHW(Tdisplay);
 
 byte InitHW(void);
 void QuitHW(void);
@@ -34,7 +34,7 @@ void QuitHW(void);
 byte RestartHW(byte verbose);
 void SuspendHW(byte verbose);
 
-display_hw AttachDisplayHW(Chars arg, uldat slot, byte flags);
+Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags);
 bool DetachDisplayHW(Chars arg, byte flags);
 
 void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, tcell Attr);

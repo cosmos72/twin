@@ -1,5 +1,5 @@
 /*
- *  widget.cpp  --  define methods of server class s_widget
+ *  widget.cpp  --  define methods of server class Swidget
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -17,13 +17,13 @@
 #include <new>
 #include <cstring> // memset()
 
-Twidget s_widget::Create(msgport owner, dat xwidth, dat ywidth, uldat attr, uldat flags, dat left,
-                         dat up, tcell fill) {
+Twidget Swidget::Create(msgport owner, dat xwidth, dat ywidth, uldat attr, uldat flags, dat left,
+                        dat up, tcell fill) {
   Twidget w = NULL;
   if (owner) {
-    void *addr = AllocMem0(sizeof(s_widget));
+    void *addr = AllocMem0(sizeof(Swidget));
     if (addr) {
-      w = new (addr) s_widget();
+      w = new (addr) Swidget();
       w->Fn = Fn_Twidget;
       if (!w->Init(owner, xwidth, ywidth, attr, flags, left, up, fill)) {
         w->Delete();
@@ -34,8 +34,8 @@ Twidget s_widget::Create(msgport owner, dat xwidth, dat ywidth, uldat attr, ulda
   return w;
 }
 
-Twidget s_widget::Init(msgport owner, dat xwidth, dat ywidth, uldat attr, uldat flags, dat left,
-                       dat up, tcell fill) {
+Twidget Swidget::Init(msgport owner, dat xwidth, dat ywidth, uldat attr, uldat flags, dat left,
+                      dat up, tcell fill) {
   if (owner && ((obj)this)->Init()) {
     Left = left;
     Up = up;

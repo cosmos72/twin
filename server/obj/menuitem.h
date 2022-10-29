@@ -1,5 +1,5 @@
 /*
- *  menuitem.h  --  declare server class s_menuitem
+ *  menuitem.h  --  declare server class Smenuitem
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -15,28 +15,28 @@
 
 #include "obj/row.h"
 
-struct s_fn_menuitem {
+struct SmenuitemFn {
   uldat Magic;
   void (*Insert)(menuitem, obj, menuitem Prev, menuitem Next);
   void (*Remove)(menuitem);
   void (*Delete)(menuitem);
   void (*ChangeField)(menuitem, udat field, uldat CLEARMask, uldat XORMask);
   /* row */
-  fn_obj Fn_Obj;
+  TobjFn Fn_Obj;
   byte (*SetText)(row, uldat Len, const char *Text, byte DefaultCol);
   byte (*SetTRune)(row, uldat Len, const trune *TRune, byte DefaultCol);
   /* menuitem */
   void (*Raise)(menuitem);
   void (*Lower)(menuitem);
-  fn_row Fn_Row;
+  TrowFn Fn_Row;
   menuitem (*Create4Menu)(obj Parent, window Window, udat Code, byte Flags, ldat Len,
                           const char *Name);
   uldat (*Create4MenuCommon)(menu);
   /* for compatibility this must return a non-zero value. */
 };
 
-struct s_menuitem : public s_obj {
-  fn_menuitem Fn;
+struct Smenuitem : public Sobj {
+  TmenuitemFn Fn;
   menuitem Prev, Next;
   obj Parent;
   /* row */

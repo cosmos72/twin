@@ -51,7 +51,7 @@
 #include "common.h"
 #include "hw.h"
 
-display_hw HW, DisplayHWCTTY;
+Tdisplay HW, DisplayHWCTTY;
 
 tcell *Video, *OldVideo;
 

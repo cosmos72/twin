@@ -30,9 +30,9 @@ void saveDisplaySize(void);
 
 void NeedRedrawVideo(dat Left, dat Up, dat Right, dat Down);
 
-extern display_hw HW;
+extern Tdisplay HW;
 
-#define SaveHW display_hw s_hw = HW
+#define SaveHW Tdisplay s_hw = HW
 
 #define SetHW(hw) (HW = (hw))
 
