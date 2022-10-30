@@ -538,9 +538,9 @@ void ExposeWindow2(Twindow w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitc
   if (utf8_bytes) {
     byte (*WriteUtf8)(Twindow, uldat, const char *);
     if (W_USE(w, USECONTENTS)) {
-      WriteUtf8 = w->Fn->TtyWriteUtf8;
+      WriteUtf8 = w->fn()->TtyWriteUtf8;
     } else
-      WriteUtf8 = w->Fn->RowWriteUtf8;
+      WriteUtf8 = w->fn()->RowWriteUtf8;
 
     CurX = w->CurX;
     CurY = w->CurY;
@@ -553,9 +553,9 @@ void ExposeWindow2(Twindow w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitc
   } else if (runes) {
     byte (*WriteTRune)(Twindow, uldat, const trune *);
     if (W_USE(w, USECONTENTS))
-      WriteTRune = w->Fn->TtyWriteTRune;
+      WriteTRune = w->fn()->TtyWriteTRune;
     else
-      WriteTRune = w->Fn->RowWriteTRune;
+      WriteTRune = w->fn()->RowWriteTRune;
 
     CurX = w->CurX;
     CurY = w->CurY;
@@ -568,9 +568,9 @@ void ExposeWindow2(Twindow w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitc
   } else if (cells) {
     byte (*WriteTCell)(Twindow, dat, dat, uldat, const tcell *);
     if (W_USE(w, USECONTENTS))
-      WriteTCell = w->Fn->TtyWriteTCell;
+      WriteTCell = w->fn()->TtyWriteTCell;
     else
-      WriteTCell = w->Fn->RowWriteTCell;
+      WriteTCell = w->fn()->RowWriteTCell;
 
     for (; YWidth; YWidth--, Up++, cells += Pitch)
       WriteTCell(w, Left, Up, (uldat)XWidth, cells);

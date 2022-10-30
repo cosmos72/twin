@@ -827,7 +827,7 @@ static void ChangeFieldWindow(Twindow w, udat field, uldat clear_mask, uldat xor
     case TWS_window_HLogic:
       break;
     default:
-      w->Fn->Fn_Widget->ChangeField((Twidget)w, field, clear_mask, xor_mask);
+      w->widget_fn()->ChangeField((Twidget)w, field, clear_mask, xor_mask);
       break;
     }
 }
@@ -966,9 +966,9 @@ static void ConfigureWindow(Twindow w, byte Bitmap, dat Left, dat Up, dat MinXWi
   }
 }
 
-static void GotoXYWindow(Twindow Window, ldat X, ldat Y) {
-  if (W_USE(Window, USECONTENTS)) {
-    ttydata *TT = Window->USE.C.TtyData;
+static void GotoXYWindow(Twindow window, ldat X, ldat Y) {
+  if (W_USE(window, USECONTENTS)) {
+    ttydata *TT = window->USE.C.TtyData;
 
     X = Max2(X, 0);
     Y = Max2(Y, 0);
@@ -980,52 +980,52 @@ static void GotoXYWindow(Twindow Window, ldat X, ldat Y) {
     TT->Y = Y;
     TT->Pos = TT->Start + X + (ldat)Y * TT->SizeX;
     if (TT->Pos >= TT->Split)
-      TT->Pos -= TT->Split - Window->USE.C.Contents;
-    Y += Window->HLogic - TT->SizeY;
+      TT->Pos -= TT->Split - window->USE.C.Contents;
+    Y += window->HLogic - TT->SizeY;
   }
-  Window->CurX = X;
-  Window->CurY = Y;
-  if (ContainsCursor((Twidget)Window))
+  window->CurX = X;
+  window->CurY = Y;
+  if (ContainsCursor((Twidget)window))
     UpdateCursor();
 }
 
 Twindow Create4MenuWindow(Tmenu Menu) {
-  Twindow Window = (Twindow)0;
-  if (Menu && (Window = New(window)(Menu->MsgPort, 0, NULL, (tcolor *)0, Menu, TCOL(tblack, twhite),
+  Twindow window = (Twindow)0;
+  if (Menu && (window = New(window)(Menu->MsgPort, 0, NULL, (tcolor *)0, Menu, TCOL(tblack, twhite),
                                     NOCURSOR, WINDOW_AUTO_KEYS,
                                     WINDOWFL_MENU | WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL |
                                         WINDOWFL_ROWS_SELCURRENT,
                                     MIN_XWIN, MIN_YWIN, 0))) {
 
-    Window->SetColors(0x1FF, TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(0, 0),
+    window->SetColors(0x1FF, TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(0, 0),
                       TCOL(thigh | twhite, twhite), TCOL(tblack, twhite), TCOL(tblack, tgreen),
                       TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack));
-    Window->Configure(0x3F, 0, 1, MIN_XWIN, MIN_YWIN, TW_MAXDAT, TW_MAXDAT);
+    window->Configure(0x3F, 0, 1, MIN_XWIN, MIN_YWIN, TW_MAXDAT, TW_MAXDAT);
   }
-  return Window;
+  return window;
 }
 
-byte FakeWriteCharset(Twindow Window, uldat Len, const char *charset_bytes) {
-  if (DlLoad(TermSo) && Window->Fn->TtyWriteCharset != FakeWriteCharset)
-    return Window->TtyWriteCharset(Len, charset_bytes);
+byte FakeWriteCharset(Twindow window, uldat Len, const char *charset_bytes) {
+  if (DlLoad(TermSo) && window->fn()->TtyWriteCharset != FakeWriteCharset)
+    return window->TtyWriteCharset(Len, charset_bytes);
   return tfalse;
 }
 
-byte FakeWriteUtf8(Twindow Window, uldat Len, const char *utf8_bytes) {
-  if (DlLoad(TermSo) && Window->Fn->TtyWriteUtf8 != FakeWriteUtf8)
-    return Window->TtyWriteUtf8(Len, utf8_bytes);
+byte FakeWriteUtf8(Twindow window, uldat Len, const char *utf8_bytes) {
+  if (DlLoad(TermSo) && window->fn()->TtyWriteUtf8 != FakeWriteUtf8)
+    return window->TtyWriteUtf8(Len, utf8_bytes);
   return tfalse;
 }
 
-byte FakeWriteTRune(Twindow Window, uldat Len, const trune *runes) {
-  if (DlLoad(TermSo) && Window->Fn->TtyWriteTRune != FakeWriteTRune)
-    return Window->TtyWriteTRune(Len, runes);
+byte FakeWriteTRune(Twindow window, uldat Len, const trune *runes) {
+  if (DlLoad(TermSo) && window->fn()->TtyWriteTRune != FakeWriteTRune)
+    return window->TtyWriteTRune(Len, runes);
   return tfalse;
 }
 
-byte FakeWriteTCell(Twindow Window, dat x, dat y, uldat Len, const tcell *cells) {
-  if (DlLoad(TermSo) && Window->Fn->TtyWriteTCell != FakeWriteTCell)
-    return Window->TtyWriteTCell(x, y, Len, cells);
+byte FakeWriteTCell(Twindow window, dat x, dat y, uldat Len, const tcell *cells) {
+  if (DlLoad(TermSo) && window->fn()->TtyWriteTCell != FakeWriteTCell)
+    return window->TtyWriteTCell(x, y, Len, cells);
   return tfalse;
 }
 
@@ -1047,19 +1047,19 @@ tpos FakeFindBorderWindow(Twindow w, dat u, dat v, byte Border, tcell *PtrAttr) 
   return v ? POS_ROOT : POS_TITLE;
 }
 
-static Trow FindRow(Twindow Window, ldat Row) {
+static Trow FindRow(Twindow window, ldat Row) {
   Trow CurrRow, ElPossib[4];
   byte Index;
   ldat k, ElNumRows[4], ElDist[4];
 
-  ElPossib[0] = Window->USE.R.RowOne;
-  ElPossib[1] = Window->USE.R.RowSplit;
-  ElPossib[2] = Window->USE.R.FirstRow;
-  ElPossib[3] = Window->USE.R.LastRow;
-  ElNumRows[0] = Window->USE.R.NumRowOne;
-  ElNumRows[1] = Window->USE.R.NumRowSplit;
+  ElPossib[0] = window->USE.R.RowOne;
+  ElPossib[1] = window->USE.R.RowSplit;
+  ElPossib[2] = window->USE.R.FirstRow;
+  ElPossib[3] = window->USE.R.LastRow;
+  ElNumRows[0] = window->USE.R.NumRowOne;
+  ElNumRows[1] = window->USE.R.NumRowSplit;
   ElNumRows[2] = (ldat)0;
-  ElNumRows[3] = Window->HLogic - (ldat)1;
+  ElNumRows[3] = window->HLogic - (ldat)1;
   ElDist[0] = (ElPossib[0] && ElNumRows[0] ? Abs(ElNumRows[0] - Row) : TW_MAXLDAT);
   ElDist[1] = (ElPossib[1] && ElNumRows[1] ? Abs(ElNumRows[1] - Row) : TW_MAXLDAT);
   ElDist[2] = Row;
@@ -1082,11 +1082,11 @@ static Trow FindRow(Twindow Window, ldat Row) {
   return CurrRow;
 }
 
-static Trow FindRowByCode(Twindow Window, udat Code, ldat *NumRow) {
+static Trow FindRowByCode(Twindow window, udat Code, ldat *NumRow) {
   Trow Row;
   ldat Num = (ldat)0;
 
-  if ((Row = Window->USE.R.FirstRow))
+  if ((Row = window->USE.R.FirstRow))
     while (Row && Row->Code != Code) {
       Row = Row->Next;
       Num++;
@@ -1575,7 +1575,7 @@ static void DeleteMenuItem(Tmenuitem MenuItem) {
   }
 }
 
-Tmenuitem Create4MenuMenuItem(Tobj Parent, Twindow Window, udat Code, byte Flags, ldat Len,
+Tmenuitem Create4MenuMenuItem(Tobj Parent, Twindow window, udat Code, byte Flags, ldat Len,
                               const char *Name) {
   dat Left, ShortCut;
 
@@ -1591,10 +1591,10 @@ Tmenuitem Create4MenuMenuItem(Tobj Parent, Twindow Window, udat Code, byte Flags
   while (ShortCut < Len && Name[ShortCut] == ' ')
     ShortCut++;
 
-  if (Window)
-    Window->Left = Left;
+  if (window)
+    window->Left = Left;
 
-  return New(menuitem)(Parent, Window, Code, Flags, Left, Len, ShortCut, Name);
+  return New(menuitem)(Parent, window, Code, Flags, Left, Len, ShortCut, Name);
 }
 
 /* this returns non-zero for compatibility */

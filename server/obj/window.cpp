@@ -32,7 +32,7 @@ Twindow Swindow::Create(Tmsgport owner, dat titlelen, const char *title, const t
     void *addr = AllocMem0(sizeof(Swindow));
     if (addr) {
       w = new (addr) Swindow();
-      w->Fn = Fn_Twindow;
+      w->Fn = (TwidgetFn)Fn_Twindow;
       if (!w->Init(owner, titlelen, title, coltitle, m, coltext, cursortype, attr, flags, xwidth,
                    ywidth, scrollbacklines)) {
         w->Delete();

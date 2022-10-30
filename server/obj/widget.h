@@ -44,7 +44,7 @@ enum widget_flag /*: udat*/ {
 
 #define w_USE(w, USExxx) (((w)->Flags & WIDGETFL_USEANY) == CAT(WIDGETFL_, USExxx))
 
-struct s_wE { /* for WIDGET_USEEXPOSE widgets */
+struct s_WE { /* for WIDGET_USEEXPOSE widgets */
   union {
     const char *Text;
     const trune *TRune;
@@ -52,6 +52,20 @@ struct s_wE { /* for WIDGET_USEEXPOSE widgets */
   } E;
   dat Flags, Pitch;
   ldat X1, Y1, X2, Y2;
+};
+
+struct s_WC { /* for WINDOWFL_USECONTENTS windows */
+  tcell *Contents;
+  ttydata *TtyData;
+  ldat HSplit;
+};
+
+struct s_WR { /* for WINDOWFL_USEROWS windows */
+  Trow FirstRow, LastRow;
+  Trow RowOne, RowSplit;       /*RESERVED: used to optimize the drawing on Tscreen */
+  ldat NumRowOne, NumRowSplit; /*RESERVED: updated automatically by WriteRow. To insert */
+                               /*or remove manually rows, you must zero out NumRowOne */
+                               /*and NumRowSplit forcing twin to recalculate them */
 };
 
 struct Sdraw {
@@ -123,7 +137,9 @@ struct Swidget : public Sobj {
   Tmsg MapQueueMsg;
   tcell USE_Fill;
   union {
-    struct s_wE E;
+    s_WE E;
+    s_WC C; // Swindow only
+    s_WR R; // Swindow only
   } USE;
 
   /* Tobj */

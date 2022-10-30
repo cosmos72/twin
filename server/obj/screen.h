@@ -78,7 +78,7 @@ struct Sscreen : public Sobj {
   tcell USE_Fill;
   union {
     struct s_sB B;
-    struct s_wE E;
+    struct s_WE E;
   } USE;
   /* Tscreen */
   dat NameLen;

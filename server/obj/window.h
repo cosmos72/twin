@@ -51,20 +51,6 @@ struct Sremotedata {
   uldat FdSlot; /* index in the FdList array (remote.c) */
 };
 
-struct s_WR { /* for WINDOWFL_USEROWS windows */
-  Trow FirstRow, LastRow;
-  Trow RowOne, RowSplit;       /*RESERVED: used to optimize the drawing on Tscreen */
-  ldat NumRowOne, NumRowSplit; /*RESERVED: updated automatically by WriteRow. To insert */
-                               /*or remove manually rows, you must zero out NumRowOne */
-                               /*and NumRowSplit forcing twin to recalculate them */
-};
-
-struct s_WC { /* for WINDOWFL_USECONTENTS windows */
-  tcell *Contents;
-  ttydata *TtyData;
-  ldat HSplit;
-};
-
 struct SwindowFn {
   uldat Magic;
   void (*Insert)(Twindow, Twidget Parent, Twidget Prev, Twidget Next);
@@ -118,29 +104,7 @@ struct SwindowFn {
   Trow (*FindRowByCode)(Twindow, udat Code, ldat *NumRow);
 };
 
-struct Swindow : public Sobj {
-  TwindowFn Fn;
-  Twidget Prev, Next; /* list in the same parent */
-  Twidget Parent;     /* where this Twindow sits */
-  /* Twidget */
-  Twidget FirstW, LastW; /* list of children */
-  Twidget SelectW;       /* selected child */
-  dat Left, Up, XWidth, YWidth;
-  uldat Attr;
-  uldat Flags;
-  ldat XLogic, YLogic;
-  Twidget O_Prev, O_Next; /* list with the same Tmsgport (owner) */
-  Tmsgport Owner;
-  HookFn ShutDownHook; /* hooks for this Twidget */
-  HookFn Hook, *WhereHook;
-  HookFn MapUnMapHook;
-  Tmsg MapQueueMsg;
-  tcell USE_Fill;
-  union {
-    struct s_WR R;
-    struct s_WC C;
-    struct s_wE E;
-  } USE;
+struct Swindow : public Swidget {
   /* Twindow */
   Tmenu Menu;
   Tmenuitem MenuItem; /* from which the Twindow depends */
@@ -168,131 +132,68 @@ struct Swindow : public Sobj {
   Twindow Init(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle, Tmenu menu,
                tcolor coltext, uldat cursortype, uldat attr, uldat flags, dat xwidth, dat ywidth,
                dat scrollbacklines);
-  uldat Magic() const {
-    return Fn->Magic;
-  }
-  void Insert(Twidget parent, Twidget prev, Twidget next) {
-    Fn->Insert(this, parent, prev, next);
-  }
-  void Remove() {
-    Fn->Remove(this);
-  }
-  void Delete() {
-    Fn->Delete(this);
-  }
-  void ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
-    Fn->ChangeField(this, field, clear_mask, xor_mask);
-  }
-  /* Twidget */
-  void DrawSelf(Sdraw *D) {
-    Fn->DrawSelf(D);
-  }
-  Twidget FindWidgetAt(dat x, dat y) {
-    return Fn->FindWidgetAt(this, x, y);
-  }
-  Tgadget FindGadgetByCode(udat code) {
-    return Fn->FindGadgetByCode(this, code);
-  }
-  void SetXY(dat x, dat y) {
-    Fn->SetXY(this, x, y);
-  }
-  void SetFill(tcell fill) {
-    Fn->SetFill(this, fill);
-  }
-  Twidget Focus() {
-    return Fn->Focus(this);
-  }
-  Twidget KbdFocus() {
-    return Fn->KbdFocus(this);
-  }
-  void Map(Twidget parent) {
-    Fn->Map(this, parent);
-  }
-  void UnMap() {
-    Fn->UnMap(this);
-  }
-  void MapTopReal(Tscreen screen) {
-    Fn->MapTopReal(this, screen);
-  }
-  void Raise() {
-    Fn->Raise(this);
-  }
-  void Lower() {
-    Fn->Lower(this);
-  }
-  void Own(Tmsgport port) {
-    Fn->Own(this, port);
-  }
-  void DisOwn() {
-    Fn->DisOwn(this);
-  }
-  void RecursiveDelete(Tmsgport port) {
-    Fn->RecursiveDelete(this, port);
-  }
-  void Expose(dat xwidth, dat ywidth, dat left, dat up, const char *ascii, const trune *runes,
-              const tcell *cells) {
-    Fn->Expose(this, xwidth, ywidth, left, up, ascii, runes, cells);
-  }
-  byte InstallHook(HookFn hook, HookFn *where) {
-    return Fn->InstallHook(this, hook, where);
-  }
-  void RemoveHook(HookFn hook, HookFn *where) {
-    Fn->RemoveHook(this, hook, where);
-  }
+
   /* Twindow */
+  const TwindowFn fn() const {
+    return (TwindowFn)Fn;
+  }
+  const TwidgetFn widget_fn() const {
+    return ((TwindowFn)Fn)->Fn_Widget;
+  }
+
   byte TtyWriteCharset(uldat len, const char *charset_bytes) {
-    return Fn->TtyWriteCharset(this, len, charset_bytes);
+    return fn()->TtyWriteCharset(this, len, charset_bytes);
   }
   byte TtyWriteUtf8(uldat len, const char *utf8_bytes) {
-    return Fn->TtyWriteUtf8(this, len, utf8_bytes);
+    return fn()->TtyWriteUtf8(this, len, utf8_bytes);
   }
   byte TtyWriteTRune(uldat len, const trune *runes) {
-    return Fn->TtyWriteTRune(this, len, runes);
+    return fn()->TtyWriteTRune(this, len, runes);
   }
   byte TtyWriteTCell(dat x, dat y, uldat len, const tcell *cells) {
-    return Fn->TtyWriteTCell(this, x, y, len, cells);
+    return fn()->TtyWriteTCell(this, x, y, len, cells);
   }
 
   byte RowWriteCharset(uldat len, const char *charset_bytes) {
-    return Fn->RowWriteCharset(this, len, charset_bytes);
+    return fn()->RowWriteCharset(this, len, charset_bytes);
   }
   byte RowWriteUtf8(uldat len, const char *utf8_bytes) {
-    return Fn->RowWriteUtf8(this, len, utf8_bytes);
+    return fn()->RowWriteUtf8(this, len, utf8_bytes);
   }
   byte RowWriteTRune(uldat len, const trune *runes) {
-    return Fn->RowWriteTRune(this, len, runes);
+    return fn()->RowWriteTRune(this, len, runes);
   }
   byte RowWriteTCell(dat x, dat y, uldat len, const tcell *attr) {
-    return Fn->RowWriteTCell(this, x, y, len, attr);
+    return fn()->RowWriteTCell(this, x, y, len, attr);
   }
 
   void GotoXY(ldat x, ldat y) {
-    Fn->GotoXY(this, x, y);
+    fn()->GotoXY(this, x, y);
   }
   void SetTitle(dat titlelen, char *title) {
-    Fn->SetTitle(this, titlelen, title);
+    fn()->SetTitle(this, titlelen, title);
   }
   void SetColText(tcolor coltext) {
-    Fn->SetColText(this, coltext);
+    fn()->SetColText(this, coltext);
   }
   void SetColors(udat bitmap, tcolor colgadgets, tcolor colarrows, tcolor colbars, tcolor coltabs,
                  tcolor colborder, tcolor coltext, tcolor colselect, tcolor coldisabled,
                  tcolor colselectdisabled) {
-    Fn->SetColors(this, bitmap, colgadgets, colarrows, colbars, coltabs, colborder, coltext,
-                  colselect, coldisabled, colselectdisabled);
+    fn()->SetColors(this, bitmap, colgadgets, colarrows, colbars, coltabs, colborder, coltext,
+                    colselect, coldisabled, colselectdisabled);
   }
   void Configure(byte bitmap, dat left, dat up, dat minxwidth, dat minywidth, dat maxxwidth,
                  dat maxywidth) {
-    Fn->Configure(this, bitmap, left, up, minxwidth, minywidth, maxxwidth, maxywidth);
+    fn()->Configure(this, bitmap, left, up, minxwidth, minywidth, maxxwidth, maxywidth);
   }
   tpos FindBorder(dat u, dat v, byte border, tcell *ptrattr) {
-    return Fn->FindBorder(this, u, v, border, ptrattr);
+    return fn()->FindBorder(this, u, v, border, ptrattr);
   }
   Trow FindRow(ldat rown) {
-    return Fn->FindRow(this, rown);
+    return fn()->FindRow(this, rown);
   }
   Trow FindRowByCode(udat code, ldat *numrow) {
-    return Fn->FindRowByCode(this, code, numrow);
+    return fn()->FindRowByCode(this, code, numrow);
   }
 };
 

@@ -670,7 +670,7 @@ void DrawSelfWindow(Sdraw *d) {
     return;
 
   if (!W_USE(w, USEROWS) && !W_USE(w, USECONTENTS)) {
-    w->Fn->Fn_Widget->DrawSelf(d);
+    w->widget_fn()->DrawSelf(d);
     return;
   }
 

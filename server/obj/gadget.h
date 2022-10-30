@@ -81,7 +81,7 @@ struct Sgadget : public Sobj {
   tcell USE_Fill;
   union {
     struct s_gT T;
-    struct s_wE E;
+    struct s_WE E;
   } USE;
   /* Tgadget */
   tcolor ColText, ColSelect, ColDisabled, ColSelectDisabled;
