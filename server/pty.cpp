@@ -243,7 +243,7 @@ static byte switchtoTty(void) {
 /* exported API: fork() a program in a pseudo-teletype */
 byte spawnInWindow(Twindow Window, const char *arg0, const char *const *argv) {
   pid_t childpid;
-  remotedata *data;
+  Tremotedata *data;
 
   /* 0 */
   if (flag_secure) {

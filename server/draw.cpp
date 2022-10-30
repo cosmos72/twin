@@ -167,12 +167,12 @@ void DrawDesktop(screen scr, dat X1, dat Y1, dat X2, dat Y2, bool shaded) {
 }
 
 /*
- * initialize a draw_ctx given Twidget-relative coords
+ * initialize a Sdraw given Twidget-relative coords
  * (0,0 is the Twidget top-left corner)
- * return tfalse if given Twindow area is not visible
+ * return false if given Twindow area is not visible
  */
-bool s_draw_ctx::Init(Twidget w, dat x1, dat y1, dat x2, dat y2, bool shaded) {
-  draw_ctx *d = this;
+bool Sdraw::Init(Twidget w, dat x1, dat y1, dat x2, dat y2, bool shaded) {
+  Sdraw *d = this;
   ldat xl, yl, height;
   uldat cycle = 0;
   Twidget c = NULL, cc = NULL;
@@ -262,8 +262,8 @@ bool s_draw_ctx::Init(Twidget w, dat x1, dat y1, dat x2, dat y2, bool shaded) {
  * absolute display coords. (0,0 is the display top-left corner)
  * return false if given area is not visible
  */
-bool s_draw_ctx::InitAbsolute(Twidget w, dat x1, dat y1, dat x2, dat y2, bool shaded) {
-  draw_ctx *d = this;
+bool Sdraw::InitAbsolute(Twidget w, dat x1, dat y1, dat x2, dat y2, bool shaded) {
+  Sdraw *d = this;
   if (d->Init(w, 0, 0, TW_MAXDAT, TW_MAXDAT, shaded)) {
 
     d->X1 = Max2(d->X1, x1);
@@ -285,7 +285,7 @@ bool s_draw_ctx::InitAbsolute(Twidget w, dat x1, dat y1, dat x2, dat y2, bool sh
  * == ttrue if inside, == ttrue+ttrue if on the border.
  */
 void TranslateCoordsWidget(Twidget W1, Twidget W2, dat *X, dat *Y, byte *Inside) {
-  draw_ctx d;
+  Sdraw d;
   if (W1 || W2) {
     if (W1) {
       d.Init(W1, 0, 0, TW_MAXDAT, TW_MAXDAT, false);
@@ -373,7 +373,7 @@ Twidget RecursiveFindWidgetAt(Twidget Parent, dat X, dat Y) {
   return Parent;
 }
 
-void DrawSelfWidget(draw_ctx *d) {
+void DrawSelfWidget(Sdraw *d) {
   Twidget w = d->TopW;
 
   if (QueuedDrawArea2FullScreen || (w->Flags & WIDGETFL_NOTVISIBLE))
@@ -526,7 +526,7 @@ void DrawSelfWidget(draw_ctx *d) {
     FillVideo(d->X1, d->Y1, d->X2, d->Y2, w->USE_Fill);
 }
 
-void DrawSelfGadget(draw_ctx *d) {
+void DrawSelfGadget(Sdraw *d) {
   Tgadget G = (Tgadget)d->TopW;
 
   if (QueuedDrawArea2FullScreen || (G->Flags & WIDGETFL_NOTVISIBLE))
@@ -663,7 +663,7 @@ static void DrawSelfBorder(Twindow w, ldat Left, ldat up, ldat rgt, ldat dwn, da
   }
 }
 
-void DrawSelfWindow(draw_ctx *d) {
+void DrawSelfWindow(Sdraw *d) {
   Twindow w = (Twindow)d->TopW;
 
   if (QueuedDrawArea2FullScreen || (w->Flags & WIDGETFL_NOTVISIBLE))
@@ -697,7 +697,7 @@ void DrawSelfWindow(draw_ctx *d) {
     shaded = d->Shaded;
     dwidth = d->DWidth;
 
-    /* not here... already done in draw_ctx.Draw() */
+    /* not here... already done in Sdraw.Draw() */
     /*
      * Left -= w->XLogic; rgt -= w->XLogic;
      * up   -= w->YLogic; dwn -= w->YLogic;
@@ -868,17 +868,17 @@ void DrawSelfWindow(draw_ctx *d) {
   }
 }
 
-void DrawSelfScreen(draw_ctx *d) {
+void DrawSelfScreen(Sdraw *d) {
   /* should never be called */
   log(ERROR) << "twin: DrawSelfScreen() called! This should not happen.\n";
 }
 
-static void _DrawWCtx_(draw_ctx **FirstD, Twidget w, Twidget childNext, Twidget onlyChild,
-                       ldat left, ldat up, ldat rgt, ldat dwn, dat X1, dat Y1, dat X2, dat Y2,
-                       bool noChildren, bool borderDone, byte shaded, errnum *lError) {
-  draw_ctx *d;
+static void _DrawWCtx_(Sdraw **FirstD, Twidget w, Twidget childNext, Twidget onlyChild, ldat left,
+                       ldat up, ldat rgt, ldat dwn, dat X1, dat Y1, dat X2, dat Y2, bool noChildren,
+                       bool borderDone, byte shaded, errnum *lError) {
+  Sdraw *d;
   if (!QueuedDrawArea2FullScreen) {
-    if ((d = (draw_ctx *)AllocMem(sizeof(draw_ctx)))) {
+    if ((d = (Sdraw *)AllocMem(sizeof(Sdraw)))) {
       d->TopW = w;
       d->W = childNext;
       d->OnlyW = onlyChild;
@@ -906,9 +906,9 @@ static void _DrawWCtx_(draw_ctx **FirstD, Twidget w, Twidget childNext, Twidget 
   }
 }
 
-void draw_ctx::Draw() {
-  draw_ctx *d = this;
-  draw_ctx *FirstD = d;
+void Sdraw::Draw() {
+  Sdraw *d = this;
+  Sdraw *FirstD = d;
   Twidget w;
   Twidget onlyChild, childNext;
   Twindow Window;
@@ -1077,7 +1077,7 @@ void draw_ctx::Draw() {
  * x1,y1,x2,y2 are absolute screen coordinates.
  */
 void DrawWidget(Twidget w, dat x1, dat y1, dat x2, dat y2, bool shaded) {
-  draw_ctx d;
+  Sdraw d;
 
   if (!QueuedDrawArea2FullScreen && w && d.InitAbsolute(w, x1, y1, x2, y2, shaded)) {
     d.TopW = w;
@@ -1091,7 +1091,7 @@ void DrawWidget(Twidget w, dat x1, dat y1, dat x2, dat y2, bool shaded) {
  */
 /* partially replaces DrawAreaWindow() -- does not redraw shadow */
 void DrawAreaWidget(Twidget w) {
-  draw_ctx d;
+  Sdraw d;
 
   if (!QueuedDrawArea2FullScreen && w && d.InitAbsolute(w, 0, 0, TW_MAXDAT, TW_MAXDAT, false)) {
     d.TopW = d.W = d.OnlyW = NULL;
@@ -1099,11 +1099,11 @@ void DrawAreaWidget(Twidget w) {
   }
 }
 
-static void _DrawAreaCtx_(draw_ctx **FirstD, screen scr, Twidget w, Twidget onlyW, dat X1, dat Y1,
+static void _DrawAreaCtx_(Sdraw **FirstD, screen scr, Twidget w, Twidget onlyW, dat X1, dat Y1,
                           dat X2, dat Y2, bool shaded, errnum *lError) {
-  draw_ctx *d;
+  Sdraw *d;
   if (!QueuedDrawArea2FullScreen) {
-    if ((d = (draw_ctx *)AllocMem(sizeof(draw_ctx)))) {
+    if ((d = (Sdraw *)AllocMem(sizeof(Sdraw)))) {
       d->TopW = w;
       d->W = onlyW;
       d->Screen = scr;
@@ -1173,9 +1173,9 @@ byte ContainsCursor(Twidget w) {
   return tfalse;
 }
 
-void s_draw_ctx::DrawArea() {
-  draw_ctx *d = this;
-  draw_ctx *FirstD = d;
+void Sdraw::DrawArea() {
+  Sdraw *d = this;
+  Sdraw *FirstD = d;
   screen FirstScreen, scr;
   Twidget w, onlyW, TopOnlyW, NextW;
   setup *SetUp;
@@ -1324,7 +1324,7 @@ void s_draw_ctx::DrawArea() {
     TopOnlyW = onlyW ? NonScreenParent(onlyW) : NULL;
 
     if (WidgetFound == ttrue && (!onlyW || TopOnlyW == w)) {
-      draw_ctx *fd = NULL;
+      Sdraw *fd = NULL;
       _DrawWCtx_(&fd, w, NULL, onlyW, shLeft, shUp, shRgt, shDwn, Max2(x1, shLeft), Max2(y1, shUp),
                  Min2(x2, shRgt), Min2(y2, shDwn), tfalse, tfalse, shaded, &lError);
       if (fd) {
@@ -1496,7 +1496,7 @@ void s_draw_ctx::DrawArea() {
 
 void DrawArea2(screen FirstScreen, Twidget w, Twidget onlyW, dat X1, dat Y1, dat X2, dat Y2,
                bool shaded) {
-  draw_ctx d;
+  Sdraw d;
 
   if (QueuedDrawArea2FullScreen)
     return;
@@ -1652,7 +1652,7 @@ void DrawShadeWindow(Twindow w, dat X1, dat Y1, dat X2, dat Y2, byte Internal) {
 
 /* replaces DrawAreaWindow() */
 void DrawAreaWindow2(Twindow w) {
-  draw_ctx d;
+  Sdraw d;
   byte Dvalid = tfalse;
   if (!QueuedDrawArea2FullScreen && w && w->Parent && IS_SCREEN(w->Parent)) {
     if ((Twidget)w == All->FirstScreen->FirstW) {
@@ -1674,7 +1674,7 @@ void DrawAreaWindow2(Twindow w) {
 
 /* replaces DrawAbsoluteWindow() */
 void DrawPartialWidget(Twidget w, dat X1, dat Y1, dat X2, dat Y2) {
-  draw_ctx d;
+  Sdraw d;
   if (!QueuedDrawArea2FullScreen && w && d.Init(w, X1, Y1, X2, Y2, false)) {
     /*
      * DO NOT assume w is completely visible...

@@ -13,11 +13,10 @@
 #ifndef TWIN_FWD_H
 #define TWIN_FWD_H
 
-typedef struct s_draw_ctx draw_ctx;
-typedef struct s_obj_list *obj_list;
-typedef struct s_obj_entry *obj_entry;
+typedef struct SobjList *TobjList;
+typedef struct SobjEntry *TobjEntry;
 struct ttydata;
-typedef struct s_remotedata remotedata;
+typedef struct Sremotedata Tremotedata;
 
 typedef struct Sobj *Tobj;
 typedef struct Swidget *Twidget;

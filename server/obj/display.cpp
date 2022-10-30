@@ -11,7 +11,7 @@
  */
 
 #include "obj/all.h" // extern All
-#include "obj/display_hw.h"
+#include "obj/display.h"
 #include "alloc.h"   // AllocMem0(), CloneStrL()
 #include "methods.h" // InsertLast()
 #include "twin.h"    // NOSLOT

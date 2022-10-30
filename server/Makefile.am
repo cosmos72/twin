@@ -21,7 +21,7 @@ twdisplay_SOURCES     = alloc.cpp display.cpp dl_helper.cpp log.cpp missing.cpp 
 twin_SOURCES          = wrapper.c
 twin_server_SOURCES   = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.cpp \
                         extreg.cpp hw.cpp hw_multi.cpp log.cpp main.cpp methods.cpp missing.cpp \
-                        obj/all.cpp obj/display_hw.cpp obj/gadget.cpp obj/group.cpp \
+                        obj/all.cpp obj/display.cpp obj/gadget.cpp obj/group.cpp \
                         obj/id.cpp obj/menu.cpp obj/menuitem.cpp obj/module.cpp obj/msg.cpp obj/msgport.cpp \
                         obj/mutex.cpp obj/obj.cpp obj/row.cpp obj/screen.cpp obj/widget.cpp obj/window.cpp \
                         printk.cpp privilege.cpp rcopt.cpp rcrun.cpp remote.cpp resize.cpp shm.cpp scroller.cpp \

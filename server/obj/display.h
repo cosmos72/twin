@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef TWIN_DISPLAY_HW_H
-#define TWIN_DISPLAY_HW_H
+#ifndef TWIN_DISPLAY_H
+#define TWIN_DISPLAY_H
 
 #include "obj/fwd.h"
 #include "obj/event.h" // MAX_MIMELEN
@@ -201,4 +201,4 @@ struct Sdisplay : public Sobj {
 #define NEEDFromPreviousFlushHW ((byte)0x40)
 #define NEEDBeepHW ((byte)0x80)
 
-#endif /* TWIN_DISPLAY_HW_H */
+#endif /* TWIN_DISPLAY_H */

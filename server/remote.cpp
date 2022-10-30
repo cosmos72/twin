@@ -294,7 +294,7 @@ void RemotePidIsDead(pid_t pid) {
   uldat Slot;
   int Fd;
   Tobj HData;
-  remotedata *RData;
+  Tremotedata *RData;
 
   for (Slot = 0; Slot < FdTop; Slot++) {
 

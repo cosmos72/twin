@@ -79,7 +79,7 @@
     TSF->type = TWS_vec | CAT(TWS_, _type);                                                        \
     break
 
-#define fieldDelta(field) ((udat)(size_t) & (((obj_entry)0)->field))
+#define fieldDelta(field) ((udat)(size_t) & (((TobjEntry)0)->field))
 #define OFFSET_OF(type, field) ((udat)(size_t) & (((type)0)->field))
 
 #define sockAllocListPrevObjs(F, len) sockAllocListDeltaObjs((Tobj)(F), (len), fieldDelta(Prev))
@@ -106,7 +106,7 @@ static tobj *sockAllocListDeltaObjs(Tobj F, topaque *len, udat fdelta) {
 }
 
 static byte sockStatObj(Tobj o, tsfield TSF) {
-  obj_entry x = (obj_entry)o;
+  TobjEntry x = (TobjEntry)o;
   switch (TSF->label) {
   case TWS_obj_Id:
     break;

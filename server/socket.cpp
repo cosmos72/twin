@@ -1000,7 +1000,7 @@ static void sockSetTRuneTranslation(const trune trans[0x80]) {
 }
 
 static Tmsgport sockGetMsgPortObj(Tobj p) {
-  obj_entry e = (obj_entry)p;
+  TobjEntry e = (TobjEntry)p;
   while (e) {
     if (IS_MSGPORT(e)) {
       return (Tmsgport)e;
@@ -1009,14 +1009,14 @@ static Tmsgport sockGetMsgPortObj(Tobj p) {
     case Trow_magic_byte:
     case Tmenuitem_magic_byte:
     case Tmenu_magic_byte:
-      e = (obj_entry)e->Parent;
+      e = (TobjEntry)e->Parent;
       break;
     case Tmutex_magic_byte:
-      e = (obj_entry)((Tmutex)e)->Owner;
+      e = (TobjEntry)((Tmutex)e)->Owner;
       break;
     default:
       if (IS_WIDGET(e))
-        e = (obj_entry)((Twidget)e)->Owner;
+        e = (TobjEntry)((Twidget)e)->Owner;
       else
         e = NULL;
       break;
@@ -1248,15 +1248,15 @@ static Tgroup sockCreateGroup(void) {
 }
 
 static Tobj sockPrevObj(Tobj o) {
-  obj_entry e = (obj_entry)o;
+  TobjEntry e = (TobjEntry)o;
   return (Tobj)(e ? e->Prev : e);
 }
 static Tobj sockNextObj(Tobj o) {
-  obj_entry e = (obj_entry)o;
+  TobjEntry e = (TobjEntry)o;
   return (Tobj)(e ? e->Next : e);
 }
 static Tobj sockParentObj(Tobj o) {
-  obj_entry e = (obj_entry)o;
+  TobjEntry e = (TobjEntry)o;
   return (Tobj)(e ? e->Parent : e);
 }
 

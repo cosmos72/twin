@@ -28,7 +28,7 @@ struct SgadgetFn {
   void (*ChangeField)(Tgadget, udat field, uldat CLEARMask, uldat XORMask);
   /* Twidget */
   TobjFn Fn_Obj;
-  void (*DrawSelf)(draw_ctx *D);
+  void (*DrawSelf)(Sdraw *D);
   Twidget (*FindWidgetAt)(Tgadget Parent, dat X, dat Y);
   Tgadget (*FindGadgetByCode)(Tgadget Parent, udat Code);
   void (*SetXY)(Tgadget, dat X, dat Y);
@@ -109,7 +109,7 @@ struct Sgadget : public Sobj {
   }
 
   /* Twidget */
-  void DrawSelf(draw_ctx *D) {
+  void DrawSelf(Sdraw *D) {
     Fn->DrawSelf(D);
   }
   Twidget FindWidgetAt(dat x, dat y) {

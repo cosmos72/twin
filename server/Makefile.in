@@ -190,15 +190,15 @@ am_twin_server_OBJECTS = alloc.$(OBJEXT) builtin.$(OBJEXT) \
 	data.$(OBJEXT) dl.$(OBJEXT) dl_helper.$(OBJEXT) draw.$(OBJEXT) \
 	extreg.$(OBJEXT) hw.$(OBJEXT) hw_multi.$(OBJEXT) log.$(OBJEXT) \
 	main.$(OBJEXT) methods.$(OBJEXT) missing.$(OBJEXT) \
-	obj/all.$(OBJEXT) obj/display_hw.$(OBJEXT) \
-	obj/gadget.$(OBJEXT) obj/group.$(OBJEXT) obj/id.$(OBJEXT) \
-	obj/menu.$(OBJEXT) obj/menuitem.$(OBJEXT) obj/module.$(OBJEXT) \
-	obj/msg.$(OBJEXT) obj/msgport.$(OBJEXT) obj/mutex.$(OBJEXT) \
-	obj/obj.$(OBJEXT) obj/row.$(OBJEXT) obj/screen.$(OBJEXT) \
-	obj/widget.$(OBJEXT) obj/window.$(OBJEXT) printk.$(OBJEXT) \
-	privilege.$(OBJEXT) rcopt.$(OBJEXT) rcrun.$(OBJEXT) \
-	remote.$(OBJEXT) resize.$(OBJEXT) shm.$(OBJEXT) \
-	scroller.$(OBJEXT) util.$(OBJEXT) wm.$(OBJEXT)
+	obj/all.$(OBJEXT) obj/display.$(OBJEXT) obj/gadget.$(OBJEXT) \
+	obj/group.$(OBJEXT) obj/id.$(OBJEXT) obj/menu.$(OBJEXT) \
+	obj/menuitem.$(OBJEXT) obj/module.$(OBJEXT) obj/msg.$(OBJEXT) \
+	obj/msgport.$(OBJEXT) obj/mutex.$(OBJEXT) obj/obj.$(OBJEXT) \
+	obj/row.$(OBJEXT) obj/screen.$(OBJEXT) obj/widget.$(OBJEXT) \
+	obj/window.$(OBJEXT) printk.$(OBJEXT) privilege.$(OBJEXT) \
+	rcopt.$(OBJEXT) rcrun.$(OBJEXT) remote.$(OBJEXT) \
+	resize.$(OBJEXT) shm.$(OBJEXT) scroller.$(OBJEXT) \
+	util.$(OBJEXT) wm.$(OBJEXT)
 twin_server_OBJECTS = $(am_twin_server_OBJECTS)
 twin_server_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
@@ -236,7 +236,7 @@ am__depfiles_remade = ./$(DEPDIR)/alloc.Po ./$(DEPDIR)/builtin.Po \
 	./$(DEPDIR)/socket.Plo ./$(DEPDIR)/tterm.Plo \
 	./$(DEPDIR)/tty.Plo ./$(DEPDIR)/twin-wrapper.Po \
 	./$(DEPDIR)/util.Po ./$(DEPDIR)/wm.Po obj/$(DEPDIR)/all.Po \
-	obj/$(DEPDIR)/display_hw.Po obj/$(DEPDIR)/gadget.Po \
+	obj/$(DEPDIR)/display.Po obj/$(DEPDIR)/gadget.Po \
 	obj/$(DEPDIR)/group.Po obj/$(DEPDIR)/id.Po \
 	obj/$(DEPDIR)/menu.Po obj/$(DEPDIR)/menuitem.Po \
 	obj/$(DEPDIR)/module.Po obj/$(DEPDIR)/msg.Po \
@@ -533,7 +533,7 @@ twdisplay_SOURCES = alloc.cpp display.cpp dl_helper.cpp log.cpp missing.cpp hw.c
 twin_SOURCES = wrapper.c
 twin_server_SOURCES = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.cpp \
                         extreg.cpp hw.cpp hw_multi.cpp log.cpp main.cpp methods.cpp missing.cpp \
-                        obj/all.cpp obj/display_hw.cpp obj/gadget.cpp obj/group.cpp \
+                        obj/all.cpp obj/display.cpp obj/gadget.cpp obj/group.cpp \
                         obj/id.cpp obj/menu.cpp obj/menuitem.cpp obj/module.cpp obj/msg.cpp obj/msgport.cpp \
                         obj/mutex.cpp obj/obj.cpp obj/row.cpp obj/screen.cpp obj/widget.cpp obj/window.cpp \
                         printk.cpp privilege.cpp rcopt.cpp rcrun.cpp remote.cpp resize.cpp shm.cpp scroller.cpp \
@@ -693,7 +693,7 @@ obj/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) obj/$(DEPDIR)
 	@: > obj/$(DEPDIR)/$(am__dirstamp)
 obj/all.$(OBJEXT): obj/$(am__dirstamp) obj/$(DEPDIR)/$(am__dirstamp)
-obj/display_hw.$(OBJEXT): obj/$(am__dirstamp) \
+obj/display.$(OBJEXT): obj/$(am__dirstamp) \
 	obj/$(DEPDIR)/$(am__dirstamp)
 obj/gadget.$(OBJEXT): obj/$(am__dirstamp) \
 	obj/$(DEPDIR)/$(am__dirstamp)
@@ -796,7 +796,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/util.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wm.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/all.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/display_hw.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/display.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/gadget.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/group.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/id.Po@am__quote@ # am--include-marker
@@ -1121,7 +1121,7 @@ distclean: distclean-recursive
 	-rm -f ./$(DEPDIR)/util.Po
 	-rm -f ./$(DEPDIR)/wm.Po
 	-rm -f obj/$(DEPDIR)/all.Po
-	-rm -f obj/$(DEPDIR)/display_hw.Po
+	-rm -f obj/$(DEPDIR)/display.Po
 	-rm -f obj/$(DEPDIR)/gadget.Po
 	-rm -f obj/$(DEPDIR)/group.Po
 	-rm -f obj/$(DEPDIR)/id.Po
@@ -1215,7 +1215,7 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f ./$(DEPDIR)/util.Po
 	-rm -f ./$(DEPDIR)/wm.Po
 	-rm -f obj/$(DEPDIR)/all.Po
-	-rm -f obj/$(DEPDIR)/display_hw.Po
+	-rm -f obj/$(DEPDIR)/display.Po
 	-rm -f obj/$(DEPDIR)/gadget.Po
 	-rm -f obj/$(DEPDIR)/group.Po
 	-rm -f obj/$(DEPDIR)/id.Po

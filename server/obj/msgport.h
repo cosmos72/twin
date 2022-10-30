@@ -14,7 +14,7 @@
 #define TWIN_MSGPORT_H
 
 #include "obj/fwd.h"
-#include "obj/window.h" // struct s_remotedata
+#include "obj/window.h" // struct Sremotedata
 #include <Tw/datatypes.h>
 
 struct SmsgportFn {
@@ -38,7 +38,7 @@ struct Smsgport : public Sobj {
   void (*Handler)(Tmsgport);
   void (*ShutDownHook)(Tmsgport);
   timevalue CallTime, PauseDuration;
-  remotedata RemoteData;
+  Tremotedata RemoteData;
   Tmsg FirstMsg, LastMsg;
   Tmenu FirstMenu, LastMenu;    /* menus created by this MsgPort */
   Twidget FirstW, LastW;        /* widgets owned by this MsgPort */

@@ -49,7 +49,7 @@
 byte NeedUpdateCursor;
 
 void FlushCursor(void) {
-  draw_ctx d;
+  Sdraw d;
   uldat type = NOCURSOR;
   screen Screen;
   Twindow Window;

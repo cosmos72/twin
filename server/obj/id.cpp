@@ -151,7 +151,7 @@ bool AssignId(const e_id class_magic_id, Tobj o) {
 }
 
 void DropId(Tobj o) {
-  obj_entry e = (obj_entry)o;
+  TobjEntry e = (TobjEntry)o;
   if (o && e->Fn) {
     const e_magic_byte magic_byte = e_magic_byte(e->Fn->Magic >> magic_shift);
 

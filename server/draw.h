@@ -11,10 +11,10 @@
 
 Twidget FindWidgetAt(Twidget Parent, dat X, dat Y);
 
-void DrawSelfWidget(draw_ctx *d);
-void DrawSelfGadget(draw_ctx *d);
-void DrawSelfWindow(draw_ctx *d);
-void DrawSelfScreen(draw_ctx *d);
+void DrawSelfWidget(Sdraw *d);
+void DrawSelfGadget(Sdraw *d);
+void DrawSelfWindow(Sdraw *d);
+void DrawSelfScreen(Sdraw *d);
 
 void TranslateCoordsWidget(Twidget w1, Twidget w2, dat *x, dat *y, byte *inside);
 

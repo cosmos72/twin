@@ -48,7 +48,7 @@
 #include "obj/msgport.h"
 #include "obj/mutex.h"
 #include "obj/module.h"
-#include "obj/display_hw.h"
+#include "obj/display.h"
 #include "obj/all.h"
 #include "obj/fn.h"
 
@@ -77,7 +77,7 @@ enum {
 #define IS_MUTEX(O) IS_OBJ(Tmutex, O)
 #define IS_MSG(O) IS_OBJ(Tmsg, O)
 #define IS_MODULE(O) IS_OBJ(Tmodule, O)
-#define IS_DISPLAY_HW(O) IS_OBJ(Tdisplay, O)
+#define IS_DISPLAY(O) IS_OBJ(Tdisplay, O)
 #define IS_ALL(O) IS_OBJ(Tall, O)
 
 /************** Keys **************/

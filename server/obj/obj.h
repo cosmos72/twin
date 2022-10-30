@@ -22,8 +22,8 @@
 
 typedef struct Sobj *Tobj;
 typedef struct SobjFn *TobjFn;
-typedef struct s_obj_entry *obj_entry;
-typedef struct s_obj_list *obj_list;
+typedef struct SobjEntry *TobjEntry;
+typedef struct SobjList *TobjList;
 
 struct SobjFn {
   uldat Magic;
@@ -51,10 +51,10 @@ public:
   virtual e_id Magic() const = 0;
 
   void Insert(Tobj parent, Tobj prev, Tobj next) {
-    ((obj_entry)this)->Fn->Insert(this, parent, prev, next);
+    ((TobjEntry)this)->Fn->Insert(this, parent, prev, next);
   }
   void Remove() {
-    ((obj_entry)this)->Fn->Remove(this);
+    ((TobjEntry)this)->Fn->Remove(this);
   }
 #endif // 0
   void Delete();
@@ -65,13 +65,13 @@ inline uldat Obj2Id(Tobj o) {
   return o ? o->Id : NOID;
 }
 
-struct s_obj_entry : public Sobj {
+struct SobjEntry : public Sobj {
   TobjFn Fn;
-  obj_entry Prev, Next, Parent;
+  TobjEntry Prev, Next, Parent;
 };
 
-struct s_obj_list {
-  obj_entry First, Last;
+struct SobjList {
+  TobjEntry First, Last;
 };
 
 #endif /* TWIN_OBJ_H */

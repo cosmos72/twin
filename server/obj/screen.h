@@ -28,7 +28,7 @@ struct SscreenFn {
   void (*ChangeField)(screen, udat field, uldat CLEARMask, uldat XORMask);
   /* Twidget */
   TobjFn Fn_Obj;
-  void (*DrawSelf)(draw_ctx *D);
+  void (*DrawSelf)(Sdraw *D);
   Twidget (*FindWidgetAt)(screen Parent, dat X, dat Y);
   Tgadget (*FindGadgetByCode)(screen Parent, udat Code);
   void (*SetXY)(screen, dat X, dat Y);
@@ -105,7 +105,7 @@ struct Sscreen : public Sobj {
     Fn->Delete(this);
   }
   /* Twidget */
-  void DrawSelf(draw_ctx *D) {
+  void DrawSelf(Sdraw *D) {
     Fn->DrawSelf(D);
   }
   Twidget FindWidgetAt(dat x, dat y) {

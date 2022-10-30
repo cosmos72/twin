@@ -54,8 +54,8 @@ struct s_wE { /* for WIDGET_USEEXPOSE widgets */
   ldat X1, Y1, X2, Y2;
 };
 
-struct s_draw_ctx {
-  draw_ctx *Next;
+struct Sdraw {
+  Sdraw *Next;
   screen Screen;
   Twidget TopW;
   Twidget W;
@@ -83,7 +83,7 @@ struct SwidgetFn {
   void (*ChangeField)(Twidget self, udat field, uldat CLEARMask, uldat XORMask);
   /* Twidget */
   TobjFn Fn_Obj; /* backup of overloaded functions */
-  void (*DrawSelf)(draw_ctx *d);
+  void (*DrawSelf)(Sdraw *d);
   Twidget (*FindWidgetAt)(Twidget self, dat x, dat y);
   Tgadget (*FindGadgetByCode)(Twidget self, udat code);
   void (*SetXY)(Twidget self, dat x, dat y);
@@ -147,7 +147,7 @@ struct Swidget : public Sobj {
     Fn->ChangeField(this, field, clear_mask, xor_mask);
   }
   /* Twidget */
-  void DrawSelf(draw_ctx *D) {
+  void DrawSelf(Sdraw *D) {
     Fn->DrawSelf(D);
   }
   Twidget FindWidgetAt(dat x, dat y) {

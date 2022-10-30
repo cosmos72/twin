@@ -57,7 +57,7 @@ inline void DeletePartialList(Tobj Obj) {
 }
 #endif
 
-inline void InsertGeneric(obj_entry Obj, obj_list Parent, obj_entry Prev, obj_entry Next,
+inline void InsertGeneric(TobjEntry Obj, TobjList Parent, TobjEntry Prev, TobjEntry Next,
                           ldat *ObjCount) {
   if (Obj->Prev || Obj->Next)
     return;
@@ -81,7 +81,7 @@ inline void InsertGeneric(obj_entry Obj, obj_list Parent, obj_entry Prev, obj_en
     (*ObjCount)++;
 }
 
-inline void RemoveGeneric(obj_entry Obj, obj_list Parent, ldat *ObjCount) {
+inline void RemoveGeneric(TobjEntry Obj, TobjList Parent, ldat *ObjCount) {
   if (Obj->Prev)
     Obj->Prev->Next = Obj->Next;
   else if (Parent->First == Obj)
@@ -127,13 +127,13 @@ static void InsertWidget(Twidget W, Twidget Parent, Twidget Prev, Twidget Next) 
      * don't check W->Parent here, as Raise() and Lower() call
      * RemoveWidget() then InsertWidget() but RemoveWidget() does not reset W->Parent
      */
-    InsertGeneric((obj_entry)W, (obj_list)&Parent->FirstW, (obj_entry)Prev, (obj_entry)Next, NULL);
+    InsertGeneric((TobjEntry)W, (TobjList)&Parent->FirstW, (TobjEntry)Prev, (TobjEntry)Next, NULL);
   }
 }
 
 static void RemoveWidget(Twidget W) {
   if (W->Parent) {
-    RemoveGeneric((obj_entry)W, (obj_list)&W->Parent->FirstW, NULL);
+    RemoveGeneric((TobjEntry)W, (TobjList)&W->Parent->FirstW, NULL);
   }
 }
 
@@ -1168,15 +1168,15 @@ static void BgImageScreen(screen Screen, dat BgWidth, dat BgHeight, const tcell 
 
 static void InsertScreen(screen Screen, all Parent, screen Prev, screen Next) {
   if (!Screen->All && Parent) {
-    InsertGeneric((obj_entry)Screen, (obj_list)&Parent->FirstScreen, (obj_entry)Prev,
-                  (obj_entry)Next, NULL);
+    InsertGeneric((TobjEntry)Screen, (TobjList)&Parent->FirstScreen, (TobjEntry)Prev,
+                  (TobjEntry)Next, NULL);
     Screen->All = Parent;
   }
 }
 
 static void RemoveScreen(screen Screen) {
   if (Screen->All) {
-    RemoveGeneric((obj_entry)Screen, (obj_list)&Screen->All->FirstScreen, NULL);
+    RemoveGeneric((TobjEntry)Screen, (TobjList)&Screen->All->FirstScreen, NULL);
     Screen->All = (all)0;
   }
 }
@@ -1314,15 +1314,15 @@ static struct SscreenFn _FnScreen = {
 
 static void InsertGroup(Tgroup group, Tmsgport MsgPort, Tgroup Prev, Tgroup Next) {
   if (!group->MsgPort && MsgPort) {
-    InsertGeneric((obj_entry)group, (obj_list)&MsgPort->FirstGroup, (obj_entry)Prev,
-                  (obj_entry)Next, NULL);
+    InsertGeneric((TobjEntry)group, (TobjList)&MsgPort->FirstGroup, (TobjEntry)Prev,
+                  (TobjEntry)Next, NULL);
     group->MsgPort = MsgPort;
   }
 }
 
 static void RemoveGroup(Tgroup group) {
   if (group->MsgPort) {
-    RemoveGeneric((obj_entry)group, (obj_list)&group->MsgPort->FirstGroup, NULL);
+    RemoveGeneric((TobjEntry)group, (TobjList)&group->MsgPort->FirstGroup, NULL);
     group->MsgPort = NULL;
   }
 }
@@ -1394,8 +1394,8 @@ static struct SgroupFn _FnGroup = {
 
 static void InsertRow(Trow Row, Twindow Parent, Trow Prev, Trow Next) {
   if (!Row->Window && Parent && W_USE(Parent, USEROWS)) {
-    InsertGeneric((obj_entry)Row, (obj_list)&Parent->USE.R.FirstRow, (obj_entry)Prev,
-                  (obj_entry)Next, &Parent->HLogic);
+    InsertGeneric((TobjEntry)Row, (TobjList)&Parent->USE.R.FirstRow, (TobjEntry)Prev,
+                  (TobjEntry)Next, &Parent->HLogic);
     Row->Window = Parent;
     Parent->USE.R.NumRowOne = Parent->USE.R.NumRowSplit = (ldat)0;
   }
@@ -1404,7 +1404,7 @@ static void InsertRow(Trow Row, Twindow Parent, Trow Prev, Trow Next) {
 static void RemoveRow(Trow Row) {
   if (Row->Window && W_USE(Row->Window, USEROWS)) {
     Row->Window->USE.R.NumRowOne = Row->Window->USE.R.NumRowSplit = (ldat)0;
-    RemoveGeneric((obj_entry)Row, (obj_list)&Row->Window->USE.R.FirstRow, &Row->Window->HLogic);
+    RemoveGeneric((TobjEntry)Row, (TobjList)&Row->Window->USE.R.FirstRow, &Row->Window->HLogic);
     Row->Window = NULL;
   }
 }
@@ -1508,7 +1508,7 @@ static void LowerMenuItem(Tmenuitem M) {
 
     if (IS_MENU(Parent))
       SyncMenu((Tmenu)Parent);
-    else if (((obj_entry)Parent)->Parent)
+    else if (((TobjEntry)Parent)->Parent)
       DrawAreaWidget((Twidget)Parent);
   }
 }
@@ -1540,8 +1540,8 @@ byte FindInfo(Tmenu Menu, dat i) {
 static void InsertMenuItem(Tmenuitem MenuItem, Tobj Parent, Tmenuitem Prev, Tmenuitem Next) {
   if (!MenuItem->Parent && Parent) {
     if (IS_MENU(Parent)) {
-      InsertGeneric((obj_entry)MenuItem, (obj_list) & ((Tmenu)Parent)->FirstI, (obj_entry)Prev,
-                    (obj_entry)Next, NULL);
+      InsertGeneric((TobjEntry)MenuItem, (TobjList) & ((Tmenu)Parent)->FirstI, (TobjEntry)Prev,
+                    (TobjEntry)Next, NULL);
       MenuItem->Parent = Parent;
     } else if (IS_WINDOW(Parent)) {
       InsertRow((Trow)MenuItem, (Twindow)Parent, (Trow)Prev, (Trow)Next);
@@ -1552,7 +1552,7 @@ static void InsertMenuItem(Tmenuitem MenuItem, Tobj Parent, Tmenuitem Prev, Tmen
 static void RemoveMenuItem(Tmenuitem MenuItem) {
   if (MenuItem->Parent) {
     if (IS_MENU(MenuItem->Parent)) {
-      RemoveGeneric((obj_entry)MenuItem, (obj_list) & ((Tmenu)MenuItem->Parent)->FirstI, NULL);
+      RemoveGeneric((TobjEntry)MenuItem, (TobjList) & ((Tmenu)MenuItem->Parent)->FirstI, NULL);
       MenuItem->Parent = (Tobj)0;
     } else {
       RemoveRow((Trow)MenuItem);
@@ -1627,7 +1627,7 @@ static struct SmenuitemFn _FnMenuItem = {
 
 static void InsertMenu(Tmenu Menu, Tmsgport MsgPort, Tmenu Prev, Tmenu Next) {
   if (!Menu->MsgPort && MsgPort) {
-    InsertGeneric((obj_entry)Menu, (obj_list)&MsgPort->FirstMenu, (obj_entry)Prev, (obj_entry)Next,
+    InsertGeneric((TobjEntry)Menu, (TobjList)&MsgPort->FirstMenu, (TobjEntry)Prev, (TobjEntry)Next,
                   NULL);
     Menu->MsgPort = MsgPort;
   }
@@ -1635,7 +1635,7 @@ static void InsertMenu(Tmenu Menu, Tmsgport MsgPort, Tmenu Prev, Tmenu Next) {
 
 static void RemoveMenu(Tmenu Menu) {
   if (Menu->MsgPort) {
-    RemoveGeneric((obj_entry)Menu, (obj_list)&Menu->MsgPort->FirstMenu, NULL);
+    RemoveGeneric((TobjEntry)Menu, (TobjList)&Menu->MsgPort->FirstMenu, NULL);
     Menu->MsgPort = (Tmsgport)0;
   }
 }
@@ -1808,7 +1808,7 @@ static void InsertMsg(Tmsg msg, Tmsgport Parent, Tmsg Prev, Tmsg Next) {
     if (!Parent->FirstMsg && Parent->All)
       MoveFirst(MsgPort, All, Parent);
 
-    InsertGeneric((obj_entry)msg, (obj_list)&Parent->FirstMsg, (obj_entry)Prev, (obj_entry)Next,
+    InsertGeneric((TobjEntry)msg, (TobjList)&Parent->FirstMsg, (TobjEntry)Prev, (TobjEntry)Next,
                   NULL);
     msg->MsgPort = Parent;
   }
@@ -1816,7 +1816,7 @@ static void InsertMsg(Tmsg msg, Tmsgport Parent, Tmsg Prev, Tmsg Next) {
 
 static void RemoveMsg(Tmsg msg) {
   if (msg->MsgPort) {
-    RemoveGeneric((obj_entry)msg, (obj_list)&msg->MsgPort->FirstMsg, NULL);
+    RemoveGeneric((TobjEntry)msg, (TobjList)&msg->MsgPort->FirstMsg, NULL);
     msg->MsgPort = NULL;
   }
 }
@@ -1842,8 +1842,8 @@ static struct SmsgFn _FnMsg = {
 
 static void InsertMsgPort(Tmsgport MsgPort, all Parent, Tmsgport Prev, Tmsgport Next) {
   if (!MsgPort->All && Parent) {
-    InsertGeneric((obj_entry)MsgPort, (obj_list)&Parent->FirstMsgPort, (obj_entry)Prev,
-                  (obj_entry)Next, NULL);
+    InsertGeneric((TobjEntry)MsgPort, (TobjList)&Parent->FirstMsgPort, (TobjEntry)Prev,
+                  (TobjEntry)Next, NULL);
     MsgPort->All = Parent;
   }
 }
@@ -1852,7 +1852,7 @@ static void RemoveMsgPort(Tmsgport MsgPort) {
   if (MsgPort->All) {
     if (All->RunMsgPort == MsgPort)
       All->RunMsgPort = MsgPort->Next;
-    RemoveGeneric((obj_entry)MsgPort, (obj_list)&MsgPort->All->FirstMsgPort, NULL);
+    RemoveGeneric((TobjEntry)MsgPort, (TobjList)&MsgPort->All->FirstMsgPort, NULL);
     MsgPort->All = (all)0;
   }
 }
@@ -1911,15 +1911,15 @@ static struct SmsgportFn _FnMsgPort = {
 
 static void InsertMutex(Tmutex Mutex, all Parent, Tmutex Prev, Tmutex Next) {
   if (!Mutex->All && Parent) {
-    InsertGeneric((obj_entry)Mutex, (obj_list)&Mutex->All->FirstMutex, (obj_entry)Prev,
-                  (obj_entry)Next, NULL);
+    InsertGeneric((TobjEntry)Mutex, (TobjList)&Mutex->All->FirstMutex, (TobjEntry)Prev,
+                  (TobjEntry)Next, NULL);
     Mutex->All = Parent;
   }
 }
 
 static void RemoveMutex(Tmutex Mutex) {
   if (Mutex->All) {
-    RemoveGeneric((obj_entry)Mutex, (obj_list)&Mutex->All->FirstMutex, NULL);
+    RemoveGeneric((TobjEntry)Mutex, (TobjList)&Mutex->All->FirstMutex, NULL);
     Mutex->All = (all)0;
   }
 }
@@ -1980,15 +1980,15 @@ static struct SmutexFn _FnMutex = {
 
 static void InsertModule(Tmodule Module, all Parent, Tmodule Prev, Tmodule Next) {
   if (!Module->All && Parent) {
-    InsertGeneric((obj_entry)Module, (obj_list)&Parent->FirstModule, (obj_entry)Prev,
-                  (obj_entry)Next, NULL);
+    InsertGeneric((TobjEntry)Module, (TobjList)&Parent->FirstModule, (TobjEntry)Prev,
+                  (TobjEntry)Next, NULL);
     Module->All = Parent;
   }
 }
 
 static void RemoveModule(Tmodule Module) {
   if (Module->All) {
-    RemoveGeneric((obj_entry)Module, (obj_list)&Module->All->FirstModule, NULL);
+    RemoveGeneric((TobjEntry)Module, (TobjList)&Module->All->FirstModule, NULL);
     Module->All = (all)0;
   }
 }
@@ -2021,8 +2021,8 @@ static struct SmoduleFn _FnModule = {
 
 static void InsertDisplayHW(Tdisplay DisplayHW, all Parent, Tdisplay Prev, Tdisplay Next) {
   if (!DisplayHW->All && Parent) {
-    InsertGeneric((obj_entry)DisplayHW, (obj_list)&Parent->FirstDisplayHW, (obj_entry)Prev,
-                  (obj_entry)Next, NULL);
+    InsertGeneric((TobjEntry)DisplayHW, (TobjList)&Parent->FirstDisplayHW, (TobjEntry)Prev,
+                  (TobjEntry)Next, NULL);
     DisplayHW->All = Parent;
 #if 0
         /*
@@ -2037,7 +2037,7 @@ static void InsertDisplayHW(Tdisplay DisplayHW, all Parent, Tdisplay Prev, Tdisp
 
 static void RemoveDisplayHW(Tdisplay DisplayHW) {
   if (DisplayHW->All) {
-    RemoveGeneric((obj_entry)DisplayHW, (obj_list)&DisplayHW->All->FirstDisplayHW, NULL);
+    RemoveGeneric((TobjEntry)DisplayHW, (TobjList)&DisplayHW->All->FirstDisplayHW, NULL);
     DisplayHW->All = (all)0;
 
     if (All->FnHookDisplayHW)

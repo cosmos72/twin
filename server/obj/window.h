@@ -45,7 +45,7 @@ enum tpos /*: byte*/ {
   POS_ROOT = 30,
 };
 
-struct s_remotedata {
+struct Sremotedata {
   int Fd;
   pid_t ChildPid;
   uldat FdSlot; /* index in the FdList array (remote.c) */
@@ -73,7 +73,7 @@ struct SwindowFn {
   void (*ChangeField)(Twindow, udat field, uldat CLEARMask, uldat XORMask);
   /* Twidget */
   TobjFn Fn_Obj;
-  void (*DrawSelf)(draw_ctx *D);
+  void (*DrawSelf)(Sdraw *D);
   Twidget (*FindWidgetAt)(Twindow Parent, dat X, dat Y);
   Tgadget (*FindGadgetByCode)(Twindow Parent, udat Code);
   void (*SetXY)(Twindow, dat X, dat Y);
@@ -148,7 +148,7 @@ struct Swindow : public Sobj {
   char *Name;
   tcolor *ColName;
   trune *BorderPattern[2];
-  remotedata RemoteData;
+  Tremotedata RemoteData;
   ldat CurX, CurY;
   ldat XstSel, YstSel, XendSel, YendSel;
   tcolor ColGadgets, ColArrows, ColBars, ColTabs, ColBorder, ColText, ColSelect, ColDisabled,
@@ -184,7 +184,7 @@ struct Swindow : public Sobj {
     Fn->ChangeField(this, field, clear_mask, xor_mask);
   }
   /* Twidget */
-  void DrawSelf(draw_ctx *D) {
+  void DrawSelf(Sdraw *D) {
     Fn->DrawSelf(D);
   }
   Twidget FindWidgetAt(dat x, dat y) {
