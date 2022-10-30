@@ -64,7 +64,7 @@ byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, char *buf);
 void closeAllFds(int tty_fd_to_dup);
 
 void ResetBorderPattern(void);
-void FallBackKeyAction(Twindow W, event_keyboard *EventK);
+void FallBackKeyAction(Twindow window, event_keyboard *EventK);
 
 char **TokenizeStringVec(uldat len, char *text);
 char **TokenizeTRuneVec(uldat len, trune *text);

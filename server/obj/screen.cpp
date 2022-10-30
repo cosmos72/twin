@@ -18,8 +18,8 @@
 #include <new>
 #include <Tw/datasizes.h> // TW_MAXDAT
 
-screen Sscreen::Create(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg) {
-  screen S = NULL;
+Tscreen Sscreen::Create(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg) {
+  Tscreen S = NULL;
   if (bgwidth && bgheight) {
     void *addr = AllocMem0(sizeof(Sscreen));
     if (addr) {
@@ -34,7 +34,7 @@ screen Sscreen::Create(dat namelen, const char *name, dat bgwidth, dat bgheight,
   return S;
 }
 
-screen Sscreen::Init(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg) {
+Tscreen Sscreen::Init(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg) {
   size_t size = (size_t)bgwidth * bgheight * sizeof(tcell);
 
   if (!size || !((Twidget)this)

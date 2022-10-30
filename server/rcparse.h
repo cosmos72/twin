@@ -73,7 +73,7 @@
  * [ButtonSelection <n>]
  *
  * Interactive <kind>
- * # Scroll, Move, Resize, Screen, Menu
+ * # Scroll, Move, Resize, screen, Menu
  *
  * Key "<keyname>" <context> <function>
  *
@@ -820,7 +820,7 @@ static str TokenName(ldat id) {
   case RESIZESCREEN:
     return "ResizeScreen";
   case SCREEN:
-    return "Screen";
+    return "screen";
   case SCROLL:
     return "Scroll";
   case SENDTOSCREEN:
@@ -1117,7 +1117,7 @@ static void WriteGlobals(void) {
   m += sizeof(GlobalShadows);
 }
 
-static screen FindNameInScreens(dat len, const char *name, screen S) {
+static Tscreen FindNameInScreens(dat len, const char *name, Tscreen S) {
   while (S) {
     if (len == S->NameLen && !memcmp(name, S->Name, len))
       return S;
@@ -1135,8 +1135,8 @@ static node FindNameInList(uldat len, const char *name, node list) {
   return NULL;
 }
 
-static void DeleteScreens(screen first) {
-  screen s = first, next;
+static void DeleteScreens(Tscreen first) {
+  Tscreen s = first, next;
   while (s) {
     next = s->Next;
     s->Delete();
@@ -1147,9 +1147,9 @@ static void DeleteScreens(screen first) {
 /*
  * create new screens as needed or fail with no side effects
  */
-static byte CreateNeededScreens(node list, screen *res_Screens) {
+static byte CreateNeededScreens(node list, Tscreen *res_Screens) {
   node body;
-  screen s, prev = (screen)0, top = (screen)0;
+  Tscreen s, prev = (Tscreen)0, top = (Tscreen)0;
   cstr n;
   tcell *attr, *r;
   trune f;
@@ -1208,11 +1208,11 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
  * make screens in new_Screens visible if they don't exist,
  * otherwise copy their background then delete them.
  */
-static void UpdateVisibleScreens(screen new_Screens) {
-  screen S, Next, Orig;
+static void UpdateVisibleScreens(Tscreen new_Screens) {
+  Tscreen S, Next, Orig;
   for (S = new_Screens; S; S = Next) {
     Next = S->Next;
-    S->Next = (screen)0;
+    S->Next = (Tscreen)0;
 
     if ((Orig = FindNameInScreens(S->NameLen, S->Name, All->FirstScreen))) {
       Orig->USE.B.BgWidth = S->USE.B.BgWidth;
@@ -1233,7 +1233,7 @@ static void UpdateVisibleScreens(screen new_Screens) {
  * Delete no-longer needed screens (all except "1" and ones in list)
  */
 static void DeleteUnneededScreens(node list) {
-  screen S, Next;
+  Tscreen S, Next;
   for (S = All->FirstScreen; S; S = Next) {
     Next = S->Next;
     if ((S->NameLen != 1 || S->Name[0] != '1') && !FindNameInList(S->NameLen, S->Name, list)) {
@@ -1258,8 +1258,8 @@ static byte NewCommonMenu(void *const *shm_M, Tmenu *res_CommonMenu, node **res_
   uldat new_MenuBindsMax;
 
   Tmenu Menu = (Tmenu)0;
-  Tmenuitem Item;
-  Twindow W;
+  Tmenuitem item;
+  Twindow w;
   Trow Row;
   node N, M;
   uldat maxlen, l;
@@ -1293,10 +1293,10 @@ static byte NewCommonMenu(void *const *shm_M, Tmenu *res_CommonMenu, node **res_
   /* ok, now create the CommonMenu. Fill new_MenuBinds[] as we proceed */
 
   for (M = new_MenuList; M; M = M->next) {
-    if ((W = Win4Menu(Menu)) && (Item = Item4Menu(Menu, W, ttrue, strlen(M->name), M->name))) {
+    if ((w = Win4Menu(Menu)) && (item = Item4Menu(Menu, w, ttrue, strlen(M->name), M->name))) {
 
-      if (!Item->Prev)
-        Item->Left = 0; /* remove padding */
+      if (!item->Prev)
+        item->Left = 0; /* remove padding */
 
       maxlen = 0;
 
@@ -1315,15 +1315,15 @@ static byte NewCommonMenu(void *const *shm_M, Tmenu *res_CommonMenu, node **res_
 
       for (N = M->body; N; N = N->next) {
         if (N->body && N->body->id != NOP) {
-          if ((Row = Row4Menu(W, 0, ROW_ACTIVE, strlen(N->name), N->name))) {
+          if ((Row = Row4Menu(w, 0, ROW_ACTIVE, strlen(N->name), N->name))) {
 
             Row->Code = (udat)(new_MenuBindsMax + COD_RESERVED);
             new_MenuBinds[new_MenuBindsMax++] = N->body;
           }
         } else if (N->name && N->name[0]) {
-          Row = Row4Menu(W, 0, ROW_INACTIVE, strlen(N->name), N->name);
+          Row = Row4Menu(w, 0, ROW_INACTIVE, strlen(N->name), N->name);
         } else {
-          Row = Row4Menu(W, 0, ROW_IGNORE, maxlen, Line);
+          Row = Row4Menu(w, 0, ROW_IGNORE, maxlen, Line);
         }
         if (!Row)
           break;
@@ -1357,7 +1357,7 @@ static byte ReadGlobals(void) {
   Tmenu new_CommonMenu;
   node *new_MenuBinds = (node *)0;
   uldat new_MenuBindsMax;
-  screen new_Screens = (screen)0;
+  Tscreen new_Screens = (Tscreen)0;
 
   if (!CreateNeededScreens((node)M[ScreenIndex], &new_Screens))
     return tfalse;

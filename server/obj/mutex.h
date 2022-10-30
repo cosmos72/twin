@@ -17,10 +17,10 @@
 
 struct SmutexFn {
   uldat Magic;
-  void (*Insert)(Tmutex, all, Tmutex Prev, Tmutex Next);
+  void (*Insert)(Tmutex, Tall, Tmutex Prev, Tmutex Next);
   void (*Remove)(Tmutex);
   void (*Delete)(Tmutex);
-  void (*ChangeField)(Tmutex, udat field, uldat CLEARMask, uldat XORMask);
+  void (*ChangeField)(Tmutex, udat field, uldat clear_mask, uldat xor_mask);
   /* Tmutex */
   TobjFn Fn_Obj;
   void (*Own)(Tmutex, Tmsgport);
@@ -30,7 +30,7 @@ struct SmutexFn {
 struct Smutex : public Sobj {
   TmutexFn Fn;
   Tmutex Prev, Next; /* in the same All */
-  all All;
+  Tall All;
   /* Tmutex */
   Tmutex O_Prev, O_Next; /* owned by the same MsgPort */
   Tmsgport Owner;
@@ -44,7 +44,7 @@ struct Smutex : public Sobj {
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(all a, Tmutex prev, Tmutex next) {
+  void Insert(Tall a, Tmutex prev, Tmutex next) {
     Fn->Insert(this, a, prev, next);
   }
   void Remove() {

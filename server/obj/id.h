@@ -57,7 +57,7 @@ enum e_id /*: uldat*/ {
 };
 
 bool AssignId(const e_id class_magic_id, Tobj Obj);
-bool AssignId_all(all Obj);
+bool AssignId_all(Tall Obj);
 void DropId(Tobj Obj);
 Tobj Id2Obj(e_magic_byte expected_magic_byte, uldat Id);
 

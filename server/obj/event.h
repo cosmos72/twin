@@ -83,7 +83,7 @@ struct event_common {
 struct event_map {
   Twidget W;
   udat Code, pad; /* unused */
-  screen Screen;
+  Tscreen Screen;
 };
 
 #define SIZEOF_EVENT_MAP (sizeof(event_map))

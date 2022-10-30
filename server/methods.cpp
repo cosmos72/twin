@@ -121,49 +121,49 @@ static struct SobjFn _FnObj = {
 
 /* Twidget */
 
-static void InsertWidget(Twidget W, Twidget Parent, Twidget Prev, Twidget Next) {
+static void InsertWidget(Twidget w, Twidget Parent, Twidget Prev, Twidget Next) {
   if (Parent) {
     /*
-     * don't check W->Parent here, as Raise() and Lower() call
-     * RemoveWidget() then InsertWidget() but RemoveWidget() does not reset W->Parent
+     * don't check w->Parent here, as Raise() and Lower() call
+     * RemoveWidget() then InsertWidget() but RemoveWidget() does not reset w->Parent
      */
-    InsertGeneric((TobjEntry)W, (TobjList)&Parent->FirstW, (TobjEntry)Prev, (TobjEntry)Next, NULL);
+    InsertGeneric((TobjEntry)w, (TobjList)&Parent->FirstW, (TobjEntry)Prev, (TobjEntry)Next, NULL);
   }
 }
 
-static void RemoveWidget(Twidget W) {
-  if (W->Parent) {
-    RemoveGeneric((TobjEntry)W, (TobjList)&W->Parent->FirstW, NULL);
+static void RemoveWidget(Twidget w) {
+  if (w->Parent) {
+    RemoveGeneric((TobjEntry)w, (TobjList)&w->Parent->FirstW, NULL);
   }
 }
 
-static void DeleteWidget(Twidget W) {
-  W->UnMap();
-  if (W->Hook) {
-    W->RemoveHook(W->Hook, W->WhereHook);
+static void DeleteWidget(Twidget w) {
+  w->UnMap();
+  if (w->Hook) {
+    w->RemoveHook(w->Hook, w->WhereHook);
   }
-  if (W->ShutDownHook) {
-    W->ShutDownHook(W);
+  if (w->ShutDownHook) {
+    w->ShutDownHook(w);
   }
-  W->DisOwn();
-  while (W->FirstW) {
-    W->FirstW->UnMap();
+  w->DisOwn();
+  while (w->FirstW) {
+    w->FirstW->UnMap();
   }
-  DeleteObj((Tobj)W);
+  DeleteObj((Tobj)w);
 }
 
-static void SetFillWidget(Twidget W, tcell Fill) {
-  if (W->USE_Fill != Fill) {
-    W->USE_Fill = Fill;
-    if (W->Parent)
-      DrawAreaWidget(W);
+static void SetFillWidget(Twidget w, tcell Fill) {
+  if (w->USE_Fill != Fill) {
+    w->USE_Fill = Fill;
+    if (w->Parent)
+      DrawAreaWidget(w);
   }
 }
 
-static void ChangeFieldWidget(Twidget W, udat field, uldat CLEARMask, uldat XORMask) {
+static void ChangeFieldWidget(Twidget w, udat field, uldat clear_mask, uldat xor_mask) {
   uldat i;
 
-  if (W)
+  if (w)
     switch (field) {
     case TWS_widget_Left:
     case TWS_widget_Up:
@@ -171,33 +171,33 @@ static void ChangeFieldWidget(Twidget W, udat field, uldat CLEARMask, uldat XORM
     case TWS_widget_Height:
       break;
     case TWS_widget_USE_Fill:
-      i = (tcell)((W->USE_Fill & ~CLEARMask) ^ XORMask);
-      SetFillWidget(W, i);
+      i = (tcell)((w->USE_Fill & ~clear_mask) ^ xor_mask);
+      SetFillWidget(w, i);
       break;
     case TWS_widget_XLogic:
     case TWS_widget_YLogic:
       break;
     default:
-      W->Fn->Fn_Obj->ChangeField((Tobj)W, field, CLEARMask, XORMask);
+      w->Fn->Fn_Obj->ChangeField(w, field, clear_mask, xor_mask);
       break;
     }
 }
 
-Twidget FocusWidget(Twidget W) {
+Twidget FocusWidget(Twidget w) {
   Twidget oldW;
-  if (W)
-    oldW = W->KbdFocus();
+  if (w)
+    oldW = w->KbdFocus();
   else
     oldW = Do(KbdFocus, widget)(NULL);
 
-  if (W != oldW && (!W || W->Parent == (Twidget)All->FirstScreen)) {
-    if (W && IS_WINDOW(W))
-      DrawBorderWindow((Twindow)W, BORDER_ANY);
+  if (w != oldW && (!w || w->Parent == (Twidget)All->FirstScreen)) {
+    if (w && IS_WINDOW(w))
+      DrawBorderWindow((Twindow)w, BORDER_ANY);
     if (oldW && IS_WINDOW(oldW))
       DrawBorderWindow((Twindow)oldW, BORDER_ANY);
-    if ((W && IS_WINDOW(W)) || (oldW && IS_WINDOW(oldW))) {
+    if ((w && IS_WINDOW(w)) || (oldW && IS_WINDOW(oldW))) {
       UpdateCursor();
-      if (!W || !IS_WINDOW(W) || !(((Twindow)W)->Flags & WINDOWFL_MENU))
+      if (!w || !IS_WINDOW(w) || !(((Twindow)w)->Flags & WINDOWFL_MENU))
         All->FirstScreen->DrawMenu(0, TW_MAXDAT);
     }
   }
@@ -205,14 +205,14 @@ Twidget FocusWidget(Twidget W) {
 }
 
 #define TtyKbdFocus FakeKbdFocus
-Twidget FakeKbdFocus(Twidget W) {
+Twidget FakeKbdFocus(Twidget w) {
   Twidget oldW;
   Twidget P;
-  screen Screen = W && (P = W->Parent) && IS_SCREEN(P) ? (screen)P : All->FirstScreen;
+  Tscreen screen = w && (P = w->Parent) && IS_SCREEN(P) ? (Tscreen)P : All->FirstScreen;
 
-  if (Screen) {
-    oldW = Screen->FocusW;
-    Screen->FocusW = W;
+  if (screen) {
+    oldW = screen->FocusW;
+    screen->FocusW = w;
   } else
     oldW = (Twidget)0;
 
@@ -220,11 +220,11 @@ Twidget FakeKbdFocus(Twidget W) {
 }
 
 static Tgadget FindGadgetByCode(Twidget Parent, udat Code) {
-  Twidget W;
+  Twidget w;
 
-  for (W = Parent->FirstW; W; W = W->Next) {
-    if (IS_GADGET(W) && ((Tgadget)W)->Code == Code)
-      return (Tgadget)W;
+  for (w = Parent->FirstW; w; w = w->Next) {
+    if (IS_GADGET(w) && ((Tgadget)w)->Code == Code)
+      return (Tgadget)w;
   }
   return (Tgadget)0;
 }
@@ -239,96 +239,96 @@ static void DecMouseMotionN(void) {
     EnableMouseMotionEvents(tfalse);
 }
 
-static void MapWidget(Twidget W, Twidget Parent) {
+static void MapWidget(Twidget w, Twidget Parent) {
   Tmsg msg;
 
-  if (W && !W->Parent && !W->MapQueueMsg && Parent) {
+  if (w && !w->Parent && !w->MapQueueMsg && Parent) {
     if (IS_SCREEN(Parent)) {
       if (Ext(WM, MsgPort) && (msg = New(msg)(msg_map, 0))) {
-        msg->Event.EventMap.W = W;
+        msg->Event.EventMap.W = w;
         msg->Event.EventMap.Code = 0;
-        msg->Event.EventMap.Screen = (screen)Parent;
-        W->MapQueueMsg = msg;
+        msg->Event.EventMap.Screen = (Tscreen)Parent;
+        w->MapQueueMsg = msg;
         SendMsg(Ext(WM, MsgPort), msg);
       } else
-        W->MapTopReal((screen)Parent);
+        w->MapTopReal((Tscreen)Parent);
     } else if (IS_WIDGET(Parent)) {
-      if (W->Up == TW_MAXDAT) {
-        W->Left = Parent->XLogic;
-        W->Up = Parent->YLogic;
+      if (w->Up == TW_MAXDAT) {
+        w->Left = Parent->XLogic;
+        w->Up = Parent->YLogic;
       }
-      InsertFirst(W, W, Parent);
-      W->Parent = Parent;
+      InsertFirst(W, w, Parent);
+      w->Parent = Parent;
 
-      DrawAreaWidget(W);
+      DrawAreaWidget(w);
 
-      if (W->Attr & (WIDGET_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS))
+      if (w->Attr & (WIDGET_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS))
         IncMouseMotionN();
 
-      if (W->MapUnMapHook)
-        W->MapUnMapHook(W);
+      if (w->MapUnMapHook)
+        w->MapUnMapHook(w);
     }
   }
 }
 
-static void MapTopRealWidget(Twidget W, screen Screen) {
+static void MapTopRealWidget(Twidget w, Tscreen screen) {
   Twidget OldW;
 
-  if (Screen && !W->Parent && (!IS_WINDOW(W) || ((Twindow)W)->Menu)) {
-    if (W->MapQueueMsg)
+  if (screen && !w->Parent && (!IS_WINDOW(w) || ((Twindow)w)->Menu)) {
+    if (w->MapQueueMsg)
       /*
        * let the upper layer do this:
-       * W->MapQueueMsg->Delete();
+       * w->MapQueueMsg->Delete();
        */
-      W->MapQueueMsg = (Tmsg)0;
+      w->MapQueueMsg = (Tmsg)0;
 
-    if (W->Up == TW_MAXDAT) {
-      W->Left = Screen->XLogic;
-      W->Up = Max2(Screen->YLimit + 1, 0) + Screen->YLogic;
+    if (w->Up == TW_MAXDAT) {
+      w->Left = screen->XLogic;
+      w->Up = Max2(screen->YLimit + 1, 0) + screen->YLogic;
     } else {
-      W->Left += Screen->XLogic;
-      W->Up += Screen->YLogic;
+      w->Left += screen->XLogic;
+      w->Up += screen->YLogic;
     }
 
-    InsertFirst(W, W, (Twidget)Screen);
-    W->Parent = (Twidget)Screen;
+    InsertFirst(W, w, (Twidget)screen);
+    w->Parent = (Twidget)screen;
 
     /* top-level widgets must be visible */
-    W->Flags &= ~WINDOWFL_NOTVISIBLE;
+    w->Flags &= ~WINDOWFL_NOTVISIBLE;
 
-    if (W->Attr & (WIDGET_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS))
+    if (w->Attr & (WIDGET_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS))
       IncMouseMotionN();
 
-    if (Screen == All->FirstScreen) {
-      OldW = W->KbdFocus();
+    if (screen == All->FirstScreen) {
+      OldW = w->KbdFocus();
       if (OldW && IS_WINDOW(OldW))
         DrawBorderWindow((Twindow)OldW, BORDER_ANY);
       UpdateCursor();
     }
-    if (IS_WINDOW(W))
-      DrawAreaWindow2((Twindow)W);
+    if (IS_WINDOW(w))
+      DrawAreaWindow2((Twindow)w);
     else
-      DrawAreaWidget(W);
-    if (!(W->Flags & WINDOWFL_MENU))
-      Screen->DrawMenu(0, TW_MAXDAT);
+      DrawAreaWidget(w);
+    if (!(w->Flags & WINDOWFL_MENU))
+      screen->DrawMenu(0, TW_MAXDAT);
 
-    if (W->MapUnMapHook)
-      W->MapUnMapHook(W);
+    if (w->MapUnMapHook)
+      w->MapUnMapHook(w);
 
-    if (Screen->FnHookW)
-      Screen->FnHookW(Screen->HookW);
+    if (screen->FnHookW)
+      screen->FnHookW(screen->HookW);
   }
 }
 
-static void UnMapWidget(Twidget W) {
+static void UnMapWidget(Twidget w) {
   Twidget Parent;
   Twindow Next;
-  screen Screen;
+  Tscreen screen;
   byte wasFocus;
 
-  if (W && (Parent = W->Parent)) {
+  if (w && (Parent = w->Parent)) {
     if (IS_SCREEN(Parent)) {
-      if ((Screen = (screen)Parent) == All->FirstScreen && W == (Twidget)Screen->MenuWindow) {
+      if ((screen = (Tscreen)Parent) == All->FirstScreen && w == (Twidget)screen->MenuWindow) {
         /*
          * ! DANGER !
          * Trying to UnMap() the Tmenu owner.
@@ -337,40 +337,40 @@ static void UnMapWidget(Twidget W) {
         CloseMenu();
       }
 
-      if (W->Attr & (WIDGET_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS))
+      if (w->Attr & (WIDGET_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS))
         DecMouseMotionN();
 
-      if (Screen->ClickWindow == (Twindow)W)
-        Screen->ClickWindow = NULL;
+      if (screen->ClickWindow == (Twindow)w)
+        screen->ClickWindow = NULL;
 
-      if ((wasFocus = W == Screen->FocusW)) {
-        if (W->Flags & WINDOWFL_MENU)
-          Next = Screen->MenuWindow;
+      if ((wasFocus = w == screen->FocusW)) {
+        if (w->Flags & WINDOWFL_MENU)
+          Next = screen->MenuWindow;
         else {
-          if ((Twidget)W == Screen->FirstW)
-            Next = (Twindow)W->Next;
+          if ((Twidget)w == screen->FirstW)
+            Next = (Twindow)w->Next;
           else
-            Next = (Twindow)Screen->FirstW;
+            Next = (Twindow)screen->FirstW;
 
           while (Next && !IS_WINDOW(Next))
             Next = (Twindow)Next->Next;
         }
       }
 
-      W->Remove();
-      if (IS_WINDOW(W))
-        DrawAreaWindow2((Twindow)W);
+      w->Remove();
+      if (IS_WINDOW(w))
+        DrawAreaWindow2((Twindow)w);
       else
-        DrawAreaWidget(W);
+        DrawAreaWidget(w);
 
       if (IS_SCREEN(Parent)) {
-        W->Left = 0;
-        W->Up = TW_MAXDAT;
+        w->Left = 0;
+        w->Up = TW_MAXDAT;
       }
-      W->Parent = (Twidget)0;
+      w->Parent = (Twidget)0;
 
       if (wasFocus) {
-        if (Screen == All->FirstScreen) {
+        if (screen == All->FirstScreen) {
           /*
            * in case the user was dragging this Twindow...
            */
@@ -382,63 +382,63 @@ static void UnMapWidget(Twidget W) {
             DrawBorderWindow(Next, BORDER_ANY);
           } else
             Do(KbdFocus, window)(NULL);
-          if (!(W->Flags & WINDOWFL_MENU))
-            Screen->DrawMenu(0, TW_MAXDAT);
+          if (!(w->Flags & WINDOWFL_MENU))
+            screen->DrawMenu(0, TW_MAXDAT);
           UpdateCursor();
         } else
-          Screen->FocusW = (Twidget)Next;
+          screen->FocusW = (Twidget)Next;
       }
 
-      if (W->MapUnMapHook)
-        W->MapUnMapHook(W);
+      if (w->MapUnMapHook)
+        w->MapUnMapHook(w);
 
-      if (Screen->FnHookW)
-        Screen->FnHookW(Screen->HookW);
+      if (screen->FnHookW)
+        screen->FnHookW(screen->HookW);
 
     } else {
       /* UnMap() a sub-window */
-      if (W == Parent->SelectW)
+      if (w == Parent->SelectW)
         Parent->SelectW = (Twidget)0;
 
-      W->Remove();
-      DrawAreaWidget(W);
-      W->Parent = (Twidget)0;
+      w->Remove();
+      DrawAreaWidget(w);
+      w->Parent = (Twidget)0;
 
-      if (W->Attr & (WIDGET_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS))
+      if (w->Attr & (WIDGET_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS))
         DecMouseMotionN();
 
-      if (W->MapUnMapHook)
-        W->MapUnMapHook(W);
+      if (w->MapUnMapHook)
+        w->MapUnMapHook(w);
     }
-  } else if (W->MapQueueMsg) {
+  } else if (w->MapQueueMsg) {
     /* the window was still waiting to be mapped! */
-    W->MapQueueMsg->Delete();
-    W->MapQueueMsg = (Tmsg)0;
+    w->MapQueueMsg->Delete();
+    w->MapQueueMsg = (Tmsg)0;
   }
 }
 
-static void RaiseW(Twidget W) {
-  RaiseWidget(W, tfalse);
+static void RaiseW(Twidget w) {
+  RaiseWidget(w, tfalse);
 }
 
-static void LowerW(Twidget W) {
-  LowerWidget(W, tfalse);
+static void LowerW(Twidget w) {
+  LowerWidget(w, tfalse);
 }
 
-static void SetXYWidget(Twidget W, dat X, dat Y) {
+static void SetXYWidget(Twidget w, dat X, dat Y) {
   Twidget Prev, Next;
 
-  if (W->Parent) {
-    Prev = W->Prev;
-    Next = W->Next;
-    W->Remove();
-    DrawAreaWidget(W);
+  if (w->Parent) {
+    Prev = w->Prev;
+    Next = w->Next;
+    w->Remove();
+    DrawAreaWidget(w);
   }
-  W->Left = X;
-  W->Up = Y;
-  if (W->Parent) {
-    InsertMiddle(W, W, W->Parent, Prev, Next);
-    DrawAreaWidget(W);
+  w->Left = X;
+  w->Up = Y;
+  if (w->Parent) {
+    InsertMiddle(w, w, w->Parent, Prev, Next);
+    DrawAreaWidget(w);
   }
 }
 
@@ -455,51 +455,51 @@ static void OwnWidget(Twidget Widget, Tmsgport Owner) {
   }
 }
 
-static void DisOwnWidget(Twidget W) {
+static void DisOwnWidget(Twidget w) {
   Tmsgport Owner;
-  if ((Owner = W->Owner)) {
-    if (W->O_Prev)
-      W->O_Prev->O_Next = W->O_Next;
-    else if (Owner->FirstW == W)
-      Owner->FirstW = W->O_Next;
+  if ((Owner = w->Owner)) {
+    if (w->O_Prev)
+      w->O_Prev->O_Next = w->O_Next;
+    else if (Owner->FirstW == w)
+      Owner->FirstW = w->O_Next;
 
-    if (W->O_Next)
-      W->O_Next->O_Prev = W->O_Prev;
-    else if (Owner->LastW == W)
-      Owner->LastW = W->O_Prev;
+    if (w->O_Next)
+      w->O_Next->O_Prev = w->O_Prev;
+    else if (Owner->LastW == w)
+      Owner->LastW = w->O_Prev;
 
-    W->O_Prev = W->O_Next = (Twidget)0;
-    W->Owner = (Tmsgport)0;
+    w->O_Prev = w->O_Next = (Twidget)0;
+    w->Owner = (Tmsgport)0;
   }
 }
 
-static void RecursiveDeleteWidget(Twidget W, Tmsgport maybeOwner) {
-  while (W->FirstW)
-    W->FirstW->RecursiveDelete(maybeOwner);
+static void RecursiveDeleteWidget(Twidget w, Tmsgport maybeOwner) {
+  while (w->FirstW)
+    w->FirstW->RecursiveDelete(maybeOwner);
 
-  if (W->Owner == maybeOwner)
-    W->Delete();
+  if (w->Owner == maybeOwner)
+    w->Delete();
   else
-    W->UnMap();
+    w->UnMap();
 }
 
-static byte InstallHookWidget(Twidget W, HookFn Hook, HookFn *WhereHook) {
-  if (W && !W->Hook && !W->WhereHook && Hook && WhereHook && !WhereHook[0] && !WhereHook[1]) {
+static byte InstallHookWidget(Twidget w, HookFn Hook, HookFn *WhereHook) {
+  if (w && !w->Hook && !w->WhereHook && Hook && WhereHook && !WhereHook[0] && !WhereHook[1]) {
 
-    W->Hook = WhereHook[0] = Hook;
-    W->WhereHook = WhereHook;
-    WhereHook[1] = (HookFn)W;
+    w->Hook = WhereHook[0] = Hook;
+    w->WhereHook = WhereHook;
+    WhereHook[1] = (HookFn)w;
     return ttrue;
   }
   return tfalse;
 }
 
-static void RemoveHookWidget(Twidget W, HookFn Hook, HookFn *WhereHook) {
-  if (W && Hook && W->Hook == Hook && WhereHook && W->WhereHook == WhereHook &&
-      WhereHook[0] == Hook && WhereHook[1] == (void *)W) {
+static void RemoveHookWidget(Twidget w, HookFn Hook, HookFn *WhereHook) {
+  if (w && Hook && w->Hook == Hook && WhereHook && w->WhereHook == WhereHook &&
+      WhereHook[0] == Hook && WhereHook[1] == (void *)w) {
 
-    W->Hook = *WhereHook = (HookFn)0;
-    W->WhereHook = (HookFn *)0;
+    w->Hook = *WhereHook = (HookFn)0;
+    w->WhereHook = (HookFn *)0;
     WhereHook[1] = (HookFn)0;
   }
 }
@@ -536,7 +536,7 @@ static void DeleteGadget(Tgadget G) {
   DeleteWidget((Twidget)G);
 }
 
-static void ChangeFieldGadget(Tgadget G, udat field, uldat CLEARMask, uldat XORMask) {
+static void ChangeFieldGadget(Tgadget G, udat field, uldat clear_mask, uldat xor_mask) {
   uldat i, mask;
 
   if (G)
@@ -549,9 +549,9 @@ static void ChangeFieldGadget(Tgadget G, udat field, uldat CLEARMask, uldat XORM
       break;
     case TWS_gadget_Flags:
       mask = GADGETFL_DISABLED | GADGETFL_TEXT_DEFCOL | GADGETFL_PRESSED | GADGETFL_TOGGLE;
-      CLEARMask &= mask;
-      XORMask &= mask;
-      i = (G->Flags & ~CLEARMask) ^ XORMask;
+      clear_mask &= mask;
+      xor_mask &= mask;
+      i = (G->Flags & ~clear_mask) ^ xor_mask;
       if ((i & mask) != (G->Flags & mask)) {
         if ((i & GADGETFL_PRESSED) != (G->Flags & GADGETFL_PRESSED)) {
           if (i & GADGETFL_PRESSED)
@@ -568,7 +568,7 @@ static void ChangeFieldGadget(Tgadget G, udat field, uldat CLEARMask, uldat XORM
       }
       break;
     default:
-      G->Fn->Fn_Widget->ChangeField((Twidget)G, field, CLEARMask, XORMask);
+      G->Fn->Fn_Widget->ChangeField((Twidget)G, field, clear_mask, xor_mask);
       break;
     }
 }
@@ -687,7 +687,7 @@ static struct SgadgetFn _FnGadget = {
     (Tgadget (*)(Tgadget, udat))FindGadgetByCode, (void (*)(Tgadget, dat, dat))SetXYWidget,
     (void (*)(Tgadget, tcell))SetFillWidget, (Twidget(*)(Tgadget))FocusWidget,
     (Twidget(*)(Tgadget))TtyKbdFocus, (void (*)(Tgadget, Twidget))MapWidget,
-    (void (*)(Tgadget))UnMapWidget, (void (*)(Tgadget, screen))MapTopRealWidget,
+    (void (*)(Tgadget))UnMapWidget, (void (*)(Tgadget, Tscreen))MapTopRealWidget,
     (void (*)(Tgadget))RaiseW, (void (*)(Tgadget))LowerW, (void (*)(Tgadget, Tmsgport))OwnWidget,
     (void (*)(Tgadget))DisOwnWidget, (void (*)(Tgadget, Tmsgport))RecursiveDeleteWidget,
     (void (*)(Tgadget, dat, dat, dat, dat, const char *, const trune *,
@@ -702,27 +702,27 @@ static struct SgadgetFn _FnGadget = {
 
 /* Twindow */
 
-static void DeleteWindow(Twindow W) {
-  W->UnMap();
-  if (W->Name)
-    FreeMem(W->Name);
-  if (W->ColName)
-    FreeMem(W->ColName);
-  if (W_USE(W, USECONTENTS)) {
-    if (W->USE.C.TtyData)
-      FreeMem(W->USE.C.TtyData);
-    if (W->USE.C.Contents)
-      FreeMem(W->USE.C.Contents);
-  } else if (W_USE(W, USEROWS)) {
-    DeleteList(W->USE.R.FirstRow);
+static void DeleteWindow(Twindow w) {
+  w->UnMap();
+  if (w->Name)
+    FreeMem(w->Name);
+  if (w->ColName)
+    FreeMem(w->ColName);
+  if (W_USE(w, USECONTENTS)) {
+    if (w->USE.C.TtyData)
+      FreeMem(w->USE.C.TtyData);
+    if (w->USE.C.Contents)
+      FreeMem(w->USE.C.Contents);
+  } else if (W_USE(w, USEROWS)) {
+    DeleteList(w->USE.R.FirstRow);
   }
-  DeleteWidget((Twidget)W);
+  DeleteWidget((Twidget)w);
 }
 
-static void ChangeFieldWindow(Twindow W, udat field, uldat CLEARMask, uldat XORMask) {
+static void ChangeFieldWindow(Twindow w, udat field, uldat clear_mask, uldat xor_mask) {
   uldat i, mask;
 
-  if (W)
+  if (w)
     switch (field) {
     case TWS_window_CurX:
     case TWS_window_CurY:
@@ -744,50 +744,50 @@ static void ChangeFieldWindow(Twindow W, udat field, uldat CLEARMask, uldat XORM
       tcolor *C = NULL;
       switch (field) {
       case TWS_window_ColGadgets:
-        C = &W->ColGadgets;
+        C = &w->ColGadgets;
         break;
       case TWS_window_ColArrows:
-        C = &W->ColArrows;
+        C = &w->ColArrows;
         break;
       case TWS_window_ColBars:
-        C = &W->ColBars;
+        C = &w->ColBars;
         break;
       case TWS_window_ColTabs:
-        C = &W->ColTabs;
+        C = &w->ColTabs;
         break;
       case TWS_window_ColBorder:
-        C = &W->ColBorder;
+        C = &w->ColBorder;
         break;
       case TWS_window_ColText:
-        C = &W->ColText;
+        C = &w->ColText;
         break;
       case TWS_window_ColSelect:
-        C = &W->ColSelect;
+        C = &w->ColSelect;
         break;
       case TWS_window_ColDisabled:
-        C = &W->ColDisabled;
+        C = &w->ColDisabled;
         break;
       case TWS_window_ColSelectDisabled:
-        C = &W->ColSelectDisabled;
+        C = &w->ColSelectDisabled;
         break;
       default:
         break;
       }
-      i = (*C & ~CLEARMask) ^ XORMask;
+      i = (*C & ~clear_mask) ^ xor_mask;
       if (i != *C) {
         *C = i;
         /* FIXME: this is an overkill */
-        DrawAreaWidget((Twidget)W);
+        DrawAreaWidget((Twidget)w);
       }
     } break;
     case TWS_window_Flags:
       mask = WINDOWFL_CURSOR_ON;
-      CLEARMask &= mask;
-      XORMask &= mask;
-      i = (W->Flags & ~CLEARMask) ^ XORMask;
-      if ((i & mask) != (W->Flags & mask)) {
-        W->Flags = i;
-        if (ContainsCursor((Twidget)W))
+      clear_mask &= mask;
+      xor_mask &= mask;
+      i = (w->Flags & ~clear_mask) ^ xor_mask;
+      if ((i & mask) != (w->Flags & mask)) {
+        w->Flags = i;
+        if (ContainsCursor((Twidget)w))
           UpdateCursor();
       }
       break;
@@ -795,26 +795,26 @@ static void ChangeFieldWindow(Twindow W, udat field, uldat CLEARMask, uldat XORM
       mask = WINDOW_WANT_KEYS | WINDOW_WANT_MOUSE | WINDOW_WANT_CHANGES | WINDOW_AUTO_FOCUS |
              WINDOW_DRAG | WINDOW_RESIZE | WINDOW_CLOSE | WINDOW_ROLLED_UP | WINDOW_X_BAR |
              WINDOW_Y_BAR | WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE_MOTION;
-      CLEARMask &= mask;
-      XORMask &= mask;
-      i = (W->Attr & ~CLEARMask) ^ XORMask;
-      if ((i & mask) != (W->Attr & mask)) {
-        if ((i & WINDOW_ROLLED_UP) != (W->Attr & WINDOW_ROLLED_UP))
-          RollUpWindow(W, !!(i & WINDOW_ROLLED_UP));
+      clear_mask &= mask;
+      xor_mask &= mask;
+      i = (w->Attr & ~clear_mask) ^ xor_mask;
+      if ((i & mask) != (w->Attr & mask)) {
+        if ((i & WINDOW_ROLLED_UP) != (w->Attr & WINDOW_ROLLED_UP))
+          RollUpWindow(w, !!(i & WINDOW_ROLLED_UP));
         if ((i & (WINDOW_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS)) !=
-                (W->Attr & (WINDOW_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS)) &&
-            W->Parent) {
+                (w->Attr & (WINDOW_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS)) &&
+            w->Parent) {
           if (i & (WINDOW_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS))
             IncMouseMotionN();
           else
             DecMouseMotionN();
         }
         mask = WINDOW_RESIZE | WINDOW_CLOSE | WINDOW_X_BAR | WINDOW_Y_BAR;
-        if ((i & mask) != (W->Attr & mask) && W->Parent) {
-          W->Attr = i;
-          DrawBorderWindow(W, BORDER_ANY);
+        if ((i & mask) != (w->Attr & mask) && w->Parent) {
+          w->Attr = i;
+          DrawBorderWindow(w, BORDER_ANY);
         } else
-          W->Attr = i;
+          w->Attr = i;
       }
       break;
     case TWS_window_State:
@@ -827,142 +827,142 @@ static void ChangeFieldWindow(Twindow W, udat field, uldat CLEARMask, uldat XORM
     case TWS_window_HLogic:
       break;
     default:
-      W->Fn->Fn_Widget->ChangeField((Twidget)W, field, CLEARMask, XORMask);
+      w->Fn->Fn_Widget->ChangeField((Twidget)w, field, clear_mask, xor_mask);
       break;
     }
 }
 
-static void SetTitleWindow(Twindow W, dat titlelen, char *title) {
+static void SetTitleWindow(Twindow w, dat titlelen, char *title) {
   Twidget P;
 
-  if (W->Name)
-    FreeMem(W->Name);
+  if (w->Name)
+    FreeMem(w->Name);
 
-  W->NameLen = titlelen;
-  W->Name = title;
+  w->NameLen = titlelen;
+  w->Name = title;
 
 #if 1
   /*
    * do not allow changing Twindow borders just because
    * some untrusted application set a new title
    */
-  DrawBorderWindow(W, BORDER_UP);
+  DrawBorderWindow(w, BORDER_UP);
 #else
   /* user may have title-dependent borders in ~/.config/twin/twinrc, honour them: */
   Win->BorderPattern[0] = Win->BorderPattern[1] = NULL;
-  DrawBorderWindow(W, BORDER_ANY);
+  DrawBorderWindow(w, BORDER_ANY);
 #endif
 
-  if ((P = W->Parent) && IS_SCREEN(P)) {
+  if ((P = w->Parent) && IS_SCREEN(P)) {
     /* need to update Twindow list with new name ? */
-    if (((screen)P)->FnHookW)
-      ((screen)P)->FnHookW(((screen)P)->HookW);
+    if (((Tscreen)P)->FnHookW)
+      ((Tscreen)P)->FnHookW(((Tscreen)P)->HookW);
   }
 }
 
-static void SetColTextWindow(Twindow W, tcolor ColText) {
-  W->ColText = ColText;
+static void SetColTextWindow(Twindow w, tcolor ColText) {
+  w->ColText = ColText;
 }
 
-static void SetColorsWindow(Twindow W, udat Bitmap, tcolor ColGadgets, tcolor ColArrows,
+static void SetColorsWindow(Twindow w, udat Bitmap, tcolor ColGadgets, tcolor ColArrows,
                             tcolor ColBars, tcolor ColTabs, tcolor ColBorder, tcolor ColText,
                             tcolor ColSelect, tcolor ColDisabled, tcolor ColSelectDisabled) {
   if (Bitmap & 1)
-    W->ColGadgets = ColGadgets;
+    w->ColGadgets = ColGadgets;
   if (Bitmap & 2)
-    W->ColArrows = ColArrows;
+    w->ColArrows = ColArrows;
   if (Bitmap & 4)
-    W->ColBars = ColBars;
+    w->ColBars = ColBars;
   if (Bitmap & 8)
-    W->ColTabs = ColTabs;
+    w->ColTabs = ColTabs;
   if (Bitmap & 0x10)
-    W->ColBorder = ColBorder;
+    w->ColBorder = ColBorder;
   if (Bitmap & 0x20) {
-    W->ColText = ColText;
-    if (W_USE(W, USECONTENTS))
-      W->USE.C.TtyData->Color = ColText;
+    w->ColText = ColText;
+    if (W_USE(w, USECONTENTS))
+      w->USE.C.TtyData->Color = ColText;
   }
   if (Bitmap & 0x40)
-    W->ColSelect = ColSelect;
+    w->ColSelect = ColSelect;
   if (Bitmap & 0x80)
-    W->ColDisabled = ColDisabled;
+    w->ColDisabled = ColDisabled;
   if (Bitmap & 0x100)
-    W->ColSelectDisabled = ColSelectDisabled;
-  if (W->Parent)
-    DrawBorderWindow(W, BORDER_ANY);
+    w->ColSelectDisabled = ColSelectDisabled;
+  if (w->Parent)
+    DrawBorderWindow(w, BORDER_ANY);
 }
 
-static void SetXYWindow(Twindow W, dat X, dat Y) {
+static void SetXYWindow(Twindow w, dat X, dat Y) {
   Twidget Prev, Next;
 
-  if (W->Parent) {
-    Prev = W->Prev;
-    Next = W->Next;
-    W->Remove();
-    DrawAreaWindow2(W);
+  if (w->Parent) {
+    Prev = w->Prev;
+    Next = w->Next;
+    w->Remove();
+    DrawAreaWindow2(w);
   }
-  W->Left = X;
-  W->Up = Y;
-  if (W->Parent) {
-    if (IS_SCREEN(W->Parent)) {
-      W->Left += W->Parent->XLogic;
-      W->Up += W->Parent->YLogic;
+  w->Left = X;
+  w->Up = Y;
+  if (w->Parent) {
+    if (IS_SCREEN(w->Parent)) {
+      w->Left += w->Parent->XLogic;
+      w->Up += w->Parent->YLogic;
     }
-    InsertMiddle(W, W, W->Parent, Prev, Next);
-    DrawAreaWindow2(W);
+    InsertMiddle(w, w, w->Parent, Prev, Next);
+    DrawAreaWindow2(w);
   }
 }
 
-static void ConfigureWindow(Twindow W, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
+static void ConfigureWindow(Twindow w, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
                             dat MaxXWidth, dat MaxYWidth) {
   Twidget Prev, Next;
-  dat HasBorder = 2 * !(W->Flags & WINDOWFL_BORDERLESS);
+  dat HasBorder = 2 * !(w->Flags & WINDOWFL_BORDERLESS);
 
-  if (W->Parent) {
-    Prev = W->Prev;
-    Next = W->Next;
-    W->Remove();
-    DrawAreaWindow2(W);
+  if (w->Parent) {
+    Prev = w->Prev;
+    Next = w->Next;
+    w->Remove();
+    DrawAreaWindow2(w);
   }
 
   if (Bitmap & 1) {
-    W->Left = Left;
-    if (W->Parent && IS_SCREEN(W->Parent))
-      W->Left += W->Parent->XLogic;
+    w->Left = Left;
+    if (w->Parent && IS_SCREEN(w->Parent))
+      w->Left += w->Parent->XLogic;
   }
   if (Bitmap & 2) {
-    W->Up = Up;
-    if (W->Parent && IS_SCREEN(W->Parent))
-      W->Up += W->Parent->YLogic;
+    w->Up = Up;
+    if (w->Parent && IS_SCREEN(w->Parent))
+      w->Up += w->Parent->YLogic;
   }
 
   if (Bitmap & 4) {
     if (MinXWidth <= TW_MAXDAT - HasBorder)
       MinXWidth = Max2(MinXWidth, MinXWidth + HasBorder);
-    W->MinXWidth = MinXWidth;
-    W->XWidth = Max2(MinXWidth, W->XWidth);
+    w->MinXWidth = MinXWidth;
+    w->XWidth = Max2(MinXWidth, w->XWidth);
   }
   if (Bitmap & 8) {
     if (MinYWidth <= TW_MAXDAT - HasBorder)
       MinYWidth = Max2(MinYWidth, MinYWidth + HasBorder);
-    W->MinYWidth = MinYWidth;
-    W->YWidth = Max2(MinYWidth, W->YWidth);
+    w->MinYWidth = MinYWidth;
+    w->YWidth = Max2(MinYWidth, w->YWidth);
   }
   if (Bitmap & 0x10) {
     if (MaxXWidth <= TW_MAXDAT - HasBorder)
       MaxXWidth = Max2(MaxXWidth, MaxXWidth + HasBorder);
-    W->MaxXWidth = Max2(W->MinXWidth, MaxXWidth);
-    W->XWidth = Min2(MaxXWidth, W->XWidth);
+    w->MaxXWidth = Max2(w->MinXWidth, MaxXWidth);
+    w->XWidth = Min2(MaxXWidth, w->XWidth);
   }
   if (Bitmap & 0x20) {
     if (MaxYWidth <= TW_MAXDAT - HasBorder)
       MaxYWidth = Max2(MaxYWidth, MaxYWidth + HasBorder);
-    W->MaxYWidth = Max2(W->MinYWidth, MaxYWidth);
-    W->YWidth = Min2(MaxYWidth, W->YWidth);
+    w->MaxYWidth = Max2(w->MinYWidth, MaxYWidth);
+    w->YWidth = Min2(MaxYWidth, w->YWidth);
   }
-  if (W->Parent) {
-    InsertMiddle(W, W, W->Parent, Prev, Next);
-    DrawAreaWindow2(W);
+  if (w->Parent) {
+    InsertMiddle(w, w, w->Parent, Prev, Next);
+    DrawAreaWindow2(w);
   }
 }
 
@@ -1035,14 +1035,14 @@ Twindow FakeOpenTerm(const char *arg0, const char *const *argv) {
   return NULL;
 }
 
-tpos FakeFindBorderWindow(Twindow W, dat u, dat v, byte Border, tcell *PtrAttr) {
+tpos FakeFindBorderWindow(Twindow w, dat u, dat v, byte Border, tcell *PtrAttr) {
   byte Horiz, Vert;
 
-  Horiz = u ? u + 1 == W->XWidth ? (byte)2 : (byte)1 : (byte)0;
-  Vert = v ? v + 1 == W->YWidth ? (byte)2 : (byte)1 : (byte)0;
+  Horiz = u ? u + 1 == w->XWidth ? (byte)2 : (byte)1 : (byte)0;
+  Vert = v ? v + 1 == w->YWidth ? (byte)2 : (byte)1 : (byte)0;
 
   if (*PtrAttr)
-    *PtrAttr = TCELL(W->ColBorder, StdBorder[Border][Vert * 3 + Horiz]);
+    *PtrAttr = TCELL(w->ColBorder, StdBorder[Border][Vert * 3 + Horiz]);
 
   return v ? POS_ROOT : POS_TITLE;
 }
@@ -1114,7 +1114,7 @@ static struct SwindowFn _FnWindow = {
     (Twidget(*)(Twindow))TtyKbdFocus,
     (void (*)(Twindow, Twidget))MapWidget,
     (void (*)(Twindow))UnMapWidget,
-    (void (*)(Twindow, screen))MapTopRealWidget,
+    (void (*)(Twindow, Tscreen))MapTopRealWidget,
     (void (*)(Twindow))RaiseW,
     (void (*)(Twindow))LowerW,
     (void (*)(Twindow, Tmsgport))OwnWidget,
@@ -1146,84 +1146,84 @@ static struct SwindowFn _FnWindow = {
     FindRowByCode,
 };
 
-/* screen */
+/* Tscreen */
 
-static screen CreateSimpleScreen(dat NameLen, const char *Name, tcell Bg) {
+static Tscreen CreateSimpleScreen(dat NameLen, const char *Name, tcell Bg) {
   return New(screen)(NameLen, Name, 1, 1, &Bg);
 }
 
-static void BgImageScreen(screen Screen, dat BgWidth, dat BgHeight, const tcell *Bg) {
+static void BgImageScreen(Tscreen screen, dat BgWidth, dat BgHeight, const tcell *Bg) {
   size_t size;
 
-  if (Screen && S_USE(Screen, USEBG) && Bg && (size = (size_t)BgWidth * BgHeight * sizeof(tcell)) &&
-      (Screen->USE.B.Bg = (tcell *)ReAllocMem(Screen->USE.B.Bg, size))) {
+  if (screen && S_USE(screen, USEBG) && Bg && (size = (size_t)BgWidth * BgHeight * sizeof(tcell)) &&
+      (screen->USE.B.Bg = (tcell *)ReAllocMem(screen->USE.B.Bg, size))) {
 
-    Screen->USE.B.BgWidth = BgWidth;
-    Screen->USE.B.BgHeight = BgHeight;
-    CopyMem(Bg, Screen->USE.B.Bg, size);
-    DrawArea2((screen)0, (Twidget)0, (Twidget)0, 0, Screen->YLimit + 1, TW_MAXDAT, TW_MAXDAT,
+    screen->USE.B.BgWidth = BgWidth;
+    screen->USE.B.BgHeight = BgHeight;
+    CopyMem(Bg, screen->USE.B.Bg, size);
+    DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, 0, screen->YLimit + 1, TW_MAXDAT, TW_MAXDAT,
               tfalse);
   }
 }
 
-static void InsertScreen(screen Screen, all Parent, screen Prev, screen Next) {
-  if (!Screen->All && Parent) {
-    InsertGeneric((TobjEntry)Screen, (TobjList)&Parent->FirstScreen, (TobjEntry)Prev,
+static void InsertScreen(Tscreen screen, Tall Parent, Tscreen Prev, Tscreen Next) {
+  if (!screen->All && Parent) {
+    InsertGeneric((TobjEntry)screen, (TobjList)&Parent->FirstScreen, (TobjEntry)Prev,
                   (TobjEntry)Next, NULL);
-    Screen->All = Parent;
+    screen->All = Parent;
   }
 }
 
-static void RemoveScreen(screen Screen) {
-  if (Screen->All) {
-    RemoveGeneric((TobjEntry)Screen, (TobjList)&Screen->All->FirstScreen, NULL);
-    Screen->All = (all)0;
+static void RemoveScreen(Tscreen screen) {
+  if (screen->All) {
+    RemoveGeneric((TobjEntry)screen, (TobjList)&screen->All->FirstScreen, NULL);
+    screen->All = (Tall)0;
   }
 }
 
-static void DeleteScreen(screen Screen) {
-  while (Screen->FirstW)
-    Screen->FirstW->UnMap();
+static void DeleteScreen(Tscreen screen) {
+  while (screen->FirstW)
+    screen->FirstW->UnMap();
 
-  Screen->Remove();
+  screen->Remove();
 
-  if (S_USE(Screen, USEBG) && Screen->USE.B.Bg) {
-    FreeMem(Screen->USE.B.Bg);
-    Screen->USE.B.Bg = NULL;
+  if (S_USE(screen, USEBG) && screen->USE.B.Bg) {
+    FreeMem(screen->USE.B.Bg);
+    screen->USE.B.Bg = NULL;
   }
-  DeleteWidget((Twidget)Screen);
+  DeleteWidget((Twidget)screen);
 }
 
-static void ChangeFieldScreen(screen S, udat field, uldat CLEARMask, uldat XORMask) {
+static void ChangeFieldScreen(Tscreen S, udat field, uldat clear_mask, uldat xor_mask) {
   if (S)
     switch (field) {
     default:
-      S->Fn->Fn_Widget->ChangeField((Twidget)S, field, CLEARMask, XORMask);
+      S->Fn->Fn_Widget->ChangeField((Twidget)S, field, clear_mask, xor_mask);
       break;
     }
 }
 
-static void SetXYScreen(screen Screen, dat X, dat Y) {
-  if (Screen == All->FirstScreen) {
+static void SetXYScreen(Tscreen screen, dat X, dat Y) {
+  if (screen == All->FirstScreen) {
     Y = Max2(Y, -1);
     Y = Min2(Y, All->DisplayHeight - 1);
-    ResizeFirstScreen(Y - Screen->YLimit);
+    ResizeFirstScreen(Y - screen->YLimit);
   }
 }
 
-static Tmenu FindMenuScreen(screen Screen) {
-  if (Screen) {
-    if (Screen->MenuWindow && IS_WINDOW(Screen->MenuWindow))
-      /* Tmenu activated from Screen->MenuWindow, return its Tmenu */
-      return Screen->MenuWindow->Menu;
+static Tmenu FindMenuScreen(Tscreen screen) {
+  if (screen) {
+    if (screen->MenuWindow && IS_WINDOW(screen->MenuWindow))
+      /* Tmenu activated from screen->MenuWindow, return its Tmenu */
+      return screen->MenuWindow->Menu;
 
     /* no Twindow activated the Tmenu... either the Tmenu is inactive
      * or it is activated from the builtin Tmenu */
 
-    if (Screen->FocusW && IS_WINDOW(Screen->FocusW) &&
-        ((Twindow)Screen->FocusW)->Menu != All->CommonMenu)
+    if (screen->FocusW && IS_WINDOW(screen->FocusW) &&
+        ((Twindow)screen->FocusW)->Menu != All->CommonMenu)
       /* Tmenu inactive... return the focus Twindow's one */
-      return ((Twindow)Screen->FocusW)->Menu;
+      return ((Twindow)screen->FocusW)->Menu;
 
     /* last case: Tmenu activated from builtin Tmenu */
     return All->BuiltinMenu;
@@ -1231,44 +1231,44 @@ static Tmenu FindMenuScreen(screen Screen) {
   return (Tmenu)0;
 }
 
-static screen FindScreen(dat j) {
-  screen CurrScreen;
+static Tscreen FindScreen(dat j) {
+  Tscreen screen;
   byte VirtScrFound = tfalse;
 
-  CurrScreen = All->FirstScreen;
-  while (CurrScreen && !(VirtScrFound = (j >= (dat)CurrScreen->YLimit)))
-    CurrScreen = CurrScreen->Next;
+  screen = All->FirstScreen;
+  while (screen && !(VirtScrFound = (j >= (dat)screen->YLimit)))
+    screen = screen->Next;
 
   if (VirtScrFound)
-    return CurrScreen;
+    return screen;
 
-  return (screen)0;
+  return (Tscreen)0;
 }
 
-static Twidget FocusScreen(screen tScreen) {
-  screen Screen = All->FirstScreen;
-  if (tScreen && Screen != tScreen) {
-    MoveFirst(Screen, All, tScreen);
-    DrawArea2((screen)0, (Twidget)0, (Twidget)0, 0, Min2(Screen->YLimit, tScreen->YLimit),
+static Twidget FocusScreen(Tscreen screen_tofocus) {
+  Tscreen screen = All->FirstScreen;
+  if (screen_tofocus && screen != screen_tofocus) {
+    MoveFirst(Screen, All, screen_tofocus);
+    DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, 0, Min2(screen->YLimit, screen_tofocus->YLimit),
               TW_MAXDAT, TW_MAXDAT, tfalse);
     UpdateCursor();
   }
-  return (Twidget)Screen;
+  return (Twidget)screen;
 }
 
-static void ActivateMenuScreen(screen Screen, Tmenuitem Item, byte ByMouse) {
+static void ActivateMenuScreen(Tscreen screen, Tmenuitem item, bool by_mouse) {
 
   if ((All->State & state_any) != state_default)
     return;
 
-  if (Screen && Screen != All->FirstScreen)
-    Screen->Focus();
+  if (screen && screen != All->FirstScreen)
+    screen->Focus();
 
-  SetMenuState(Item, ByMouse);
+  SetMenuState(item, by_mouse);
 }
 
-static void DeActivateMenuScreen(screen Screen) {
-  if (Screen == All->FirstScreen && (All->State & state_any) == state_menu)
+static void DeActivateMenuScreen(Tscreen screen) {
+  if (screen == All->FirstScreen && (All->State & state_any) == state_menu)
     CloseMenu();
 }
 
@@ -1281,25 +1281,25 @@ static struct SscreenFn _FnScreen = {
     /* Twidget */
     &_FnObj,
     DrawSelfScreen,
-    (Twidget(*)(screen, dat, dat))FindWidgetAt,
-    (Tgadget(*)(screen, udat))FindGadgetByCode,
+    (Twidget(*)(Tscreen, dat, dat))FindWidgetAt,
+    (Tgadget(*)(Tscreen, udat))FindGadgetByCode,
     SetXYScreen,
-    (void (*)(screen, tcell))SetFillWidget,
+    (void (*)(Tscreen, tcell))SetFillWidget,
     FocusScreen,
-    (Twidget(*)(screen))NoOp,        /* KbdFocusWidget */
-    (void (*)(screen, Twidget))NoOp, /* MapWidget */
-    (void (*)(screen))NoOp,          /* UnMapWidget */
-    (void (*)(screen, screen))NoOp,  /* MapTopRealWidget */
-    (void (*)(screen))RaiseW,
-    (void (*)(screen))LowerW,
-    (void (*)(screen, Tmsgport))OwnWidget,
-    (void (*)(screen))DisOwnWidget,
-    (void (*)(screen, Tmsgport))RecursiveDeleteWidget,
-    (void (*)(screen, dat, dat, dat, dat, const char *, const trune *,
+    (Twidget(*)(Tscreen))NoOp,        /* KbdFocusWidget */
+    (void (*)(Tscreen, Twidget))NoOp, /* MapWidget */
+    (void (*)(Tscreen))NoOp,          /* UnMapWidget */
+    (void (*)(Tscreen, Tscreen))NoOp, /* MapTopRealWidget */
+    (void (*)(Tscreen))RaiseW,
+    (void (*)(Tscreen))LowerW,
+    (void (*)(Tscreen, Tmsgport))OwnWidget,
+    (void (*)(Tscreen))DisOwnWidget,
+    (void (*)(Tscreen, Tmsgport))RecursiveDeleteWidget,
+    (void (*)(Tscreen, dat, dat, dat, dat, const char *, const trune *,
               const tcell *))ExposeWidget2, /* exported by resize.c */
-    (byte (*)(screen, HookFn, void (**)(Twidget)))InstallHookWidget,
-    (void (*)(screen, HookFn, void (**)(Twidget)))RemoveHookWidget,
-    /* screen */
+    (byte (*)(Tscreen, HookFn, void (**)(Twidget)))InstallHookWidget,
+    (void (*)(Tscreen, HookFn, void (**)(Twidget)))RemoveHookWidget,
+    /* Tscreen */
     &_FnWidget,
     FindMenuScreen,
     FindScreen,
@@ -1411,7 +1411,7 @@ static void RemoveRow(Trow Row) {
 
 static void DeleteRow(Trow Row) {
   if (Row) {
-    Twindow W = Row->Window;
+    Twindow w = Row->Window;
 
     Row->Remove();
     if (Row->Text)
@@ -1421,8 +1421,8 @@ static void DeleteRow(Trow Row) {
 
     DeleteObj((Tobj)Row);
 
-    if (W && W->Parent && (W->Flags & WINDOWFL_MENU))
-      ResizeRelWindow(W, 0, -1);
+    if (w && w->Parent && (w->Flags & WINDOWFL_MENU))
+      ResizeRelWindow(w, 0, -1);
   }
 }
 
@@ -1645,7 +1645,7 @@ static void DeleteMenu(Tmenu Menu) {
 
   if (Menu) {
     Tmsgport MsgPort = Menu->MsgPort;
-    Twidget W, WNext;
+    Twidget w, WNext;
 
     /*
      * warning:
@@ -1659,10 +1659,10 @@ static void DeleteMenu(Tmenu Menu) {
      * calls do not have to redraw every time.
      */
     if (!QueuedDrawArea2FullScreen) {
-      for (W = MsgPort->FirstW; W && count; W = WNext) {
-        WNext = W->O_Next;
-        if (IS_WINDOW(W) && ((Twindow)W)->Menu == Menu) {
-          if (W->Parent && IS_SCREEN(W->Parent)) {
+      for (w = MsgPort->FirstW; w && count; w = WNext) {
+        WNext = w->O_Next;
+        if (IS_WINDOW(w) && ((Twindow)w)->Menu == Menu) {
+          if (w->Parent && IS_SCREEN(w->Parent)) {
             count--;
           }
         }
@@ -1670,12 +1670,12 @@ static void DeleteMenu(Tmenu Menu) {
       if (!count)
         QueuedDrawArea2FullScreen = ttrue;
     }
-    for (W = MsgPort->FirstW; W; W = WNext) {
-      WNext = W->O_Next;
-      if (IS_WINDOW(W) && ((Twindow)W)->Menu == Menu) {
-        if (W->Parent && IS_SCREEN(W->Parent)) {
-          W->UnMap();
-          ((Twindow)W)->Menu = NULL;
+    for (w = MsgPort->FirstW; w; w = WNext) {
+      WNext = w->O_Next;
+      if (IS_WINDOW(w) && ((Twindow)w)->Menu == Menu) {
+        if (w->Parent && IS_SCREEN(w->Parent)) {
+          w->UnMap();
+          ((Twindow)w)->Menu = NULL;
         }
       }
     }
@@ -1705,31 +1705,31 @@ static Trow SetInfoMenu(Tmenu Menu, byte Flags, ldat Len, const char *Text, cons
 }
 
 static Tmenuitem FindItem(Tmenu Menu, dat i) {
-  Tmenuitem Item = (Tmenuitem)0;
+  Tmenuitem item = (Tmenuitem)0;
 
   if (Menu) {
-    for (Item = Menu->FirstI; Item; Item = Item->Next) {
-      if (i >= Item->Left && (uldat)(i - Item->Left) < Item->Len)
+    for (item = Menu->FirstI; item; item = item->Next) {
+      if (i >= item->Left && (uldat)(i - item->Left) < item->Len)
         break;
     }
 
-    if (!Item && Menu->CommonItems && All->CommonMenu) {
+    if (!item && Menu->CommonItems && All->CommonMenu) {
 
-      Item = Menu->LastI;
+      item = Menu->LastI;
 
-      if (!Item || (i >= Item->Left && (uldat)(i - Item->Left) >= Item->Len)) {
+      if (!item || (i >= item->Left && (uldat)(i - item->Left) >= item->Len)) {
         /* search in All->CommonMenu */
-        if (Item)
-          i -= Item->Left + (dat)Item->Len;
-        for (Item = All->CommonMenu->FirstI; Item; Item = Item->Next) {
-          if (i >= Item->Left && (uldat)(i - Item->Left) < Item->Len)
+        if (item)
+          i -= item->Left + (dat)item->Len;
+        for (item = All->CommonMenu->FirstI; item; item = item->Next) {
+          if (i >= item->Left && (uldat)(i - item->Left) < item->Len)
             break;
         }
       } else
-        Item = (Tmenuitem)0;
+        item = (Tmenuitem)0;
     }
   }
-  return Item;
+  return item;
 }
 
 static Tmenuitem GetSelectedItem(Tmenu Menu) {
@@ -1744,16 +1744,16 @@ static Tmenuitem GetSelectedItem(Tmenu Menu) {
 
 static Tmenuitem RecursiveGetSelectedItem(Tmenu Menu, dat *depth) {
   Tmenuitem I = NULL, _I = Menu->GetSelectedItem();
-  Twindow W = (Twindow)0, FW = (Twindow)All->FirstScreen->FocusW;
+  Twindow w = (Twindow)0, FW = (Twindow)All->FirstScreen->FocusW;
   dat d = -1;
 
   while (_I && IS_MENUITEM(_I)) {
     I = _I;
     d++;
-    if (W == FW)
+    if (w == FW)
       break;
-    if ((W = I->Window) && W->Parent)
-      _I = (Tmenuitem)W->FindRow(W->CurY);
+    if ((w = I->Window) && w->Parent)
+      _I = (Tmenuitem)w->FindRow(w->CurY);
     else
       break;
   }
@@ -1762,22 +1762,22 @@ static Tmenuitem RecursiveGetSelectedItem(Tmenu Menu, dat *depth) {
   return I;
 }
 
-static void SetSelectedItem(Tmenu Menu, Tmenuitem Item) {
+static void SetSelectedItem(Tmenu Menu, Tmenuitem item) {
   if (Menu) {
-    if (Item) {
-      if (Item->Parent == (Tobj)Menu) {
-        Menu->SelectI = Item;
+    if (item) {
+      if (item->Parent == (Tobj)Menu) {
+        Menu->SelectI = item;
         if (Menu->CommonItems && All->CommonMenu)
           All->CommonMenu->SelectI = (Tmenuitem)0;
-      } else if (Menu->CommonItems && Item->Parent == (Tobj)All->CommonMenu) {
+      } else if (Menu->CommonItems && item->Parent == (Tobj)All->CommonMenu) {
         Menu->SelectI = (Tmenuitem)0;
-        All->CommonMenu->SelectI = Item;
+        All->CommonMenu->SelectI = item;
       }
-      /* else Item is not a meaningful one! */
+      /* else item is not a meaningful one! */
     } else {
-      Menu->SelectI = Item;
+      Menu->SelectI = item;
       if (Menu->CommonItems && All->CommonMenu)
-        All->CommonMenu->SelectI = Item;
+        All->CommonMenu->SelectI = item;
     }
 
     All->FirstScreen->DrawMenu(0, TW_MAXDAT);
@@ -1840,7 +1840,7 @@ static struct SmsgFn _FnMsg = {
 
 /* Tmsgport */
 
-static void InsertMsgPort(Tmsgport MsgPort, all Parent, Tmsgport Prev, Tmsgport Next) {
+static void InsertMsgPort(Tmsgport MsgPort, Tall Parent, Tmsgport Prev, Tmsgport Next) {
   if (!MsgPort->All && Parent) {
     InsertGeneric((TobjEntry)MsgPort, (TobjList)&Parent->FirstMsgPort, (TobjEntry)Prev,
                   (TobjEntry)Next, NULL);
@@ -1853,13 +1853,13 @@ static void RemoveMsgPort(Tmsgport MsgPort) {
     if (All->RunMsgPort == MsgPort)
       All->RunMsgPort = MsgPort->Next;
     RemoveGeneric((TobjEntry)MsgPort, (TobjList)&MsgPort->All->FirstMsgPort, NULL);
-    MsgPort->All = (all)0;
+    MsgPort->All = (Tall)0;
   }
 }
 
 static void DeleteMsgPort(Tmsgport MsgPort) {
   uldat count = 20;
-  Twidget W;
+  Twidget w;
 
   if (MsgPort) {
     /*
@@ -1867,8 +1867,8 @@ static void DeleteMsgPort(Tmsgport MsgPort) {
      * we set QueuedDrawArea2FullScreen = ttrue, so that the UnMap()
      * calls do not have to redraw every time.
      */
-    for (W = MsgPort->FirstW; W && count; W = W->O_Next) {
-      if (IS_WINDOW(W) && W->Parent && IS_SCREEN(W->Parent)) {
+    for (w = MsgPort->FirstW; w && count; w = w->O_Next) {
+      if (IS_WINDOW(w) && w->Parent && IS_SCREEN(w->Parent)) {
         count--;
       }
     }
@@ -1909,7 +1909,7 @@ static struct SmsgportFn _FnMsgPort = {
 
 /* Tmutex */
 
-static void InsertMutex(Tmutex Mutex, all Parent, Tmutex Prev, Tmutex Next) {
+static void InsertMutex(Tmutex Mutex, Tall Parent, Tmutex Prev, Tmutex Next) {
   if (!Mutex->All && Parent) {
     InsertGeneric((TobjEntry)Mutex, (TobjList)&Mutex->All->FirstMutex, (TobjEntry)Prev,
                   (TobjEntry)Next, NULL);
@@ -1920,7 +1920,7 @@ static void InsertMutex(Tmutex Mutex, all Parent, Tmutex Prev, Tmutex Next) {
 static void RemoveMutex(Tmutex Mutex) {
   if (Mutex->All) {
     RemoveGeneric((TobjEntry)Mutex, (TobjList)&Mutex->All->FirstMutex, NULL);
-    Mutex->All = (all)0;
+    Mutex->All = (Tall)0;
   }
 }
 
@@ -1978,7 +1978,7 @@ static struct SmutexFn _FnMutex = {
 
 /* Tmodule */
 
-static void InsertModule(Tmodule Module, all Parent, Tmodule Prev, Tmodule Next) {
+static void InsertModule(Tmodule Module, Tall Parent, Tmodule Prev, Tmodule Next) {
   if (!Module->All && Parent) {
     InsertGeneric((TobjEntry)Module, (TobjList)&Parent->FirstModule, (TobjEntry)Prev,
                   (TobjEntry)Next, NULL);
@@ -1989,7 +1989,7 @@ static void InsertModule(Tmodule Module, all Parent, Tmodule Prev, Tmodule Next)
 static void RemoveModule(Tmodule Module) {
   if (Module->All) {
     RemoveGeneric((TobjEntry)Module, (TobjList)&Module->All->FirstModule, NULL);
-    Module->All = (all)0;
+    Module->All = (Tall)0;
   }
 }
 
@@ -2019,7 +2019,7 @@ static struct SmoduleFn _FnModule = {
 
 /* Tdisplay */
 
-static void InsertDisplayHW(Tdisplay DisplayHW, all Parent, Tdisplay Prev, Tdisplay Next) {
+static void InsertDisplayHW(Tdisplay DisplayHW, Tall Parent, Tdisplay Prev, Tdisplay Next) {
   if (!DisplayHW->All && Parent) {
     InsertGeneric((TobjEntry)DisplayHW, (TobjList)&Parent->FirstDisplayHW, (TobjEntry)Prev,
                   (TobjEntry)Next, NULL);
@@ -2038,7 +2038,7 @@ static void InsertDisplayHW(Tdisplay DisplayHW, all Parent, Tdisplay Prev, Tdisp
 static void RemoveDisplayHW(Tdisplay DisplayHW) {
   if (DisplayHW->All) {
     RemoveGeneric((TobjEntry)DisplayHW, (TobjList)&DisplayHW->All->FirstDisplayHW, NULL);
-    DisplayHW->All = (all)0;
+    DisplayHW->All = (Tall)0;
 
     if (All->FnHookDisplayHW)
       All->FnHookDisplayHW(All->HookDisplayHW);

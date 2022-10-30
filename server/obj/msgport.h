@@ -19,10 +19,10 @@
 
 struct SmsgportFn {
   uldat Magic;
-  void (*Insert)(Tmsgport, all, Tmsgport Prev, Tmsgport Next);
+  void (*Insert)(Tmsgport, Tall, Tmsgport Prev, Tmsgport Next);
   void (*Remove)(Tmsgport);
   void (*Delete)(Tmsgport);
-  void (*ChangeField)(Tmsgport, udat field, uldat CLEARMask, uldat XORMask);
+  void (*ChangeField)(Tmsgport, udat field, uldat clear_mask, uldat xor_mask);
   /* Tmsgport */
   TobjFn Fn_Obj;
 };
@@ -30,7 +30,7 @@ struct SmsgportFn {
 struct Smsgport : public Sobj {
   TmsgportFn Fn;
   Tmsgport Prev, Next; /* list in the same All */
-  all All;
+  Tall All;
   /* Tmsgport */
   byte WakeUp, NameLen;
   char *Name;
@@ -55,7 +55,7 @@ struct Smsgport : public Sobj {
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(all a, Tmsgport prev, Tmsgport next) {
+  void Insert(Tall a, Tmsgport prev, Tmsgport next) {
     Fn->Insert(this, a, prev, next);
   }
   void Remove() {

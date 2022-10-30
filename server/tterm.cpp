@@ -35,10 +35,10 @@ static Tmsgport Term_MsgPort;
 static void TwinTermH(Tmsgport MsgPort);
 static void TwinTermIO(int Fd, Twindow Window);
 
-static void termShutDown(Twidget W) {
+static void termShutDown(Twidget w) {
   Twindow Window;
-  if (IS_WINDOW(W)) {
-    Window = (Twindow)W;
+  if (IS_WINDOW(w)) {
+    Window = (Twindow)w;
     if (Window->RemoteData.Fd != NOFD)
       close(Window->RemoteData.Fd);
     UnRegisterWindowFdIO(Window);

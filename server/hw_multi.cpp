@@ -923,20 +923,20 @@ void FlushHW(void) {
   ValidOldVideo = ttrue;
 }
 
-void SyntheticKey(Twidget W, udat Code, udat ShiftFlags, byte Len, const char *Seq) {
+void SyntheticKey(Twidget w, udat Code, udat ShiftFlags, byte Len, const char *Seq) {
   event_keyboard *Event;
   Tmsg msg;
 
-  if (W && Len && Seq && (msg = New(msg)(msg_widget_key, Len))) {
+  if (w && Len && Seq && (msg = New(msg)(msg_widget_key, Len))) {
 
     Event = &msg->Event.EventKeyboard;
-    Event->W = W;
+    Event->W = w;
     Event->Code = Code;
     Event->ShiftFlags = ShiftFlags;
     Event->SeqLen = Len;
     CopyMem(Seq, Event->AsciiSeq, Len);
     Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
-    SendMsg(W->Owner, msg);
+    SendMsg(w->Owner, msg);
   }
 }
 

@@ -358,18 +358,18 @@ static void sockDeleteObj(void *V);
 
 static Twidget sockCreateWidget(dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left, dat Up,
                                 tcell Fill);
-static void sockRecursiveDeleteWidget(Twidget W);
-static void sockSetXYWidget(Twidget W, dat x, dat y);
-static void sockResizeWidget(Twidget W, dat XWidth, dat YWidth);
+static void sockRecursiveDeleteWidget(Twidget w);
+static void sockSetXYWidget(Twidget w, dat x, dat y);
+static void sockResizeWidget(Twidget w, dat XWidth, dat YWidth);
 #define sockScrollWidget ScrollWidget
-static void sockDrawWidget(Twidget W, dat XWidth, dat YWidth, dat Left, dat Up,
+static void sockDrawWidget(Twidget w, dat XWidth, dat YWidth, dat Left, dat Up,
                            const char *utf8_bytes, const trune *runes, const tcell *cells);
 
 #define sockSetVisibleWidget SetVisibleWidget
-static void sockFocusSubWidget(Twidget W);
+static void sockFocusSubWidget(Twidget w);
 
 #define sockRestackChildrenWidget RestackWidgets
-static void sockCirculateChildrenWidget(Twidget W, byte up_or_down);
+static void sockCirculateChildrenWidget(Twidget w, byte up_or_down);
 #define TW_CIRCULATE_RAISE_LAST 0
 #define TW_CIRCULATE_LOWER_FIRST 1
 
@@ -410,8 +410,8 @@ static Tobj sockPrevObj(Tobj o);
 static Tobj sockNextObj(Tobj o);
 static Tobj sockParentObj(Tobj o);
 
-static screen sockFirstScreen(void);
-static Twidget sockFirstWidget(Twidget W);
+static Tscreen sockFirstScreen(void);
+static Twidget sockFirstWidget(Twidget w);
 static Tmsgport sockFirstMsgPort(void);
 static Tmenu sockFirstMenu(Tmsgport MsgPort);
 static Twidget sockFirstW(Tmsgport MsgPort);
@@ -433,7 +433,7 @@ static void sockRequestSelection(Tobj Owner, uldat ReqPrivate);
 #define sockGetDisplayWidth GetDisplayWidth
 #define sockGetDisplayHeight GetDisplayHeight
 
-static all sockGetAll(void);
+static Tall sockGetAll(void);
 
 /* Second: socket handling functions */
 
@@ -1040,65 +1040,65 @@ static Twidget sockCreateWidget(dat XWidth, dat YWidth, uldat Attr, uldat Flags,
     return New(widget)(Owner, XWidth, YWidth, Attr, Flags, Left, Up, Fill);
   return (Twidget)0;
 }
-static void sockRecursiveDeleteWidget(Twidget W) {
+static void sockRecursiveDeleteWidget(Twidget w) {
   Tmsgport MsgPort = RemoteGetMsgPort(Slot);
 
   /* avoid too much visual activity... UnMap top-level Twidget immediately */
-  Act(UnMap, W)(W);
+  Act(UnMap, w)(w);
 
-  Act(RecursiveDelete, W)(W, MsgPort);
+  Act(RecursiveDelete, w)(w, MsgPort);
 }
-static void sockSetXYWidget(Twidget W, dat x, dat y) {
-  if (W) {
-    if (W->Parent && IS_SCREEN(W->Parent)) {
-      x += W->Parent->XLogic;
-      y += W->Parent->YLogic;
+static void sockSetXYWidget(Twidget w, dat x, dat y) {
+  if (w) {
+    if (w->Parent && IS_SCREEN(w->Parent)) {
+      x += w->Parent->XLogic;
+      y += w->Parent->YLogic;
     }
-    Act(SetXY, W)(W, x, y);
+    Act(SetXY, w)(w, x, y);
   }
 }
-static void sockDrawWidget(Twidget W, dat XWidth, dat YWidth, dat Left, dat Up, const char *Text,
+static void sockDrawWidget(Twidget w, dat XWidth, dat YWidth, dat Left, dat Up, const char *Text,
                            const trune *Font, const tcell *Attr) {
-  if (W) {
-    Act(Expose, W)(W, XWidth, YWidth, Left, Up, XWidth, Text, Font, Attr);
+  if (w) {
+    Act(Expose, w)(w, XWidth, YWidth, Left, Up, XWidth, Text, Font, Attr);
   }
 }
 
-static void sockFocusSubWidget(Twidget W) {
+static void sockFocusSubWidget(Twidget w) {
   Twidget P;
-  if (W && !IS_SCREEN(W) && W->Parent && !IS_SCREEN(W->Parent)) {
-    W->SelectW = NULL;
-    while ((P = W->Parent) && !IS_SCREEN(P)) {
-      P->SelectW = W;
-      W = P;
+  if (w && !IS_SCREEN(w) && w->Parent && !IS_SCREEN(w->Parent)) {
+    w->SelectW = NULL;
+    while ((P = w->Parent) && !IS_SCREEN(P)) {
+      P->SelectW = w;
+      w = P;
     }
-    if (ContainsCursor((Twidget)WindowParent(W)))
+    if (ContainsCursor((Twidget)WindowParent(w)))
       UpdateCursor();
   }
 }
 
-static void sockResizeWidget(Twidget W, dat X, dat Y) {
-  if (W) {
-    if (IS_WINDOW(W)) {
-      if (!(W->Flags & WINDOWFL_BORDERLESS))
+static void sockResizeWidget(Twidget w, dat X, dat Y) {
+  if (w) {
+    if (IS_WINDOW(w)) {
+      if (!(w->Flags & WINDOWFL_BORDERLESS))
         X += 2, Y += 2;
-      ResizeRelWindow((Twindow)W, X - W->XWidth, Y - W->YWidth);
-    } else if (IS_GADGET(W)) {
-      ResizeGadget((Tgadget)W, X, Y);
+      ResizeRelWindow((Twindow)w, X - w->XWidth, Y - w->YWidth);
+    } else if (IS_GADGET(w)) {
+      ResizeGadget((Tgadget)w, X, Y);
     } else {
-      ResizeWidget((Twidget)W, X, Y);
+      ResizeWidget((Twidget)w, X, Y);
     }
   }
 }
 
-static void sockCirculateChildrenWidget(Twidget W, byte up_or_down) {
-  if (W) {
+static void sockCirculateChildrenWidget(Twidget w, byte up_or_down) {
+  if (w) {
     if (up_or_down == TW_CIRCULATE_RAISE_LAST) {
-      if ((W = W->LastW))
-        Act(Raise, W)(W);
+      if ((w = w->LastW))
+        Act(Raise, w)(w);
     } else if (up_or_down == TW_CIRCULATE_LOWER_FIRST) {
-      if ((W = W->FirstW))
-        Act(Lower, W)(W);
+      if ((w = w->FirstW))
+        Act(Lower, w)(w);
     }
   }
 }
@@ -1260,11 +1260,11 @@ static Tobj sockParentObj(Tobj o) {
   return (Tobj)(e ? e->Parent : e);
 }
 
-static screen sockFirstScreen(void) {
+static Tscreen sockFirstScreen(void) {
   return All->FirstScreen;
 }
-static Twidget sockFirstWidget(Twidget W) {
-  return W ? W->FirstW : W;
+static Twidget sockFirstWidget(Twidget w) {
+  return w ? w->FirstW : w;
 }
 static Tmsgport sockFirstMsgPort(void) {
   return All->FirstMsgPort;
@@ -1288,7 +1288,7 @@ static Tgadget sockFirstGadget(Tgroup group) {
   return group ? group->FirstG : (Tgadget)0;
 }
 
-static all sockGetAll(void) {
+static Tall sockGetAll(void) {
   return All;
 }
 
@@ -2386,16 +2386,16 @@ static void SocketIO(int fd, uldat slot) {
 
 static void SocketH(Tmsgport MsgPort) {
   Tmsg msg;
-  Twidget W;
+  Twidget w;
   char buf[10];
   byte len;
 
   while ((msg = MsgPort->FirstMsg)) {
     msg->Remove();
 
-    if (msg->Type == msg_widget_mouse && (W = msg->Event.EventMouse.W) && IS_WINDOW(W) &&
-        (W->Flags & WINDOWFL_USECONTENTS) && ((Twindow)W)->USE.C.TtyData &&
-        ((Twindow)W)->USE.C.TtyData->Flags & (TTY_REPORTMOUSE_TWTERM | TTY_REPORTMOUSE_XTERM)) {
+    if (msg->Type == msg_widget_mouse && (w = msg->Event.EventMouse.W) && IS_WINDOW(w) &&
+        (w->Flags & WINDOWFL_USECONTENTS) && ((Twindow)w)->USE.C.TtyData &&
+        ((Twindow)w)->USE.C.TtyData->Flags & (TTY_REPORTMOUSE_TWTERM | TTY_REPORTMOUSE_XTERM)) {
 
       len = CreateXTermMouseEvent(&msg->Event.EventMouse, 10, buf);
       /*

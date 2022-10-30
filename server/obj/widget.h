@@ -56,12 +56,12 @@ struct s_wE { /* for WIDGET_USEEXPOSE widgets */
 
 struct Sdraw {
   Sdraw *Next;
-  screen Screen;
+  Tscreen Screen;
   Twidget TopW;
   Twidget W;
   Twidget OnlyW;
-  ldat Left, Up, Rgt, Dwn; /* Twidget corners position on Screen */
-  ldat X1, Y1, X2, Y2;     /* screen area to draw */
+  ldat Left, Up, Rgt, Dwn; /* Twidget corners position on screen */
+  ldat X1, Y1, X2, Y2;     /* Tscreen area to draw */
   dat DWidth;
   dat DHeight;
   bool NoChildren;
@@ -80,7 +80,7 @@ struct SwidgetFn {
   void (*Insert)(Twidget self, Twidget parent, Twidget Prev, Twidget Next);
   void (*Remove)(Twidget self);
   void (*Delete)(Twidget self);
-  void (*ChangeField)(Twidget self, udat field, uldat CLEARMask, uldat XORMask);
+  void (*ChangeField)(Twidget self, udat field, uldat clear_mask, uldat xor_mask);
   /* Twidget */
   TobjFn Fn_Obj; /* backup of overloaded functions */
   void (*DrawSelf)(Sdraw *d);
@@ -92,7 +92,7 @@ struct SwidgetFn {
   Twidget (*KbdFocus)(Twidget self);
   void (*Map)(Twidget self, Twidget parent);
   void (*UnMap)(Twidget self);
-  void (*MapTopReal)(Twidget self, screen scr);
+  void (*MapTopReal)(Twidget self, Tscreen screen);
   void (*Raise)(Twidget self);
   void (*Lower)(Twidget self);
   void (*Own)(Twidget self, Tmsgport port);
@@ -174,8 +174,8 @@ struct Swidget : public Sobj {
   void UnMap() {
     Fn->UnMap(this);
   }
-  void MapTopReal(screen scr) {
-    Fn->MapTopReal(this, scr);
+  void MapTopReal(Tscreen screen) {
+    Fn->MapTopReal(this, screen);
   }
   void Raise() {
     Fn->Raise(this);

@@ -53,7 +53,7 @@ struct Sremotedata {
 
 struct s_WR { /* for WINDOWFL_USEROWS windows */
   Trow FirstRow, LastRow;
-  Trow RowOne, RowSplit;       /*RESERVED: used to optimize the drawing on screen */
+  Trow RowOne, RowSplit;       /*RESERVED: used to optimize the drawing on Tscreen */
   ldat NumRowOne, NumRowSplit; /*RESERVED: updated automatically by WriteRow. To insert */
                                /*or remove manually rows, you must zero out NumRowOne */
                                /*and NumRowSplit forcing twin to recalculate them */
@@ -70,7 +70,7 @@ struct SwindowFn {
   void (*Insert)(Twindow, Twidget Parent, Twidget Prev, Twidget Next);
   void (*Remove)(Twindow);
   void (*Delete)(Twindow);
-  void (*ChangeField)(Twindow, udat field, uldat CLEARMask, uldat XORMask);
+  void (*ChangeField)(Twindow, udat field, uldat clear_mask, uldat xor_mask);
   /* Twidget */
   TobjFn Fn_Obj;
   void (*DrawSelf)(Sdraw *D);
@@ -82,7 +82,7 @@ struct SwindowFn {
   Twidget (*KbdFocus)(Twindow);
   void (*Map)(Twindow, Twidget Parent);
   void (*UnMap)(Twindow);
-  void (*MapTopReal)(Twindow, screen);
+  void (*MapTopReal)(Twindow, Tscreen);
   void (*Raise)(Twindow);
   void (*Lower)(Twindow);
   void (*Own)(Twindow, Tmsgport);
@@ -211,8 +211,8 @@ struct Swindow : public Sobj {
   void UnMap() {
     Fn->UnMap(this);
   }
-  void MapTopReal(screen scr) {
-    Fn->MapTopReal(this, scr);
+  void MapTopReal(Tscreen screen) {
+    Fn->MapTopReal(this, screen);
   }
   void Raise() {
     Fn->Raise(this);
@@ -329,7 +329,7 @@ enum window_flag /*: udat*/ {
   WINDOWFL_NOTVISIBLE = 0x8000,
 };
 
-#define W_USE(W, USExxx) (((W)->Flags & WINDOWFL_USEANY) == CAT(WINDOWFL_, USExxx))
+#define W_USE(w, USExxx) (((w)->Flags & WINDOWFL_USEANY) == CAT(WINDOWFL_, USExxx))
 
 /* Window->State */
 enum window_state /*: uldat*/ {

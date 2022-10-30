@@ -52,7 +52,7 @@ void Sselection::paste() {
   }
 }
 
-all Sall::Init() {
+Tall Sall::Init() {
   State = state_default;
   Selection = &_Selection;
   Clipboard = &_Clipboard;
@@ -66,4 +66,4 @@ all Sall::Init() {
 
 static struct Sall _All;
 
-all const All = _All.Init();
+Tall const All = _All.Init();

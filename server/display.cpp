@@ -219,13 +219,13 @@ static void RemoteEvent(int FdCount, fd_set *FdSet) {
 
 static struct SmoduleFn _FnModule = {
     module_magic,
-    (void (*)(Tmodule, all, Tmodule, Tmodule))NoOp, /* InsertModule */
-    (void (*)(Tmodule))NoOp,                        /* RemoveModule */
-    (void (*)(Tmodule))NoOp,                        /* DeleteModule */
-    (void (*)(Tmodule, udat, uldat, uldat))NoOp,    /* ChangeField  */
-    NULL,                                           /* Fn_Obj       */
-    (bool (*)(Tmodule))NoOp,                        /* DlOpen       */
-    (void (*)(Tmodule))NoOp,                        /* DlClose      */
+    (void (*)(Tmodule, Tall, Tmodule, Tmodule))NoOp, /* InsertModule */
+    (void (*)(Tmodule))NoOp,                         /* RemoveModule */
+    (void (*)(Tmodule))NoOp,                         /* DeleteModule */
+    (void (*)(Tmodule, udat, uldat, uldat))NoOp,     /* ChangeField  */
+    NULL,                                            /* Fn_Obj       */
+    (bool (*)(Tmodule))NoOp,                         /* DlOpen       */
+    (void (*)(Tmodule))NoOp,                         /* DlClose      */
 };
 
 Tobj Sobj::Init() {
@@ -321,11 +321,11 @@ static void QuitDisplayHW(Tdisplay);
 static struct SdisplayFn _FnDisplayHW = {
     /*-------------------*/
     display_hw_magic,
-    (void (*)(Tdisplay, all, Tdisplay, Tdisplay))NoOp, /* InsertDisplayHW */
-    (void (*)(Tdisplay))NoOp,                          /* RemoveDisplayHW */
-    (void (*)(Tdisplay))NoOp,                          /* DeleteDisplayHW */
-    (void (*)(Tdisplay, udat, uldat, uldat))NoOp,      /* ChangeFieldDisplayHW */
-    NULL,                                              /* Fn_Obj */
+    (void (*)(Tdisplay, Tall, Tdisplay, Tdisplay))NoOp, /* InsertDisplayHW */
+    (void (*)(Tdisplay))NoOp,                           /* RemoveDisplayHW */
+    (void (*)(Tdisplay))NoOp,                           /* DeleteDisplayHW */
+    (void (*)(Tdisplay, udat, uldat, uldat))NoOp,       /* ChangeFieldDisplayHW */
+    NULL,                                               /* Fn_Obj */
     InitDisplayHW,
     QuitDisplayHW,
 };

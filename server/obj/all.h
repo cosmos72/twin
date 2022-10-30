@@ -92,8 +92,8 @@ struct Sall : public Sobj {
   TobjFn Fn;
   Tobj Prev, Next, Parent;
 
-  /* all */
-  screen FirstScreen, LastScreen;
+  /* Tall */
+  Tscreen FirstScreen, LastScreen;
   Tmsgport FirstMsgPort, LastMsgPort, RunMsgPort;
   Tmutex FirstMutex, LastMutex;
 
@@ -121,9 +121,9 @@ struct Sall : public Sobj {
 
   trune *Gtranslations[USER_MAP + 1];
 
-  all Init();
+  Tall Init();
 };
 
-extern all const All;
+extern Tall const All;
 
 #endif /* TWIN_ALL_H */

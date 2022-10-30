@@ -20,10 +20,10 @@
 
 struct SdisplayFn {
   uldat Magic;
-  void (*Insert)(Tdisplay, all, Tdisplay Prev, Tdisplay Next);
+  void (*Insert)(Tdisplay, Tall, Tdisplay Prev, Tdisplay Next);
   void (*Remove)(Tdisplay);
   void (*Delete)(Tdisplay);
-  void (*ChangeField)(Tdisplay, udat field, uldat CLEARMask, uldat XORMask);
+  void (*ChangeField)(Tdisplay, udat field, uldat clear_mask, uldat xor_mask);
   /* Tdisplay */
   TobjFn Fn_Obj;
   byte (*DoInit)(Tdisplay);
@@ -39,7 +39,7 @@ struct mouse_state {
 struct Sdisplay : public Sobj {
   TdisplayFn Fn;
   Tdisplay Prev, Next; /* in the same All */
-  all All;
+  Tall All;
 
   /* Tdisplay */
   String Name;
@@ -166,7 +166,7 @@ struct Sdisplay : public Sobj {
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(all a, Tdisplay prev, Tdisplay next) {
+  void Insert(Tall a, Tdisplay prev, Tdisplay next) {
     Fn->Insert(this, a, prev, next);
   }
   void Remove() {

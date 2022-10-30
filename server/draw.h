@@ -18,15 +18,15 @@ void DrawSelfScreen(Sdraw *d);
 
 void TranslateCoordsWidget(Twidget w1, Twidget w2, dat *x, dat *y, byte *inside);
 
-void DrawDesktop(screen s, dat xstart, dat ystart, dat xend, dat yend, bool shaded);
+void DrawDesktop(Tscreen s, dat xstart, dat ystart, dat xend, dat yend, bool shaded);
 
-void DrawArea2(screen FirstScreen, Twidget Top, Twidget OnlyW, dat X1, dat Y1, dat X2, dat Y2,
+void DrawArea2(Tscreen FirstScreen, Twidget Top, Twidget OnlyW, dat X1, dat Y1, dat X2, dat Y2,
                bool Shaded);
-#define FULL_SCREEN (screen)0, (Twidget)0, (Twidget)0, (dat)0, (dat)0, TW_MAXDAT, TW_MAXDAT, tfalse
+#define FULL_SCREEN (Tscreen)0, (Twidget)0, (Twidget)0, (dat)0, (dat)0, TW_MAXDAT, TW_MAXDAT, tfalse
 
 /*
  * DrawWidget() ASSUMES the specified part of the Twidget is unobscured.
- * xstart,ystart,xend,yend are absolute screen coordinates.
+ * xstart,ystart,xend,yend are absolute Tscreen coordinates.
  */
 void DrawWidget(Twidget w, dat xstart, dat ystart, dat xend, dat yend, bool shaded);
 #define DrawFirstWidget(w) DrawWidget((w), 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse)
@@ -35,7 +35,7 @@ void DrawAreaWidget(Twidget w);
 /* like DrawAreaWindow2, but does not draw the shadow: */
 #define DrawFullWindow2(w) DrawAreaWidget((Twidget)w)
 
-void DrawScreen(screen s);
+void DrawScreen(Tscreen s);
 
 void DrawBorderWindow(Twindow w, byte Flags);
 #define BORDER_LEFT (0x1)
@@ -45,7 +45,7 @@ void DrawBorderWindow(Twindow w, byte Flags);
 #define BORDER_ANY (0xF)
 
 void DrawShadeWindow(Twindow w, dat xstart, dat ystart, dat xend, dat yend, byte internal);
-void DrawAreaShadeWindow(screen s, Twindow w, dat xstart, dat ystart, dat xend, dat yend,
+void DrawAreaShadeWindow(Tscreen s, Twindow w, dat xstart, dat ystart, dat xend, dat yend,
                          ldat shleft, ldat shup, ldat shrgt, ldat shdwn, byte internal);
 /* this also draws the shadow: */
 void DrawAreaWindow2(Twindow w);
@@ -55,13 +55,13 @@ void DrawLogicWidget(Twidget w, ldat x1, ldat y1, ldat x2, ldat y2);
 
 void ReDrawRolledUpAreaWindow(Twindow w, bool shaded);
 
-void DrawMenuScreen(screen s, dat xstart, dat xend);
+void DrawMenuScreen(Tscreen s, dat xstart, dat xend);
 
 void ClearHilight(Twindow w);
 void StartHilight(Twindow w, ldat xsel, ldat ysel);
 void ExtendHilight(Twindow w, ldat xsel, ldat ysel);
 
-screen ScreenParent(Twidget w);
+Tscreen ScreenParent(Twidget w);
 Twindow WindowParent(Twidget w);
 Twidget NonScreenParent(Twidget w);
 Twindow FindCursorWindow(void);

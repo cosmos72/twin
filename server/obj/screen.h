@@ -22,45 +22,45 @@ struct s_sB { /* for SCREENFL_USEBG screens */
 
 struct SscreenFn {
   uldat Magic;
-  void (*Insert)(screen, all, screen Prev, screen Next);
-  void (*Remove)(screen);
-  void (*Delete)(screen);
-  void (*ChangeField)(screen, udat field, uldat CLEARMask, uldat XORMask);
+  void (*Insert)(Tscreen, Tall, Tscreen Prev, Tscreen Next);
+  void (*Remove)(Tscreen);
+  void (*Delete)(Tscreen);
+  void (*ChangeField)(Tscreen, udat field, uldat clear_mask, uldat xor_mask);
   /* Twidget */
   TobjFn Fn_Obj;
   void (*DrawSelf)(Sdraw *D);
-  Twidget (*FindWidgetAt)(screen Parent, dat X, dat Y);
-  Tgadget (*FindGadgetByCode)(screen Parent, udat Code);
-  void (*SetXY)(screen, dat X, dat Y);
-  void (*SetFill)(screen, tcell Fill);
-  Twidget (*Focus)(screen);
-  Twidget (*KbdFocus)(screen);
-  void (*Map)(screen, Twidget Parent);
-  void (*UnMap)(screen);
-  void (*MapTopReal)(screen, screen);
-  void (*Raise)(screen);
-  void (*Lower)(screen);
-  void (*Own)(screen, Tmsgport);
-  void (*DisOwn)(screen);
-  void (*RecursiveDelete)(screen, Tmsgport);
-  void (*Expose)(screen, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
+  Twidget (*FindWidgetAt)(Tscreen Parent, dat X, dat Y);
+  Tgadget (*FindGadgetByCode)(Tscreen Parent, udat Code);
+  void (*SetXY)(Tscreen, dat X, dat Y);
+  void (*SetFill)(Tscreen, tcell Fill);
+  Twidget (*Focus)(Tscreen);
+  Twidget (*KbdFocus)(Tscreen);
+  void (*Map)(Tscreen, Twidget Parent);
+  void (*UnMap)(Tscreen);
+  void (*MapTopReal)(Tscreen, Tscreen);
+  void (*Raise)(Tscreen);
+  void (*Lower)(Tscreen);
+  void (*Own)(Tscreen, Tmsgport);
+  void (*DisOwn)(Tscreen);
+  void (*RecursiveDelete)(Tscreen, Tmsgport);
+  void (*Expose)(Tscreen, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
                  const tcell *);
-  byte (*InstallHook)(screen, HookFn, HookFn *Where);
-  void (*RemoveHook)(screen, HookFn, HookFn *Where);
-  /* screen */
+  byte (*InstallHook)(Tscreen, HookFn, HookFn *Where);
+  void (*RemoveHook)(Tscreen, HookFn, HookFn *Where);
+  /* Tscreen */
   TwidgetFn Fn_Widget;
-  Tmenu (*FindMenu)(screen);
-  screen (*Find)(dat j);
-  screen (*CreateSimple)(dat NameLen, const char *Name, tcell Bg);
-  void (*BgImage)(screen, dat BgWidth, dat BgHeight, const tcell *Bg);
-  void (*DrawMenu)(screen, dat Xstart, dat Xend);
-  void (*ActivateMenu)(screen, Tmenuitem, byte ByMouse);
-  void (*DeActivateMenu)(screen);
+  Tmenu (*FindMenu)(Tscreen);
+  Tscreen (*Find)(dat j);
+  Tscreen (*CreateSimple)(dat NameLen, const char *Name, tcell Bg);
+  void (*BgImage)(Tscreen, dat BgWidth, dat BgHeight, const tcell *Bg);
+  void (*DrawMenu)(Tscreen, dat Xstart, dat Xend);
+  void (*ActivateMenu)(Tscreen, Tmenuitem, bool by_mouse);
+  void (*DeActivateMenu)(Tscreen);
 };
 
 struct Sscreen : public Sobj {
   TscreenFn Fn;
-  screen Prev, Next;   /* list in the same All */
+  Tscreen Prev, Next;  /* list in the same All */
   Twidget dummyParent; /* NULL */
   /* Twidget */
   Twidget FirstW, LastW; /* list of children */
@@ -80,22 +80,22 @@ struct Sscreen : public Sobj {
     struct s_sB B;
     struct s_wE E;
   } USE;
-  /* screen */
+  /* Tscreen */
   dat NameLen;
   char *Name;
   Twindow MenuWindow, ClickWindow;
-  all All;
+  Tall All;
   HookFn FnHookW; /* allow hooks on children Map()/UnMap() inside this Twidget */
   Twidget HookW;
 
-  static screen Create(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
-  screen Init(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
+  static Tscreen Create(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
+  Tscreen Init(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
 
   /* Tobj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(all a, screen prev, screen next) {
+  void Insert(Tall a, Tscreen prev, Tscreen next) {
     Fn->Insert(this, a, prev, next);
   }
   void Remove() {
@@ -132,8 +132,8 @@ struct Sscreen : public Sobj {
   void UnMap() {
     Fn->UnMap(this);
   }
-  void MapTopReal(screen scr) {
-    Fn->MapTopReal(this, scr);
+  void MapTopReal(Tscreen screen) {
+    Fn->MapTopReal(this, screen);
   }
   void Raise() {
     Fn->Raise(this);
@@ -160,14 +160,14 @@ struct Sscreen : public Sobj {
   void RemoveHook(HookFn hook, HookFn *where) {
     Fn->RemoveHook(this, hook, where);
   }
-  /* screen */
+  /* Tscreen */
   Tmenu FindMenu() {
     return Fn->FindMenu(this);
   }
-  screen Find(dat j) {
+  Tscreen Find(dat j) {
     return Fn->Find(j);
   }
-  screen CreateSimple(dat namelen, const char *name, tcell bg) {
+  Tscreen CreateSimple(dat namelen, const char *name, tcell bg) {
     return Fn->CreateSimple(namelen, name, bg);
   }
   void BgImage(dat bgwidth, dat bgheight, const tcell *bg) {
@@ -184,10 +184,10 @@ struct Sscreen : public Sobj {
   }
 };
 
-/* Screen->Attr */
+/* screen->Attr */
 /* not used */
 
-/* Screen->Flags */
+/* screen->Flags */
 #define SCREENFL_USEBG 0x00                   /* it's the default */
 #define SCREENFL_USEEXPOSE WIDGETFL_USEEXPOSE /* 0x02 */
 #define SCREENFL_USEFILL WIDGETFL_USEFILL     /* 0x03 */

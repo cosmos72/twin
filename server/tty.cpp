@@ -152,7 +152,7 @@ static void flush_tty(void) {
   byte doupdate = tfalse;
   dat i;
 
-  /* first, draw on screen whatever changed in the window */
+  /* first, draw on Tscreen whatever changed in the window */
   if (dirtyN) {
     if (dirtyN == TW_MAXBYTE)
       DrawLogicWidget((Twidget)Win, 0, ScrollBack, SizeX - 1, SizeY - 1 + ScrollBack);
@@ -1434,15 +1434,15 @@ Twidget TtyKbdFocus(Twidget newW) {
   udat newFlags;
   Twidget oldW;
   Twidget P;
-  screen Screen = newW && (P = newW->Parent) && IS_SCREEN(P) ? (screen)P : All->FirstScreen;
+  Tscreen screen = newW && (P = newW->Parent) && IS_SCREEN(P) ? (Tscreen)P : All->FirstScreen;
 
-  if (Screen) {
-    oldW = Screen->FocusW;
-    Screen->FocusW = newW;
+  if (screen) {
+    oldW = screen->FocusW;
+    screen->FocusW = newW;
   } else
     oldW = newW = (Twidget)0;
 
-  if (Screen == All->FirstScreen) {
+  if (screen == All->FirstScreen) {
     if (!newW || !IS_WINDOW(newW) || !W_USE((Twindow)newW, USECONTENTS) ||
         !((Twindow)newW)->USE.C.TtyData)
 

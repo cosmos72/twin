@@ -210,7 +210,7 @@ Tobj Id2Obj(e_magic_byte expected_magic_byte, uldat id) {
 
 static Tobj IdVec_all[1];
 
-bool AssignId_all(all a) {
+bool AssignId_all(Tall a) {
   const e_magic_byte magic_byte = Tall_magic_byte;
   s_idvec &my = IdVec[magic_byte];
 

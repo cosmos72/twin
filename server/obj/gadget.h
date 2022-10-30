@@ -25,7 +25,7 @@ struct SgadgetFn {
   void (*Insert)(Tgadget, Twidget Parent, Twidget Prev, Twidget Next);
   void (*Remove)(Tgadget);
   void (*Delete)(Tgadget);
-  void (*ChangeField)(Tgadget, udat field, uldat CLEARMask, uldat XORMask);
+  void (*ChangeField)(Tgadget, udat field, uldat clear_mask, uldat xor_mask);
   /* Twidget */
   TobjFn Fn_Obj;
   void (*DrawSelf)(Sdraw *D);
@@ -37,7 +37,7 @@ struct SgadgetFn {
   Twidget (*KbdFocus)(Tgadget);
   void (*Map)(Tgadget, Twidget Parent);
   void (*UnMap)(Tgadget);
-  void (*MapTopReal)(Tgadget, screen);
+  void (*MapTopReal)(Tgadget, Tscreen);
   void (*Raise)(Tgadget);
   void (*Lower)(Tgadget);
   void (*Own)(Tgadget, Tmsgport);
@@ -136,8 +136,8 @@ struct Sgadget : public Sobj {
   void UnMap() {
     Fn->UnMap(this);
   }
-  void MapTopReal(screen scr) {
-    Fn->MapTopReal(this, scr);
+  void MapTopReal(Tscreen screen) {
+    Fn->MapTopReal(this, screen);
   }
   void Raise() {
     Fn->Raise(this);

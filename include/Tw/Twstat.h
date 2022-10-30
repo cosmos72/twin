@@ -101,7 +101,7 @@ tslist Tw_CloneStatA(tdisplay TwD, tobj Id, uldat hN, TW_CONST udat *h);
 tslist Tw_CloneStatV(tdisplay TwD, tobj Id, uldat hN, va_list h);
 void Tw_DeleteStat(tdisplay TwD, tslist TSL);
 tsfield Tw_FindStat(tdisplay TwD, tslist TSL, udat label);
-void Tw_ChangeField(tdisplay TwD, tobj Obj, udat field, uldat CLEARMask, uldat XORMask);
+void Tw_ChangeField(tdisplay TwD, tobj Obj, udat field, uldat clear_mask, uldat xor_mask);
 
 #define TwStat(Id, h) Tw_Stat(Tw_DefaultD, Id, h)
 

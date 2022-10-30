@@ -385,7 +385,7 @@ case order_FindMsgPort:
 
 case order_BgImageScreen:
     if (a.size() >= 4)
-        Act(BgImage,(screen)a[1]_obj)((screen)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const tcell *)a[4]_vec);
+        Act(BgImage,(Tscreen)a[1]_obj)((Tscreen)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const tcell *)a[4]_vec);
     break;
 
 

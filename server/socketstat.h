@@ -173,7 +173,7 @@ static byte sockStatWidget(Twidget x, tsfield TSF) {
   default:
     return tfalse;
   }
-  /* correct for screen scrolling */
+  /* correct for Tscreen scrolling */
   if (x->Parent && IS_SCREEN(x->Parent)) {
     if (TSF->label == TWS_widget_Left)
       TSF->TWS_field_scalar -= x->Parent->XLogic;
@@ -298,7 +298,7 @@ static byte sockStatWindow(Twindow x, tsfield TSF) {
   return ttrue;
 }
 
-static byte sockStatScreen(screen x, tsfield TSF) {
+static byte sockStatScreen(Tscreen x, tsfield TSF) {
   switch (TSF->label) {
     TWScase(screen, NameLen, dat);
     TWScasevec(screen, Name, byte, x->NameLen);
@@ -448,7 +448,7 @@ static byte sockStatMutex(Tmutex x, tsfield TSF) {
   return ttrue;
 }
 
-static byte sockStatAll(all x, tsfield TSF) {
+static byte sockStatAll(Tall x, tsfield TSF) {
   switch (TSF->label) {
     TWScase(all, FirstScreen, obj);
     TWScase(all, LastScreen, obj);
@@ -502,7 +502,7 @@ static void sockStat(Tobj x, udat n, const byte *in) {
              sockStatObj(x, TSF + i);
         break;
       case Tscreen_magic_byte:
-        ok = sockStatScreen((screen)x, TSF + i) || sockStatWidget((Twidget)x, TSF + i) ||
+        ok = sockStatScreen((Tscreen)x, TSF + i) || sockStatWidget((Twidget)x, TSF + i) ||
              sockStatObj(x, TSF + i);
         break;
       case Tgroup_magic_byte:
@@ -522,7 +522,7 @@ static void sockStat(Tobj x, udat n, const byte *in) {
         ok = sockStatMutex((Tmutex)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
       case Tall_magic_byte:
-        ok = sockStatAll((all)x, TSF + i) || sockStatObj(x, TSF + i);
+        ok = sockStatAll((Tall)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
       default:
         ok = tfalse;

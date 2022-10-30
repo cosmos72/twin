@@ -21,10 +21,10 @@
 
 struct SmoduleFn {
   uldat Magic;
-  void (*Insert)(Tmodule, all, Tmodule Prev, Tmodule Next);
+  void (*Insert)(Tmodule, Tall, Tmodule Prev, Tmodule Next);
   void (*Remove)(Tmodule);
   void (*Delete)(Tmodule);
-  void (*ChangeField)(Tmodule, udat field, uldat CLEARMask, uldat XORMask);
+  void (*ChangeField)(Tmodule, udat field, uldat clear_mask, uldat xor_mask);
   /* Tmodule */
   TobjFn Fn_Obj;
   bool (*DlOpen)(Tmodule);
@@ -34,7 +34,7 @@ struct SmoduleFn {
 struct Smodule : public Sobj {
   TmoduleFn Fn;
   Tmodule Prev, Next; /* in the same All */
-  all All;
+  Tall All;
   /* Tmodule */
   uldat NameLen, Used;
   char *Name;
@@ -48,7 +48,7 @@ struct Smodule : public Sobj {
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(all a, Tmodule prev, Tmodule next) {
+  void Insert(Tall a, Tmodule prev, Tmodule next) {
     Fn->Insert(this, a, prev, next);
   }
   void Remove() {

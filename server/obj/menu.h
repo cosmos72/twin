@@ -20,7 +20,7 @@ struct SmenuFn {
   void (*Insert)(Tmenu, Tmsgport, Tmenu Prev, Tmenu Next);
   void (*Remove)(Tmenu);
   void (*Delete)(Tmenu);
-  void (*ChangeField)(Tmenu, udat field, uldat CLEARMask, uldat XORMask);
+  void (*ChangeField)(Tmenu, udat field, uldat clear_mask, uldat xor_mask);
   /* Tmenu */
   TobjFn Fn_Obj;
   Trow (*SetInfo)(Tmenu, byte Flags, ldat Len, const char *Text, const tcolor *ColText);

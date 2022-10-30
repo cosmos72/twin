@@ -24,7 +24,7 @@ struct SmsgFn {
   void (*Insert)(Tmsg, Tmsgport, Tmsg Prev, Tmsg Next);
   void (*Remove)(Tmsg);
   void (*Delete)(Tmsg);
-  void (*ChangeField)(Tmsg, udat field, uldat CLEARMask, uldat XORMask);
+  void (*ChangeField)(Tmsg, udat field, uldat clear_mask, uldat xor_mask);
   /* Tmsg */
   TobjFn Fn_Obj;
 };

@@ -117,12 +117,12 @@ static void Clock_Update(void) {
   Builtin_MsgPort->PauseDuration.Seconds = 0;
 }
 
-static void TweakMenuRows(Tmenuitem Item, udat code, byte flag) {
-  Twindow Win;
-  Trow Row;
+static void TweakMenuRows(Tmenuitem item, udat code, byte flag) {
+  Twindow win;
+  Trow row;
 
-  if ((Win = Item->Window) && (Row = Win->FindRowByCode(code, (ldat *)0)))
-    Row->Flags = flag;
+  if ((win = item->Window) && (row = win->FindRowByCode(code, (ldat *)0)))
+    row->Flags = flag;
 }
 
 static void UpdateMenuRows(Twidget dummy) {
@@ -143,21 +143,21 @@ static void UpdateMenuRows(Twidget dummy) {
 }
 
 static void SelectWinList(void) {
-  screen Screen = All->FirstScreen;
+  Tscreen screen = All->FirstScreen;
   uldat n = WinList->CurY;
-  Twidget W;
+  Twidget w;
 
-  for (W = Screen->FirstW; W; W = W->Next) {
-    if (W == (Twidget)WinList || !IS_WINDOW(W) ||
-        (((Twindow)W)->Flags & (WINDOWFL_NOTVISIBLE | WINDOWFL_MENU)))
+  for (w = screen->FirstW; w; w = w->Next) {
+    if (w == (Twidget)WinList || !IS_WINDOW(w) ||
+        (((Twindow)w)->Flags & (WINDOWFL_NOTVISIBLE | WINDOWFL_MENU)))
       continue;
     if (!n)
       break;
     n--;
   }
-  if (!n && W) {
-    RaiseWidget(W, ttrue);
-    CenterWindow((Twindow)W);
+  if (!n && w) {
+    RaiseWidget(w, ttrue);
+    CenterWindow((Twindow)w);
   }
 }
 
@@ -177,7 +177,7 @@ static void ExecuteGadgetH(event_gadget *EventG) {
 
 static void ExecuteWinRun(void) {
   char **argv, *arg0;
-  Trow Row;
+  Trow row;
   Tgadget G;
 
   ExecuteWin->UnMap();
@@ -187,9 +187,9 @@ static void ExecuteWinRun(void) {
     return;
   }
 
-  if ((Row = ExecuteWin->FindRow(ExecuteWin->CurY)) && !Row->LenGap) {
+  if ((row = ExecuteWin->FindRow(ExecuteWin->CurY)) && !row->LenGap) {
 
-    argv = TokenizeTRuneVec(Row->Len, Row->Text);
+    argv = TokenizeTRuneVec(row->Len, row->Text);
     arg0 = argv ? argv[0] : NULL;
 
     if ((G = ExecuteWin->FindGadgetByCode(COD_E_TTY)) && G->USE.T.Text[0][1] != ' ') {
@@ -486,12 +486,12 @@ static void DisplayGadgetH(Tmsg msg) {
 static void BuiltinH(Tmsgport MsgPort) {
   Tmsg msg;
   event_any *Event;
-  screen Screen;
+  Tscreen screen;
   Twindow NewWindow, tempWin;
-  Trow Row;
+  Trow row;
   udat Code;
 
-  Screen = All->FirstScreen;
+  screen = All->FirstScreen;
 
   while ((msg = Builtin_MsgPort->FirstMsg)) {
     msg->Remove();
@@ -562,7 +562,7 @@ static void BuiltinH(Tmsgport MsgPort) {
           }
           if (NewWindow->Parent)
             NewWindow->UnMap();
-          NewWindow->Map((Twidget)Screen);
+          NewWindow->Map((Twidget)screen);
           break;
 
         case COD_QUIT:
@@ -647,9 +647,9 @@ static void BuiltinH(Tmsgport MsgPort) {
           if (ExecuteWin->CurX) {
             ExecuteWin->CurX--;
             UpdateCursor();
-            if ((Row = ExecuteWin->FindRow(ExecuteWin->CurY)) && Row->Len) {
-              Row->Len--;
-              DrawLogicWidget((Twidget)ExecuteWin, Row->Len, ExecuteWin->CurY, Row->Len + 1,
+            if ((row = ExecuteWin->FindRow(ExecuteWin->CurY)) && row->Len) {
+              row->Len--;
+              DrawLogicWidget((Twidget)ExecuteWin, row->Len, ExecuteWin->CurY, row->Len + 1,
                               ExecuteWin->CurY);
             }
           }
@@ -742,15 +742,15 @@ void FullUpdateWinList(Twidget listWin);
 void InstallRemoveWinListHook(Twidget listWin) {
   if (listWin == (Twidget)WinList) {
     if (WinList->Parent && IS_SCREEN(WinList->Parent))
-      WinList->InstallHook(FullUpdateWinList, &((screen)WinList->Parent)->FnHookW);
+      WinList->InstallHook(FullUpdateWinList, &((Tscreen)WinList->Parent)->FnHookW);
     else
       WinList->RemoveHook(FullUpdateWinList, WinList->WhereHook);
   }
 }
 
 void UpdateWinList(void) {
-  screen Screen = All->FirstScreen;
-  Twidget W;
+  Tscreen screen = All->FirstScreen;
+  Twidget w;
 
   DeleteList(WinList->USE.R.FirstRow);
   WinList->CurX = WinList->CurY = 0;
@@ -759,11 +759,11 @@ void UpdateWinList(void) {
   WinList->XWidth = WinList->MinXWidth;
   WinList->YWidth = WinList->MinYWidth;
 
-  for (W = Screen->FirstW; W; W = W->Next) {
-    if (W == (Twidget)WinList || !IS_WINDOW(W) ||
-        (((Twindow)W)->Flags & (WINDOWFL_NOTVISIBLE | WINDOWFL_MENU)))
+  for (w = screen->FirstW; w; w = w->Next) {
+    if (w == (Twidget)WinList || !IS_WINDOW(w) ||
+        (((Twindow)w)->Flags & (WINDOWFL_NOTVISIBLE | WINDOWFL_MENU)))
       continue;
-    (void)Row4Menu(WinList, (udat)0, ROW_ACTIVE, ((Twindow)W)->NameLen, ((Twindow)W)->Name);
+    (void)Row4Menu(WinList, (udat)0, ROW_ACTIVE, ((Twindow)w)->NameLen, ((Twindow)w)->Name);
   }
 }
 
@@ -794,7 +794,7 @@ static byte InitMessagesWin(void) {
 #endif
 
 static byte InitScreens(void) {
-  screen OneScreen;
+  Tscreen OneScreen;
 
   if ((OneScreen =
            Do(CreateSimple, screen)(1, "1", TCELL(TCOL(thigh | tblack, tblue), _MEDIUM_SHADE)))) {
@@ -808,7 +808,7 @@ static byte InitScreens(void) {
 }
 
 byte InitBuiltin(void) {
-  Twindow W;
+  Twindow w;
   const char *greeting =
       "\n"
       "                TWIN              \n"
@@ -820,7 +820,7 @@ byte InitBuiltin(void) {
 
   if ((Builtin_MsgPort = New(msgport)(4, "twin", 0, 0, 0, BuiltinH)) &&
 
-      InitScreens() && /* New(Screen)() requires Builtin_MsgPort ! */
+      InitScreens() && /* New(screen)() requires Builtin_MsgPort ! */
 
       (All->BuiltinRow = New(row)(0, ROW_ACTIVE | ROW_DEFCOL)) &&
 
@@ -829,34 +829,34 @@ byte InitBuiltin(void) {
       Info4Menu(Builtin_Menu, ROW_ACTIVE, (uldat)42, " Hit PAUSE or Mouse Right Button for Menu ",
                 (const tcolor *)"tttttttttttttttttttttttttttttttttttttttttt") &&
 
-      (W = Win4Menu(Builtin_Menu)) && Row4Menu(W, COD_CLOCK_WIN, ROW_ACTIVE, 9, " Clock   ") &&
-      Row4Menu(W, COD_OPTION_WIN, ROW_ACTIVE, 9, " Options ") &&
-      Row4Menu(W, COD_BUTTONS_WIN, ROW_ACTIVE, 9, " Buttons ") &&
-      Row4Menu(W, COD_DISPLAY_WIN, ROW_ACTIVE, 9, " Display ") &&
+      (w = Win4Menu(Builtin_Menu)) && Row4Menu(w, COD_CLOCK_WIN, ROW_ACTIVE, 9, " Clock   ") &&
+      Row4Menu(w, COD_OPTION_WIN, ROW_ACTIVE, 9, " Options ") &&
+      Row4Menu(w, COD_BUTTONS_WIN, ROW_ACTIVE, 9, " Buttons ") &&
+      Row4Menu(w, COD_DISPLAY_WIN, ROW_ACTIVE, 9, " Display ") &&
 #ifdef CONF_PRINTK
-      Row4Menu(W, COD_MESSAGES_WIN, ROW_ACTIVE, 10, " Messages ") &&
+      Row4Menu(w, COD_MESSAGES_WIN, ROW_ACTIVE, 10, " Messages ") &&
 #endif
-      Row4Menu(W, COD_ABOUT_WIN, ROW_ACTIVE, 9, " About   ") &&
-      Item4Menu(Builtin_Menu, W, ttrue, 3, " \xF0 ") &&
+      Row4Menu(w, COD_ABOUT_WIN, ROW_ACTIVE, 9, " About   ") &&
+      Item4Menu(Builtin_Menu, w, ttrue, 3, " \xF0 ") &&
 
-      (W = Win4Menu(Builtin_Menu)) && Row4Menu(W, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&
-      Row4Menu(W, COD_EXECUTE, ROW_ACTIVE, 10, " Execute  ") &&
-      Row4Menu(W, COD_RELOAD_RC, ROW_ACTIVE, 11, " Reload RC ") &&
-      Row4Menu(W, (udat)0, ROW_IGNORE, 11, "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
-      Row4Menu(W, COD_DETACH, ROW_ACTIVE, 10, " Detach   ") &&
-      Row4Menu(W, COD_SUSPEND, ROW_ACTIVE, 10, " Suspend  ") &&
-      Row4Menu(W, COD_QUIT, ROW_ACTIVE, 10, " Quit     ") &&
-      (Builtin_File = Item4Menu(Builtin_Menu, W, ttrue, 6, " File ")) &&
+      (w = Win4Menu(Builtin_Menu)) && Row4Menu(w, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&
+      Row4Menu(w, COD_EXECUTE, ROW_ACTIVE, 10, " Execute  ") &&
+      Row4Menu(w, COD_RELOAD_RC, ROW_ACTIVE, 11, " Reload RC ") &&
+      Row4Menu(w, (udat)0, ROW_IGNORE, 11, "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
+      Row4Menu(w, COD_DETACH, ROW_ACTIVE, 10, " Detach   ") &&
+      Row4Menu(w, COD_SUSPEND, ROW_ACTIVE, 10, " Suspend  ") &&
+      Row4Menu(w, COD_QUIT, ROW_ACTIVE, 10, " Quit     ") &&
+      (Builtin_File = Item4Menu(Builtin_Menu, w, ttrue, 6, " File ")) &&
 
-      (W = Win4Menu(Builtin_Menu)) && (W->InstallHook(UpdateMenuRows, &All->FnHookModule), ttrue) &&
-      Row4Menu(W, COD_TERM_ON, ROW_ACTIVE, 20, " Run Twin Term      ") &&
-      Row4Menu(W, COD_TERM_OFF, ROW_INACTIVE, 20, " Stop Twin Term     ") &&
+      (w = Win4Menu(Builtin_Menu)) && (w->InstallHook(UpdateMenuRows, &All->FnHookModule), ttrue) &&
+      Row4Menu(w, COD_TERM_ON, ROW_ACTIVE, 20, " Run Twin Term      ") &&
+      Row4Menu(w, COD_TERM_OFF, ROW_INACTIVE, 20, " Stop Twin Term     ") &&
       Row4Menu(
-          W, (udat)0, ROW_IGNORE, 20,
+          w, (udat)0, ROW_IGNORE, 20,
           "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
-      Row4Menu(W, COD_SOCKET_ON, ROW_ACTIVE, 20, " Run Socket Server  ") &&
-      Row4Menu(W, COD_SOCKET_OFF, ROW_INACTIVE, 20, " Stop Socket Server ") &&
-      (Builtin_Modules = Item4Menu(Builtin_Menu, W, ttrue, 9, " Modules ")) &&
+      Row4Menu(w, COD_SOCKET_ON, ROW_ACTIVE, 20, " Run Socket Server  ") &&
+      Row4Menu(w, COD_SOCKET_OFF, ROW_INACTIVE, 20, " Stop Socket Server ") &&
+      (Builtin_Modules = Item4Menu(Builtin_Menu, w, ttrue, 9, " Modules ")) &&
 
       Item4MenuCommon(Builtin_Menu) &&
 
@@ -912,7 +912,7 @@ byte InitBuiltin(void) {
       (ButtonRemove = Do(CreateEmptyButton, gadget)(Builtin_MsgPort, 8, 1, TCOL(tblack, twhite))) &&
       (ButtonThis = Do(CreateEmptyButton, gadget)(Builtin_MsgPort, 8, 1, TCOL(tblack, twhite))) &&
 
-      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 27, 1, "[ ] Enable Screen Scrolling", 0,
+      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 27, 1, "[ ] Enable screen Scrolling", 0,
                   GADGETFL_TEXT_DEFCOL, COD_O_SCREEN_SCROLL, TCOL(tblack, twhite),
                   TCOL(thigh | twhite, tgreen), TCOL(thigh | tblack, twhite),
                   TCOL(thigh | tblack, tblack), 2, 16) &&

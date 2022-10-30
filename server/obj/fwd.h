@@ -22,7 +22,7 @@ typedef struct Sobj *Tobj;
 typedef struct Swidget *Twidget;
 typedef struct Sgadget *Tgadget;
 typedef struct Swindow *Twindow;
-typedef struct Sscreen *screen;
+typedef struct Sscreen *Tscreen;
 typedef struct Sgroup *Tgroup;
 typedef struct Srow *Trow;
 typedef struct Smenuitem *Tmenuitem;
@@ -51,7 +51,7 @@ typedef struct SdisplayFn *TdisplayFn;
 typedef struct SstructFn TstructFn;
 typedef struct Ssetup setup;
 typedef struct Sselection *selection;
-typedef struct Sall *all;
+typedef struct Sall *Tall;
 
 typedef void (*HookFn)(Twidget);
 

@@ -11,13 +11,13 @@
 
 struct wm_ctx {
   Twidget W; /* top level Twidget user is interacting with */
-  screen Screen;
+  Tscreen Screen;
   Tmenu Menu;
   Tmenuitem Item;
   Twidget DW; /* deepest Twidget user is interacting with */
   udat Type;  /* Tmsg->Type: MSG_* */
   byte Pos;   /* POS_* relative to (W) */
-  byte ByMouse;
+  bool ByMouse;
   udat Code; /* keyboard key / mouse buttons pressed */
   udat ShiftFlags;
   dat i, j;                /* mouse coordinates */
@@ -27,9 +27,9 @@ struct wm_ctx {
 byte InitWM(void);
 void QuitWM(void);
 
-void AskCloseWidget(Twidget W);
-void Check4Resize(Twindow W);
-void MaximizeWindow(Twindow W, byte full_screen);
+void AskCloseWidget(Twidget w);
+void Check4Resize(Twindow window);
+void MaximizeWindow(Twindow w, byte full_screen);
 void ShowWinList(wm_ctx *C);
 
 void FocusCtx(wm_ctx *C);
