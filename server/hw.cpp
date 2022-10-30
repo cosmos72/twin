@@ -71,18 +71,18 @@ uldat CursorType;
 struct termios ttysave;
 
 VOLATILE bool GotSignals;
-static VOLATILE byte GotSignalWinch;
-static VOLATILE byte GotSignalChild;
-static VOLATILE byte GotSignalHangup;
+static VOLATILE bool GotSignalWinch;
+static VOLATILE bool GotSignalChild;
+static VOLATILE bool GotSignalHangup;
 
 static void SignalWinch(int n) NOTHROW {
-  GotSignals = GotSignalWinch = ttrue;
+  GotSignals = GotSignalWinch = true;
   signal(SIGWINCH, SignalWinch);
   TW_RETFROMSIGNAL(0);
 }
 
 static void HandleSignalWinch(void) {
-  GotSignalWinch = tfalse;
+  GotSignalWinch = false;
   if (DisplayHWCTTY && DisplayHWCTTY != HWCTTY_DETACHED && DisplayHWCTTY->DisplayIsCTTY) {
 
     ResizeDisplayPrefer(DisplayHWCTTY);
@@ -91,7 +91,7 @@ static void HandleSignalWinch(void) {
 }
 
 static void SignalChild(int n) NOTHROW {
-  GotSignals = GotSignalChild = ttrue;
+  GotSignals = GotSignalChild = true;
   signal(SIGCHLD, SignalChild);
   TW_RETFROMSIGNAL(0);
 }
@@ -99,7 +99,7 @@ static void SignalChild(int n) NOTHROW {
 static void HandleSignalChild(void) {
   pid_t pid;
   int status;
-  GotSignalChild = tfalse;
+  GotSignalChild = false;
   while ((pid = Tw_wait3(&status, WNOHANG, (struct rusage *)0)) != 0 && pid != (pid_t)-1) {
     if (WIFEXITED(status) || WIFSIGNALED(status))
       RemotePidIsDead(pid);
@@ -110,13 +110,13 @@ static void HandleSignalChild(void) {
  * got a SIGHUP. shutdown the display on controlling tty, if any
  */
 static void SignalHangup(int n) {
-  GotSignals = GotSignalHangup = ttrue;
+  GotSignals = GotSignalHangup = true;
   signal(SIGHUP, SignalHangup);
   TW_RETFROMSIGNAL(0);
 }
 
 static void HandleSignalHangup(void) {
-  GotSignalHangup = tfalse;
+  GotSignalHangup = false;
   if (DisplayHWCTTY && DisplayHWCTTY != HWCTTY_DETACHED && DisplayHWCTTY->DisplayIsCTTY) {
 
     DisplayHWCTTY->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;

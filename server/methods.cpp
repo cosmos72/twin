@@ -47,52 +47,52 @@ void *OverrideMth(void **where, void *OrigMth, void *NewMth) {
 }
 
 #if 0 /* not used */
-inline void DeletePartialList(Tobj Obj) {
+inline void DeletePartialList(Tobj obj) {
   Tobj Next;
-  while (Obj) {
-    Next = Obj->Next;
-    Obj->Delete();
-    Obj = Next;
+  while (obj) {
+    Next = obj->Next;
+    obj->Delete();
+    obj = Next;
   }
 }
 #endif
 
-inline void InsertGeneric(TobjEntry Obj, TobjList Parent, TobjEntry Prev, TobjEntry Next,
+inline void InsertGeneric(TobjEntry obj, TobjList parent, TobjEntry prev, TobjEntry Next,
                           ldat *ObjCount) {
-  if (Obj->Prev || Obj->Next)
+  if (obj->Prev || obj->Next)
     return;
 
-  if (Prev)
-    Next = Prev->Next;
+  if (prev)
+    Next = prev->Next;
   else if (Next)
-    Prev = Next->Prev;
+    prev = Next->Prev;
 
-  if ((Obj->Prev = Prev))
-    Prev->Next = Obj;
+  if ((obj->Prev = prev))
+    prev->Next = obj;
   else
-    Parent->First = Obj;
+    parent->First = obj;
 
-  if ((Obj->Next = Next))
-    Next->Prev = Obj;
+  if ((obj->Next = Next))
+    Next->Prev = obj;
   else
-    Parent->Last = Obj;
+    parent->Last = obj;
 
   if (ObjCount)
     (*ObjCount)++;
 }
 
-inline void RemoveGeneric(TobjEntry Obj, TobjList Parent, ldat *ObjCount) {
-  if (Obj->Prev)
-    Obj->Prev->Next = Obj->Next;
-  else if (Parent->First == Obj)
-    Parent->First = Obj->Next;
+inline void RemoveGeneric(TobjEntry obj, TobjList parent, ldat *ObjCount) {
+  if (obj->Prev)
+    obj->Prev->Next = obj->Next;
+  else if (parent->First == obj)
+    parent->First = obj->Next;
 
-  if (Obj->Next)
-    Obj->Next->Prev = Obj->Prev;
-  else if (Parent->Last == Obj)
-    Parent->Last = Obj->Prev;
+  if (obj->Next)
+    obj->Next->Prev = obj->Prev;
+  else if (parent->Last == obj)
+    parent->Last = obj->Prev;
 
-  Obj->Prev = Obj->Next = NULL;
+  obj->Prev = obj->Next = NULL;
   if (ObjCount)
     (*ObjCount)--;
 }
@@ -101,18 +101,18 @@ inline void RemoveGeneric(TobjEntry Obj, TobjList Parent, ldat *ObjCount) {
 
 /* Tobj */
 
-static void InsertObj(Tobj Obj, Tobj Parent, Tobj Prev, Tobj Next) {
+static void InsertObj(Tobj obj, Tobj parent, Tobj Prev, Tobj Next) {
   log(ERROR) << "twin: internal error: pure virtual function InsertObj() called!\n";
 }
 
-static void RemoveObj(Tobj Obj) {
+static void RemoveObj(Tobj obj) {
   log(ERROR) << "twin: internal error: pure virtual function RemoveObj() called!\n";
 }
 
-static void DeleteObj(Tobj Obj) {
-  /* not a good idea to RemoveObj(Obj) here */
-  DropId(Obj);
-  FreeMem(Obj);
+static void DeleteObj(Tobj obj) {
+  /* not a good idea to RemoveObj(obj) here */
+  DropId(obj);
+  FreeMem(obj);
 }
 
 static struct SobjFn _FnObj = {
@@ -121,13 +121,13 @@ static struct SobjFn _FnObj = {
 
 /* Twidget */
 
-static void InsertWidget(Twidget w, Twidget Parent, Twidget Prev, Twidget Next) {
-  if (Parent) {
+static void InsertWidget(Twidget w, Twidget parent, Twidget Prev, Twidget Next) {
+  if (parent) {
     /*
      * don't check w->Parent here, as Raise() and Lower() call
      * RemoveWidget() then InsertWidget() but RemoveWidget() does not reset w->Parent
      */
-    InsertGeneric((TobjEntry)w, (TobjList)&Parent->FirstW, (TobjEntry)Prev, (TobjEntry)Next, NULL);
+    InsertGeneric((TobjEntry)w, (TobjList)&parent->FirstW, (TobjEntry)Prev, (TobjEntry)Next, NULL);
   }
 }
 
@@ -219,10 +219,10 @@ Twidget FakeKbdFocus(Twidget w) {
   return oldW;
 }
 
-static Tgadget FindGadgetByCode(Twidget Parent, udat Code) {
+static Tgadget FindGadgetByCode(Twidget parent, udat Code) {
   Twidget w;
 
-  for (w = Parent->FirstW; w; w = w->Next) {
+  for (w = parent->FirstW; w; w = w->Next) {
     if (IS_GADGET(w) && ((Tgadget)w)->Code == Code)
       return (Tgadget)w;
   }
@@ -239,26 +239,26 @@ static void DecMouseMotionN(void) {
     EnableMouseMotionEvents(tfalse);
 }
 
-static void MapWidget(Twidget w, Twidget Parent) {
+static void MapWidget(Twidget w, Twidget parent) {
   Tmsg msg;
 
-  if (w && !w->Parent && !w->MapQueueMsg && Parent) {
-    if (IS_SCREEN(Parent)) {
+  if (w && parent && !w->Parent && !w->MapQueueMsg) {
+    if (IS_SCREEN(parent)) {
       if (Ext(WM, MsgPort) && (msg = New(msg)(msg_map, 0))) {
         msg->Event.EventMap.W = w;
         msg->Event.EventMap.Code = 0;
-        msg->Event.EventMap.Screen = (Tscreen)Parent;
+        msg->Event.EventMap.Screen = (Tscreen)parent;
         w->MapQueueMsg = msg;
         SendMsg(Ext(WM, MsgPort), msg);
       } else
-        w->MapTopReal((Tscreen)Parent);
-    } else if (IS_WIDGET(Parent)) {
+        w->MapTopReal((Tscreen)parent);
+    } else if (IS_WIDGET(parent)) {
       if (w->Up == TW_MAXDAT) {
-        w->Left = Parent->XLogic;
-        w->Up = Parent->YLogic;
+        w->Left = parent->XLogic;
+        w->Up = parent->YLogic;
       }
-      InsertFirst(W, w, Parent);
-      w->Parent = Parent;
+      InsertFirst(W, w, parent);
+      w->Parent = parent;
 
       DrawAreaWidget(w);
 
@@ -517,29 +517,29 @@ static struct SwidgetFn _FnWidget = {
 
 /* Tgadget */
 
-static void DeleteGadget(Tgadget G) {
+static void DeleteGadget(Tgadget g) {
   byte i;
 
-  G->UnMap();
-  if (G_USE(G, USETEXT)) {
+  g->UnMap();
+  if (G_USE(g, USETEXT)) {
     for (i = 0; i < 4; i++) {
-      if (G->USE.T.Text[i])
-        FreeMem(G->USE.T.Text[i]);
-      if (G->USE.T.Color[i])
-        FreeMem(G->USE.T.Color[i]);
+      if (g->USE.T.Text[i])
+        FreeMem(g->USE.T.Text[i]);
+      if (g->USE.T.Color[i])
+        FreeMem(g->USE.T.Color[i]);
     }
   }
-  if (G->Group) {
-    G->Group->RemoveGadget(G);
+  if (g->Group) {
+    g->Group->RemoveGadget(g);
   }
 
-  DeleteWidget((Twidget)G);
+  DeleteWidget((Twidget)g);
 }
 
-static void ChangeFieldGadget(Tgadget G, udat field, uldat clear_mask, uldat xor_mask) {
-  uldat i, mask;
+static void ChangeFieldGadget(Tgadget g, udat field, uldat clear_mask, uldat xor_mask) {
+  if (g) {
+    uldat i, mask;
 
-  if (G)
     switch (field) {
     case TWS_gadget_ColText:
     case TWS_gadget_ColSelect:
@@ -551,30 +551,31 @@ static void ChangeFieldGadget(Tgadget G, udat field, uldat clear_mask, uldat xor
       mask = GADGETFL_DISABLED | GADGETFL_TEXT_DEFCOL | GADGETFL_PRESSED | GADGETFL_TOGGLE;
       clear_mask &= mask;
       xor_mask &= mask;
-      i = (G->Flags & ~clear_mask) ^ xor_mask;
-      if ((i & mask) != (G->Flags & mask)) {
-        if ((i & GADGETFL_PRESSED) != (G->Flags & GADGETFL_PRESSED)) {
+      i = (g->Flags & ~clear_mask) ^ xor_mask;
+      if ((i & mask) != (g->Flags & mask)) {
+        if ((i & GADGETFL_PRESSED) != (g->Flags & GADGETFL_PRESSED)) {
           if (i & GADGETFL_PRESSED)
-            PressGadget(G);
+            PressGadget(g);
           else
-            UnPressGadget(G, ttrue);
+            UnPressGadget(g, ttrue);
         }
         mask = GADGETFL_DISABLED | GADGETFL_TEXT_DEFCOL;
-        if ((i & mask) != (G->Flags & mask)) {
-          G->Flags = i;
-          DrawAreaWidget((Twidget)G);
+        if ((i & mask) != (g->Flags & mask)) {
+          g->Flags = i;
+          DrawAreaWidget((Twidget)g);
         } else
-          G->Flags = i;
+          g->Flags = i;
       }
       break;
     default:
-      G->Fn->Fn_Widget->ChangeField((Twidget)G, field, clear_mask, xor_mask);
+      g->widget_fn()->ChangeField((Twidget)g, field, clear_mask, xor_mask);
       break;
     }
+  }
 }
 
 static Tgadget CreateEmptyButton(Tmsgport Owner, dat XWidth, dat YWidth, tcolor BgCol) {
-  Tgadget G = NULL;
+  Tgadget g = NULL;
   ldat Size;
   byte i;
   dat j, k;
@@ -583,25 +584,25 @@ static Tgadget CreateEmptyButton(Tmsgport Owner, dat XWidth, dat YWidth, tcolor 
 #define _UPPER T_UTF_32_UPPER_HALF_BLOCK
   void *addr = AllocMem0(sizeof(Sgadget));
   if (addr) {
-    G = new (addr) Sgadget();
-    G->Fn = Fn_Tgadget;
-    if (!((Twidget)G)
+    g = new (addr) Sgadget();
+    g->Fn = (TwidgetFn)Fn_Tgadget;
+    if (!((Twidget)g)
              ->Init(Owner, ++XWidth, ++YWidth, 0, GADGETFL_USETEXT | GADGETFL_BUTTON, 0, 0,
                     (tcell)0)) {
-      G->Delete();
+      g->Delete();
       return NULL;
     }
 
     Size = (ldat)XWidth * YWidth;
 
     for (i = 0; i < 4; i++)
-      G->USE.T.Text[i] = NULL, G->USE.T.Color[i] = NULL;
+      g->USE.T.Text[i] = NULL, g->USE.T.Color[i] = NULL;
 
     for (i = 0; i < 4; i++)
-      if (!(G->USE.T.Text[i] = (trune *)AllocMem(Size * sizeof(trune))) ||
-          !(G->USE.T.Color[i] = (tcolor *)AllocMem(Size * sizeof(tcolor)))) {
+      if (!(g->USE.T.Text[i] = (trune *)AllocMem(Size * sizeof(trune))) ||
+          !(g->USE.T.Color[i] = (tcolor *)AllocMem(Size * sizeof(tcolor)))) {
 
-        G->Delete();
+        g->Delete();
         return NULL;
       }
 
@@ -610,30 +611,30 @@ static Tgadget CreateEmptyButton(Tmsgport Owner, dat XWidth, dat YWidth, tcolor 
 
     for (i = 0; i < 4; i++) {
       for (j = k = (dat)0; j < YWidth; j++, k += XWidth + 1) {
-        G->USE.T.Text[i][k + (i & 1 ? 0 : XWidth)] = i & 1 ? ' ' : k ? _FULL : _LOWER;
-        G->USE.T.Color[i][k + (i & 1 ? 0 : XWidth)] = BgCol;
+        g->USE.T.Text[i][k + (i & 1 ? 0 : XWidth)] = i & 1 ? ' ' : k ? _FULL : _LOWER;
+        g->USE.T.Color[i][k + (i & 1 ? 0 : XWidth)] = BgCol;
       }
-      G->USE.T.Text[i][k] = ' ';
+      g->USE.T.Text[i][k] = ' ';
       for (j = (dat)0; j < XWidth; j++)
-        G->USE.T.Text[i][k + 1 + j] = i & 1 ? ' ' : _UPPER;
+        g->USE.T.Text[i][k + 1 + j] = i & 1 ? ' ' : _UPPER;
 #if TW_SIZEOF_TCOLOR == 1
-      memset((void *)(G->USE.T.Color[i] + k), BgCol, XWidth + 1);
+      memset((void *)(g->USE.T.Color[i] + k), BgCol, XWidth + 1);
 #else
       for (j = (dat)0; j <= XWidth; j++)
-        G->USE.T.Color[i][k + j] = BgCol;
+        g->USE.T.Color[i][k + j] = BgCol;
 #endif
     }
 
-    G->G_Prev = G->G_Next = (Tgadget)0;
-    G->Group = (Tgroup)0;
+    g->G_Prev = g->G_Next = (Tgadget)0;
+    g->Group = (Tgroup)0;
   }
-  return G;
+  return g;
 #undef _FULL
 #undef _UPPER
 #undef _LOWER
 }
 
-byte FillButton(Tgadget G, Twidget Parent, udat Code, dat Left, dat Up, udat Flags,
+byte FillButton(Tgadget g, Twidget Parent, udat Code, dat Left, dat Up, udat Flags,
                 const char *Text, tcolor Color, tcolor ColorDisabled) {
   dat i, j, XWidth, YWidth;
   const char *T;
@@ -641,25 +642,25 @@ byte FillButton(Tgadget G, Twidget Parent, udat Code, dat Left, dat Up, udat Fla
   if (Code >= COD_RESERVED)
     return tfalse;
 
-  G->Code = Code;
-  G->Left = Left;
-  G->Up = Up;
-  G->Flags = (Flags & ~GADGETFL_USEANY) | GADGETFL_USETEXT | GADGETFL_BUTTON;
-  XWidth = G->XWidth;
-  YWidth = G->YWidth;
+  g->Code = Code;
+  g->Left = Left;
+  g->Up = Up;
+  g->Flags = (Flags & ~GADGETFL_USEANY) | GADGETFL_USETEXT | GADGETFL_BUTTON;
+  XWidth = g->XWidth;
+  YWidth = g->YWidth;
 
   T = Text;
   for (j = (dat)0; j < (YWidth - (dat)1) * XWidth; j += XWidth) {
     for (i = (dat)0; i < XWidth - (dat)1; i++) {
-      G->USE.T.Text[0][i + j] = G->USE.T.Text[1][i + j + 1] = G->USE.T.Text[2][i + j] =
-          G->USE.T.Text[3][i + j + 1] = Tutf_CP437_to_UTF_32[(byte) * (T++)];
+      g->USE.T.Text[0][i + j] = g->USE.T.Text[1][i + j + 1] = g->USE.T.Text[2][i + j] =
+          g->USE.T.Text[3][i + j + 1] = Tutf_CP437_to_UTF_32[(byte) * (T++)];
 
-      G->USE.T.Color[0][i + j] = G->USE.T.Color[1][i + j + 1] = Color;
-      G->USE.T.Color[2][i + j] = G->USE.T.Color[3][i + j + 1] = ColorDisabled;
+      g->USE.T.Color[0][i + j] = g->USE.T.Color[1][i + j + 1] = Color;
+      g->USE.T.Color[2][i + j] = g->USE.T.Color[3][i + j + 1] = ColorDisabled;
     }
   }
   if (Parent)
-    G->Map(Parent);
+    g->Map(Parent);
 
   return ttrue;
 }
@@ -667,14 +668,14 @@ byte FillButton(Tgadget G, Twidget Parent, udat Code, dat Left, dat Up, udat Fla
 static Tgadget CreateButton(Twidget Parent, dat XWidth, dat YWidth, const char *Text, uldat Flags,
                             udat Code, tcolor BgCol, tcolor Col, tcolor ColDisabled, dat Left,
                             dat Up) {
-  Tgadget G;
-  if (Parent && (G = CreateEmptyButton(Parent->Owner, XWidth, YWidth, BgCol))) {
-    if (G->FillButton(Parent, Code, Left, Up, Flags, Text, Col, ColDisabled))
-      return G;
-    G->Delete();
-    G = NULL;
+  Tgadget g;
+  if (Parent && (g = CreateEmptyButton(Parent->Owner, XWidth, YWidth, BgCol))) {
+    if (g->FillButton(Parent, Code, Left, Up, Flags, Text, Col, ColDisabled))
+      return g;
+    g->Delete();
+    g = NULL;
   }
-  return G;
+  return g;
 }
 
 static struct SgadgetFn _FnGadget = {
@@ -1335,32 +1336,32 @@ static void DeleteGroup(Tgroup group) {
   DeleteObj((Tobj)group);
 }
 
-static void InsertGadgetGroup(Tgroup group, Tgadget G) {
-  if (G && !G->Group && !G->G_Prev && !G->G_Next) {
-    if ((G->G_Next = group->FirstG))
-      group->FirstG->G_Prev = G;
+static void InsertGadgetGroup(Tgroup group, Tgadget g) {
+  if (g && !g->Group && !g->G_Prev && !g->G_Next) {
+    if ((g->G_Next = group->FirstG))
+      group->FirstG->G_Prev = g;
     else
-      group->LastG = G;
+      group->LastG = g;
 
-    group->FirstG = G;
-    G->Group = group;
+    group->FirstG = g;
+    g->Group = group;
   }
 }
 
-static void RemoveGadgetGroup(Tgroup group, Tgadget G) {
-  if (G && G->Group == group) {
-    if (G->G_Prev)
-      G->G_Prev->G_Next = G->G_Next;
-    else if (group->FirstG == G)
-      group->FirstG = G->G_Next;
+static void RemoveGadgetGroup(Tgroup group, Tgadget g) {
+  if (g && g->Group == group) {
+    if (g->G_Prev)
+      g->G_Prev->G_Next = g->G_Next;
+    else if (group->FirstG == g)
+      group->FirstG = g->G_Next;
 
-    if (G->G_Next)
-      G->G_Next->G_Prev = G->G_Prev;
-    else if (group->LastG == G)
-      group->LastG = G->G_Prev;
+    if (g->G_Next)
+      g->G_Next->G_Prev = g->G_Prev;
+    else if (group->LastG == g)
+      group->LastG = g->G_Prev;
 
-    G->G_Prev = G->G_Next = (Tgadget)0;
-    G->Group = (Tgroup)0;
+    g->G_Prev = g->G_Next = (Tgadget)0;
+    g->Group = (Tgroup)0;
   }
 }
 
@@ -1368,12 +1369,12 @@ static Tgadget GetSelectedGadget(Tgroup group) {
   return group->SelectG;
 }
 
-static void SetSelectedGadget(Tgroup group, Tgadget G) {
-  if (!G || (G && G->Group == group)) {
+static void SetSelectedGadget(Tgroup group, Tgadget g) {
+  if (!g || (g && g->Group == group)) {
     if (group->SelectG)
       UnPressGadget(group->SelectG, ttrue);
-    if (G)
-      PressGadget(G);
+    if (g)
+      PressGadget(g);
   }
 }
 

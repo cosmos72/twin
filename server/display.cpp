@@ -88,7 +88,7 @@ static uldat FdSize = 5, FdTop, FdBottom, FdWQueued;
 static fd_set save_rfds, save_wfds;
 static int max_fds;
 
-static tmsgport TMsgPort = NOID, THelper = NOID;
+static tmsgport TMsgPort = NOID, tw_helper = NOID;
 static byte MouseMotionN; /* non-zero to report also mouse motion events */
 
 int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
@@ -602,7 +602,7 @@ static byte ReAllocVideo(dat Width, dat Height) {
  */
 static byte ResizeDisplay(void) {
   byte change = tfalse;
-  tmsg Tmsg;
+  tmsg tw_msg;
 
   if (!TryDisplayWidth || !TryDisplayHeight)
     HW->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
@@ -616,12 +616,12 @@ static byte ResizeDisplay(void) {
 
   TryDisplayWidth = TryDisplayHeight = 0;
 
-  if (change && (Tmsg = TwCreateMsg(TW_MSG_DISPLAY, TW_SIZEOF_TEVENT_DISPLAY))) {
-    Tmsg->Event.EventDisplay.Code = TW_EV_DPY_Resize;
-    Tmsg->Event.EventDisplay.Len = 0;
-    Tmsg->Event.EventDisplay.X = DisplayWidth;
-    Tmsg->Event.EventDisplay.Y = DisplayHeight;
-    TwBlindSendMsg(THelper, Tmsg);
+  if (change && (tw_msg = TwCreateMsg(TW_MSG_DISPLAY, TW_SIZEOF_TEVENT_DISPLAY))) {
+    tw_msg->Event.EventDisplay.Code = TW_EV_DPY_Resize;
+    tw_msg->Event.EventDisplay.Len = 0;
+    tw_msg->Event.EventDisplay.X = DisplayWidth;
+    tw_msg->Event.EventDisplay.Y = DisplayHeight;
+    TwBlindSendMsg(tw_helper, tw_msg);
   }
   return change;
 }
@@ -757,7 +757,7 @@ static void HandleMsg(tmsg msg) {
       HW->ResetPalette();
       break;
     case TW_EV_DPY_Helper:
-      THelper = deserialize<uldat>(EventD->Data);
+      tw_helper = deserialize<uldat>(EventD->Data);
       break;
     case TW_EV_DPY_Quit:
       Quit(0);
@@ -796,7 +796,7 @@ void TwinSelectionSetOwner(Tobj Owner, tany Time, tany Frac) {
   tmsg msg;
 
   if ((msg = TwCreateMsg(TW_MSG_SELECTIONCLEAR, sizeof(tevent_common)))) {
-    TwBlindSendMsg(THelper, msg);
+    TwBlindSendMsg(tw_helper, msg);
   }
 }
 
@@ -838,7 +838,7 @@ static byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
     Event->X = MouseX;
     Event->Y = MouseY;
 
-    TwBlindSendMsg(THelper, msg);
+    TwBlindSendMsg(tw_helper, msg);
     return ttrue;
   }
   return tfalse;
@@ -905,7 +905,7 @@ byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) 
     CopyMem(Seq, Event->AsciiSeq, Len);
     Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
 
-    TwBlindSendMsg(THelper, msg);
+    TwBlindSendMsg(tw_helper, msg);
     return ttrue;
   }
   return tfalse;

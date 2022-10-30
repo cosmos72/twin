@@ -54,6 +54,11 @@ struct s_WE { /* for WIDGET_USEEXPOSE widgets */
   ldat X1, Y1, X2, Y2;
 };
 
+struct s_GT { /* for GADGETFL_USETEXT gadgets */
+  trune *Text[4];
+  tcolor *Color[4];
+};
+
 struct s_WC { /* for WINDOWFL_USECONTENTS windows */
   tcell *Contents;
   ttydata *TtyData;
@@ -140,6 +145,7 @@ struct Swidget : public Sobj {
     s_WE E;
     s_WC C; // Swindow only
     s_WR R; // Swindow only
+    s_GT T; // Sgadget only
   } USE;
 
   /* Tobj */

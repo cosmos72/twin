@@ -420,8 +420,8 @@ static bool TW_InitHW(void) {
   Chars arg = HW->Name;
   char name[] = "twin :??? on twin";
   uldat len;
-  tmenu Tmenu;
-  tscreen Tscreen;
+  tmenu tw_menu;
+  tscreen tw_screen;
 
   if (arg.size() > 4) {
     arg = arg.view(4, arg.size());
@@ -492,20 +492,20 @@ static bool TW_InitHW(void) {
                        Tw_GotoXYWindow, Tw_ResizeWindow,
                        /* Tw_DragAreaWindow, */ NULL) &&
 
-      (Tscreen = Tw_FirstScreen(Td)) && (Tmsgport = Tw_CreateMsgPort(Td, 12, "Twin on Twin")) &&
-      (Tmenu = Tw_CreateMenu(Td, TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                             TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
-                             TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
-      Tw_Item4MenuCommon(Td, Tmenu)) {
+      (tw_screen = Tw_FirstScreen(Td)) && (Tmsgport = Tw_CreateMsgPort(Td, 12, "Twin on Twin")) &&
+      (tw_menu = Tw_CreateMenu(Td, TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                               TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
+                               TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
+      Tw_Item4MenuCommon(Td, tw_menu)) {
     do {
 
-      Tw_Info4Menu(Td, Tmenu, TW_ROW_ACTIVE, (uldat)14, " Twin on Twin ",
+      Tw_Info4Menu(Td, tw_menu, TW_ROW_ACTIVE, (uldat)14, " Twin on Twin ",
                    (const tcolor *)"ptppppppptpppp");
 
       sprintf(name + 5, "%s on twin", TWDisplay);
       len = strlen(name);
 
-      Twin = Tw_CreateWindow(Td, len, name, NULL, Tmenu, TCOL(twhite, tblack), TW_LINECURSOR,
+      Twin = Tw_CreateWindow(Td, len, name, NULL, tw_menu, TCOL(twhite, tblack), TW_LINECURSOR,
                              TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_MOUSE | TW_WINDOW_WANT_CHANGES |
                                  TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_CLOSE,
                              TW_WINDOWFL_USECONTENTS | TW_WINDOWFL_CURSOR_ON,
@@ -519,7 +519,7 @@ static bool TW_InitHW(void) {
                          TCOL(thigh | twhite, thigh | tblue), TCOL(thigh | twhite, thigh | tblue),
                          TCOL(twhite, tblack), TCOL(twhite, thigh | tblack),
                          TCOL(thigh | tblack, tblack), TCOL(tblack, thigh | tblack));
-      Tw_MapWidget(Td, Twin, Tscreen);
+      Tw_MapWidget(Td, Twin, tw_screen);
 
       /*
        * NOT Tw_Sync(Td) as it might deadlock when

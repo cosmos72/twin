@@ -1476,7 +1476,7 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
 
 /* extract the (tmsg) from Data, turn it into a (Tmsg) and send it to MsgPort */
 static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
-  tmsg tMsg;
+  tmsg tw_msg;
   Tmsgport Sender;
   Tmsg msg;
   uldat dstSlot;
@@ -1486,46 +1486,46 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
   /* FIXME: must code alienSendToMsgPort() and call it if AlienMagic(Slot) != MagicNative */
 
   /* be careful with alignment! */
-  tMsg = (tmsg)CloneMem(Data, Len);
+  tw_msg = (tmsg)CloneMem(Data, Len);
 
   do
-    if (MsgPort && Len && tMsg && Len >= tmsgEventDelta && Len == tMsg->Len &&
-        tMsg->Magic == msg_magic) {
+    if (MsgPort && Len && tw_msg && Len >= tmsgEventDelta && Len == tw_msg->Len &&
+        tw_msg->Magic == msg_magic) {
 
       Sender = RemoteGetMsgPort(Slot);
       if (Sender && Sender->AttachHW && MsgPort->Handler != SocketH)
         minType = TW_MSG_DISPLAY;
       else
         minType = TW_MSG_USER_FIRST;
-      if (tMsg->Type < minType)
+      if (tw_msg->Type < minType)
         /* not allowed! */
         break;
 
       _Len = 0;
-      switch (tMsg->Type) {
+      switch (tw_msg->Type) {
       case TW_MSG_WIDGET_KEY:
         if (Len >= tmsgEventOffset(EventKeyboard.AsciiSeq)) {
-          if (tMsg->Event.EventKeyboard.SeqLen + tmsgEventOffset(EventKeyboard.AsciiSeq) > Len)
-            tMsg->Event.EventKeyboard.SeqLen = Len - tmsgEventOffset(EventKeyboard.AsciiSeq);
-          _Len += tMsg->Event.EventKeyboard.SeqLen;
+          if (tw_msg->Event.EventKeyboard.SeqLen + tmsgEventOffset(EventKeyboard.AsciiSeq) > Len)
+            tw_msg->Event.EventKeyboard.SeqLen = Len - tmsgEventOffset(EventKeyboard.AsciiSeq);
+          _Len += tw_msg->Event.EventKeyboard.SeqLen;
         } else
           /* (tmsg) too short */
           ok = tfalse;
         break;
       case TW_MSG_USER_CONTROL:
         if (Len >= tmsgEventOffset(EventControl.Data)) {
-          if (tMsg->Event.EventControl.Len + tmsgEventOffset(EventControl.Data) > Len)
-            tMsg->Event.EventControl.Len = Len - tmsgEventOffset(EventControl.Data);
-          _Len += tMsg->Event.EventControl.Len;
+          if (tw_msg->Event.EventControl.Len + tmsgEventOffset(EventControl.Data) > Len)
+            tw_msg->Event.EventControl.Len = Len - tmsgEventOffset(EventControl.Data);
+          _Len += tw_msg->Event.EventControl.Len;
         } else
           /* (tmsg) too short */
           ok = tfalse;
         break;
       case TW_MSG_USER_CLIENTMSG:
         if (Len >= tmsgEventOffset(EventClientMsg.Data)) {
-          if (tMsg->Event.EventClientMsg.Len + tmsgEventOffset(EventClientMsg.Data) > Len)
-            tMsg->Event.EventClientMsg.Len = Len - tmsgEventOffset(EventClientMsg.Data);
-          _Len += tMsg->Event.EventClientMsg.Len;
+          if (tw_msg->Event.EventClientMsg.Len + tmsgEventOffset(EventClientMsg.Data) > Len)
+            tw_msg->Event.EventClientMsg.Len = Len - tmsgEventOffset(EventClientMsg.Data);
+          _Len += tw_msg->Event.EventClientMsg.Len;
         } else
           /* (tmsg) too short */
           ok = tfalse;
@@ -1547,32 +1547,33 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
          * both clients must have the same AlienMagic()
          * (i.e. endianity and data sizes).
          */
-        tMsg->Len -= AlienSizeof(uldat, Slot);
-        tMsg->Magic = MSG_MAGIC;
-        RemoteWriteQueue(dstSlot, Len, (const byte *)tMsg);
+        tw_msg->Len -= AlienSizeof(uldat, Slot);
+        tw_msg->Magic = MSG_MAGIC;
+        RemoteWriteQueue(dstSlot, Len, (const byte *)tw_msg);
         break;
       }
 
-      if ((msg = New(msg)(tMsg->Type, _Len))) {
+      if ((msg = New(msg)(tw_msg->Type, _Len))) {
 
-        msg->Event.EventCommon.W = (Twidget)Id2Obj(Twidget_magic_byte, tMsg->Event.EventCommon.W);
+        msg->Event.EventCommon.W = (Twidget)Id2Obj(Twidget_magic_byte, tw_msg->Event.EventCommon.W);
 
-        switch (tMsg->Type) {
+        switch (tw_msg->Type) {
         case TW_MSG_DISPLAY:
           if (sizeof(struct event_display) == sizeof(Twindow) + 4 * sizeof(dat) + sizeof(byte *) &&
               sizeof(struct s_tevent_display) ==
                   sizeof(twindow) + 4 * sizeof(dat) + sizeof(uldat)) {
 
-            CopyMem(&tMsg->Event.EventDisplay.Code, &msg->Event.EventDisplay.Code, 4 * sizeof(dat));
+            CopyMem(&tw_msg->Event.EventDisplay.Code, &msg->Event.EventDisplay.Code,
+                    4 * sizeof(dat));
           } else {
-            msg->Event.EventDisplay.Code = tMsg->Event.EventDisplay.Code;
-            msg->Event.EventDisplay.Len = tMsg->Event.EventDisplay.Len;
-            msg->Event.EventDisplay.X = tMsg->Event.EventDisplay.X;
-            msg->Event.EventDisplay.Y = tMsg->Event.EventDisplay.Y;
+            msg->Event.EventDisplay.Code = tw_msg->Event.EventDisplay.Code;
+            msg->Event.EventDisplay.Len = tw_msg->Event.EventDisplay.Len;
+            msg->Event.EventDisplay.X = tw_msg->Event.EventDisplay.X;
+            msg->Event.EventDisplay.Y = tw_msg->Event.EventDisplay.Y;
           }
           if (!(msg->Event.EventDisplay.Data =
-                    CloneMem(tMsg->Event.EventDisplay.Data, tMsg->Event.EventDisplay.Len)) &&
-              tMsg->Event.EventDisplay.Len)
+                    CloneMem(tw_msg->Event.EventDisplay.Data, tw_msg->Event.EventDisplay.Len)) &&
+              tw_msg->Event.EventDisplay.Len)
 
             ok = tfalse;
 
@@ -1583,40 +1584,40 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
               sizeof(struct s_tevent_keyboard) ==
                   sizeof(twindow) + 3 * sizeof(dat) + 2 * sizeof(byte)) {
 
-            CopyMem(&tMsg->Event.EventKeyboard.Code, &msg->Event.EventKeyboard.Code,
+            CopyMem(&tw_msg->Event.EventKeyboard.Code, &msg->Event.EventKeyboard.Code,
                     3 * sizeof(dat) + sizeof(byte));
           } else {
-            msg->Event.EventKeyboard.Code = tMsg->Event.EventKeyboard.Code;
-            msg->Event.EventKeyboard.ShiftFlags = tMsg->Event.EventKeyboard.ShiftFlags;
-            msg->Event.EventKeyboard.SeqLen = tMsg->Event.EventKeyboard.SeqLen;
-            msg->Event.EventKeyboard.pad = tMsg->Event.EventKeyboard.pad;
+            msg->Event.EventKeyboard.Code = tw_msg->Event.EventKeyboard.Code;
+            msg->Event.EventKeyboard.ShiftFlags = tw_msg->Event.EventKeyboard.ShiftFlags;
+            msg->Event.EventKeyboard.SeqLen = tw_msg->Event.EventKeyboard.SeqLen;
+            msg->Event.EventKeyboard.pad = tw_msg->Event.EventKeyboard.pad;
           }
-          CopyMem(tMsg->Event.EventKeyboard.AsciiSeq, msg->Event.EventKeyboard.AsciiSeq,
-                  tMsg->Event.EventKeyboard.SeqLen);
+          CopyMem(tw_msg->Event.EventKeyboard.AsciiSeq, msg->Event.EventKeyboard.AsciiSeq,
+                  tw_msg->Event.EventKeyboard.SeqLen);
 
-          msg->Event.EventKeyboard.AsciiSeq[tMsg->Event.EventKeyboard.SeqLen] = '\0';
+          msg->Event.EventKeyboard.AsciiSeq[tw_msg->Event.EventKeyboard.SeqLen] = '\0';
 
           break;
         case TW_MSG_WIDGET_MOUSE:
           if (sizeof(struct event_mouse) == sizeof(Twindow) + 4 * sizeof(dat) &&
               sizeof(struct s_tevent_mouse) == sizeof(twindow) + 4 * sizeof(dat)) {
 
-            CopyMem(&tMsg->Event.EventMouse.Code, &msg->Event.EventMouse.Code, 4 * sizeof(dat));
+            CopyMem(&tw_msg->Event.EventMouse.Code, &msg->Event.EventMouse.Code, 4 * sizeof(dat));
           } else {
-            msg->Event.EventMouse.Code = tMsg->Event.EventMouse.Code;
-            msg->Event.EventMouse.ShiftFlags = tMsg->Event.EventMouse.ShiftFlags;
-            msg->Event.EventMouse.X = tMsg->Event.EventMouse.X;
-            msg->Event.EventMouse.Y = tMsg->Event.EventMouse.Y;
+            msg->Event.EventMouse.Code = tw_msg->Event.EventMouse.Code;
+            msg->Event.EventMouse.ShiftFlags = tw_msg->Event.EventMouse.ShiftFlags;
+            msg->Event.EventMouse.X = tw_msg->Event.EventMouse.X;
+            msg->Event.EventMouse.Y = tw_msg->Event.EventMouse.Y;
           }
           break;
         case TW_MSG_SELECTIONCLEAR:
           if (sizeof(struct event_common) == sizeof(Twindow) + 2 * sizeof(dat) &&
               sizeof(struct s_tevent_common) == sizeof(twindow) + 2 * sizeof(dat)) {
 
-            CopyMem(&tMsg->Event.EventCommon.Code, &msg->Event.EventCommon.Code, 2 * sizeof(dat));
+            CopyMem(&tw_msg->Event.EventCommon.Code, &msg->Event.EventCommon.Code, 2 * sizeof(dat));
           } else {
-            msg->Event.EventCommon.Code = tMsg->Event.EventCommon.Code;
-            msg->Event.EventCommon.pad = tMsg->Event.EventCommon.pad;
+            msg->Event.EventCommon.Code = tw_msg->Event.EventCommon.Code;
+            msg->Event.EventCommon.pad = tw_msg->Event.EventCommon.pad;
           }
           break;
 
@@ -1643,33 +1644,34 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
               sizeof(struct s_tevent_control) ==
                   sizeof(twindow) + 4 * sizeof(dat) + sizeof(uldat)) {
 
-            CopyMem(&tMsg->Event.EventControl.Code, &msg->Event.EventControl.Code, 4 * sizeof(dat));
+            CopyMem(&tw_msg->Event.EventControl.Code, &msg->Event.EventControl.Code,
+                    4 * sizeof(dat));
           } else {
-            msg->Event.EventControl.Code = tMsg->Event.EventControl.Code;
-            msg->Event.EventControl.Len = tMsg->Event.EventControl.Len;
-            msg->Event.EventControl.X = tMsg->Event.EventControl.X;
-            msg->Event.EventControl.Y = tMsg->Event.EventControl.Y;
+            msg->Event.EventControl.Code = tw_msg->Event.EventControl.Code;
+            msg->Event.EventControl.Len = tw_msg->Event.EventControl.Len;
+            msg->Event.EventControl.X = tw_msg->Event.EventControl.X;
+            msg->Event.EventControl.Y = tw_msg->Event.EventControl.Y;
           }
-          CopyMem(tMsg->Event.EventControl.Data, msg->Event.EventControl.Data,
-                  tMsg->Event.EventControl.Len);
+          CopyMem(tw_msg->Event.EventControl.Data, msg->Event.EventControl.Data,
+                  tw_msg->Event.EventControl.Len);
 
           msg->Event.EventControl.Data[msg->Event.EventControl.Len] = '\0';
           break;
         case TW_MSG_USER_CLIENTMSG:
-          msg->Event.EventClientMsg.Code = tMsg->Event.EventClientMsg.Code;
-          msg->Event.EventClientMsg.Format = tMsg->Event.EventClientMsg.Format;
-          msg->Event.EventClientMsg.Len = tMsg->Event.EventClientMsg.Len;
+          msg->Event.EventClientMsg.Code = tw_msg->Event.EventClientMsg.Code;
+          msg->Event.EventClientMsg.Format = tw_msg->Event.EventClientMsg.Format;
+          msg->Event.EventClientMsg.Len = tw_msg->Event.EventClientMsg.Len;
 #ifdef CONF_SOCKET_ALIEN
           /* FIXME: this must be replaced with a call to alienSendToMsgPort() above */
           if (AlienXendian(Slot) == MagicAlienXendian) {
-            tevent_clientmsg tC = &tMsg->Event.EventClientMsg;
+            tevent_clientmsg tC = &tw_msg->Event.EventClientMsg;
             event_clientmsg *C = &msg->Event.EventClientMsg;
 
             alienReadVec(tC->Data.b, C->Data.b, tC->Len, tC->Format, tC->Format, ttrue);
           } else
 #endif
-            CopyMem(tMsg->Event.EventClientMsg.Data.b, msg->Event.EventClientMsg.Data.b,
-                    tMsg->Event.EventClientMsg.Len);
+            CopyMem(tw_msg->Event.EventClientMsg.Data.b, msg->Event.EventClientMsg.Data.b,
+                    tw_msg->Event.EventClientMsg.Len);
           break;
         default:
           ok = tfalse;
@@ -1684,7 +1686,7 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
     }
   while (0);
 
-  FreeMem(tMsg);
+  FreeMem(tw_msg);
   return ok;
 }
 

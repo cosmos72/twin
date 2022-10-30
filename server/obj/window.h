@@ -138,7 +138,7 @@ struct Swindow : public Swidget {
     return (TwindowFn)Fn;
   }
   const TwidgetFn widget_fn() const {
-    return ((TwindowFn)Fn)->Fn_Widget;
+    return fn()->Fn_Widget;
   }
 
   byte TtyWriteCharset(uldat len, const char *charset_bytes) {
