@@ -15,11 +15,6 @@
 
 #include "obj/widget.h"
 
-struct s_gT { /* for GADGETFL_USETEXT gadgets */
-  trune *Text[4];
-  tcolor *Color[4];
-};
-
 struct SgadgetFn {
   uldat Magic;
   void (*Insert)(Tgadget, Twidget Parent, Twidget Prev, Twidget Next);
@@ -61,28 +56,7 @@ struct SgadgetFn {
                       dat Up);
 };
 
-struct Sgadget : public Sobj {
-  TgadgetFn Fn;
-  Twidget Prev, Next;
-  Twidget Parent;
-  /* Twidget */
-  Twidget FirstW, LastW; /* list of children */
-  Twidget SelectW;       /* selected child */
-  dat Left, Up, XWidth, YWidth;
-  uldat Attr;
-  uldat Flags;
-  ldat XLogic, YLogic;
-  Twidget O_Prev, O_Next; /* list in the same Tmsgport (owner) */
-  Tmsgport Owner;
-  HookFn ShutDownHook; /* hooks for this Twidget */
-  HookFn Hook, *WhereHook;
-  HookFn MapUnMapHook;
-  Tmsg MapQueueMsg;
-  tcell USE_Fill;
-  union {
-    struct s_gT T;
-    struct s_WE E;
-  } USE;
+struct Sgadget : public Swidget {
   /* Tgadget */
   tcolor ColText, ColSelect, ColDisabled, ColSelectDisabled;
   udat Code;
@@ -97,91 +71,31 @@ struct Sgadget : public Sobj {
                uldat Attr, uldat Flags, udat Code, tcolor ColText, tcolor ColTextSelect,
                tcolor ColTextDisabled, tcolor ColTextSelectDisabled, dat Left, dat Up);
 
-  /* Tobj */
-  uldat Magic() const {
-    return Fn->Magic;
+  /* Tgadget */
+  const TgadgetFn fn() const {
+    return (TgadgetFn)Fn;
   }
-  void Remove() {
-    Fn->Remove(this);
-  }
-  void Delete() {
-    Fn->Delete(this);
+  const TwidgetFn widget_fn() const {
+    return fn()->Fn_Widget;
   }
 
-  /* Twidget */
-  void DrawSelf(Sdraw *D) {
-    Fn->DrawSelf(D);
-  }
-  Twidget FindWidgetAt(dat x, dat y) {
-    return Fn->FindWidgetAt(this, x, y);
-  }
-  Tgadget FindGadgetByCode(udat code) {
-    return Fn->FindGadgetByCode(this, code);
-  }
-  void SetXY(dat x, dat y) {
-    Fn->SetXY(this, x, y);
-  }
-  void SetFill(tcell fill) {
-    Fn->SetFill(this, fill);
-  }
-  Twidget Focus() {
-    return Fn->Focus(this);
-  }
-  Twidget KbdFocus() {
-    return Fn->KbdFocus(this);
-  }
-  void Map(Twidget parent) {
-    Fn->Map(this, parent);
-  }
-  void UnMap() {
-    Fn->UnMap(this);
-  }
-  void MapTopReal(Tscreen screen) {
-    Fn->MapTopReal(this, screen);
-  }
-  void Raise() {
-    Fn->Raise(this);
-  }
-  void Lower() {
-    Fn->Lower(this);
-  }
-  void Own(Tmsgport port) {
-    Fn->Own(this, port);
-  }
-  void DisOwn() {
-    Fn->DisOwn(this);
-  }
-  void RecursiveDelete(Tmsgport port) {
-    Fn->RecursiveDelete(this, port);
-  }
-  void Expose(dat xwidth, dat ywidth, dat left, dat up, const char *ascii, const trune *runes,
-              const tcell *cells) {
-    Fn->Expose(this, xwidth, ywidth, left, up, ascii, runes, cells);
-  }
-  byte InstallHook(HookFn hook, HookFn *where) {
-    return Fn->InstallHook(this, hook, where);
-  }
-  void RemoveHook(HookFn hook, HookFn *where) {
-    Fn->RemoveHook(this, hook, where);
-  }
-  /* Tgadget */
   byte FillButton(Twidget parent, udat code, dat left, dat up, udat flags, const char *text,
                   tcolor color, tcolor colordisabled) {
-    return Fn->FillButton(this, parent, code, left, up, flags, text, color, colordisabled);
+    return fn()->FillButton(this, parent, code, left, up, flags, text, color, colordisabled);
   }
   Tgadget CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolor bgcol) {
-    return Fn->CreateEmptyButton(owner, xwidth, ywidth, bgcol);
+    return fn()->CreateEmptyButton(owner, xwidth, ywidth, bgcol);
   }
   Tgadget CreateButton(Twidget parent, dat xwidth, dat ywidth, const char *text, uldat flags,
                        udat code, tcolor bgcol, tcolor col, tcolor coldisabled, dat left, dat up) {
-    return Fn->CreateButton(parent, xwidth, ywidth, text, flags, code, bgcol, col, coldisabled,
-                            left, up);
+    return fn()->CreateButton(parent, xwidth, ywidth, text, flags, code, bgcol, col, coldisabled,
+                              left, up);
   }
   void WriteTexts(byte bitmap, dat xwidth, dat ywidth, const char *text, dat left, dat up) {
-    Fn->WriteTexts(this, bitmap, xwidth, ywidth, text, left, up);
+    fn()->WriteTexts(this, bitmap, xwidth, ywidth, text, left, up);
   }
   void WriteTRunes(byte bitmap, dat xwidth, dat ywidth, const trune *runes, dat left, dat up) {
-    Fn->WriteTRunes(this, bitmap, xwidth, ywidth, runes, left, up);
+    fn()->WriteTRunes(this, bitmap, xwidth, ywidth, runes, left, up);
   }
 };
 

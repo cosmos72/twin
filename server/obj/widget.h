@@ -73,6 +73,11 @@ struct s_WR { /* for WINDOWFL_USEROWS windows */
                                /*and NumRowSplit forcing twin to recalculate them */
 };
 
+struct s_GT { /* for GADGETFL_USETEXT gadgets */
+  trune *Text[4];
+  tcolor *Color[4];
+};
+
 struct Sdraw {
   Sdraw *Next;
   Tscreen Screen;
@@ -146,6 +151,7 @@ struct Swidget : public Sobj {
     s_WE E;
     s_WC C; // Swindow only
     s_WR R; // Swindow only
+    s_GT T; // Sgadget only
   } USE;
 
   /* Tobj */

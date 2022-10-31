@@ -27,7 +27,7 @@ Tgadget Sgadget::Create(Tmsgport owner, Twidget parent, dat xwidth, dat ywidth,
     void *addr = AllocMem0(sizeof(Sgadget));
     if (addr) {
       g = new (addr) Sgadget();
-      g->Fn = Fn_Tgadget;
+      g->Fn = (TwidgetFn)Fn_Tgadget;
       if (!g->Init(owner, parent, xwidth, ywidth, textnormal, attr, flags, code, coltext,
                    coltextselect, coltextdisabled, coltextselectdisabled, left, up)) {
         g->Delete();

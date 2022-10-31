@@ -527,13 +527,13 @@ void DrawSelfWidget(Sdraw *d) {
 }
 
 void DrawSelfGadget(Sdraw *d) {
-  Tgadget G = (Tgadget)d->TopW;
+  Tgadget g = (Tgadget)d->TopW;
 
-  if (QueuedDrawArea2FullScreen || (G->Flags & WIDGETFL_NOTVISIBLE))
+  if (QueuedDrawArea2FullScreen || (g->Flags & WIDGETFL_NOTVISIBLE))
     return;
 
-  if (!G_USE(G, USETEXT)) {
-    G->Fn->Fn_Widget->DrawSelf(d);
+  if (!G_USE(g, USETEXT)) {
+    g->widget_fn()->DrawSelf(d);
     return;
   }
 
@@ -545,9 +545,9 @@ void DrawSelfGadget(Sdraw *d) {
     tcolor *ColText, **GadgetColor;
     tcolor Color;
 
-    select = !!(G->Flags & GADGETFL_PRESSED);
-    disabled = !!(G->Flags & GADGETFL_DISABLED);
-    absent = !!(G->Flags & GADGETFL_TEXT_DEFCOL);
+    select = !!(g->Flags & GADGETFL_PRESSED);
+    disabled = !!(g->Flags & GADGETFL_DISABLED);
+    absent = !!(g->Flags & GADGETFL_TEXT_DEFCOL);
 
     i_min = d->X1 - d->Left;
     i_max = d->X2 - d->Left;
@@ -555,13 +555,13 @@ void DrawSelfGadget(Sdraw *d) {
     j_min = d->Y1 - d->Up;
     j_max = d->Y2 - d->Up;
 
-    width = G->XWidth;
+    width = g->XWidth;
     dwidth = d->DWidth;
 
     Offset = d->Left + d->Up * (ldat)dwidth;
 
-    GadgetText = G->USE.T.Text;
-    GadgetColor = G->USE.T.Color;
+    GadgetText = g->USE.T.Text;
+    GadgetColor = g->USE.T.Color;
 
     Text = select                      ? disabled && GadgetText[3] ? GadgetText[3]
                                          : GadgetText[1]           ? GadgetText[1]
@@ -581,9 +581,9 @@ void DrawSelfGadget(Sdraw *d) {
 
     if (!ColText) {
       absent = true;
-      Color = select     ? disabled ? G->ColSelectDisabled : G->ColSelect
-              : disabled ? G->ColDisabled
-                         : G->ColText;
+      Color = select     ? disabled ? g->ColSelectDisabled : g->ColSelect
+              : disabled ? g->ColDisabled
+                         : g->ColText;
       Color = DoShadowColor(Color, d->Shaded, d->Shaded);
     }
 
