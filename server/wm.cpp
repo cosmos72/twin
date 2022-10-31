@@ -111,7 +111,7 @@ static tpos WMFindBorderWindow(Twindow w, dat u, dat v, byte Border, tcell *PtrA
 
   FlDrag = FlResize = FlScroll = FlPressed = tfalse;
 
-  if (w == (Twindow)All->FirstScreen->FocusW) {
+  if (w == (Twindow)All->FirstScreen->FocusW()) {
     switch (All->State & state_any) {
     case state_drag:
       FlDrag = ttrue;
@@ -377,14 +377,14 @@ void MaximizeWindow(Twindow w, byte full_screen) {
       w->Left = screen->XLogic - 1;
       w->Up = screen->YLogic;
       w->XWidth = All->DisplayWidth + 2;
-      w->YWidth = All->DisplayHeight + 1 - screen->YLimit;
+      w->YWidth = All->DisplayHeight + 1 - screen->Up;
     } else {
       if (screen->YLogic == TW_MAXDAT)
         screen->YLogic--;
       w->Left = screen->XLogic;
       w->Up = screen->YLogic + 1;
       w->XWidth = All->DisplayWidth;
-      w->YWidth = All->DisplayHeight - 1 - screen->YLimit;
+      w->YWidth = All->DisplayHeight - 1 - screen->Up;
     }
     QueuedDrawArea2FullScreen = ttrue;
     Check4Resize(w);
@@ -398,7 +398,7 @@ void ShowWinList(wm_ctx *C) {
     Act(UnMap, WinList)(WinList);
   if (C->ByMouse) {
     WinList->Left = C->i - 5;
-    WinList->Up = C->j - C->Screen->YLimit;
+    WinList->Up = C->j - C->Screen->Up;
   } else {
     WinList->Left = 0;
     WinList->Up = TW_MAXDAT;
@@ -511,7 +511,7 @@ static byte CheckForwardMsg(wm_ctx *C, Tmsg msg, byte WasUsed) {
 
   last_w = (Twidget)Id2Obj(Twidget_magic_byte, LastWId);
 
-  w = All->FirstScreen->FocusW;
+  w = All->FirstScreen->FocusW();
 
   if ((All->State & state_any) == state_menu) {
     if (!w)
@@ -658,13 +658,13 @@ static void InitCtx(const Tmsg msg, wm_ctx *C) {
     C->j = msg->Event.EventMouse.Y;
 
     if ((C->Screen = Do(Find, screen)(C->j)) && C->Screen == All->FirstScreen &&
-        C->Screen->YLimit < C->j) {
-      C->W = Act(FindWidgetAt, C->Screen)(C->Screen, C->i, C->j - C->Screen->YLimit);
+        C->Screen->Up < C->j) {
+      C->W = Act(FindWidgetAt, C->Screen)(C->Screen, C->i, C->j - C->Screen->Up);
     } else
       C->W = NULL;
   } else {
     C->Screen = All->FirstScreen;
-    C->W = C->Screen->FocusW;
+    C->W = C->Screen->FocusW();
   }
 }
 
@@ -689,7 +689,7 @@ static void DetailCtx(wm_ctx *C) {
     if (C->W) {
       ldat HasBorder = IS_WINDOW(C->W) && !(C->W->Flags & WINDOWFL_BORDERLESS);
 
-      C->Up = (ldat)C->W->Up - C->Screen->YLogic + (ldat)C->Screen->YLimit;
+      C->Up = (ldat)C->W->Up - C->Screen->YLogic + (ldat)C->Screen->Up;
       C->Left = (ldat)C->W->Left - C->Screen->XLogic;
       C->Rgt = C->Left + (ldat)C->W->XWidth - 1;
       C->Dwn = C->Up + (C->W->Attr & WINDOW_ROLLED_UP ? 0 : (ldat)C->W->YWidth - (ldat)1);
@@ -715,14 +715,14 @@ static void DetailCtx(wm_ctx *C) {
      * (used for Interactive Drag/Resize/Scroll)
      * but return the correct C->Pos :
      */
-    if (C->Screen && C->j <= C->Screen->YLimit) {
+    if (C->Screen && C->j <= C->Screen->Up) {
       C->Pos = POS_ROOT;
-      if (C->j == C->Screen->YLimit) {
+      if (C->j == C->Screen->Up) {
         if (C->i > All->DisplayWidth - (dat)3)
           C->Pos = POS_BUTTON_SCREEN;
         else {
           C->Pos = POS_MENU;
-          C->W = C->Screen->FocusW;
+          C->W = C->Screen->FocusW();
           C->Item = Act(FindItem, C->Menu)(C->Menu, C->i);
         }
       }
@@ -746,10 +746,10 @@ void FocusCtx(wm_ctx *C) {
   else
     C->Screen = All->FirstScreen;
 
-  if (C->W && C->W != C->Screen->FocusW)
+  if (C->W && C->W != C->Screen->FocusW())
     Act(Focus, C->W)(C->W);
   else
-    C->W = C->Screen->FocusW;
+    C->W = C->Screen->FocusW();
 }
 
 static byte ActivateScreen(wm_ctx *C) {
@@ -763,7 +763,7 @@ static byte ActivateScreen(wm_ctx *C) {
 
 /* this is mouse-only */
 static void ContinueScreen(wm_ctx *C) {
-  ResizeFirstScreen(C->j - All->FirstScreen->YLimit);
+  ResizeFirstScreen(C->j - All->FirstScreen->Up);
 }
 
 static void ReleaseScreen(wm_ctx *C) {
@@ -806,8 +806,8 @@ static void ReleaseScreenButton(wm_ctx *C) {
 
   if (C->Screen != All->LastScreen && (DetailCtx(C), C->Pos == POS_BUTTON_SCREEN)) {
     MoveLast(Screen, All, C->Screen);
-    DrawArea2(NULL, NULL, NULL, 0, Min2(C->Screen->YLimit, All->FirstScreen->YLimit), TW_MAXDAT,
-              TW_MAXDAT, tfalse);
+    DrawArea2(NULL, NULL, NULL, 0, Min2(C->Screen->Up, All->FirstScreen->Up), TW_MAXDAT, TW_MAXDAT,
+              tfalse);
     UpdateCursor();
   } else
     Act(DrawMenu, C->Screen)(C->Screen, All->DisplayWidth - (dat)2, All->DisplayWidth - (dat)1);
@@ -817,11 +817,11 @@ static byte ActivateMenu(wm_ctx *C) {
   if (C->Screen && C->Screen != All->FirstScreen)
     Act(Focus, C->Screen)(C->Screen);
   C->Screen = All->FirstScreen;
-  C->W = C->Screen->FocusW;
+  C->W = C->Screen->FocusW();
   C->Menu = Act(FindMenu, C->Screen)(C->Screen);
 
   if (C->ByMouse) {
-    if (C->j == C->Screen->YLimit)
+    if (C->j == C->Screen->Up)
       C->Item = Act(FindItem, C->Menu)(C->Menu, C->i);
     else
       C->Item = (Tmenuitem)0;
@@ -850,7 +850,7 @@ static void ContinueMenu(wm_ctx *C) {
       SetMenuState(C->Item, ttrue);
       return;
     }
-  } else if ((w = (Twindow)All->FirstScreen->FocusW) && (w->Flags & WINDOWFL_MENU) &&
+  } else if ((w = (Twindow)All->FirstScreen->FocusW()) && (w->Flags & WINDOWFL_MENU) &&
              (C->Item = (Tmenuitem)Act(FindRow, w)(w, w->CurY)) && IS_MENUITEM(C->Item) &&
              !C->Item->Window) {
 
@@ -863,7 +863,7 @@ static void ContinueMenu(wm_ctx *C) {
 
 static void ReleaseMenu(wm_ctx *C) {
   Twindow MW = All->FirstScreen->MenuWindow;
-  Twindow FW = (Twindow)All->FirstScreen->FocusW;
+  Twindow FW = (Twindow)All->FirstScreen->FocusW();
   Tmenu Menu;
   Tmenuitem item;
   Trow Row;
@@ -1017,10 +1017,10 @@ static void ContinueDrag(wm_ctx *C) {
     DetailCtx(C);
     if (C->W == All->FirstScreen->FirstW)
       DragFirstWindow(C->i - C->Left - DragPosition[0],
-                      Max2(C->j, All->FirstScreen->YLimit + 1) - C->Up - DragPosition[1]);
+                      Max2(C->j, All->FirstScreen->Up + 1) - C->Up - DragPosition[1]);
     else
       DragWindow((Twindow)C->W, C->i - C->Left - DragPosition[0],
-                 Max2(C->j, All->FirstScreen->YLimit + 1) - C->Up - DragPosition[1]);
+                 Max2(C->j, All->FirstScreen->Up + 1) - C->Up - DragPosition[1]);
   }
 }
 
@@ -1031,10 +1031,10 @@ static void ContinueResize(wm_ctx *C) {
     DetailCtx(C);
     if (C->W == All->FirstScreen->FirstW)
       ResizeRelFirstWindow(C->i - C->Rgt - DragPosition[0],
-                           Max2(C->j, All->FirstScreen->YLimit + 1) - C->Dwn - DragPosition[1]);
+                           Max2(C->j, All->FirstScreen->Up + 1) - C->Dwn - DragPosition[1]);
     else
       ResizeRelWindow((Twindow)C->W, C->i - C->Rgt - DragPosition[0],
-                      Max2(C->j, All->FirstScreen->YLimit + 1) - C->Dwn - DragPosition[1]);
+                      Max2(C->j, All->FirstScreen->Up + 1) - C->Dwn - DragPosition[1]);
     ShowResize((Twindow)C->W);
   }
 }
@@ -1060,7 +1060,7 @@ static void ContinueScroll(wm_ctx *C) {
 
     } else if (w->State & Y_BAR_SELECT) {
       NumLogicMax = Max2(w->HLogic, w->YLogic + (ldat)w->YWidth - 2);
-      i = Max2(C->j, All->FirstScreen->YLimit + 1);
+      i = Max2(C->j, All->FirstScreen->Up + 1);
       if (i + 3 > C->Dwn + DragPosition[1])
         i = C->Dwn + DragPosition[1] - 3;
       ScrollWindow(w, 0,
@@ -1461,7 +1461,7 @@ static void EnterItem(Tmenuitem item) {
 /* handle keyboard during various STATE_* */
 /* this is keyboard only */
 static byte ActivateKeyState(wm_ctx *C, byte State) {
-  Twindow w = (Twindow)All->FirstScreen->FocusW;
+  Twindow w = (Twindow)All->FirstScreen->FocusW();
   ldat NumRow;
   dat XDelta = 0, YDelta = 0, depth;
   udat Key = C->Code;
@@ -1619,42 +1619,42 @@ static byte ActivateKeyState(wm_ctx *C, byte State) {
  * if it and all its non-Tscreen parents have WIDGET_AUTO_FOCUS flag set
  */
 static void TryAutoFocus(wm_ctx *C) {
-  Twidget w, DeepW, OldW, FocusW = All->FirstScreen->FocusW;
+  Twidget w, deepW, oldW, focusW = All->FirstScreen->FocusW();
 
-  if (!FocusW)
-    FocusW = (Twidget)All->FirstScreen->MenuWindow;
+  if (!focusW)
+    focusW = (Twidget)All->FirstScreen->MenuWindow;
 
-  if (!FocusW)
+  if (!focusW)
     return;
 
-  OldW = RecursiveFindFocusWidget((Twidget)All->FirstScreen);
+  oldW = RecursiveFindFocusWidget((Twidget)All->FirstScreen);
 
-  if ((w = C->W) && w == FocusW && (DeepW = C->DW) && DeepW != OldW) {
+  if ((w = C->W) && w == focusW && (deepW = C->DW) && deepW != oldW) {
 
     /*
      * must have AUTO_FOCUS to be autofocused...
      * and focusing top-level widgets is handled elsewhere
      */
-    if (!(DeepW->Attr & WIDGET_AUTO_FOCUS) || (w == DeepW && w->Parent->SelectW != w))
+    if (!(deepW->Attr & WIDGET_AUTO_FOCUS) || (w == deepW && w->Parent->SelectW != w))
       return;
 
-    FocusW = DeepW;
+    focusW = deepW;
 
     /* climb through all AUTO_FOCUS widgets */
-    while (DeepW != w) {
-      if (!(DeepW = DeepW->Parent))
+    while (deepW != w) {
+      if (!(deepW = deepW->Parent))
         return;
-      if (!(DeepW->Attr & WIDGET_AUTO_FOCUS))
+      if (!(deepW->Attr & WIDGET_AUTO_FOCUS))
         break;
     }
     /* climb through all already focused widgets */
-    while (DeepW != w && DeepW->Parent && DeepW->Parent->SelectW == DeepW) {
-      DeepW = DeepW->Parent;
+    while (deepW != w && deepW->Parent && deepW->Parent->SelectW == deepW) {
+      deepW = deepW->Parent;
     }
-    if (DeepW == w) {
-      RecursiveFocusWidget(FocusW);
+    if (deepW == w) {
+      RecursiveFocusWidget(focusW);
 #ifdef DEBUG_WM
-      log(INFO) << "autofocus: 0x" << hex(OldW ? OldW->Id : NOID) << " -> 0x" << hex(FocusW->Id)
+      log(INFO) << "autofocus: 0x" << hex(oldW ? oldW->Id : NOID) << " -> 0x" << hex(focusW->Id)
                 << "\n";
 #endif
     }
@@ -1703,7 +1703,7 @@ static void WManagerH(Tmsgport MsgPort) {
         }
         if (HOLD_CODE(PRESS_N(C->Code)) == All->SetUp->ButtonSelection) {
 
-          if (C->W && C->W != C->Screen->FocusW)
+          if (C->W && C->W != C->Screen->FocusW())
             Act(Focus, C->W)(C->W);
 
           DetailCtx(C);
@@ -1891,7 +1891,7 @@ static void SmartPlace(Twidget w, Tscreen screen) {
 
   if (w->Up == TW_MAXDAT) {
     X[1] = (X[0] = screen->XLogic) + All->DisplayWidth - 1;
-    Y[1] = (Y[0] = screen->YLogic + 1) + All->DisplayHeight - screen->YLimit - 2;
+    Y[1] = (Y[0] = screen->YLogic + 1) + All->DisplayHeight - screen->Up - 2;
 
     XWidth = w->XWidth;
     YWidth = IS_WINDOW(w) && w->Attr & WINDOW_ROLLED_UP ? 1 : w->YWidth;

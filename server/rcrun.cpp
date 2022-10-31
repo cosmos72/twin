@@ -352,29 +352,29 @@ static ldat applyflagy(node n) {
 static Twindow RCFindWindowName(cstr name) {
   uldat len = strlen(name);
   Twindow w;
-  Tscreen S = All->FirstScreen;
+  Tscreen screen = All->FirstScreen;
 
-  while (S) {
+  while (screen) {
     /* search among mapped windows */
-    w = (Twindow)S->FirstW;
+    w = (Twindow)screen->FirstW;
     while (w) {
       if (IS_WINDOW(w) && w->NameLen >= 0 && (udat)w->NameLen == len && !memcmp(w->Name, name, len))
         return w;
       w = (Twindow)w->Next;
     }
-    S = S->Next;
+    screen = screen->Next();
   }
   return NULL;
 }
 
 static Tscreen RCFindScreenName(cstr name) {
   uldat len = strlen(name);
-  Tscreen S = All->FirstScreen;
-  while (S) {
-    if (S->NameLen >= 0 && (udat)S->NameLen == len && !memcmp(S->Name, name, len))
+  Tscreen screen = All->FirstScreen;
+  while (screen) {
+    if (screen->NameLen >= 0 && (udat)screen->NameLen == len && !memcmp(screen->Name, name, len))
       break;
   }
-  return S;
+  return screen;
 }
 
 inline Twidget RCCheck4WidgetId(run *r) {
@@ -419,7 +419,7 @@ inline Tscreen ScreenOf(Twidget w) {
 /* run the specified queue */
 static byte RCSteps(run *r) {
   Twidget w, SkipW;
-  Tscreen S;
+  Tscreen screen;
   wm_ctx *C;
   node n, f;
   ldat flag;
@@ -428,7 +428,7 @@ static byte RCSteps(run *r) {
   int nfd;
 
   w = RCCheck4WidgetId(r);
-  S = ScreenOf(w);
+  screen = ScreenOf(w);
   C = &r->C;
   n = r->stack[r->depth];
 
@@ -475,7 +475,7 @@ static byte RCSteps(run *r) {
 
       case INTERACTIVE:
         C->W = w;
-        if (!C->Screen && !(C->Screen = S))
+        if (!C->Screen && !(C->Screen = screen))
           C->Screen = All->FirstScreen;
 
         ret = tfalse;
@@ -519,8 +519,8 @@ static byte RCSteps(run *r) {
           DragWindow((Twindow)w, applyflagx(n), applyflagy(n));
         break;
       case MOVESCREEN:
-        if (S && S != All->FirstScreen)
-          S->Focus();
+        if (screen && screen != All->FirstScreen)
+          screen->Focus();
         DragFirstScreen(applyflagx(n), applyflagy(n));
         break;
       case NOP:
@@ -541,8 +541,8 @@ static byte RCSteps(run *r) {
         }
         break;
       case RESIZESCREEN:
-        if (S && S != All->FirstScreen)
-          S->Focus();
+        if (screen && screen != All->FirstScreen)
+          screen->Focus();
         ResizeFirstScreen(applyflagx(n));
         break;
       case SCROLL:
@@ -550,11 +550,11 @@ static byte RCSteps(run *r) {
           ScrollWindow((Twindow)w, applyflagx(n), applyflagy(n));
         break;
       case SENDTOSCREEN:
-        if (w && IS_WINDOW(w) && S && n->name) {
-          Tscreen screen = RCFindScreenName(n->name);
-          if (S != screen) {
+        if (w && IS_WINDOW(w) && screen && n->name) {
+          Tscreen s = RCFindScreenName(n->name);
+          if (s != screen) {
             w->UnMap();
-            w->Map((Twidget)screen);
+            w->Map(s);
           }
         }
         break;
@@ -600,7 +600,7 @@ static byte RCSteps(run *r) {
 
           if (flag == 0) {
             if (i == 0) {
-              w = All->FirstScreen->FocusW;
+              w = All->FirstScreen->FocusW();
               if (w && !IS_WINDOW(w))
                 w = (Twidget)0;
             } else {
@@ -616,10 +616,10 @@ static byte RCSteps(run *r) {
               if ((SkipW = ForwardWindow(w->Next)))
                 w = SkipW;
               else {
-                S = ScreenOf(w);
+                screen = ScreenOf(w);
                 w = NULL;
-                if (S)
-                  while ((S = S->Next) && !(w = ForwardWindow(S->FirstW)))
+                if (screen)
+                  while ((screen = screen->Next()) && !(w = ForwardWindow(screen->FirstW)))
                     ;
               }
             }
@@ -628,17 +628,17 @@ static byte RCSteps(run *r) {
               if ((SkipW = BackwardWindow(w->Prev)))
                 w = SkipW;
               else {
-                S = ScreenOf(w);
+                screen = ScreenOf(w);
                 w = NULL;
-                if (S)
-                  while ((S = S->Prev) && !(w = BackwardWindow(S->LastW)))
+                if (screen)
+                  while ((screen = screen->Prev()) && !(w = BackwardWindow(screen->LastW)))
                     ;
               }
             }
           }
         }
         r->W = w ? w->Id : NOID;
-        S = ScreenOf(w);
+        screen = ScreenOf(w);
         if (n->body) /* enter function */
           state = Sbody;
         break;
@@ -667,7 +667,7 @@ static byte RCSteps(run *r) {
           if (M->RemoteData.FdSlot != NOSLOT) {
             Ext(Remote, KillSlot)(M->RemoteData.FdSlot);
             w = NULL;
-            S = NULL;
+            screen = NULL;
             r->W = NOID;
           } else
             AskCloseWidget(w);
@@ -686,13 +686,13 @@ static byte RCSteps(run *r) {
         ShowWinList(C);
         break;
       case FOCUS:
-        if (w && S) {
+        if (w && screen) {
           flag = n->x.f.flag;
           if (flag == FL_TOGGLE)
-            flag = (S->FocusW == (Twidget)w) ? FL_OFF : FL_ON;
+            flag = (screen->FocusW() == (Twidget)w) ? FL_OFF : FL_ON;
 
-          if (flag == FL_ON && S != All->FirstScreen)
-            S->Focus();
+          if (flag == FL_ON && screen != All->FirstScreen)
+            screen->Focus();
 
           if (flag == FL_ON) {
             w->Focus();
@@ -703,20 +703,20 @@ static byte RCSteps(run *r) {
         break;
       case MAXIMIZE:
       case FULLSCREEN:
-        if (w && IS_WINDOW(w) && S)
+        if (w && IS_WINDOW(w) && screen)
           MaximizeWindow((Twindow)w, n->id == FULLSCREEN);
         break;
       case LOWER:
-        if (w && S)
+        if (w && screen)
           LowerWidget(w, tfalse);
         break;
       case RAISE:
-        if (w && S)
+        if (w && screen)
           RaiseWidget(w, tfalse);
         break;
       case RAISELOWER:
-        if (w && S) {
-          if ((Twidget)w == S->FirstW)
+        if (w && screen) {
+          if ((Twidget)w == screen->FirstW)
             LowerWidget(w, ttrue);
           else
             RaiseWidget(w, ttrue);
@@ -988,7 +988,7 @@ byte RC_VMQueue(const wm_ctx *C) {
       if (n && (r = RCNew(n))) {
         used = ttrue;
         CopyMem(C, &r->C, sizeof(wm_ctx));
-        w = All->FirstScreen->FocusW;
+        w = All->FirstScreen->FocusW();
         r->W = w ? w->Id : NOID;
         r->C.ByMouse = false;
         /* to preserve execution orded, run it right now ! */

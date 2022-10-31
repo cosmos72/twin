@@ -19,19 +19,19 @@
 #include <Tw/datasizes.h> // TW_MAXDAT
 
 Tscreen Sscreen::Create(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg) {
-  Tscreen S = NULL;
+  Tscreen screen = NULL;
   if (bgwidth && bgheight) {
     void *addr = AllocMem0(sizeof(Sscreen));
     if (addr) {
-      S = new (addr) Sscreen();
-      S->Fn = Fn_Tscreen;
-      if (!S->Init(namelen, name, bgwidth, bgheight, bg)) {
-        S->Delete();
-        S = NULL;
+      screen = new (addr) Sscreen();
+      screen->Fn = (TwidgetFn)Fn_Tscreen;
+      if (!screen->Init(namelen, name, bgwidth, bgheight, bg)) {
+        screen->Delete();
+        screen = NULL;
       }
     }
   }
-  return S;
+  return screen;
 }
 
 Tscreen Sscreen::Init(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg) {

@@ -211,8 +211,8 @@ Twidget FakeKbdFocus(Twidget w) {
   Tscreen screen = w && (P = w->Parent) && IS_SCREEN(P) ? (Tscreen)P : All->FirstScreen;
 
   if (screen) {
-    oldW = screen->FocusW;
-    screen->FocusW = w;
+    oldW = screen->FocusW();
+    screen->FocusW(w);
   } else
     oldW = (Twidget)0;
 
@@ -284,7 +284,7 @@ static void MapTopRealWidget(Twidget w, Tscreen screen) {
 
     if (w->Up == TW_MAXDAT) {
       w->Left = screen->XLogic;
-      w->Up = Max2(screen->YLimit + 1, 0) + screen->YLogic;
+      w->Up = Max2(screen->Up + 1, 0) + screen->YLogic;
     } else {
       w->Left += screen->XLogic;
       w->Up += screen->YLogic;
@@ -343,7 +343,7 @@ static void UnMapWidget(Twidget w) {
       if (screen->ClickWindow == (Twindow)w)
         screen->ClickWindow = NULL;
 
-      if ((wasFocus = w == screen->FocusW)) {
+      if ((wasFocus = w == screen->FocusW())) {
         if (w->Flags & WINDOWFL_MENU)
           Next = screen->MenuWindow;
         else {
@@ -386,7 +386,7 @@ static void UnMapWidget(Twidget w) {
             screen->DrawMenu(0, TW_MAXDAT);
           UpdateCursor();
         } else
-          screen->FocusW = (Twidget)Next;
+          screen->FocusW(Next);
       }
 
       if (w->MapUnMapHook)
@@ -425,7 +425,7 @@ static void LowerW(Twidget w) {
   LowerWidget(w, tfalse);
 }
 
-static void SetXYWidget(Twidget w, dat X, dat Y) {
+static void SetXYWidget(Twidget w, dat x, dat y) {
   Twidget Prev, Next;
 
   if (w->Parent) {
@@ -434,8 +434,8 @@ static void SetXYWidget(Twidget w, dat X, dat Y) {
     w->Remove();
     DrawAreaWidget(w);
   }
-  w->Left = X;
-  w->Up = Y;
+  w->Left = x;
+  w->Up = y;
   if (w->Parent) {
     InsertMiddle(w, w, w->Parent, Prev, Next);
     DrawAreaWidget(w);
@@ -892,7 +892,7 @@ static void SetColorsWindow(Twindow w, udat Bitmap, tcolor ColGadgets, tcolor Co
     DrawBorderWindow(w, BORDER_ANY);
 }
 
-static void SetXYWindow(Twindow w, dat X, dat Y) {
+static void SetXYWindow(Twindow w, dat x, dat y) {
   Twidget Prev, Next;
 
   if (w->Parent) {
@@ -901,8 +901,8 @@ static void SetXYWindow(Twindow w, dat X, dat Y) {
     w->Remove();
     DrawAreaWindow2(w);
   }
-  w->Left = X;
-  w->Up = Y;
+  w->Left = x;
+  w->Up = y;
   if (w->Parent) {
     if (IS_SCREEN(w->Parent)) {
       w->Left += w->Parent->XLogic;
@@ -966,25 +966,25 @@ static void ConfigureWindow(Twindow w, byte Bitmap, dat Left, dat Up, dat MinXWi
   }
 }
 
-static void GotoXYWindow(Twindow window, ldat X, ldat Y) {
+static void GotoXYWindow(Twindow window, ldat x, ldat y) {
   if (W_USE(window, USECONTENTS)) {
     ttydata *TT = window->USE.C.TtyData;
 
-    X = Max2(X, 0);
-    Y = Max2(Y, 0);
-    if (X >= TT->SizeX)
-      X = TT->SizeX - 1;
-    if (Y >= TT->SizeY)
-      Y = TT->SizeY - 1;
-    TT->X = X;
-    TT->Y = Y;
-    TT->Pos = TT->Start + X + (ldat)Y * TT->SizeX;
+    x = Max2(x, 0);
+    y = Max2(y, 0);
+    if (x >= TT->SizeX)
+      x = TT->SizeX - 1;
+    if (y >= TT->SizeY)
+      y = TT->SizeY - 1;
+    TT->X = x;
+    TT->Y = y;
+    TT->Pos = TT->Start + x + (ldat)y * TT->SizeX;
     if (TT->Pos >= TT->Split)
       TT->Pos -= TT->Split - window->USE.C.Contents;
-    Y += window->HLogic - TT->SizeY;
+    y += window->HLogic - TT->SizeY;
   }
-  window->CurX = X;
-  window->CurY = Y;
+  window->CurX = x;
+  window->CurY = y;
   if (ContainsCursor((Twidget)window))
     UpdateCursor();
 }
@@ -1161,8 +1161,7 @@ static void BgImageScreen(Tscreen screen, dat BgWidth, dat BgHeight, const tcell
     screen->USE.B.BgWidth = BgWidth;
     screen->USE.B.BgHeight = BgHeight;
     CopyMem(Bg, screen->USE.B.Bg, size);
-    DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, 0, screen->YLimit + 1, TW_MAXDAT, TW_MAXDAT,
-              tfalse);
+    DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, 0, screen->Up + 1, TW_MAXDAT, TW_MAXDAT, tfalse);
   }
 }
 
@@ -1194,20 +1193,20 @@ static void DeleteScreen(Tscreen screen) {
   DeleteWidget((Twidget)screen);
 }
 
-static void ChangeFieldScreen(Tscreen S, udat field, uldat clear_mask, uldat xor_mask) {
-  if (S)
+static void ChangeFieldScreen(Tscreen screen, udat field, uldat clear_mask, uldat xor_mask) {
+  if (screen)
     switch (field) {
     default:
-      S->Fn->Fn_Widget->ChangeField((Twidget)S, field, clear_mask, xor_mask);
+      screen->widget_fn()->ChangeField(screen, field, clear_mask, xor_mask);
       break;
     }
 }
 
-static void SetXYScreen(Tscreen screen, dat X, dat Y) {
+static void SetXYScreen(Tscreen screen, dat x, dat y) {
   if (screen == All->FirstScreen) {
-    Y = Max2(Y, -1);
-    Y = Min2(Y, All->DisplayHeight - 1);
-    ResizeFirstScreen(Y - screen->YLimit);
+    y = Max2(y, -1);
+    y = Min2(y, All->DisplayHeight - 1);
+    ResizeFirstScreen(y - screen->Up);
   }
 }
 
@@ -1220,10 +1219,10 @@ static Tmenu FindMenuScreen(Tscreen screen) {
     /* no Twindow activated the Tmenu... either the Tmenu is inactive
      * or it is activated from the builtin Tmenu */
 
-    if (screen->FocusW && IS_WINDOW(screen->FocusW) &&
-        ((Twindow)screen->FocusW)->Menu != All->CommonMenu)
+    if (screen->FocusW() && IS_WINDOW(screen->FocusW()) &&
+        ((Twindow)screen->FocusW())->Menu != All->CommonMenu)
       /* Tmenu inactive... return the focus Twindow's one */
-      return ((Twindow)screen->FocusW)->Menu;
+      return ((Twindow)screen->FocusW())->Menu;
 
     /* last case: Tmenu activated from builtin Tmenu */
     return All->BuiltinMenu;
@@ -1236,8 +1235,8 @@ static Tscreen FindScreen(dat j) {
   byte VirtScrFound = tfalse;
 
   screen = All->FirstScreen;
-  while (screen && !(VirtScrFound = (j >= (dat)screen->YLimit)))
-    screen = screen->Next;
+  while (screen && !(VirtScrFound = (j >= (dat)screen->Up)))
+    screen = screen->Next();
 
   if (VirtScrFound)
     return screen;
@@ -1249,7 +1248,7 @@ static Twidget FocusScreen(Tscreen screen_tofocus) {
   Tscreen screen = All->FirstScreen;
   if (screen_tofocus && screen != screen_tofocus) {
     MoveFirst(Screen, All, screen_tofocus);
-    DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, 0, Min2(screen->YLimit, screen_tofocus->YLimit),
+    DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, 0, Min2(screen->Up, screen_tofocus->Up),
               TW_MAXDAT, TW_MAXDAT, tfalse);
     UpdateCursor();
   }
@@ -1744,7 +1743,7 @@ static Tmenuitem GetSelectedItem(Tmenu Menu) {
 
 static Tmenuitem RecursiveGetSelectedItem(Tmenu Menu, dat *depth) {
   Tmenuitem I = NULL, _I = Menu->GetSelectedItem();
-  Twindow w = (Twindow)0, FW = (Twindow)All->FirstScreen->FocusW;
+  Twindow w = (Twindow)0, FW = (Twindow)All->FirstScreen->FocusW();
   dat d = -1;
 
   while (_I && IS_MENUITEM(_I)) {

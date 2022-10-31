@@ -44,6 +44,17 @@ enum widget_flag /*: udat*/ {
 
 #define w_USE(w, USExxx) (((w)->Flags & WIDGETFL_USEANY) == CAT(WIDGETFL_, USExxx))
 
+struct s_SB { /* for SCREENFL_USEBG screens */
+  dat BgWidth, BgHeight;
+  tcell *Bg;
+};
+
+struct s_WC { /* for WINDOWFL_USECONTENTS windows */
+  tcell *Contents;
+  ttydata *TtyData;
+  ldat HSplit;
+};
+
 struct s_WE { /* for WIDGET_USEEXPOSE widgets */
   union {
     const char *Text;
@@ -52,12 +63,6 @@ struct s_WE { /* for WIDGET_USEEXPOSE widgets */
   } E;
   dat Flags, Pitch;
   ldat X1, Y1, X2, Y2;
-};
-
-struct s_WC { /* for WINDOWFL_USECONTENTS windows */
-  tcell *Contents;
-  ttydata *TtyData;
-  ldat HSplit;
 };
 
 struct s_WR { /* for WINDOWFL_USEROWS windows */
@@ -137,6 +142,7 @@ struct Swidget : public Sobj {
   Tmsg MapQueueMsg;
   tcell USE_Fill;
   union {
+    s_SB B; // Sscreen only
     s_WE E;
     s_WC C; // Swindow only
     s_WR R; // Swindow only

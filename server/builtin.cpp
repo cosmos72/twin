@@ -793,21 +793,21 @@ static byte InitMessagesWin(void) {
 }
 #endif
 
-static byte InitScreens(void) {
-  Tscreen OneScreen;
+static bool InitScreens(void) {
+  Tscreen oneScreen;
 
-  if ((OneScreen =
+  if ((oneScreen =
            Do(CreateSimple, screen)(1, "1", TCELL(TCOL(thigh | tblack, tblue), _MEDIUM_SHADE)))) {
 
-    InsertLast(Screen, OneScreen, All);
-    return ttrue;
+    InsertLast(Screen, oneScreen, All);
+    return true;
   }
   Error(NOMEMORY);
   log(ERROR) << "twin: InitScreens(): " << Errstr << "\n";
-  return tfalse;
+  return false;
 }
 
-byte InitBuiltin(void) {
+bool InitBuiltin(void) {
   Twindow w;
   const char *greeting =
       "\n"

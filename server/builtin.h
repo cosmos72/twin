@@ -12,7 +12,7 @@
 #include "obj/fwd.h"
 #include <Tw/datatypes.h>
 
-byte InitBuiltin(void);
+bool InitBuiltin(void);
 void FillButtonWin(void);
 void UpdateOptionWin(void);
 

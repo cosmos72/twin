@@ -1117,11 +1117,11 @@ static void WriteGlobals(void) {
   m += sizeof(GlobalShadows);
 }
 
-static Tscreen FindNameInScreens(dat len, const char *name, Tscreen S) {
-  while (S) {
-    if (len == S->NameLen && !memcmp(name, S->Name, len))
-      return S;
-    S = S->Next;
+static Tscreen FindNameInScreens(dat len, const char *name, Tscreen screen) {
+  while (screen) {
+    if (len == screen->NameLen && !memcmp(name, screen->Name, len))
+      return screen;
+    screen = screen->Next();
   }
   return NULL;
 }
@@ -1138,7 +1138,7 @@ static node FindNameInList(uldat len, const char *name, node list) {
 static void DeleteScreens(Tscreen first) {
   Tscreen s = first, next;
   while (s) {
-    next = s->Next;
+    next = s->Next();
     s->Delete();
     s = next;
   }
@@ -1193,7 +1193,7 @@ static byte CreateNeededScreens(node list, Tscreen *res_Screens) {
       return tfalse;
     }
     if (prev)
-      prev->Next = s;
+      prev->Next(s);
     prev = s;
     if (!top)
       top = s;
@@ -1209,23 +1209,23 @@ static byte CreateNeededScreens(node list, Tscreen *res_Screens) {
  * otherwise copy their background then delete them.
  */
 static void UpdateVisibleScreens(Tscreen new_Screens) {
-  Tscreen S, Next, Orig;
-  for (S = new_Screens; S; S = Next) {
-    Next = S->Next;
-    S->Next = (Tscreen)0;
+  Tscreen screen, next, orig;
+  for (screen = new_Screens; screen; screen = next) {
+    next = screen->Next();
+    screen->Next((Tscreen)0);
 
-    if ((Orig = FindNameInScreens(S->NameLen, S->Name, All->FirstScreen))) {
-      Orig->USE.B.BgWidth = S->USE.B.BgWidth;
-      Orig->USE.B.BgHeight = S->USE.B.BgHeight;
-      if (Orig->USE.B.Bg)
-        FreeMem(Orig->USE.B.Bg);
-      Orig->USE.B.Bg = S->USE.B.Bg;
-      S->USE.B.Bg = NULL;
-      S->Delete();
+    if ((orig = FindNameInScreens(screen->NameLen, screen->Name, All->FirstScreen))) {
+      orig->USE.B.BgWidth = screen->USE.B.BgWidth;
+      orig->USE.B.BgHeight = screen->USE.B.BgHeight;
+      if (orig->USE.B.Bg)
+        FreeMem(orig->USE.B.Bg);
+      orig->USE.B.Bg = screen->USE.B.Bg;
+      screen->USE.B.Bg = NULL;
+      screen->Delete();
     } else
-      InsertLast(Screen, S, All);
+      InsertLast(Screen, screen, All);
 
-    S = Next;
+    screen = next;
   }
 }
 
@@ -1233,11 +1233,12 @@ static void UpdateVisibleScreens(Tscreen new_Screens) {
  * Delete no-longer needed screens (all except "1" and ones in list)
  */
 static void DeleteUnneededScreens(node list) {
-  Tscreen S, Next;
-  for (S = All->FirstScreen; S; S = Next) {
-    Next = S->Next;
-    if ((S->NameLen != 1 || S->Name[0] != '1') && !FindNameInList(S->NameLen, S->Name, list)) {
-      S->Delete();
+  Tscreen screen, next;
+  for (screen = All->FirstScreen; screen; screen = next) {
+    next = screen->Next();
+    if ((screen->NameLen != 1 || screen->Name[0] != '1') &&
+        !FindNameInList(screen->NameLen, screen->Name, list)) {
+      screen->Delete();
     }
   }
 }

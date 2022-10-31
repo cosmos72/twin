@@ -184,7 +184,7 @@ static void flush_tty(void) {
   /* finally, keyboard focus configuration: */
   if (*Flags & TTY_NEEDREFOCUS) {
     *Flags &= ~TTY_NEEDREFOCUS;
-    if (Win == (Twindow)All->FirstScreen->FocusW)
+    if (Win == (Twindow)All->FirstScreen->FocusW())
       Win->KbdFocus();
   }
 }
@@ -1437,8 +1437,8 @@ Twidget TtyKbdFocus(Twidget newW) {
   Tscreen screen = newW && (P = newW->Parent) && IS_SCREEN(P) ? (Tscreen)P : All->FirstScreen;
 
   if (screen) {
-    oldW = screen->FocusW;
-    screen->FocusW = newW;
+    oldW = screen->FocusW();
+    screen->FocusW(newW);
   } else
     oldW = newW = (Twidget)0;
 
@@ -1463,7 +1463,7 @@ Twidget TtyKbdFocus(Twidget newW) {
 
 void ForceKbdFocus(void) {
   kbdFlags = ~defaultFlags;
-  (void)TtyKbdFocus(All->FirstScreen->FocusW);
+  (void)TtyKbdFocus(All->FirstScreen->FocusW());
 }
 
 /* initialize global static data */

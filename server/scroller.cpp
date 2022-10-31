@@ -84,7 +84,7 @@ static void ScrollerH(Tmsgport MsgPort) {
 
   Mouse = &All->MouseHW->MouseState;
 
-  FocusWindow = (Twindow)All->FirstScreen->FocusW;
+  FocusWindow = (Twindow)All->FirstScreen->FocusW();
   if (FocusWindow && !IS_WINDOW(FocusWindow))
     FocusWindow = (Twindow)0;
 
