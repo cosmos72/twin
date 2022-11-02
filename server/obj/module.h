@@ -24,7 +24,6 @@ struct SmoduleFn {
   void (*Insert)(Tmodule, Tall, Tmodule Prev, Tmodule Next);
   void (*Remove)(Tmodule);
   void (*Delete)(Tmodule);
-  void (*ChangeField)(Tmodule, udat field, uldat clear_mask, uldat xor_mask);
   /* Tmodule */
   TobjFn Fn_Obj;
   bool (*DlOpen)(Tmodule);

@@ -30,7 +30,6 @@ struct SobjFn {
   void (*Insert)(Tobj self, Tobj parent, Tobj prev, Tobj next);
   void (*Remove)(Tobj self);
   void (*Delete)(Tobj self);
-  void (*ChangeField)(Tobj self, udat field, uldat clear_mask, uldat xor_mask);
 };
 
 struct Sobj {
@@ -58,7 +57,10 @@ public:
   }
 #endif // 0
   void Delete();
-  void ChangeField(udat field, uldat clear_mask, uldat xor_mask);
+
+  // default implementation does nothing
+  virtual void ChangeField(udat /*field*/, uldat /*clear_mask*/, uldat /*xor_mask*/) {
+  }
 };
 
 inline uldat Obj2Id(Tobj o) {

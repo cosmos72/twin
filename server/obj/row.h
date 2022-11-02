@@ -22,7 +22,6 @@ struct SrowFn {
   void (*Insert)(Trow, Twindow, Trow prev, Trow next);
   void (*Remove)(Trow);
   void (*Delete)(Trow);
-  void (*ChangeField)(Trow, udat field, uldat clearmask, uldat xormask);
   /* Trow */
   TobjFn Fn_Obj;
   byte (*SetText)(Trow, uldat len, const char *text, byte defaultcol);

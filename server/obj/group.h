@@ -23,7 +23,6 @@ struct SgroupFn {
   void (*Insert)(Tgroup, Tmsgport MsgPort, Tgroup Prev, Tgroup Next);
   void (*Remove)(Tgroup);
   void (*Delete)(Tgroup);
-  void (*ChangeField)(Tgroup, udat field, uldat clear_mask, uldat xor_mask);
   /* Tgroup */
   TobjFn Fn_Obj; /* backup of overloaded functions */
   void (*InsertGadget)(Tgroup, Tgadget);

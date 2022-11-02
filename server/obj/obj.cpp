@@ -41,6 +41,3 @@ Tobj Sobj::Init() {
 void Sobj::Delete() {
   ((TobjEntry)this)->Fn->Delete(this);
 }
-void Sobj::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
-  ((TobjEntry)this)->Fn->ChangeField(this, field, clear_mask, xor_mask);
-}

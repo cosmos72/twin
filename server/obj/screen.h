@@ -20,7 +20,6 @@ struct SscreenFn {
   void (*Insert)(Tscreen, Tall parent, Tscreen Prev, Tscreen Next);
   void (*Remove)(Tscreen);
   void (*Delete)(Tscreen);
-  void (*ChangeField)(Tscreen, udat field, uldat clear_mask, uldat xor_mask);
   /* Twidget */
   TobjFn Fn_Obj;
   void (*DrawSelf)(Sdraw *D);
@@ -69,6 +68,8 @@ struct Sscreen : public Swidget {
   void Insert(Tall parent, Tscreen prev, Tscreen next) {
     fn()->Insert(this, parent, prev, next);
   }
+
+  virtual void ChangeField(udat field, uldat clear_mask, uldat xor_mask) OVERRIDE;
 
   /* Tscreen */
   const TscreenFn fn() const {

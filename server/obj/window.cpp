@@ -11,15 +11,21 @@
  */
 
 #include "obj/window.h"
-#include "algo.h"  // Max2()
-#include "alloc.h" // AllocMem0(), CloneStrL()
-#include "data.h"  // DEFAULT_Col*
-#include "fn.h"    // Fn_Twindow
-#include "twin.h"  // NOFD, NOPID, NOSLOT
+
+#include "algo.h"    // Max2()
+#include "alloc.h"   // AllocMem0(), CloneStrL()
+#include "data.h"    // DEFAULT_Col*
+#include "draw.h"    // ContainsCursor(), DrawAreaWidget()
+#include "fn.h"      // Fn_Twindow
+#include "methods.h" // IncMouseMotionN(), DecMouseMotionN()
+#include "resize.h"  // UpdateCursor(), RollUpWindow()
+#include "twin.h"    // NOFD, NOPID, NOSLOT
+
+#include <Tutf/Tutf.h>      // Tutf_CP437_to_UTF_32[]
+#include <Tw/Twstat_defs.h> // TWS_window_*
 
 #include <new>
-#include <cstring>     // memset()
-#include <Tutf/Tutf.h> // Tutf_CP437_to_UTF_32[]
+#include <cstring> // memset()
 
 static byte InitTtyDataWindow(Twindow w, dat scrollbacklines);
 
@@ -180,4 +186,118 @@ static byte InitTtyDataWindow(Twindow w, dat scrollbacklines) {
   Data->newName = NULL;
 
   return ttrue;
+}
+
+void Swindow::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
+  Twindow w = this;
+  uldat old, curr, mask;
+
+  if (w)
+    switch (field) {
+    case TWS_window_CurX:
+    case TWS_window_CurY:
+    case TWS_window_XstSel:
+    case TWS_window_YstSel:
+    case TWS_window_XendSel:
+    case TWS_window_YendSel:
+      /* FIXME: finish this */
+      break;
+    case TWS_window_ColGadgets:
+    case TWS_window_ColArrows:
+    case TWS_window_ColBars:
+    case TWS_window_ColTabs:
+    case TWS_window_ColBorder:
+    case TWS_window_ColText:
+    case TWS_window_ColSelect:
+    case TWS_window_ColDisabled:
+    case TWS_window_ColSelectDisabled: {
+      tcolor *C = NULL;
+      switch (field) {
+      case TWS_window_ColGadgets:
+        C = &w->ColGadgets;
+        break;
+      case TWS_window_ColArrows:
+        C = &w->ColArrows;
+        break;
+      case TWS_window_ColBars:
+        C = &w->ColBars;
+        break;
+      case TWS_window_ColTabs:
+        C = &w->ColTabs;
+        break;
+      case TWS_window_ColBorder:
+        C = &w->ColBorder;
+        break;
+      case TWS_window_ColText:
+        C = &w->ColText;
+        break;
+      case TWS_window_ColSelect:
+        C = &w->ColSelect;
+        break;
+      case TWS_window_ColDisabled:
+        C = &w->ColDisabled;
+        break;
+      case TWS_window_ColSelectDisabled:
+        C = &w->ColSelectDisabled;
+        break;
+      default:
+        break;
+      }
+      curr = (*C & ~clear_mask) ^ xor_mask;
+      if (*C != curr) {
+        *C = curr;
+        /* FIXME: this is an overkill */
+        DrawAreaWidget((Twidget)w);
+      }
+      break;
+    }
+    case TWS_window_Flags:
+      mask = WINDOWFL_CURSOR_ON;
+      old = w->Flags & mask;
+      curr = ((old & ~clear_mask) ^ xor_mask) & mask;
+      if (curr != old) {
+        w->Flags = curr | (w->Flags & ~mask);
+        if (ContainsCursor((Twidget)w)) {
+          UpdateCursor();
+        }
+      }
+      break;
+    case TWS_window_Attr:
+      mask = WINDOW_WANT_KEYS | WINDOW_WANT_MOUSE | WINDOW_WANT_CHANGES | WINDOW_AUTO_FOCUS |
+             WINDOW_DRAG | WINDOW_RESIZE | WINDOW_CLOSE | WINDOW_ROLLED_UP | WINDOW_X_BAR |
+             WINDOW_Y_BAR | WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE_MOTION;
+      old = w->Attr & mask;
+      curr = ((old & ~clear_mask) ^ xor_mask) & mask;
+      if (curr != old) {
+        if ((curr & WINDOW_ROLLED_UP) != (old & WINDOW_ROLLED_UP)) {
+          RollUpWindow(w, !!(curr & WINDOW_ROLLED_UP));
+        }
+        uldat lmask = WINDOW_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS;
+        if ((curr & lmask) != (old & lmask) && w->Parent) {
+          if (curr & mask)
+            IncMouseMotionN();
+          else
+            DecMouseMotionN();
+        }
+        lmask = WINDOW_RESIZE | WINDOW_CLOSE | WINDOW_X_BAR | WINDOW_Y_BAR;
+        const bool drawborder = (curr & lmask) != (old & lmask) && w->Parent;
+        w->Attr = curr | (w->Attr & ~mask);
+        if (drawborder) {
+          DrawBorderWindow(w, BORDER_ANY);
+        }
+      }
+      break;
+    case TWS_window_State:
+    case TWS_window_CursorType:
+    case TWS_window_MinXWidth:
+    case TWS_window_MinYWidth:
+    case TWS_window_MaxXWidth:
+    case TWS_window_MaxYWidth:
+    case TWS_window_WLogic:
+    case TWS_window_HLogic:
+      break;
+    default:
+      Swidget::ChangeField(field, clear_mask, xor_mask);
+      break;
+    }
 }

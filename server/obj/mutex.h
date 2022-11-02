@@ -20,7 +20,6 @@ struct SmutexFn {
   void (*Insert)(Tmutex, Tall, Tmutex Prev, Tmutex Next);
   void (*Remove)(Tmutex);
   void (*Delete)(Tmutex);
-  void (*ChangeField)(Tmutex, udat field, uldat clear_mask, uldat xor_mask);
   /* Tmutex */
   TobjFn Fn_Obj;
   void (*Own)(Tmutex, Tmsgport);

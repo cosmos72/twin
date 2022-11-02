@@ -57,3 +57,13 @@ Tscreen Sscreen::Init(dat namelen, const char *name, dat bgwidth, dat bgheight, 
   this->All = NULL;
   return this;
 }
+
+void Sscreen::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
+  Tscreen screen = this;
+  if (screen)
+    switch (field) {
+    default:
+      Swidget::ChangeField(field, clear_mask, xor_mask);
+      break;
+    }
+}

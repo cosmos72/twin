@@ -20,7 +20,6 @@ struct SmenuitemFn {
   void (*Insert)(Tmenuitem, Tobj, Tmenuitem Prev, Tmenuitem Next);
   void (*Remove)(Tmenuitem);
   void (*Delete)(Tmenuitem);
-  void (*ChangeField)(Tmenuitem, udat field, uldat clear_mask, uldat xor_mask);
   /* Trow */
   TobjFn Fn_Obj;
   byte (*SetText)(Trow, uldat Len, const char *Text, byte DefaultCol);

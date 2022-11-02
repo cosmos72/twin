@@ -22,7 +22,6 @@ struct SmsgportFn {
   void (*Insert)(Tmsgport, Tall, Tmsgport Prev, Tmsgport Next);
   void (*Remove)(Tmsgport);
   void (*Delete)(Tmsgport);
-  void (*ChangeField)(Tmsgport, udat field, uldat clear_mask, uldat xor_mask);
   /* Tmsgport */
   TobjFn Fn_Obj;
 };

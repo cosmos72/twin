@@ -23,7 +23,6 @@ struct SdisplayFn {
   void (*Insert)(Tdisplay, Tall, Tdisplay Prev, Tdisplay Next);
   void (*Remove)(Tdisplay);
   void (*Delete)(Tdisplay);
-  void (*ChangeField)(Tdisplay, udat field, uldat clear_mask, uldat xor_mask);
   /* Tdisplay */
   TobjFn Fn_Obj;
   byte (*DoInit)(Tdisplay);

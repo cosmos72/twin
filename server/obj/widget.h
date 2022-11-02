@@ -14,6 +14,7 @@
 #define TWIN_WIDGET_H
 
 #include "obj/obj.h"
+#include "stl/macros.h" // OVERRIDE
 
 /* WIDGET_USEEXPOSE  USE.E.Flags: */
 #define WIDGET_USEEXPOSE_TEXT 1
@@ -104,7 +105,6 @@ struct SwidgetFn {
   void (*Insert)(Twidget self, Twidget parent, Twidget Prev, Twidget Next);
   void (*Remove)(Twidget self);
   void (*Delete)(Twidget self);
-  void (*ChangeField)(Twidget self, udat field, uldat clear_mask, uldat xor_mask);
   /* Twidget */
   TobjFn Fn_Obj; /* backup of overloaded functions */
   void (*DrawSelf)(Sdraw *d);
@@ -171,9 +171,8 @@ struct Swidget : public Sobj {
   void Delete() {
     Fn->Delete(this);
   }
-  void ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
-    Fn->ChangeField(this, field, clear_mask, xor_mask);
-  }
+  virtual void ChangeField(udat field, uldat clear_mask, uldat xor_mask) OVERRIDE;
+
   /* Twidget */
   void DrawSelf(Sdraw *D) {
     Fn->DrawSelf(D);

@@ -11,8 +11,12 @@
  */
 
 #include "obj/widget.h"
-#include "alloc.h" // AllocMem0()
-#include "fn.h"    // Fn_Twidget
+
+#include "alloc.h"   // AllocMem0()
+#include "fn.h"      // Fn_Twidget
+#include "methods.h" // SetFillWidget()
+
+#include <Tw/Twstat_defs.h> // TWS_widget_*
 
 #include <new>
 #include <cstring> // memset()
@@ -52,4 +56,27 @@ Twidget Swidget::Init(Tmsgport owner, dat xwidth, dat ywidth, uldat attr, uldat 
     return this;
   }
   return NULL;
+}
+
+void Swidget::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
+  Twidget w = this;
+  if (w)
+    switch (field) {
+    case TWS_widget_Left:
+    case TWS_widget_Up:
+    case TWS_widget_Width:
+    case TWS_widget_Height:
+      break;
+    case TWS_widget_USE_Fill: {
+      uldat i = tcell((w->USE_Fill & ~clear_mask) ^ xor_mask);
+      SetFillWidget(w, i);
+      break;
+    }
+    case TWS_widget_XLogic:
+    case TWS_widget_YLogic:
+      break;
+    default:
+      Sobj::ChangeField(field, clear_mask, xor_mask);
+      break;
+    }
 }

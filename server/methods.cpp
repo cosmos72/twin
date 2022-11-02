@@ -116,7 +116,10 @@ static void DeleteObj(Tobj obj) {
 }
 
 static struct SobjFn _FnObj = {
-    obj_magic, InsertObj, RemoveObj, DeleteObj, (void (*)(Tobj, udat, uldat, uldat))NoOp,
+    obj_magic,
+    InsertObj,
+    RemoveObj,
+    DeleteObj,
 };
 
 /* Twidget */
@@ -152,7 +155,7 @@ static void DeleteWidget(Twidget w) {
   DeleteObj((Tobj)w);
 }
 
-static void SetFillWidget(Twidget w, tcell Fill) {
+void SetFillWidget(Twidget w, tcell Fill) {
   if (w->USE_Fill != Fill) {
     w->USE_Fill = Fill;
     if (w->Parent)
@@ -160,27 +163,14 @@ static void SetFillWidget(Twidget w, tcell Fill) {
   }
 }
 
-static void ChangeFieldWidget(Twidget w, udat field, uldat clear_mask, uldat xor_mask) {
-  uldat i;
+void IncMouseMotionN(void) {
+  if (!All->MouseMotionN++)
+    EnableMouseMotionEvents(ttrue);
+}
 
-  if (w)
-    switch (field) {
-    case TWS_widget_Left:
-    case TWS_widget_Up:
-    case TWS_widget_Width:
-    case TWS_widget_Height:
-      break;
-    case TWS_widget_USE_Fill:
-      i = (tcell)((w->USE_Fill & ~clear_mask) ^ xor_mask);
-      SetFillWidget(w, i);
-      break;
-    case TWS_widget_XLogic:
-    case TWS_widget_YLogic:
-      break;
-    default:
-      w->Fn->Fn_Obj->ChangeField(w, field, clear_mask, xor_mask);
-      break;
-    }
+void DecMouseMotionN(void) {
+  if (All->MouseMotionN && !--All->MouseMotionN)
+    EnableMouseMotionEvents(tfalse);
 }
 
 Twidget FocusWidget(Twidget w) {
@@ -227,16 +217,6 @@ static Tgadget FindGadgetByCode(Twidget parent, udat Code) {
       return (Tgadget)w;
   }
   return (Tgadget)0;
-}
-
-static void IncMouseMotionN(void) {
-  if (!All->MouseMotionN++)
-    EnableMouseMotionEvents(ttrue);
-}
-
-static void DecMouseMotionN(void) {
-  if (All->MouseMotionN && !--All->MouseMotionN)
-    EnableMouseMotionEvents(tfalse);
 }
 
 static void MapWidget(Twidget w, Twidget parent) {
@@ -505,7 +485,7 @@ static void RemoveHookWidget(Twidget w, HookFn Hook, HookFn *WhereHook) {
 }
 
 static struct SwidgetFn _FnWidget = {
-    widget_magic,      InsertWidget,     RemoveWidget,          DeleteWidget,  ChangeFieldWidget,
+    widget_magic,      InsertWidget,     RemoveWidget,          DeleteWidget, //
     &_FnObj,           DrawSelfWidget, /* exported by draw.c */
     FindWidgetAt,                      /* exported by draw.c */
     FindGadgetByCode,  SetXYWidget,      SetFillWidget,         FocusWidget,   TtyKbdFocus,
@@ -534,44 +514,6 @@ static void DeleteGadget(Tgadget g) {
   }
 
   DeleteWidget((Twidget)g);
-}
-
-static void ChangeFieldGadget(Tgadget g, udat field, uldat clear_mask, uldat xor_mask) {
-  if (g) {
-    uldat i, mask;
-
-    switch (field) {
-    case TWS_gadget_ColText:
-    case TWS_gadget_ColSelect:
-    case TWS_gadget_ColDisabled:
-    case TWS_gadget_ColSelectDisabled:
-    case TWS_gadget_Code:
-      break;
-    case TWS_gadget_Flags:
-      mask = GADGETFL_DISABLED | GADGETFL_TEXT_DEFCOL | GADGETFL_PRESSED | GADGETFL_TOGGLE;
-      clear_mask &= mask;
-      xor_mask &= mask;
-      i = (g->Flags & ~clear_mask) ^ xor_mask;
-      if ((i & mask) != (g->Flags & mask)) {
-        if ((i & GADGETFL_PRESSED) != (g->Flags & GADGETFL_PRESSED)) {
-          if (i & GADGETFL_PRESSED)
-            PressGadget(g);
-          else
-            UnPressGadget(g, ttrue);
-        }
-        mask = GADGETFL_DISABLED | GADGETFL_TEXT_DEFCOL;
-        if ((i & mask) != (g->Flags & mask)) {
-          g->Flags = i;
-          DrawAreaWidget((Twidget)g);
-        } else
-          g->Flags = i;
-      }
-      break;
-    default:
-      g->widget_fn()->ChangeField((Twidget)g, field, clear_mask, xor_mask);
-      break;
-    }
-  }
 }
 
 static Tgadget CreateEmptyButton(Tmsgport Owner, dat XWidth, dat YWidth, tcolor BgCol) {
@@ -681,7 +623,7 @@ static Tgadget CreateButton(Twidget Parent, dat XWidth, dat YWidth, const char *
 static struct SgadgetFn _FnGadget = {
     gadget_magic,                                               //
     (void (*)(Tgadget, Twidget, Twidget, Twidget))InsertWidget, //
-    (void (*)(Tgadget))RemoveWidget, DeleteGadget, ChangeFieldGadget,
+    (void (*)(Tgadget))RemoveWidget, DeleteGadget,
     /* Twidget */
     &_FnObj, DrawSelfGadget,                      /* exported by draw.c */
     (Twidget (*)(Tgadget, dat, dat))FindWidgetAt, /* exported by draw.c */
@@ -718,119 +660,6 @@ static void DeleteWindow(Twindow w) {
     DeleteList(w->USE.R.FirstRow);
   }
   DeleteWidget((Twidget)w);
-}
-
-static void ChangeFieldWindow(Twindow w, udat field, uldat clear_mask, uldat xor_mask) {
-  uldat i, mask;
-
-  if (w)
-    switch (field) {
-    case TWS_window_CurX:
-    case TWS_window_CurY:
-    case TWS_window_XstSel:
-    case TWS_window_YstSel:
-    case TWS_window_XendSel:
-    case TWS_window_YendSel:
-      /* FIXME: finish this */
-      break;
-    case TWS_window_ColGadgets:
-    case TWS_window_ColArrows:
-    case TWS_window_ColBars:
-    case TWS_window_ColTabs:
-    case TWS_window_ColBorder:
-    case TWS_window_ColText:
-    case TWS_window_ColSelect:
-    case TWS_window_ColDisabled:
-    case TWS_window_ColSelectDisabled: {
-      tcolor *C = NULL;
-      switch (field) {
-      case TWS_window_ColGadgets:
-        C = &w->ColGadgets;
-        break;
-      case TWS_window_ColArrows:
-        C = &w->ColArrows;
-        break;
-      case TWS_window_ColBars:
-        C = &w->ColBars;
-        break;
-      case TWS_window_ColTabs:
-        C = &w->ColTabs;
-        break;
-      case TWS_window_ColBorder:
-        C = &w->ColBorder;
-        break;
-      case TWS_window_ColText:
-        C = &w->ColText;
-        break;
-      case TWS_window_ColSelect:
-        C = &w->ColSelect;
-        break;
-      case TWS_window_ColDisabled:
-        C = &w->ColDisabled;
-        break;
-      case TWS_window_ColSelectDisabled:
-        C = &w->ColSelectDisabled;
-        break;
-      default:
-        break;
-      }
-      i = (*C & ~clear_mask) ^ xor_mask;
-      if (i != *C) {
-        *C = i;
-        /* FIXME: this is an overkill */
-        DrawAreaWidget((Twidget)w);
-      }
-    } break;
-    case TWS_window_Flags:
-      mask = WINDOWFL_CURSOR_ON;
-      clear_mask &= mask;
-      xor_mask &= mask;
-      i = (w->Flags & ~clear_mask) ^ xor_mask;
-      if ((i & mask) != (w->Flags & mask)) {
-        w->Flags = i;
-        if (ContainsCursor((Twidget)w))
-          UpdateCursor();
-      }
-      break;
-    case TWS_window_Attr:
-      mask = WINDOW_WANT_KEYS | WINDOW_WANT_MOUSE | WINDOW_WANT_CHANGES | WINDOW_AUTO_FOCUS |
-             WINDOW_DRAG | WINDOW_RESIZE | WINDOW_CLOSE | WINDOW_ROLLED_UP | WINDOW_X_BAR |
-             WINDOW_Y_BAR | WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE_MOTION;
-      clear_mask &= mask;
-      xor_mask &= mask;
-      i = (w->Attr & ~clear_mask) ^ xor_mask;
-      if ((i & mask) != (w->Attr & mask)) {
-        if ((i & WINDOW_ROLLED_UP) != (w->Attr & WINDOW_ROLLED_UP))
-          RollUpWindow(w, !!(i & WINDOW_ROLLED_UP));
-        if ((i & (WINDOW_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS)) !=
-                (w->Attr & (WINDOW_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS)) &&
-            w->Parent) {
-          if (i & (WINDOW_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS))
-            IncMouseMotionN();
-          else
-            DecMouseMotionN();
-        }
-        mask = WINDOW_RESIZE | WINDOW_CLOSE | WINDOW_X_BAR | WINDOW_Y_BAR;
-        if ((i & mask) != (w->Attr & mask) && w->Parent) {
-          w->Attr = i;
-          DrawBorderWindow(w, BORDER_ANY);
-        } else
-          w->Attr = i;
-      }
-      break;
-    case TWS_window_State:
-    case TWS_window_CursorType:
-    case TWS_window_MinXWidth:
-    case TWS_window_MinYWidth:
-    case TWS_window_MaxXWidth:
-    case TWS_window_MaxYWidth:
-    case TWS_window_WLogic:
-    case TWS_window_HLogic:
-      break;
-    default:
-      w->widget_fn()->ChangeField((Twidget)w, field, clear_mask, xor_mask);
-      break;
-    }
 }
 
 static void SetTitleWindow(Twindow w, dat titlelen, char *title) {
@@ -1103,7 +932,6 @@ static struct SwindowFn _FnWindow = {
     (void (*)(Twindow, Twidget, Twidget, Twidget))InsertWidget,
     (void (*)(Twindow))RemoveWidget,
     DeleteWindow,
-    ChangeFieldWindow,
     /* Twidget */
     &_FnObj,
     DrawSelfWindow,
@@ -1194,15 +1022,6 @@ static void DeleteScreen(Tscreen screen) {
   DeleteWidget((Twidget)screen);
 }
 
-static void ChangeFieldScreen(Tscreen screen, udat field, uldat clear_mask, uldat xor_mask) {
-  if (screen)
-    switch (field) {
-    default:
-      screen->widget_fn()->ChangeField(screen, field, clear_mask, xor_mask);
-      break;
-    }
-}
-
 static void SetXYScreen(Tscreen screen, dat x, dat y) {
   if (screen == All->FirstScreen) {
     y = Max2(y, -1);
@@ -1277,7 +1096,6 @@ static struct SscreenFn _FnScreen = {
     InsertScreen,
     RemoveScreen,
     DeleteScreen,
-    ChangeFieldScreen,
     /* Twidget */
     &_FnObj,
     DrawSelfScreen,
@@ -1378,16 +1196,8 @@ static void SetSelectedGadget(Tgroup group, Tgadget g) {
 }
 
 static struct SgroupFn _FnGroup = {
-    ggroup_magic,
-    InsertGroup,
-    RemoveGroup,
-    DeleteGroup,
-    (void (*)(Tgroup, udat, uldat, uldat))NoOp,
-    &_FnObj,
-    InsertGadgetGroup,
-    RemoveGadgetGroup,
-    GetSelectedGadget,
-    SetSelectedGadget,
+    ggroup_magic, InsertGroup,       RemoveGroup,       DeleteGroup, //
+    &_FnObj,      InsertGadgetGroup, RemoveGadgetGroup, GetSelectedGadget, SetSelectedGadget,
 };
 
 /* Trow */
@@ -1518,7 +1328,6 @@ static struct SrowFn _FnRow = {
     InsertRow,
     RemoveRow,
     DeleteRow,
-    (void (*)(Trow, udat, uldat, uldat))NoOp,
     /* Trow */
     &_FnObj,
     SetTextRow,
@@ -1608,19 +1417,9 @@ static uldat Create4MenuCommonMenuItem(Tmenu Menu) {
 }
 
 static struct SmenuitemFn _FnMenuItem = {
-    menuitem_magic,
-    InsertMenuItem,
-    RemoveMenuItem,
-    DeleteMenuItem,
-    (void (*)(Tmenuitem, udat, uldat, uldat))NoOp,
-    &_FnObj,
-    SetTextRow,
-    SetTRuneRow,
-    RaiseMenuItem,
-    LowerMenuItem,
-    &_FnRow,
-    Create4MenuMenuItem,
-    Create4MenuCommonMenuItem,
+    menuitem_magic, InsertMenuItem, RemoveMenuItem,      DeleteMenuItem,
+    &_FnObj,        SetTextRow,     SetTRuneRow,         RaiseMenuItem,
+    LowerMenuItem,  &_FnRow,        Create4MenuMenuItem, Create4MenuCommonMenuItem,
 };
 
 /* Tmenu */
@@ -1789,7 +1588,6 @@ static struct SmenuFn _FnMenu = {
     InsertMenu,
     RemoveMenu,
     DeleteMenu,
-    (void (*)(Tmenu, udat, uldat, uldat))NoOp,
     /* Tmenu */
     &_FnObj,
     SetInfoMenu,
@@ -1833,7 +1631,6 @@ static struct SmsgFn _FnMsg = {
     InsertMsg,
     RemoveMsg,
     DeleteMsg,
-    (void (*)(Tmsg, udat, uldat, uldat))NoOp,
     /* Tmsg */
     &_FnObj,
 };
@@ -1902,7 +1699,6 @@ static struct SmsgportFn _FnMsgPort = {
     InsertMsgPort,
     RemoveMsgPort,
     DeleteMsgPort,
-    (void (*)(Tmsgport, udat, uldat, uldat))NoOp,
     /* Tmsgport */
     &_FnObj,
 };
@@ -1969,7 +1765,6 @@ static struct SmutexFn _FnMutex = {
     InsertMutex,
     RemoveMutex,
     DeleteMutex,
-    (void (*)(Tmutex, udat, uldat, uldat))NoOp,
     /* Tmutex */
     &_FnObj,
     OwnMutex,
@@ -2010,7 +1805,6 @@ static struct SmoduleFn _FnModule = {
     InsertModule,
     RemoveModule,
     DeleteModule,
-    (void (*)(Tmodule, udat, uldat, uldat))NoOp,
     /* Tmodule */
     &_FnObj,
     DlOpen,
@@ -2072,12 +1866,11 @@ static void DeleteDisplayHW(Tdisplay DisplayHW) {
   }
 }
 
-static struct SdisplayFn _FnDisplayHW = {
+static struct SdisplayFn _FnDisplay = {
     display_hw_magic,
     InsertDisplayHW,
     RemoveDisplayHW,
     DeleteDisplayHW,
-    (void (*)(Tdisplay, udat, uldat, uldat))NoOp,
     /* Tdisplay */
     &_FnObj,
     InitDisplayHW,
@@ -2086,5 +1879,5 @@ static struct SdisplayFn _FnDisplayHW = {
 
 TstructFn FnStruct = {
     &_FnObj,      &_FnWidget, &_FnGadget,  &_FnWindow, &_FnScreen, &_FnGroup,  &_FnRow,
-    &_FnMenuItem, &_FnMenu,   &_FnMsgPort, &_FnMutex,  &_FnMsg,    &_FnModule, &_FnDisplayHW,
+    &_FnMenuItem, &_FnMenu,   &_FnMsgPort, &_FnMutex,  &_FnMsg,    &_FnModule, &_FnDisplay,
 };

@@ -21,6 +21,10 @@ byte FakeWriteTRune(Twindow window, uldat Len, const trune *runes);
 byte FakeWriteTCell(Twindow window, dat x, dat y, uldat Len, const tcell *cells);
 tpos FakeFindBorderWindow(Twindow window, dat u, dat v, byte Border, tcell *PtrAttr);
 
+void SetFillWidget(Twidget w, tcell Fill);
+void IncMouseMotionN(void);
+void DecMouseMotionN(void);
+
 #define Do(Command, objtype) (Fn_T##objtype->Command)
 
 #define New(objtype) S##objtype::Create

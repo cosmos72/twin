@@ -220,7 +220,6 @@ static struct SmoduleFn _FnModule = {
     (void (*)(Tmodule, Tall, Tmodule, Tmodule))NoOp, /* InsertModule */
     (void (*)(Tmodule))NoOp,                         /* RemoveModule */
     (void (*)(Tmodule))NoOp,                         /* DeleteModule */
-    (void (*)(Tmodule, udat, uldat, uldat))NoOp,     /* ChangeField  */
     NULL,                                            /* Fn_Obj       */
     (bool (*)(Tmodule))NoOp,                         /* DlOpen       */
     (void (*)(Tmodule))NoOp,                         /* DlClose      */
@@ -316,20 +315,19 @@ static Tdisplay CreateDisplayHW(Chars name);
 static byte InitDisplayHW(Tdisplay);
 static void QuitDisplayHW(Tdisplay);
 
-static struct SdisplayFn _FnDisplayHW = {
+static struct SdisplayFn _FnDisplay = {
     /*-------------------*/
     display_hw_magic,
     (void (*)(Tdisplay, Tall, Tdisplay, Tdisplay))NoOp, /* InsertDisplayHW */
     (void (*)(Tdisplay))NoOp,                           /* RemoveDisplayHW */
     (void (*)(Tdisplay))NoOp,                           /* DeleteDisplayHW */
-    (void (*)(Tdisplay, udat, uldat, uldat))NoOp,       /* ChangeFieldDisplayHW */
     NULL,                                               /* Fn_Obj */
     InitDisplayHW,
     QuitDisplayHW,
 };
 
 Tdisplay Sdisplay::Init(uldat namelen, const char *name) {
-  Fn = &_FnDisplayHW;
+  Fn = &_FnDisplay;
   if (!Sobj::Init()) {
     return NULL;
   }

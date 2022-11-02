@@ -10,10 +10,15 @@
  *
  */
 
+#include "obj/gadget.h"
+
 #include "alloc.h"    // AllocMem0(), CloneStr2TRune()
 #include "fn.h"       // Fn_Tgadget
 #include "menuitem.h" // COD_RESERVED
-#include "obj/gadget.h"
+#include "resize.h"   // PressGadget(), UnPressGadget()
+#include "draw.h"     // DrawAreaWidget()
+
+#include <Tw/Twstat_defs.h> // TWS_gadget_*
 
 #include <new>
 
@@ -78,4 +83,43 @@ Tgadget Sgadget::Init(Tmsgport owner, Twidget parent, dat xwidth, dat ywidth,
     this->Map(parent);
   }
   return this;
+}
+
+void Sgadget::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
+  Tgadget g = this;
+  if (g) {
+
+    switch (field) {
+    case TWS_gadget_ColText:
+    case TWS_gadget_ColSelect:
+    case TWS_gadget_ColDisabled:
+    case TWS_gadget_ColSelectDisabled:
+    case TWS_gadget_Code:
+      break;
+    case TWS_gadget_Flags: {
+      uldat mask = GADGETFL_DISABLED | GADGETFL_TEXT_DEFCOL | GADGETFL_PRESSED | GADGETFL_TOGGLE;
+      clear_mask &= mask;
+      xor_mask &= mask;
+      uldat i = (g->Flags & ~clear_mask) ^ xor_mask;
+      if ((i & mask) != (g->Flags & mask)) {
+        if ((i & GADGETFL_PRESSED) != (g->Flags & GADGETFL_PRESSED)) {
+          if (i & GADGETFL_PRESSED)
+            PressGadget(g);
+          else
+            UnPressGadget(g, ttrue);
+        }
+        mask = GADGETFL_DISABLED | GADGETFL_TEXT_DEFCOL;
+        if ((i & mask) != (g->Flags & mask)) {
+          g->Flags = i;
+          DrawAreaWidget((Twidget)g);
+        } else
+          g->Flags = i;
+      }
+      break;
+    }
+    default:
+      Swidget::ChangeField(field, clear_mask, xor_mask);
+      break;
+    }
+  }
 }
