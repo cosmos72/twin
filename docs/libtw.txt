@@ -501,7 +501,7 @@ void Tw_SetOwnerSelection(tdisplay TwD, tobj Owner, time_t Time, frac_t Frac);
 #define TW_SEL_CURRENTTIME ((time_t)0)
 
 void Tw_NotifySelection(tdisplay TwD, tobj Requestor, uldat ReqPrivate,
-			uldat Magic, byte MIME[TW_MAX_MIMELEN], uldat Len, byte *Data);
+			uldat Magic, char MIME[TW_MAX_MIMELEN], uldat Len, byte *Data);
 
 
 

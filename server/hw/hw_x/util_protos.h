@@ -15,8 +15,7 @@ static void XSYM(CheckResize)(dat *x, dat *y);
 static void XSYM(Resize)(dat x, dat y);
 static byte XSYM(SelectionImport_X11)(void);
 static void XSYM(SelectionExport_X11)(void);
-static void XSYM(SelectionNotify_X11)(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                                      Chars Data);
+static void XSYM(SelectionNotify_X11)(uldat reqprivate, uldat magic, const Chars mime, Chars data);
 static void XSYM(SelectionNotify_up)(Window win, Atom prop);
 static void XSYM(SelectionRequest_X11)(Tobj Requestor, uldat ReqPrivate);
 static void XSYM(SelectionRequest_up)(XSelectionRequestEvent *req);

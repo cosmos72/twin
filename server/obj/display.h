@@ -14,7 +14,7 @@
 #define TWIN_DISPLAY_H
 
 #include "obj/fwd.h"
-#include "obj/event.h" // MAX_MIMELEN
+#include "obj/event.h" // TW_MAX_MIMELEN
 #include "obj/obj.h"
 #include "stl_types.h"
 
@@ -68,8 +68,8 @@ struct Sdisplay : public Sobj {
 
   byte (*HWSelectionImport)(void);
   void (*HWSelectionExport)(void);
-  void (*HWSelectionRequest)(Tobj Requestor, uldat ReqPrivate);
-  void (*HWSelectionNotify)(uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN], Chars Data);
+  void (*HWSelectionRequest)(Tobj requestor, uldat reqprivate);
+  void (*HWSelectionNotify)(uldat reqprivate, e_id magic, Chars mime, Chars data);
   tany HWSelectionPrivate;
 
   byte (*CanDragArea)(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);

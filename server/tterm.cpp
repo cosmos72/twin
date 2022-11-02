@@ -124,8 +124,8 @@ static void TwinTermH(Tmsgport MsgPort) {
     } else if (msg->Type == msg_selection_notify) {
 
       if ((Win = (Twindow)Id2Obj(Twindow_magic_byte, Event->EventSelectionNotify.ReqPrivate))) {
-        (void)RemoteWindowWriteQueue(Win, Event->EventSelectionNotify.Len,
-                                     Event->EventSelectionNotify.Data);
+        Chars data = Event->EventSelectionNotify.Data();
+        (void)RemoteWindowWriteQueue(Win, data.size(), data.data());
       }
     } else if (msg->Type == msg_widget_mouse) {
       if (Win) {

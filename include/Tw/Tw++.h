@@ -831,7 +831,7 @@ public:
   static TMsg *create(uldat Type, uldat Len, TEvent *E = 0) {
     TMsg *M = (TMsg *)TwCreateMsg(Type, Len);
     if (M && E)
-      TwCopyMem((void *)E, (void *)M->event(), Len);
+      TwCopyMem((void *)E, (void *)M->Event(), Len);
     return M;
   }
   /*

@@ -34,17 +34,17 @@ struct Smsg : public Sobj {
   Tmsg Prev, Next;
   Tmsgport MsgPort;
   /* Tmsg */
-  udat Type; /* See note above */
-  uldat Len; /* length of Event, in bytes */
-  event_any Event;
-
-  static Tmsg Create(udat type, size_t eventlen);
-  Tmsg Init(udat type, uldat eventlen);
+  udat Type;       /* Event type */
+  uldat Len;       /* length of subsequent Event, in bytes */
+  event_any Event; /* more bytes may be allocated - enough for actual Type */
 
   /* Tobj */
   uldat Magic() const {
     return Fn->Magic;
   }
+  static Tmsg Create(udat type, size_t eventlen);
+  Tmsg Init(udat type, uldat eventlen);
+
   void Insert(Tmsgport port, Tmsg prev, Tmsg next) {
     Fn->Insert(this, port, prev, next);
   }

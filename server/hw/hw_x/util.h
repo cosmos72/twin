@@ -194,8 +194,7 @@ static void XSYM(utf8_to_wchar)(Chars src, Vector<wchar_t> &dst) {
 /*
  * notify our Selection to X11
  */
-static void XSYM(SelectionNotify_X11)(uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN],
-                                      Chars data) {
+static void XSYM(SelectionNotify_X11)(uldat reqprivate, e_id Magic, Chars /*mime*/, Chars data) {
   XEvent ev;
   Atom target;
 
@@ -341,14 +340,15 @@ static void XSYM(SelectionNotify_up)(Window win, Atom prop) {
   XDeleteProperty(xdisplay, win, prop);
 
   if (buff) {
-    TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_UTF8MAGIC, NULL, buff);
+    TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_UTF8MAGIC, Chars(),
+                        buff);
   }
 }
 
 /*
  * request X11 Selection
  */
-static void XSYM(SelectionRequest_X11)(Tobj Requestor, uldat ReqPrivate) {
+static void XSYM(SelectionRequest_X11)(Tobj requestor, uldat reqprivate) {
   if (!HW->HWSelectionPrivate) {
 
     if (xReqCount == NEST) {
@@ -362,8 +362,8 @@ static void XSYM(SelectionRequest_X11)(Tobj Requestor, uldat ReqPrivate) {
                 << " nested Twin Selection Request events\n";
     }
 #endif
-    xRequestor(xReqCount) = Requestor;
-    xReqPrivate(xReqCount) = ReqPrivate;
+    xRequestor(xReqCount) = requestor;
+    xReqPrivate(xReqCount) = reqprivate;
     xReqCount++;
 
     if (XGetSelectionOwner(xdisplay, XA_PRIMARY) == None) {

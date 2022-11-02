@@ -304,12 +304,14 @@ byte SendControlMsg(Tmsgport MsgPort, udat Code, udat Len, const char *Data) {
   return tfalse;
 }
 
-bool SelectionStore(e_id magic, const char mime[MAX_MIMELEN], Chars data) {
+bool SelectionStore(e_id magic, Chars mime, Chars data) {
   selection Sel = All->Selection;
+  uldat len = Min2(mime.size(), TW_MAX_MIMELEN);
   if (mime) {
-    CopyMem(mime, Sel->MIME, MAX_MIMELEN);
-  } else {
-    memset(Sel->MIME, '\0', MAX_MIMELEN);
+    CopyMem(mime.data(), Sel->MIME, len);
+  }
+  if (len < TW_MAX_MIMELEN) {
+    memset(Sel->MIME + len, '\0', TW_MAX_MIMELEN - len);
   }
   Sel->Owner = NULL;
   Sel->Magic = magic;
@@ -382,7 +384,7 @@ bool SetSelectionFromWindow(Twindow w) {
   if (!(w->State & WINDOW_ANYSEL) || w->YstSel > w->YendSel ||
       (w->YstSel == w->YendSel && w->XstSel > w->XendSel)) {
 
-    ok = SelectionStore(SEL_UTF8MAGIC, NULL, Chars());
+    ok = SelectionStore(SEL_UTF8MAGIC, Chars(), Chars());
     if (ok) {
       NeedHW |= NEEDSelectionExport;
     }
@@ -437,7 +439,7 @@ bool SetSelectionFromWindow(Twindow w) {
         slen = w->XendSel - w->XstSel + 1;
       }
       cells += w->XstSel;
-      ok = SelectionStore(SEL_UTF8MAGIC, NULL, Chars());
+      ok = SelectionStore(SEL_UTF8MAGIC, Chars(), Chars());
       for (i = slen; ok && i-- > 0; cells++) {
         ok = appender.rune(TRUNE(*cells));
       }
@@ -485,7 +487,7 @@ bool SetSelectionFromWindow(Twindow w) {
     return false;
   }
 
-  ok = SelectionStore(SEL_UTF8MAGIC, NULL, Chars());
+  ok = SelectionStore(SEL_UTF8MAGIC, Chars(), Chars());
   Trow r;
 
   /* Gap not supported! */

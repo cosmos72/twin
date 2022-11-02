@@ -426,7 +426,7 @@ static void sockBlindSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data)
 static Tobj sockGetOwnerSelection(void);
 static void sockSetOwnerSelection(tany Time, tany Frac);
 static void sockNotifySelection(Tobj Requestor, uldat ReqPrivate, uldat Magic,
-                                const char MIME[MAX_MIMELEN], uldat Len, const char *Data);
+                                const char MIME[TW_MAX_MIMELEN], uldat Len, const char *Data);
 static void sockRequestSelection(Tobj Owner, uldat ReqPrivate);
 
 #define sockSetServerUid SetServerUid
@@ -1409,8 +1409,8 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     break;
   case msg_selection_notify:
     sockReply(msg->Type,
-              Len = sizeof(twindow) + 2 * sizeof(dat) + 3 * sizeof(ldat) + MAX_MIMELEN +
-                    msg->Event.EventSelectionNotify.Len,
+              Len = sizeof(twindow) + 2 * sizeof(dat) + 3 * sizeof(ldat) + TW_MAX_MIMELEN +
+                    msg->Event.EventSelectionNotify.DataLen,
               NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
@@ -1419,9 +1419,16 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
       Push(t, udat, msg->Event.EventSelectionNotify.pad);
       Push(t, uldat, msg->Event.EventSelectionNotify.ReqPrivate);
       Push(t, uldat, msg->Event.EventSelectionNotify.Magic);
-      PushV(t, MAX_MIMELEN, msg->Event.EventSelectionNotify.MIME);
-      Push(t, uldat, msg->Event.EventSelectionNotify.Len);
-      PushV(t, msg->Event.EventSelectionNotify.Len, msg->Event.EventSelectionNotify.Data);
+
+      char mimeBuf[TW_MAX_MIMELEN] = {};
+      const size_t mimeLen = Min2u(msg->Event.EventSelectionNotify.MimeLen, TW_MAX_MIMELEN);
+      CopyMem(msg->Event.EventSelectionNotify.MIME().data(), mimeBuf, mimeLen);
+      PushV(t, TW_MAX_MIMELEN, mimeBuf);
+
+      Chars data = msg->Event.EventSelectionNotify.Data();
+      const uldat dataLen = uldat(data.size());
+      Push(t, uldat, dataLen);
+      PushV(t, dataLen, data.data());
     }
     break;
   case msg_selection_request:
@@ -1706,9 +1713,10 @@ static void sockSetOwnerSelection(tany Time, tany Frac) {
     TwinSelectionSetOwner((Tobj)LS.MsgPort, Time, Frac);
 }
 
-static void sockNotifySelection(Tobj Requestor, uldat ReqPrivate, uldat Magic,
-                                const char MIME[MAX_MIMELEN], uldat Len, const char *Data) {
-  TwinSelectionNotify(Requestor, ReqPrivate, e_id(Magic), MIME, Chars(Data, Len));
+static void sockNotifySelection(Tobj requestor, uldat reqprivate, uldat magic,
+                                const char mime[TW_MAX_MIMELEN], uldat len, const char *data) {
+  TwinSelectionNotify(requestor, reqprivate, e_id(magic),
+                      Chars::from_c_maxlen(mime, TW_MAX_MIMELEN), Chars(data, len));
 }
 
 static void sockRequestSelection(Tobj Owner, uldat ReqPrivate) {

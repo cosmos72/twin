@@ -46,6 +46,6 @@ Tdisplay Sdisplay::Init(uldat namelen, const char *name) {
    * ->Quitted will be set to tfalse only
    * after this->InitHW() has succeeded
    */
-  InsertLast(DisplayHW, this, ::All);
+  InsertLast(Display, this, ::All);
   return this;
 }

@@ -33,18 +33,18 @@ struct display_data {
 #define display (displaydata->display)
 #define Helper (displaydata->Helper)
 
-static Tmsg msg;
+static Tmsg gmsg;
 static event_display *ev;
 static uldat Used;
 
 inline void display_CreateMsg(udat Code, udat Len) {
-  msg->Event.EventDisplay.Code = Code;
-  msg->Event.EventDisplay.Len = Len;
+  gmsg->Event.EventDisplay.Code = Code;
+  gmsg->Event.EventDisplay.Len = Len;
 }
 
 static void display_Beep(void) {
   display_CreateMsg(ev_dpy_Beep, 0);
-  Ext(Socket, SendMsg)(display, msg);
+  Ext(Socket, SendMsg)(display, gmsg);
   setFlush();
 }
 
@@ -56,13 +56,13 @@ static void display_Configure(udat resource, byte todefault, udat value) {
     ev->Y = -1;
   else
     ev->Y = (dat)value;
-  Ext(Socket, SendMsg)(display, msg);
+  Ext(Socket, SendMsg)(display, gmsg);
   setFlush();
 }
 
 /* handle messages from twdisplay */
 static void display_HandleEvent(Tdisplay hw) {
-  Tmsg hMsg;
+  Tmsg msg;
   event_any *Event;
   dat x, y, dx, dy;
   udat keys;
@@ -70,12 +70,12 @@ static void display_HandleEvent(Tdisplay hw) {
   SaveHW;
   SetHW(hw);
 
-  while ((hMsg = Helper->FirstMsg)) {
+  while ((msg = Helper->FirstMsg)) {
 
-    hMsg->Remove();
-    Event = &hMsg->Event;
+    msg->Remove();
+    Event = &msg->Event;
 
-    switch (hMsg->Type) {
+    switch (msg->Type) {
     case msg_widget_key:
       KeyboardEventCommon(Event->EventKeyboard.Code, Event->EventKeyboard.ShiftFlags,
                           Event->EventKeyboard.SeqLen, Event->EventKeyboard.AsciiSeq);
@@ -125,8 +125,8 @@ static void display_HandleEvent(Tdisplay hw) {
 #if 0
       TwinSelectionNotify(
           dRequestor, dReqPrivate, Event->EventSelectionNotify.Magic,
-          Event->EventSelectionNotify.MIME,
-          Chars(Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len));
+          Event->EventSelectionNotify.MIME(),
+          Event->EventSelectionNotify.Data());
 #endif
       break;
 
@@ -161,7 +161,7 @@ static void display_HandleEvent(Tdisplay hw) {
     default:
       break;
     }
-    hMsg->Delete();
+    msg->Delete();
   }
   RestoreHW;
 }
@@ -175,7 +175,7 @@ inline void display_DrawTCell(dat x, dat y, udat buflen, tcell *buf) {
   ev->X = x;
   ev->Y = y;
   ev->Data = buf;
-  Ext(Socket, SendMsg)(display, msg);
+  Ext(Socket, SendMsg)(display, gmsg);
 }
 
 inline void display_DrawSome(dat x, dat y, uldat len) {
@@ -208,13 +208,13 @@ inline void display_MoveToXY(udat x, udat y) {
   display_CreateMsg(ev_dpy_MoveToXY, 0);
   ev->X = x;
   ev->Y = y;
-  Ext(Socket, SendMsg)(display, msg);
+  Ext(Socket, SendMsg)(display, gmsg);
 }
 
 inline void display_SetCursorType(uldat type) {
   display_CreateMsg(ev_dpy_SetCursorType, sizeof(uldat));
   ev->Data = &type;
-  Ext(Socket, SendMsg)(display, msg);
+  Ext(Socket, SendMsg)(display, gmsg);
 }
 
 static void display_FlushVideo(void) {
@@ -248,7 +248,7 @@ static void display_FlushVideo(void) {
 
 static void display_FlushHW(void) {
   display_CreateMsg(ev_dpy_FlushHW, 0);
-  Ext(Socket, SendMsg)(display, msg);
+  Ext(Socket, SendMsg)(display, gmsg);
   if (RemoteFlush(HW->AttachSlot))
     clrFlush();
 }
@@ -280,7 +280,7 @@ static void display_Resize(dat x, dat y) {
       HW->Y = y;
     }
 
-    Ext(Socket, SendMsg)(display, msg);
+    Ext(Socket, SendMsg)(display, gmsg);
     setFlush();
   }
 }
@@ -303,7 +303,7 @@ static void display_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, da
   ev->Y = Up;
   ev->Data = data;
 
-  Ext(Socket, SendMsg)(display, msg);
+  Ext(Socket, SendMsg)(display, gmsg);
   setFlush();
 }
 
@@ -318,13 +318,13 @@ static void display_SetPalette(udat N, udat R, udat G, udat B) {
   ev->X = N;
   ev->Data = data;
 
-  Ext(Socket, SendMsg)(display, msg);
+  Ext(Socket, SendMsg)(display, gmsg);
   setFlush();
 }
 
 static void display_ResetPalette(void) {
   display_CreateMsg(ev_dpy_ResetPalette, 0);
-  Ext(Socket, SendMsg)(display, msg);
+  Ext(Socket, SendMsg)(display, gmsg);
   setFlush();
 }
 
@@ -342,7 +342,7 @@ static void display_SelectionExport_display(void) {
   if (!HW->HWSelectionPrivate) {
     HW->HWSelectionPrivate = (tany)display;
     display_CreateMsg(ev_dpy_SelectionExport, 0);
-    Ext(Socket, SendMsg)(display, msg);
+    Ext(Socket, SendMsg)(display, gmsg);
     setFlush();
   }
 }
@@ -350,13 +350,13 @@ static void display_SelectionExport_display(void) {
 /*
  * request Selection from twdisplay
  */
-static void display_SelectionRequest_display(Tobj Requestor, uldat ReqPrivate) {
+static void display_SelectionRequest_display(Tobj requestor, uldat reqprivate) {
   if (!HW->HWSelectionPrivate) {
     /*
      * shortcut: since (display) is a Tmsgport, use fail-safe TwinSelectionRequest()
      * to send message to twdisplay.
      */
-    TwinSelectionRequest(Requestor, ReqPrivate, (Tobj)display);
+    TwinSelectionRequest(requestor, reqprivate, (Tobj)display);
   }
   /* else race! someone else became Selection owner in the meanwhile... */
 }
@@ -364,19 +364,18 @@ static void display_SelectionRequest_display(Tobj Requestor, uldat ReqPrivate) {
 /*
  * notify our Selection to twdisplay
  */
-static void display_SelectionNotify_display(uldat ReqPrivate, e_id Magic,
-                                            const char MIME[MAX_MIMELEN], Chars Data) {
+static void display_SelectionNotify_display(uldat reqprivate, e_id magic, Chars mime, Chars data) {
   /*
    * shortcut: since (display) is a Tmsgport, use fail-safe TwinSelectionNotify()
    * to send message to twdisplay.
    */
-  TwinSelectionNotify((Tobj)display, ReqPrivate, Magic, MIME, Data);
+  TwinSelectionNotify((Tobj)display, reqprivate, magic, mime, data);
 }
 
 static void display_QuitHW(void) {
   /* tell twdisplay to cleanly quit */
   display_CreateMsg(ev_dpy_Quit, 4 * sizeof(dat));
-  Ext(Socket, SendMsg)(display, msg);
+  Ext(Socket, SendMsg)(display, gmsg);
   RemoteFlush(HW->AttachSlot);
 
   /* then cleanup */
@@ -384,9 +383,9 @@ static void display_QuitHW(void) {
   Helper->AttachHW = (Tdisplay)0; /* to avoid infinite loop */
   Helper->Delete();
 
-  if (!--Used && msg) {
-    msg->Delete();
-    msg = NULL;
+  if (!--Used && gmsg) {
+    gmsg->Delete();
+    gmsg = NULL;
   }
 
   /*
@@ -445,7 +444,7 @@ static bool display_InitHW(void) {
 
   if (!(HW->Private = (struct display_data *)AllocMem(sizeof(struct display_data))) ||
       !(Helper = New(msgport)(16, "twdisplay Helper", 0, 0, 0, display_HelperH)) ||
-      (!msg && !(msg = New(msg)(msg_display, sizeof(uldat))))) {
+      (!gmsg && !(gmsg = New(msg)(msg_display, sizeof(uldat))))) {
 
     if (HW->Private) {
       if (Helper) {
@@ -457,7 +456,7 @@ static bool display_InitHW(void) {
     return false;
   }
 
-  ev = &msg->Event.EventDisplay;
+  ev = &gmsg->Event.EventDisplay;
   display = Port;
   Helper->AttachHW = HW;
 
@@ -522,7 +521,7 @@ static bool display_InitHW(void) {
   display_CreateMsg(ev_dpy_Helper, sizeof(Helper->Id));
   ev->Len = sizeof(uldat);
   ev->Data = &Helper->Id;
-  Ext(Socket, SendMsg)(display, msg);
+  Ext(Socket, SendMsg)(display, gmsg);
   /* don't flush now, twdisplay waits for attach messages */
 
   size_t pos;

@@ -14,6 +14,12 @@ Chars Chars::from_c(const char *c_str) NOTHROW {
   return Chars(c_str, c_str ? strlen(c_str) : 0);
 }
 
+Chars Chars::from_c_maxlen(const char c_str[], size_t max_len) NOTHROW {
+  const char *end = (const char *)std::memchr(c_str, '\0', max_len);
+  const size_t len = end ? size_t(c_str - end) : max_len;
+  return Chars(c_str, len);
+}
+
 size_t Chars::find0(Chars str, Chars substr) NOTHROW {
   size_t n1 = str.size();
   size_t n2 = substr.size();

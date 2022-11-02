@@ -77,12 +77,12 @@ static void ScrollerH(Tmsgport MsgPort) {
       msg->Delete();
   }
 
-  if (saveMsg == Dont_Scroll || !All->MouseHW) {
+  if (saveMsg == Dont_Scroll || !All->MouseDisplay) {
     ScrollerDeactivate();
     return;
   }
 
-  Mouse = &All->MouseHW->MouseState;
+  Mouse = &All->MouseDisplay->MouseState;
 
   FocusWindow = (Twindow)All->FirstScreen->FocusW();
   if (FocusWindow && !IS_WINDOW(FocusWindow))

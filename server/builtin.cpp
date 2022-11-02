@@ -431,7 +431,7 @@ static void UpdateDisplayWin(Twidget displayWin) {
   if (displayWin == (Twidget)DisplayWin) {
     DeleteList(DisplayWin->USE.R.FirstRow);
 
-    for (hw = All->FirstDisplayHW; hw; hw = hw->Next) {
+    for (hw = All->FirstDisplay; hw; hw = hw->Next) {
       DisplayWin->GotoXY(x, y++);
       if (!hw->Name)
         DisplayWin->RowWriteCharset(9, "(no name)");
@@ -461,7 +461,7 @@ static void DisplayGadgetH(Tmsg msg) {
   switch (msg->Event.EventGadget.Code) {
   case COD_D_REMOVE:
     if ((i = DisplayWin->CurY) < DisplayWin->HLogic) {
-      for (hw = All->FirstDisplayHW; hw && i; hw = hw->Next, i--) {
+      for (hw = All->FirstDisplay; hw && i; hw = hw->Next, i--) {
       }
       if (hw && !i) {
         hw->Delete();
@@ -469,9 +469,9 @@ static void DisplayGadgetH(Tmsg msg) {
     }
     break;
   case COD_D_THIS:
-    if (All->MouseHW) {
-      for (i = 0, hw = All->FirstDisplayHW; hw; hw = hw->Next, i++) {
-        if (hw == All->MouseHW)
+    if (All->MouseDisplay) {
+      for (i = 0, hw = All->FirstDisplay; hw; hw = hw->Next, i++) {
+        if (hw == All->MouseDisplay)
           break;
       }
       if (hw)
@@ -609,7 +609,7 @@ static void BuiltinH(Tmsgport MsgPort) {
 
         case COD_SOCKET_OFF:
           DlUnload(SocketSo);
-          if (All->FirstDisplayHW)
+          if (All->FirstDisplay)
             break;
           /* hmm... better to fire it up again */
           /* FALLTHROUGH */
@@ -699,10 +699,11 @@ static void BuiltinH(Tmsgport MsgPort) {
       tempWin = (Twindow)Id2Obj(Twindow_magic_byte, msg->Event.EventSelectionNotify.ReqPrivate);
       if (tempWin && tempWin == ExecuteWin) {
         switch (msg->Event.EventSelectionNotify.Magic) {
-        case SEL_UTF8MAGIC:
-          tempWin->RowWriteUtf8(msg->Event.EventSelectionNotify.Len,
-                                msg->Event.EventSelectionNotify.Data);
+        case SEL_UTF8MAGIC: {
+          const Chars utf8_bytes = msg->Event.EventSelectionNotify.Data();
+          tempWin->RowWriteUtf8(utf8_bytes.size(), utf8_bytes.data());
           break;
+        }
         default:
           break;
         }
@@ -848,7 +849,7 @@ bool InitBuiltin(void) {
       Row4Menu(w, COD_QUIT, ROW_ACTIVE, 10, " Quit     ") &&
       (Builtin_File = Item4Menu(Builtin_Menu, w, ttrue, 6, " File ")) &&
 
-      (w = Win4Menu(Builtin_Menu)) && (w->InstallHook(UpdateMenuRows, &All->FnHookModule), ttrue) &&
+      (w = Win4Menu(Builtin_Menu)) && (w->InstallHook(UpdateMenuRows, &All->HookModuleFn), ttrue) &&
       Row4Menu(w, COD_TERM_ON, ROW_ACTIVE, 20, " Run Twin Term      ") &&
       Row4Menu(w, COD_TERM_OFF, ROW_INACTIVE, 20, " Stop Twin Term     ") &&
       Row4Menu(
@@ -991,7 +992,7 @@ bool InitBuiltin(void) {
     Act(Configure, DisplaySubWin)(DisplaySubWin, 1 << 0 | 1 << 1, -1, -1, 0, 0, 0, 0);
     Act(Map, DisplaySubWin)(DisplaySubWin, (Twidget)DisplayWin);
 
-    Act(InstallHook, DisplayWin)(DisplayWin, UpdateDisplayWin, &All->FnHookDisplayHW);
+    Act(InstallHook, DisplayWin)(DisplayWin, UpdateDisplayWin, &All->HookDisplayFn);
     WinList->MapUnMapHook = InstallRemoveWinListHook;
 
     Act(FillButton, ButtonOK_About)(ButtonOK_About, (Twidget)AboutWin, COD_OK, 15, 11, 0,

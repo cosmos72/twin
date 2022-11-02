@@ -14,10 +14,12 @@
 #define TWIN_ALL_H
 
 #include "obj/obj.h"
-#include "obj/event.h"  /* MAX_MIMELEN */
+#include "obj/event.h"  /* TW_MAX_MIMELEN */
 #include "obj/window.h" /* BUTTON_MAX */
 #include "tty.h"        /* USER_MAP */
 #include "stl_types.h"  /* String */
+
+#include <Tw/Tw.h> /* TW_MAX_MIMELEN */
 
 struct Ssetup {
   dat MaxMouseSnap;
@@ -82,7 +84,7 @@ struct Sselection {
   Tdisplay OwnerOnce;
   uldat Magic;
   String Data;
-  char MIME[MAX_MIMELEN];
+  char MIME[TW_MAX_MIMELEN];
 
   void dup(const selection other);
   void paste();
@@ -98,12 +100,12 @@ struct Sall : public Sobj {
   Tmutex FirstMutex, LastMutex;
 
   Tmodule FirstModule, LastModule;
-  HookFn FnHookModule;
+  HookFn HookModuleFn;
   Twidget HookModule;
 
-  Tdisplay FirstDisplayHW, LastDisplayHW, MouseHW, ExclusiveHW;
-  HookFn FnHookDisplayHW;
-  Twidget HookDisplayHW;
+  Tdisplay FirstDisplay, LastDisplay, MouseDisplay, ExclusiveDisplay;
+  HookFn HookDisplayFn;
+  Twidget HookDisplay;
 
   dat DisplayWidth, DisplayHeight;
   byte State;

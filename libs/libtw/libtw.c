@@ -1599,29 +1599,29 @@ int Tw_ConnectionFd(tw_d TwD) {
 
 /* this requires LOCK to be held */
 static tmsg ReadMsg(tw_d TwD, byte Wait, byte deQueue) {
-  tmsg Msg = (tmsg)0;
+  tmsg msg = (tmsg)0;
   uldat len;
 
   if (Fd != TW_NOFD) {
-    Msg = (tmsg)GetQueue(TwD, QMSG, &len);
+    msg = (tmsg)GetQueue(TwD, QMSG, &len);
 
     if (!len) {
       Flush(TwD, Wait);
       do {
         if (TryRead(TwD, Wait ? TIMEOUT_INFINITE : TIMEOUT_ZERO) != (uldat)-1) {
           ParseReplies(TwD);
-          Msg = (tmsg)GetQueue(TwD, QMSG, &len);
+          msg = (tmsg)GetQueue(TwD, QMSG, &len);
         }
       } while (Wait && Fd != TW_NOFD && !len);
     }
 
     if (Fd != TW_NOFD && len) {
       if (deQueue)
-        DeQueueAligned(TwD, QMSG, Msg->Len);
+        DeQueueAligned(TwD, QMSG, msg->Len);
     } else
-      Msg = (tmsg)0;
+      msg = (tmsg)0;
   }
-  return Msg;
+  return msg;
 }
 
 /* this requires LOCK not to be held */
@@ -1630,16 +1630,16 @@ static tmsg ReadMsg(tw_d TwD, byte Wait, byte deQueue) {
  * are available in the queue; it never blocks nor reads from the connection
  */
 tmsg Tw_PendingMsg(tw_d TwD) {
-  tmsg Msg;
+  tmsg msg;
   uldat len = 0;
   if (TwD) {
     LOCK;
-    Msg = (tmsg)GetQueue(TwD, QMSG, &len);
+    msg = (tmsg)GetQueue(TwD, QMSG, &len);
     UNLK;
   }
   if (!len)
-    Msg = (tmsg)0;
-  return Msg;
+    msg = (tmsg)0;
+  return msg;
 }
 
 /* non-blocking check if there are messages available,
@@ -1651,13 +1651,13 @@ tmsg Tw_PendingMsg(tw_d TwD) {
  * returns NULL
  */
 tmsg Tw_PeekMsg(tw_d TwD) {
-  tmsg Msg = (tmsg)0;
+  tmsg msg = (tmsg)0;
   if (TwD) {
     LOCK;
-    Msg = ReadMsg(TwD, tfalse, tfalse);
+    msg = ReadMsg(TwD, tfalse, tfalse);
     UNLK;
   }
-  return Msg;
+  return msg;
 }
 
 /**
@@ -1669,13 +1669,13 @@ tmsg Tw_PeekMsg(tw_d TwD) {
  * in any case, the tmsg returned is removed from the queue.
  */
 tmsg Tw_ReadMsg(tw_d TwD, byte Wait) {
-  tmsg Msg = (tmsg)0;
+  tmsg msg = (tmsg)0;
   if (TwD) {
     LOCK;
-    Msg = ReadMsg(TwD, Wait, ttrue);
+    msg = ReadMsg(TwD, Wait, ttrue);
     UNLK;
   }
-  return Msg;
+  return msg;
 }
 
 /**
@@ -1684,11 +1684,11 @@ tmsg Tw_ReadMsg(tw_d TwD, byte Wait) {
  * you must Tw_FreeMem() it when done!
  */
 tmsg Tw_CloneReadMsg(tw_d TwD, byte Wait) {
-  tmsg Msg, ClonedMsg = (tmsg)0;
+  tmsg msg, ClonedMsg = (tmsg)0;
   if (TwD) {
     LOCK;
-    if ((Msg = ReadMsg(TwD, Wait, ttrue)) && (ClonedMsg = (tmsg)Tw_AllocMem(Msg->Len))) {
-      Tw_CopyMem(Msg, ClonedMsg, Msg->Len);
+    if ((msg = ReadMsg(TwD, Wait, ttrue)) && (ClonedMsg = (tmsg)Tw_AllocMem(msg->Len))) {
+      Tw_CopyMem(msg, ClonedMsg, msg->Len);
     }
     UNLK;
   }
@@ -1702,7 +1702,7 @@ TW_INLINE uldat TwAVLgetkey(uldat Type, tevent_common Event) {
   return (Type << 5) ^ Event->W ^ ((uldat)Event->Code << ((sizeof(uldat) - sizeof(udat)) * 8));
 }
 
-#define TwAVLgetkeyMsg(Msg) TwAVLgetkey((Msg)->Type, &(Msg)->Event.EventCommon)
+#define TwAVLgetkeyMsg(msg) TwAVLgetkey((msg)->Type, &(msg)->Event.EventCommon)
 
 #define TwAVLgetkeyListener(L) TwAVLgetkey((L)->Type, &(L)->Event->EventCommon)
 
@@ -1744,12 +1744,12 @@ static int CompareListeners(tlistener L1, tlistener L2) {
   return L1->Type - L2->Type;
 }
 
-static tlistener FindListener(tw_d TwD, tmsg Msg) {
+static tlistener FindListener(tw_d TwD, tmsg msg) {
   struct s_tlistener key;
 
-  key.Type = Msg->Type;
-  key.Event = &Msg->Event;
-  key.AVLkey = TwAVLgetkeyMsg(Msg);
+  key.Type = msg->Type;
+  key.Event = &msg->Event;
+  key.AVLkey = TwAVLgetkeyMsg(msg);
 
   return (tlistener)AVLFind((tavl)&key, (tavl)TwD->AVLRoot, (tavl_compare)CompareListeners);
 }
@@ -2024,7 +2024,7 @@ tlistener Tw_AddSelectionRequestListener(tw_d TwD, tfn_listener Listener, void *
   return AddListener(TwD, TW_MSG_SELECTIONREQUEST, TW_NOID, 0, 0, Listener, Arg);
 }
 
-static byte DispatchMsg(tdisplay TwD, tmsg Msg, byte mustClone) {
+static byte DispatchMsg(tdisplay TwD, tmsg msg, byte mustClone) {
   tlistener L;
   tfn_listener Listener;
   tfn_default_listener DefaultListener;
@@ -2033,7 +2033,7 @@ static byte DispatchMsg(tdisplay TwD, tmsg Msg, byte mustClone) {
 
   if (!TwD) {
     return tfalse;
-  } else if ((L = FindListener(TwD, Msg))) {
+  } else if ((L = FindListener(TwD, msg))) {
     Listener = L->Listener;
     Arg = L->Arg;
     DefaultListener = NULL;
@@ -2045,7 +2045,7 @@ static byte DispatchMsg(tdisplay TwD, tmsg Msg, byte mustClone) {
     return tfalse;
 
   /*
-   * Tw_MainLoop calls us with a Msg still inside Queue[].
+   * Tw_MainLoop calls us with a msg still inside Queue[].
    * Clone it before calling Listener to avoid problems.
    *
    * If the user calls Tw_DispatchMsg, it's up to him to ensure
@@ -2053,10 +2053,10 @@ static byte DispatchMsg(tdisplay TwD, tmsg Msg, byte mustClone) {
    * of Tw_ReadMsg() ).
    */
   if (mustClone) {
-    if ((ClonedMsg = (tmsg)Tw_AllocMem(Msg->Len)))
-      Tw_CopyMem(Msg, ClonedMsg, Msg->Len);
+    if ((ClonedMsg = (tmsg)Tw_AllocMem(msg->Len)))
+      Tw_CopyMem(msg, ClonedMsg, msg->Len);
   } else
-    ClonedMsg = Msg;
+    ClonedMsg = msg;
 
   if (ClonedMsg) {
     UNLK;
@@ -2075,11 +2075,11 @@ static byte DispatchMsg(tdisplay TwD, tmsg Msg, byte mustClone) {
 /**
  * calls the appropriate event listener for given tmsg
  */
-byte Tw_DispatchMsg(tdisplay TwD, tmsg Msg) {
+byte Tw_DispatchMsg(tdisplay TwD, tmsg msg) {
   byte ret = tfalse;
   if (TwD) {
     LOCK;
-    ret = DispatchMsg(TwD, Msg, tfalse);
+    ret = DispatchMsg(TwD, msg, tfalse);
     UNLK;
   }
   return ret;
@@ -2091,12 +2091,12 @@ byte Tw_DispatchMsg(tdisplay TwD, tmsg Msg) {
  */
 byte Tw_MainLoop(tw_d TwD) {
   byte ret = tfalse;
-  tmsg Msg;
+  tmsg msg;
   if (TwD) {
     LOCK;
     Errno = 0;
-    while (!TwD->ExitMainLoop && (Msg = ReadMsg(TwD, ttrue, ttrue)))
-      (void)DispatchMsg(TwD, Msg, ttrue);
+    while (!TwD->ExitMainLoop && (msg = ReadMsg(TwD, ttrue, ttrue)))
+      (void)DispatchMsg(TwD, msg, ttrue);
     ret = TwD->ExitMainLoop || Errno == 0;
     UNLK;
   }
@@ -2867,7 +2867,7 @@ static void ParseReplies(tw_d TwD) {
 
         /* either a MSG, or a malformed reply. In both cases, it will be removed */
         if (rlen >= 2 * sizeof(uldat) && serial == MSG_MAGIC) {
-          /* it's a Msg, copy it in its own queue */
+          /* it's a msg, copy it in its own queue */
           /* we no longer need `t', clobber it */
           t -= sizeof(uldat);
           Push(t, uldat, rlen + sizeof(uldat));
@@ -2901,16 +2901,16 @@ static void ParseReplies(tw_d TwD) {
 /**
  * creates an event message
  */
-tmsg Tw_CreateMsg(tw_d TwD, uldat Type, uldat EventLen) {
-  tmsg Msg;
+tmsg Tw_CreateMsg(tw_d TwD, uldat Type, uldat len) {
+  tmsg msg;
   const uldat delta = (uldat)(size_t) & (((tmsg)NULL)->Event);
 
-  if ((Msg = (tmsg)Tw_AllocMem(EventLen += delta))) {
-    Msg->Len = EventLen;
-    Msg->Magic = tmsg_magic;
-    Msg->Type = Type;
+  if ((msg = (tmsg)Tw_AllocMem(len += delta))) {
+    msg->Len = len;
+    msg->Magic = tmsg_magic;
+    msg->Type = Type;
   }
-  return Msg;
+  return msg;
 }
 
 /**
@@ -2918,19 +2918,19 @@ tmsg Tw_CreateMsg(tw_d TwD, uldat Type, uldat EventLen) {
  * created with Tw_CreateMsg(), and only if they are not sent with
  * Tw_SendMsg() or Tw_BlindSendMsg()
  */
-void Tw_DeleteMsg(tw_d TwD, tmsg Msg) {
-  if (Msg && Msg->Magic == tmsg_magic)
-    Tw_FreeMem(Msg);
+void Tw_DeleteMsg(tw_d TwD, tmsg msg) {
+  if (msg && msg->Magic == tmsg_magic)
+    Tw_FreeMem(msg);
 }
 
 /**
  * sends message to given client, blocking to see if it could be delivered
  */
-byte Tw_SendMsg(tw_d TwD, tmsgport MsgPort, tmsg Msg) {
+byte Tw_SendMsg(tw_d TwD, tmsgport MsgPort, tmsg msg) {
   byte ret = tfalse;
-  if (Msg && Msg->Magic == tmsg_magic) {
-    ret = Tw_SendToMsgPort(TwD, MsgPort, Msg->Len, (void *)Msg);
-    Tw_FreeMem(Msg);
+  if (msg && msg->Magic == tmsg_magic) {
+    ret = Tw_SendToMsgPort(TwD, MsgPort, msg->Len, (void *)msg);
+    Tw_FreeMem(msg);
   }
   return ret;
 }
@@ -2938,10 +2938,10 @@ byte Tw_SendMsg(tw_d TwD, tmsgport MsgPort, tmsg Msg) {
 /**
  * sends message to given client, without blocking
  */
-void Tw_BlindSendMsg(tw_d TwD, tmsgport MsgPort, tmsg Msg) {
-  if (Msg && Msg->Magic == tmsg_magic) {
-    Tw_BlindSendToMsgPort(TwD, MsgPort, Msg->Len, (void *)Msg);
-    Tw_FreeMem(Msg);
+void Tw_BlindSendMsg(tw_d TwD, tmsgport MsgPort, tmsg msg) {
+  if (msg && msg->Magic == tmsg_magic) {
+    Tw_BlindSendToMsgPort(TwD, MsgPort, msg->Len, (void *)msg);
+    Tw_FreeMem(msg);
   }
 }
 

@@ -36,7 +36,11 @@ public:
   // ~Chars() = default;
   // operator=(const Chars&) = default;
 
-  static Chars from_c(const char *c_str) NOTHROW;
+  // create from nul-terminated C array of chars
+  static Chars from_c(const char c_str[]) NOTHROW;
+
+  // create from possibly nul-terminated C array of chars, limited to maximum length
+  static Chars from_c_maxlen(const char c_str[], size_t max_len) NOTHROW;
 
   bool contains(Chars substr) const NOTHROW {
     return find0(*this, substr) != size_t(-1);

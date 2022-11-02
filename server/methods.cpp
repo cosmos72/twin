@@ -1214,7 +1214,7 @@ static void SetXYScreen(Tscreen screen, dat x, dat y) {
 static Tmenu FindMenuScreen(Tscreen screen) {
   if (screen) {
     if (screen->MenuWindow && IS_WINDOW(screen->MenuWindow))
-      /* Tmenu activated from screen->MenuWindow, return its Tmenu */
+      /* menu activated from screen->MenuWindow, return its Tmenu */
       return screen->MenuWindow->Menu;
 
     /* no Twindow activated the Tmenu... either the Tmenu is inactive
@@ -2021,7 +2021,7 @@ static struct SmoduleFn _FnModule = {
 
 static void InsertDisplayHW(Tdisplay DisplayHW, Tall Parent, Tdisplay Prev, Tdisplay Next) {
   if (!DisplayHW->All && Parent) {
-    InsertGeneric((TobjEntry)DisplayHW, (TobjList)&Parent->FirstDisplayHW, (TobjEntry)Prev,
+    InsertGeneric((TobjEntry)DisplayHW, (TobjList)&Parent->FirstDisplay, (TobjEntry)Prev,
                   (TobjEntry)Next, NULL);
     DisplayHW->All = Parent;
 #if 0
@@ -2029,19 +2029,19 @@ static void InsertDisplayHW(Tdisplay DisplayHW, Tall Parent, Tdisplay Prev, Tdis
          * here we would call uninitialized DisplayHW routines like MoveToXY,
          * put this after DisplayHW->InitHW()
          */
-        if (All->FnHookDisplayHW)
-            All->FnHookDisplayHW(All->HookDisplayHW);
+        if (All->HookDisplayFn)
+            All->HookDisplayFn(All->HookDisplay);
 #endif
   }
 }
 
 static void RemoveDisplayHW(Tdisplay DisplayHW) {
   if (DisplayHW->All) {
-    RemoveGeneric((TobjEntry)DisplayHW, (TobjList)&DisplayHW->All->FirstDisplayHW, NULL);
+    RemoveGeneric((TobjEntry)DisplayHW, (TobjList)&DisplayHW->All->FirstDisplay, NULL);
     DisplayHW->All = (Tall)0;
 
-    if (All->FnHookDisplayHW)
-      All->FnHookDisplayHW(All->HookDisplayHW);
+    if (All->HookDisplayFn)
+      All->HookDisplayFn(All->HookDisplay);
   }
 }
 
@@ -2053,10 +2053,10 @@ static void DeleteDisplayHW(Tdisplay DisplayHW) {
     DisplayHW->DoQuit();
 
   /* avoid getting stale pointers */
-  if (All->MouseHW == DisplayHW)
-    All->MouseHW = NULL;
-  if (All->ExclusiveHW == DisplayHW)
-    All->ExclusiveHW = NULL;
+  if (All->MouseDisplay == DisplayHW)
+    All->MouseDisplay = NULL;
+  if (All->ExclusiveDisplay == DisplayHW)
+    All->ExclusiveDisplay = NULL;
 
   DisplayHW->Remove();
   String().swap(DisplayHW->Name); // destroy DisplayHW->Name
@@ -2064,9 +2064,9 @@ static void DeleteDisplayHW(Tdisplay DisplayHW) {
   DeleteObj((Tobj)DisplayHW);
 
   if (!Quitted) {
-    if (!All->FirstDisplayHW || isCTTY)
+    if (!All->FirstDisplay || isCTTY)
       RunNoHW(tfalse);
-    else if (All->FirstDisplayHW && ResizeDisplay()) {
+    else if (All->FirstDisplay && ResizeDisplay()) {
       QueuedDrawArea2FullScreen = ttrue;
     }
   }

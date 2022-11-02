@@ -44,10 +44,10 @@
 
 #include <Tw/Tw.h>
 
-#define forHW for (HW = All->FirstDisplayHW; HW; HW = HW->Next)
+#define forHW for (HW = All->FirstDisplay; HW; HW = HW->Next)
 
 #define safeforHW(s_HW)                                                                            \
-  for (HW = All->FirstDisplayHW; HW && (((s_HW) = HW->Next), ttrue); HW = (s_HW))
+  for (HW = All->FirstDisplay; HW && (((s_HW) = HW->Next), ttrue); HW = (s_HW))
 
 /* common data */
 
@@ -66,11 +66,11 @@ static byte ConfigureHWDefault[HW_CONFIGURE_MAX];
 /* common functions */
 
 dat GetDisplayWidth(void) NOTHROW {
-  return All->FirstDisplayHW && !All->FirstDisplayHW->Quitted ? DisplayWidth : savedDisplayWidth;
+  return All->FirstDisplay && !All->FirstDisplay->Quitted ? DisplayWidth : savedDisplayWidth;
 }
 
 dat GetDisplayHeight(void) NOTHROW {
-  return All->FirstDisplayHW && !All->FirstDisplayHW->Quitted ? DisplayHeight : savedDisplayHeight;
+  return All->FirstDisplay && !All->FirstDisplay->Quitted ? DisplayHeight : savedDisplayHeight;
 }
 
 void UpdateFlagsHW(void) NOTHROW {
@@ -228,8 +228,8 @@ byte InitDisplayHW(Tdisplay D_HW) {
 
     if (!DisplayHWCTTY && D_HW->DisplayIsCTTY)
       DisplayHWCTTY = D_HW;
-    if (All->FnHookDisplayHW)
-      All->FnHookDisplayHW(All->HookDisplayHW);
+    if (All->HookDisplayFn)
+      All->HookDisplayFn(All->HookDisplay);
     UpdateFlagsHW(); /* this garbles HW... not a problem here */
   } else {
     warn_NoHW(arg.data(), arg.size());
@@ -300,7 +300,7 @@ Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
     return D_HW;
   }
 
-  if (All->ExclusiveHW) {
+  if (All->ExclusiveDisplay) {
     log(ERROR) << "twin: exclusive display in use, permission to display denied!\n";
     return D_HW;
   }
@@ -313,9 +313,9 @@ Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
         /* started exclusive display, kill all others */
         Tdisplay s_HW, n_HW;
 
-        All->ExclusiveHW = D_HW;
+        All->ExclusiveDisplay = D_HW;
 
-        for (s_HW = All->FirstDisplayHW; s_HW; s_HW = n_HW) {
+        for (s_HW = All->FirstDisplay; s_HW; s_HW = n_HW) {
           n_HW = s_HW->Next;
           if (s_HW != D_HW) {
             s_HW->Delete();
@@ -339,7 +339,7 @@ Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
 }
 
 bool DetachDisplayHW(Chars arg, byte flags) {
-  if (All->ExclusiveHW && !(flags & TW_ATTACH_HW_EXCLUSIVE))
+  if (All->ExclusiveDisplay && !(flags & TW_ATTACH_HW_EXCLUSIVE))
     return false;
 
   Tdisplay s_HW;
@@ -428,14 +428,14 @@ byte InitHW(void) {
 }
 
 void QuitHW(void) {
-  DeleteList(All->FirstDisplayHW);
+  DeleteList(All->FirstDisplay);
 }
 
 byte RestartHW(byte verbose) {
   Tdisplay s_HW;
   byte ret = tfalse;
 
-  if (All->FirstDisplayHW) {
+  if (All->FirstDisplay) {
     safeforHW(s_HW) {
       if (HW->DoInit())
         ret = ttrue;
@@ -466,7 +466,7 @@ void SuspendHW(byte verbose) {
     else
       HW->DoQuit();
   }
-  if (verbose && !All->FirstDisplayHW) {
+  if (verbose && !All->FirstDisplay) {
     log(INFO) << "twin: SuspendHW(): All display drivers had to be removed\n"
                  "      since they were attached to clients (twattach/twdisplay).\n"
                  "twin: --- STOPPED ---\n";
@@ -500,7 +500,7 @@ byte ResizeDisplay(void) {
   dat Width, Height;
   byte change = tfalse;
 
-  if (All->FirstDisplayHW) {
+  if (All->FirstDisplay) {
 
     if (!TryDisplayWidth || !TryDisplayHeight) {
       /*
@@ -666,70 +666,71 @@ void TwinSelectionSetOwner(Tobj Owner, tany Time, tany Frac) {
   }
 }
 
-void TwinSelectionNotify(Tobj Requestor, uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN],
-                         Chars Data) {
+void TwinSelectionNotify(Tobj requestor, uldat reqprivate, e_id magic, Chars mime, Chars data) {
   Tmsg NewMsg;
-  event_any *Event;
+  event_any *event;
 #if 0
-  log(INFO) << "twin: Selection Notify to 0x" << hex(Requestor ? Requestor->Id : NOID) << "\n";
+  log(INFO) << "twin: Selection Notify to 0x" << hex(requestor ? requestor->Id : NOID) << "\n";
 #endif
-  if (!Requestor) {
-    (void)SelectionStore(Magic, MIME, Data);
-  } else if (Requestor->Id >> magic_shift == msgport_magic >> magic_shift) {
+  if (!requestor) {
+    (void)SelectionStore(magic, mime, data);
+  } else if (requestor->Id >> magic_shift == msgport_magic >> magic_shift) {
 
-    const size_t len = Data.size();
+    const size_t len = mime.size() + data.size();
 
     if ((NewMsg = New(msg)(msg_selection_notify, len))) {
-      Event = &NewMsg->Event;
-      Event->EventSelectionNotify.W = NULL;
-      Event->EventSelectionNotify.Code = 0;
-      Event->EventSelectionNotify.pad = 0;
-      Event->EventSelectionNotify.ReqPrivate = ReqPrivate;
-      Event->EventSelectionNotify.Magic = Magic;
-      if (MIME)
-        CopyMem(MIME, Event->EventSelectionNotify.MIME, MAX_MIMELEN);
-      else
-        memset(Event->EventSelectionNotify.MIME, '\0', MAX_MIMELEN);
-      Event->EventSelectionNotify.Len = len;
-      CopyMem(Data.data(), Event->EventSelectionNotify.Data, len);
-      SendMsg((Tmsgport)Requestor, NewMsg);
+      event = &NewMsg->Event;
+      event->EventSelectionNotify.W = NULL;
+      event->EventSelectionNotify.Code = 0;
+      event->EventSelectionNotify.pad = 0;
+      event->EventSelectionNotify.ReqPrivate = reqprivate;
+      event->EventSelectionNotify.Magic = magic;
+      event->EventSelectionNotify.MimeLen = mime.size();
+      event->EventSelectionNotify.DataLen = data.size();
+      if (mime) {
+        CopyMem(mime.data(), event->EventSelectionNotify.MIME().data(), mime.size());
+      }
+      if (data) {
+        CopyMem(data.data(), event->EventSelectionNotify.Data().data(), data.size());
+      }
+      SendMsg((Tmsgport)requestor, NewMsg);
     }
-  } else if (Requestor->Id >> magic_shift == display_hw_magic >> magic_shift) {
+  } else if (requestor->Id >> magic_shift == display_hw_magic >> magic_shift) {
     SaveHW;
-    SetHW((Tdisplay)Requestor);
-    HW->HWSelectionNotify(ReqPrivate, Magic, MIME, Data);
+    SetHW((Tdisplay)requestor);
+    HW->HWSelectionNotify(reqprivate, magic, mime, data);
     RestoreHW;
   }
 }
 
-void TwinSelectionRequest(Tobj Requestor, uldat ReqPrivate, Tobj Owner) {
+void TwinSelectionRequest(Tobj requestor, uldat reqprivate, Tobj Owner) {
 #if 0
-  log(INFO) << "twin: Selection Request from 0x" << (Requestor ? Requestor->Id : NOID)
+  log(INFO) << "twin: Selection Request from 0x" << (requestor ? requestor->Id : NOID)
             << ", owner is 0x" << (Owner ? Owner->Id : NOID) << "\n";
 #endif
   if (Owner) {
     if (Owner->Id >> magic_shift == msgport_magic >> magic_shift) {
       Tmsg NewMsg;
-      event_any *Event;
+      event_any *event;
       if ((NewMsg = New(msg)(msg_selection_request, 0))) {
 
-        Event = &NewMsg->Event;
-        Event->EventSelectionRequest.W = NULL;
-        Event->EventSelectionRequest.Code = 0;
-        Event->EventSelectionRequest.pad = 0;
-        Event->EventSelectionRequest.Requestor = Requestor;
-        Event->EventSelectionRequest.ReqPrivate = ReqPrivate;
+        event = &NewMsg->Event;
+        event->EventSelectionRequest.W = NULL;
+        event->EventSelectionRequest.Code = 0;
+        event->EventSelectionRequest.pad = 0;
+        event->EventSelectionRequest.Requestor = requestor;
+        event->EventSelectionRequest.ReqPrivate = reqprivate;
         SendMsg((Tmsgport)Owner, NewMsg);
       }
     } else if (Owner->Id >> magic_shift == display_hw_magic >> magic_shift) {
       SaveHW;
       SetHW((Tdisplay)Owner);
-      HW->HWSelectionRequest(Requestor, ReqPrivate);
+      HW->HWSelectionRequest(requestor, reqprivate);
       RestoreHW;
     }
   } else {
     selection Sel = All->Selection;
-    TwinSelectionNotify(Requestor, ReqPrivate, e_id(Sel->Magic), Sel->MIME, Sel->Data);
+    TwinSelectionNotify(requestor, reqprivate, e_id(Sel->Magic), Sel->MIME, Sel->Data);
   }
 }
 
@@ -741,7 +742,7 @@ void SelectionExport(void) {
 }
 
 void SelectionImport(void) {
-  if ((HW = All->MouseHW)) {
+  if ((HW = All->MouseDisplay)) {
     if (HW->HWSelectionImport())
       All->Selection->OwnerOnce = HW;
     else
@@ -924,18 +925,18 @@ void FlushHW(void) {
 }
 
 void SyntheticKey(Twidget w, udat Code, udat ShiftFlags, byte Len, const char *Seq) {
-  event_keyboard *Event;
+  event_keyboard *event;
   Tmsg msg;
 
   if (w && Len && Seq && (msg = New(msg)(msg_widget_key, Len))) {
 
-    Event = &msg->Event.EventKeyboard;
-    Event->W = w;
-    Event->Code = Code;
-    Event->ShiftFlags = ShiftFlags;
-    Event->SeqLen = Len;
-    CopyMem(Seq, Event->AsciiSeq, Len);
-    Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
+    event = &msg->Event.EventKeyboard;
+    event->W = w;
+    event->Code = Code;
+    event->ShiftFlags = ShiftFlags;
+    event->SeqLen = Len;
+    CopyMem(Seq, event->AsciiSeq, Len);
+    event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
     SendMsg(w->Owner, msg);
   }
 }
@@ -1114,7 +1115,7 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
   OldState->keys = Buttons &= HOLD_ANY;
 
   /* keep it available */
-  All->MouseHW = HW;
+  All->MouseDisplay = HW;
 
   if (Buttons != OldButtons || ((alsoMotionEvents || OldButtons) && (x != prev_x || y != prev_y))) {
 
@@ -1135,24 +1136,24 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
 
 byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
   Tmsg msg;
-  event_mouse *Event;
+  event_mouse *event;
 
-  if (HW && HW == All->MouseHW && HW->FlagsHW & FlHWNoInput)
+  if (HW && HW == All->MouseDisplay && HW->FlagsHW & FlHWNoInput)
     return ttrue;
 
   if ((Code & MOUSE_ACTION_ANY) == MOVE_MOUSE && (msg = Ext(WM, MsgPort)->LastMsg) &&
-      msg->Type == msg_mouse && (Event = &msg->Event.EventMouse) && Event->Code == Code) {
+      msg->Type == msg_mouse && (event = &msg->Event.EventMouse) && event->Code == Code) {
     /* merge the two events */
-    Event->X = MouseX;
-    Event->Y = MouseY;
+    event->X = MouseX;
+    event->Y = MouseY;
     return ttrue;
   }
   if ((msg = New(msg)(msg_mouse, 0))) {
-    Event = &msg->Event.EventMouse;
-    Event->Code = Code;
-    Event->ShiftFlags = (udat)0;
-    Event->X = MouseX;
-    Event->Y = MouseY;
+    event = &msg->Event.EventMouse;
+    event->Code = Code;
+    event->ShiftFlags = (udat)0;
+    event->X = MouseX;
+    event->Y = MouseY;
     SendMsg(Ext(WM, MsgPort), msg);
     return ttrue;
   }
@@ -1160,20 +1161,20 @@ byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
 }
 
 byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) {
-  event_keyboard *Event;
+  event_keyboard *event;
   Tmsg msg;
 
   if (HW->FlagsHW & FlHWNoInput)
     return ttrue;
 
   if ((msg = New(msg)(msg_key, Len))) {
-    Event = &msg->Event.EventKeyboard;
+    event = &msg->Event.EventKeyboard;
 
-    Event->Code = Code;
-    Event->ShiftFlags = ShiftFlags;
-    Event->SeqLen = Len;
-    CopyMem(Seq, Event->AsciiSeq, Len);
-    Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
+    event->Code = Code;
+    event->ShiftFlags = ShiftFlags;
+    event->SeqLen = Len;
+    CopyMem(Seq, event->AsciiSeq, Len);
+    event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
     SendMsg(Ext(WM, MsgPort), msg);
     return ttrue;
   }

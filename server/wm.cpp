@@ -1807,11 +1807,12 @@ static void WManagerH(Tmsgport MsgPort) {
     }
   }
 
-  if (All->MouseHW && All->MouseHW->MouseState.keys && Scroller_MsgPort->WakeUp != TIMER_ALWAYS) {
+  if (All->MouseDisplay && All->MouseDisplay->MouseState.keys &&
+      Scroller_MsgPort->WakeUp != TIMER_ALWAYS) {
     extern Tmsg Do_Scroll;
     Scroller_MsgPort->WakeUp = TIMER_ALWAYS;
     SendMsg(Scroller_MsgPort, Do_Scroll);
-  } else if ((!All->MouseHW || !All->MouseHW->MouseState.keys) &&
+  } else if ((!All->MouseDisplay || !All->MouseDisplay->MouseState.keys) &&
              Scroller_MsgPort->WakeUp == TIMER_ALWAYS) {
     extern Tmsg Dont_Scroll;
     SendMsg(Scroller_MsgPort, Dont_Scroll);

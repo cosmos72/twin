@@ -14,6 +14,8 @@
 #define TWIN_EVENT_H
 
 #include "obj/fwd.h"
+#include "stl/span.h" // CharSpan
+
 #include <Tw/datatypes.h>
 
 enum e_msg {
@@ -78,15 +80,11 @@ struct event_common {
   udat Code, pad;
 };
 
-#define SIZEOF_EVENT_COMMON (sizeof(event_common))
-
 struct event_map {
   Twidget W;
   udat Code, pad; /* unused */
   Tscreen Screen;
 };
-
-#define SIZEOF_EVENT_MAP (sizeof(event_map))
 
 struct event_keyboard {
   Twidget W;
@@ -95,24 +93,18 @@ struct event_keyboard {
   char AsciiSeq[1]; /* [SeqLen+1] bytes actually. AsciiSeq[SeqLen] == '\0' */
 };
 
-#define SIZEOF_EVENT_KEYBOARD (1 + offsetof(event_keyboard, AsciiSeq))
-
 struct event_mouse {
   Twidget W;
   udat Code, ShiftFlags;
   dat X, Y;
 };
 
-#define SIZEOF_EVENT_MOUSE (sizeof(event_mouse))
-
 struct event_control {
   Twidget W;
   udat Code, Len;
   dat X, Y;
-  char Data[sizeof(uldat)]; /* [Len] bytes actually */
+  char Data[1]; /* [Len] bytes actually */
 };
-
-#define SIZEOF_EVENT_CONTROL (offsetof(event_control, Data))
 
 /* some msg_control codes */
 #define MSG_CONTROL_QUIT ((udat)0)
@@ -132,16 +124,12 @@ struct event_clientmsg {
   } Data; /* [Len] bytes actually */
 };
 
-#define SIZEOF_EVENT_CLIENTMSG (offsetof(event_clientmsg, Data))
-
 struct event_display {
   Twidget W; /* not used here */
   udat Code, Len;
   dat X, Y;
   void *Data; /* [Len] bytes actually */
 };
-
-#define SIZEOF_EVENT_DISPLAY (offsetof(event_clientmsg, Data))
 
 enum e_event_display_code {
   ev_dpy_DrawTCell = 0,
@@ -170,8 +158,6 @@ struct event_widget {
   dat X, Y;
 };
 
-#define SIZEOF_EVENT_WIDGET (sizeof(event_widget))
-
 /* some msg_widget_change codes */
 #define MSG_WIDGET_RESIZE 0
 #define MSG_WIDGET_EXPOSE 1
@@ -184,8 +170,6 @@ struct event_gadget {
   udat Code, Flags; /* the Flags of the gadget */
 };
 
-#define SIZEOF_EVENT_GADGET (sizeof(event_gadget))
-
 struct event_menu {
   Twindow W;
   udat Code, pad;
@@ -193,29 +177,28 @@ struct event_menu {
   Trow Row;
 };
 
-#define SIZEOF_EVENT_MENU (sizeof(event_menu))
-
 struct event_selection {
   Twidget W;
   udat Code, pad; /* unused */
   dat X, Y;
 };
 
-#define SIZEOF_EVENT_SELECTION (sizeof(event_selection))
-
-#define MAX_MIMELEN 64
-
 struct event_selectionnotify {
   Twidget W;
   udat Code, pad; /* unused */
   uldat ReqPrivate;
   uldat Magic;
-  char MIME[MAX_MIMELEN];
-  uldat Len;
-  char Data[sizeof(uldat)]; /* Data[] is Len bytes actually */
-};
+  uldat MimeLen;
+  uldat DataLen;
+  char MimeAndData[1]; /* MimeLen + DataLen bytes actually */
 
-#define SIZEOF_EVENT_SELECTIONNOTIFY (offsetof(event_selectionnotify, Data))
+  CharSpan MIME() {
+    return CharSpan(MimeAndData, MimeLen);
+  }
+  CharSpan Data() {
+    return CharSpan(MimeAndData + MimeLen, DataLen);
+  }
+};
 
 struct event_selectionrequest {
   Twidget W;
@@ -223,8 +206,6 @@ struct event_selectionrequest {
   Tobj Requestor;
   uldat ReqPrivate;
 };
-
-#define SIZEOF_EVENT_SELECTIONREQUEST (sizeof(event_selectionrequest))
 
 union event_any {
   event_common EventCommon;

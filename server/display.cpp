@@ -56,8 +56,6 @@ static byte ValidVideo;
 
 const char *TWDisplay, *origTWDisplay, *origTERM;
 
-char nullMIME[TW_MAX_MIMELEN];
-
 char printk_buf[TW_BIGBUFF];
 
 String HOME;
@@ -680,10 +678,11 @@ static void HandleMsg(tmsg msg) {
     log(INFO) << "twdisplay: Selection Notify to underlying HW\n";
 #endif
     /* notify selection to underlying HW */
+
     HW->HWSelectionNotify(
-        msg->Event.EventSelectionNotify.ReqPrivate,  //
-        e_id(msg->Event.EventSelectionNotify.Magic), //
-        msg->Event.EventSelectionNotify.MIME,        //
+        msg->Event.EventSelectionNotify.ReqPrivate,                                 //
+        e_id(msg->Event.EventSelectionNotify.Magic),                                //
+        Chars::from_c_maxlen(msg->Event.EventSelectionNotify.MIME, TW_MAX_MIMELEN), //
         Chars(msg->Event.EventSelectionNotify.Data, msg->Event.EventSelectionNotify.Len));
     break;
   case TW_MSG_DISPLAY:
@@ -801,16 +800,15 @@ void TwinSelectionSetOwner(Tobj Owner, tany Time, tany Frac) {
 }
 
 /* HW back-end function: notify selection */
-void TwinSelectionNotify(Tobj Requestor, uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN],
-                         Chars Data) {
-  if (!MIME) {
-    MIME = nullMIME;
-  }
+void TwinSelectionNotify(Tobj Requestor, uldat ReqPrivate, e_id Magic, Chars mime, Chars data) {
 #if 0
   log(INFO) << "twdisplay: Selection Notify to 0x" << hex((topaque)Requestor) << "\n";
 #endif
+  char mimeBuf[TW_MAX_MIMELEN] = {};
+  CopyMem(mime.data(), mimeBuf, Min2u(mime.size(), TW_MAX_MIMELEN));
+
   /* cast back Requestor from fake (Tobj) to its original (uldat) */
-  TwNotifySelection((topaque)Requestor, ReqPrivate, Magic, MIME, Data.size(), Data.data());
+  TwNotifySelection((topaque)Requestor, ReqPrivate, Magic, mimeBuf, data.size(), data.data());
 }
 
 /* HW back-end function: request selection */
@@ -896,7 +894,7 @@ byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) 
   if (HW->FlagsHW & FlHWNoInput)
     return ttrue;
 
-  if ((msg = TwCreateMsg(TW_MSG_WIDGET_KEY, Len + SIZEOF_EVENT_KEYBOARD))) {
+  if ((msg = TwCreateMsg(TW_MSG_WIDGET_KEY, Len + 1 + sizeof(s_tevent_keyboard)))) {
     Event = &msg->Event.EventKeyboard;
 
     Event->Code = Code;

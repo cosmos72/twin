@@ -12,6 +12,7 @@
 
 #include "twin.h"
 #include "alloc.h"
+#include "algo.h" // Min2u()
 #include "main.h"
 #include "data.h"
 #include "remote.h"
@@ -55,9 +56,8 @@ struct tw_data {
 #define SelReq (twdata->SelReq)
 #define TSelReq (twdata->TSelReq)
 
-static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate);
-static void TW_SelectionNotify_up(uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN],
-                                  Chars Data);
+static void TW_SelectionRequest_up(uldat requestor, uldat reqprivate);
+static void TW_SelectionNotify_up(uldat reqprivate, e_id magic, Chars mime, Chars data);
 
 static void TW_Beep(void) {
   Tw_WriteCharsetWindow(Td, Twin, 1, "\007");
@@ -107,11 +107,11 @@ static void TW_Configure(udat resource, byte todefault, udat value) {
 }
 
 static void TW_HandleMsg(tmsg msg) {
-  tevent_any Event;
+  tevent_any event;
   dat x, y, dx, dy;
   udat keys;
 
-  Event = &msg->Event;
+  event = &msg->Event;
 
   switch (msg->Type) {
   case TW_MSG_SELECTIONCLEAR:
@@ -119,45 +119,45 @@ static void TW_HandleMsg(tmsg msg) {
     TwinSelectionSetOwner((Tobj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
     return;
   case TW_MSG_SELECTIONREQUEST:
-    TW_SelectionRequest_up(Event->EventSelectionRequest.Requestor,
-                           Event->EventSelectionRequest.ReqPrivate);
+    TW_SelectionRequest_up(event->EventSelectionRequest.Requestor,
+                           event->EventSelectionRequest.ReqPrivate);
     return;
   case TW_MSG_SELECTIONNOTIFY:
-    TW_SelectionNotify_up(Event->EventSelectionNotify.ReqPrivate,  //
-                          e_id(Event->EventSelectionNotify.Magic), //
-                          Event->EventSelectionNotify.MIME,        //
-                          Chars(Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len));
+    TW_SelectionNotify_up(event->EventSelectionNotify.ReqPrivate,                                 //
+                          e_id(event->EventSelectionNotify.Magic),                                //
+                          Chars::from_c_maxlen(event->EventSelectionNotify.MIME, TW_MAX_MIMELEN), //
+                          Chars(event->EventSelectionNotify.Data, event->EventSelectionNotify.Len));
     return;
   default:
     break;
   }
 
-  if (Event->EventCommon.W == Twin) {
+  if (event->EventCommon.W == Twin) {
     switch (msg->Type) {
     case TW_MSG_WIDGET_KEY:
-      KeyboardEventCommon(Event->EventKeyboard.Code, Event->EventKeyboard.ShiftFlags,
-                          Event->EventKeyboard.SeqLen, Event->EventKeyboard.AsciiSeq);
+      KeyboardEventCommon(event->EventKeyboard.Code, event->EventKeyboard.ShiftFlags,
+                          event->EventKeyboard.SeqLen, event->EventKeyboard.AsciiSeq);
       break;
     case TW_MSG_WIDGET_MOUSE:
-      x = Event->EventMouse.X;
-      y = Event->EventMouse.Y;
+      x = event->EventMouse.X;
+      y = event->EventMouse.Y;
       dx = x == 0 ? -1 : x == DisplayWidth - 1 ? 1 : 0;
       dy = y == 0 ? -1 : y == DisplayHeight - 1 ? 1 : 0;
-      keys = Event->EventMouse.Code;
+      keys = event->EventMouse.Code;
       keys = (keys & HOLD_ANY) | (isPRESS(keys) ? HOLD_CODE(PRESS_N(keys)) : 0);
 
       MouseEventCommon(x, y, dx, dy, keys);
       break;
     case TW_MSG_WIDGET_CHANGE:
-      if (HW->X != Event->EventWidget.XWidth || HW->Y != Event->EventWidget.YWidth) {
+      if (HW->X != event->EventWidget.XWidth || HW->Y != event->EventWidget.YWidth) {
 
-        HW->X = Event->EventWidget.XWidth;
-        HW->Y = Event->EventWidget.YWidth;
+        HW->X = event->EventWidget.XWidth;
+        HW->Y = event->EventWidget.YWidth;
         ResizeDisplayPrefer(HW);
       }
       break;
     case TW_MSG_WIDGET_GADGET:
-      if (!Event->EventGadget.Code)
+      if (!event->EventGadget.Code)
         /* 0 == Close Code */
         HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
       break;
@@ -319,7 +319,7 @@ static void TW_SelectionExport_TW(void) {
 /*
  * request Selection from libtw
  */
-static void TW_SelectionRequest_TW(Tobj Requestor, uldat ReqPrivate) {
+static void TW_SelectionRequest_TW(Tobj requestor, uldat reqprivate) {
   if (!HW->HWSelectionPrivate) {
     if (TSelCount < TSELMAX) {
 #ifdef DEBUG_HW_TWIN
@@ -328,8 +328,8 @@ static void TW_SelectionRequest_TW(Tobj Requestor, uldat ReqPrivate) {
       /*
        * we exploit the ReqPrivate field of libtw Selection Request/Notify
        */
-      TSelReq[TSelCount].Requestor = (topaque)Requestor;
-      TSelReq[TSelCount].ReqPrivate = ReqPrivate;
+      TSelReq[TSelCount].Requestor = (topaque)requestor;
+      TSelReq[TSelCount].ReqPrivate = reqprivate;
       Tw_RequestSelection(Td, Tw_GetOwnerSelection(Td), TSelCount++);
       setFlush();
       /* we will get a TW_MSG_SELECTIONNOTIFY event, i.e.
@@ -346,7 +346,7 @@ static void TW_SelectionRequest_TW(Tobj Requestor, uldat ReqPrivate) {
 /*
  * request twin Selection from upper layer
  */
-static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
+static void TW_SelectionRequest_up(uldat requestor, uldat reqprivate) {
   if (SelCount < TSELMAX) {
 #ifdef DEBUG_HW_TWIN
     printf("requesting selection (%d) from twin core\n", SelCount);
@@ -354,8 +354,8 @@ static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
     /*
      * we exploit the ReqPrivate field of libtw Selection Request/Notify
      */
-    SelReq[SelCount].Requestor = Requestor;
-    SelReq[SelCount].ReqPrivate = ReqPrivate;
+    SelReq[SelCount].Requestor = requestor;
+    SelReq[SelCount].ReqPrivate = reqprivate;
     TwinSelectionRequest((Tobj)HW, SelCount++, TwinSelectionGetOwner());
     /* we will get a HW->HWSelectionNotify(), i.e. TW_SelectionNotify_TW() call */
     /* the call **CAN** arrive while we are still inside TwinSelectionRequest() !!! */
@@ -369,31 +369,32 @@ static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
 /*
  * notify our Selection to libtw
  */
-static void TW_SelectionNotify_TW(uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN],
-                                  Chars Data) {
+static void TW_SelectionNotify_TW(uldat reqprivate, e_id magic, Chars mime, Chars data) {
 #ifdef DEBUG_HW_TWIN
-  printf("notifying selection (%d/%d) to libtw server\n", ReqPrivate, SelCount - 1);
+  printf("notifying selection (%d/%d) to libtw server\n", reqprivate, SelCount - 1);
 #endif
-  if (ReqPrivate + 1 == SelCount) {
-    SelCount--;
-    Tw_NotifySelection(Td, SelReq[SelCount].Requestor, SelReq[SelCount].ReqPrivate, Magic, MIME,
-                       Data.size(), Data.data());
-    setFlush();
+  if (reqprivate + 1 != SelCount) {
+    return;
   }
+  SelCount--;
+  char mimeBuf[TW_MAX_MIMELEN] = {};
+  CopyMem(mime.data(), mimeBuf, Min2u(mime.size(), TW_MAX_MIMELEN));
+  Tw_NotifySelection(Td, SelReq[SelCount].Requestor, SelReq[SelCount].ReqPrivate, magic, mimeBuf,
+                     data.size(), data.data());
+  setFlush();
 }
 
 /*
  * notify the libtw Selection to twin upper layer
  */
-static void TW_SelectionNotify_up(uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN],
-                                  Chars Data) {
+static void TW_SelectionNotify_up(uldat reqprivate, e_id magic, Chars mime, Chars data) {
 #ifdef DEBUG_HW_TWIN
-  printf("notifying selection (%d/%d) to twin core\n", ReqPrivate, TSelCount - 1);
+  printf("notifying selection (%d/%d) to twin core\n", reqprivate, TSelCount - 1);
 #endif
-  if (ReqPrivate + 1 == TSelCount) {
+  if (reqprivate + 1 == TSelCount) {
     TSelCount--;
     TwinSelectionNotify((Tobj)(topaque)TSelReq[TSelCount].Requestor, TSelReq[TSelCount].ReqPrivate,
-                        Magic, MIME, Data);
+                        magic, mime, data);
   }
 }
 

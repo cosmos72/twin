@@ -904,8 +904,8 @@ static void alienSendMsg(Tmsgport MsgPort, Tmsg msg) {
     }
     break;
   case msg_selection_notify:
-    N = msg->Event.EventSelectionNotify.Len;
-    alienReply(msg->Type, Len = 4 * SIZEOF(uldat) + 2 * SIZEOF(dat) + MAX_MIMELEN + N, 0, NULL);
+    N = msg->Event.EventSelectionNotify.DataLen;
+    alienReply(msg->Type, Len = 4 * SIZEOF(uldat) + 2 * SIZEOF(dat) + TW_MAX_MIMELEN + N, 0, NULL);
 
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
@@ -914,9 +914,16 @@ static void alienSendMsg(Tmsgport MsgPort, Tmsg msg) {
       PUSH(t, udat, msg->Event.EventSelectionNotify.pad);
       PUSH(t, uldat, msg->Event.EventSelectionNotify.ReqPrivate);
       PUSH(t, uldat, msg->Event.EventSelectionNotify.Magic);
-      PushV(t, MAX_MIMELEN, msg->Event.EventSelectionNotify.MIME);
-      PUSH(t, uldat, msg->Event.EventSelectionNotify.Len);
-      PushV(t, msg->Event.EventSelectionNotify.Len, msg->Event.EventSelectionNotify.Data);
+
+      char mimeBuf[TW_MAX_MIMELEN] = {};
+      const size_t mimeLen = Min2u(msg->Event.EventSelectionNotify.MimeLen, TW_MAX_MIMELEN);
+      CopyMem(msg->Event.EventSelectionNotify.MIME().data(), mimeBuf, mimeLen);
+      PushV(t, TW_MAX_MIMELEN, mimeBuf);
+
+      Chars data = msg->Event.EventSelectionNotify.Data();
+      const uldat dataLen = uldat(data.size());
+      PUSH(t, uldat, dataLen);
+      PushV(t, dataLen, data.data());
     }
     break;
   case msg_selection_request:
