@@ -18,8 +18,6 @@
 struct SmenuitemFn {
   uldat Magic;
   void (*Insert)(Tmenuitem, Tobj, Tmenuitem Prev, Tmenuitem Next);
-  void (*Remove)(Tmenuitem);
-  void (*Delete)(Tmenuitem);
   /* Trow */
   TobjFn Fn_Obj;
   byte (*SetText)(Trow, uldat Len, const char *Text, byte DefaultCol);
@@ -34,17 +32,7 @@ struct SmenuitemFn {
   /* for compatibility this must return a non-zero value. */
 };
 
-struct Smenuitem : public Sobj {
-  TmenuitemFn Fn;
-  Tmenuitem Prev, Next;
-  Tobj Parent;
-  /* Trow */
-  udat Code;
-  byte Flags;
-  uldat Len, MaxLen;
-  uldat Gap, LenGap;
-  trune *Text;
-  tcolor *ColText;
+struct Smenuitem : public Srow {
   /* Tmenuitem */
   Twindow Window;
   dat Left, ShortCut;
@@ -62,12 +50,12 @@ struct Smenuitem : public Sobj {
   void Insert(Tobj parent, Tmenuitem prev, Tmenuitem next) {
     Fn->Insert(this, parent, prev, next);
   }
-  void Remove() {
-    Fn->Remove(this);
-  }
-  void Delete() {
-    Fn->Delete(this);
-  }
+  virtual void Remove() OVERRIDE;
+  virtual void Delete() OVERRIDE;
+
+  /* Tmenuitem */
+  Tmenuitem Prev() const; // cast this->Prev to Tmenuitem
+  Tmenuitem Next() const; // cast this->Next to Tmenuitem
 };
 
 /* Some common Tmenuitem codes: */

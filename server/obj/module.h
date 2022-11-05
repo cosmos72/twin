@@ -22,8 +22,6 @@
 struct SmoduleFn {
   uldat Magic;
   void (*Insert)(Tmodule, Tall, Tmodule Prev, Tmodule Next);
-  void (*Remove)(Tmodule);
-  void (*Delete)(Tmodule);
   /* Tmodule */
   TobjFn Fn_Obj;
   bool (*DlOpen)(Tmodule);
@@ -50,12 +48,9 @@ struct Smodule : public Sobj {
   void Insert(Tall a, Tmodule prev, Tmodule next) {
     Fn->Insert(this, a, prev, next);
   }
-  void Remove() {
-    Fn->Remove(this);
-  }
-  void Delete() {
-    Fn->Delete(this);
-  }
+  virtual void Remove() OVERRIDE;
+  virtual void Delete() OVERRIDE;
+
   /* Tmodule */
   bool DlOpen() {
     return Fn->DlOpen(this);

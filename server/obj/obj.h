@@ -28,8 +28,6 @@ typedef struct SobjList *TobjList;
 struct SobjFn {
   uldat Magic;
   void (*Insert)(Tobj self, Tobj parent, Tobj prev, Tobj next);
-  void (*Remove)(Tobj self);
-  void (*Delete)(Tobj self);
 };
 
 struct Sobj {
@@ -52,14 +50,18 @@ public:
   void Insert(Tobj parent, Tobj prev, Tobj next) {
     ((TobjEntry)this)->Fn->Insert(this, parent, prev, next);
   }
-  void Remove() {
-    ((TobjEntry)this)->Fn->Remove(this);
-  }
 #endif // 0
-  void Delete();
 
   // default implementation does nothing
-  virtual void ChangeField(udat /*field*/, uldat /*clear_mask*/, uldat /*xor_mask*/) {
+  virtual void Remove();
+
+  virtual void Delete();
+
+  // default implementation does nothing
+  virtual void ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
+    (void)field;
+    (void)clear_mask;
+    (void)xor_mask;
   }
 };
 

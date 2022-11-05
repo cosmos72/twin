@@ -13,7 +13,7 @@
 #include "obj/all.h" // extern All
 #include "obj/module.h"
 #include "alloc.h"   // CloneStrL()
-#include "methods.h" // InsertLast()
+#include "methods.h" // InsertLast(), RemoveGeneric()
 
 #include <new>
 
@@ -46,4 +46,22 @@ Tmodule Smodule::Init(uldat namelen, const char *name) {
   // this->DoInit = NULL;
   InsertLast(Module, this, ::All);
   return this;
+}
+
+void Smodule::Remove() {
+  if (All) {
+    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstModule, NULL);
+    All = (Tall)0;
+  }
+}
+
+void Smodule::Delete() {
+  if (!Used) {
+    DlClose();
+    Remove();
+    if (Name) {
+      FreeMem(Name);
+    }
+    Sobj::Delete();
+  }
 }

@@ -48,40 +48,39 @@ void *OverrideMth(void **where, void *OrigMth, void *NewMth) {
 
 #if 0 /* not used */
 inline void DeletePartialList(Tobj obj) {
-  Tobj Next;
+  Tobj next;
   while (obj) {
-    Next = obj->Next;
+    next = obj->Next;
     obj->Delete();
-    obj = Next;
+    obj = next;
   }
 }
 #endif
 
-inline void InsertGeneric(TobjEntry obj, TobjList parent, TobjEntry prev, TobjEntry Next,
-                          ldat *ObjCount) {
+void InsertGeneric(TobjEntry obj, TobjList parent, TobjEntry prev, TobjEntry next, ldat *objcount) {
   if (obj->Prev || obj->Next)
     return;
 
   if (prev)
-    Next = prev->Next;
-  else if (Next)
-    prev = Next->Prev;
+    next = prev->Next;
+  else if (next)
+    prev = next->Prev;
 
   if ((obj->Prev = prev))
     prev->Next = obj;
   else
     parent->First = obj;
 
-  if ((obj->Next = Next))
-    Next->Prev = obj;
+  if ((obj->Next = next))
+    next->Prev = obj;
   else
     parent->Last = obj;
 
-  if (ObjCount)
-    (*ObjCount)++;
+  if (objcount)
+    ++(*objcount);
 }
 
-inline void RemoveGeneric(TobjEntry obj, TobjList parent, ldat *ObjCount) {
+void RemoveGeneric(TobjEntry obj, TobjList parent, ldat *objcount) {
   if (obj->Prev)
     obj->Prev->Next = obj->Next;
   else if (parent->First == obj)
@@ -93,66 +92,33 @@ inline void RemoveGeneric(TobjEntry obj, TobjList parent, ldat *ObjCount) {
     parent->Last = obj->Prev;
 
   obj->Prev = obj->Next = NULL;
-  if (ObjCount)
-    (*ObjCount)--;
+  if (objcount)
+    --(*objcount);
 }
 
 /* TobjFn and others fn_XXX functions */
 
 /* Tobj */
 
-static void InsertObj(Tobj obj, Tobj parent, Tobj Prev, Tobj Next) {
+static void InsertObj(Tobj obj, Tobj parent, Tobj prev, Tobj next) {
   log(ERROR) << "twin: internal error: pure virtual function InsertObj() called!\n";
-}
-
-static void RemoveObj(Tobj obj) {
-  log(ERROR) << "twin: internal error: pure virtual function RemoveObj() called!\n";
-}
-
-static void DeleteObj(Tobj obj) {
-  /* not a good idea to RemoveObj(obj) here */
-  DropId(obj);
-  FreeMem(obj);
 }
 
 static struct SobjFn _FnObj = {
     obj_magic,
     InsertObj,
-    RemoveObj,
-    DeleteObj,
 };
 
 /* Twidget */
 
-static void InsertWidget(Twidget w, Twidget parent, Twidget Prev, Twidget Next) {
+static void InsertWidget(Twidget w, Twidget parent, Twidget prev, Twidget next) {
   if (parent) {
     /*
      * don't check w->Parent here, as Raise() and Lower() call
-     * RemoveWidget() then InsertWidget() but RemoveWidget() does not reset w->Parent
+     * Swidget::Remove() then Swidget::Insert() but Swidget::Remove() does not reset w->Parent
      */
-    InsertGeneric((TobjEntry)w, (TobjList)&parent->FirstW, (TobjEntry)Prev, (TobjEntry)Next, NULL);
+    InsertGeneric((TobjEntry)w, (TobjList)&parent->FirstW, (TobjEntry)prev, (TobjEntry)next, NULL);
   }
-}
-
-static void RemoveWidget(Twidget w) {
-  if (w->Parent) {
-    RemoveGeneric((TobjEntry)w, (TobjList)&w->Parent->FirstW, NULL);
-  }
-}
-
-static void DeleteWidget(Twidget w) {
-  w->UnMap();
-  if (w->Hook) {
-    w->RemoveHook(w->Hook, w->WhereHook);
-  }
-  if (w->ShutDownHook) {
-    w->ShutDownHook(w);
-  }
-  w->DisOwn();
-  while (w->FirstW) {
-    w->FirstW->UnMap();
-  }
-  DeleteObj((Tobj)w);
 }
 
 void SetFillWidget(Twidget w, tcell Fill) {
@@ -302,7 +268,7 @@ static void MapTopRealWidget(Twidget w, Tscreen screen) {
 
 static void UnMapWidget(Twidget w) {
   Twidget Parent;
-  Twindow Next;
+  Twindow next;
   Tscreen screen;
   byte wasFocus;
 
@@ -325,15 +291,15 @@ static void UnMapWidget(Twidget w) {
 
       if ((wasFocus = w == screen->FocusW())) {
         if (w->Flags & WINDOWFL_MENU)
-          Next = screen->MenuWindow;
+          next = screen->MenuWindow;
         else {
           if ((Twidget)w == screen->FirstW)
-            Next = (Twindow)w->Next;
+            next = (Twindow)w->Next;
           else
-            Next = (Twindow)screen->FirstW;
+            next = (Twindow)screen->FirstW;
 
-          while (Next && !IS_WINDOW(Next))
-            Next = (Twindow)Next->Next;
+          while (next && !IS_WINDOW(next))
+            next = (Twindow)next->Next;
         }
       }
 
@@ -357,16 +323,16 @@ static void UnMapWidget(Twidget w) {
           if ((All->State & state_any) < state_menu)
             All->State &= ~state_any;
 
-          if (Next) {
-            (void)Next->KbdFocus();
-            DrawBorderWindow(Next, BORDER_ANY);
+          if (next) {
+            (void)next->KbdFocus();
+            DrawBorderWindow(next, BORDER_ANY);
           } else
             Do(KbdFocus, window)(NULL);
           if (!(w->Flags & WINDOWFL_MENU))
             screen->DrawMenu(0, TW_MAXDAT);
           UpdateCursor();
         } else
-          screen->FocusW(Next);
+          screen->FocusW(next);
       }
 
       if (w->MapUnMapHook)
@@ -406,18 +372,18 @@ static void LowerW(Twidget w) {
 }
 
 static void SetXYWidget(Twidget w, dat x, dat y) {
-  Twidget Prev, Next;
+  Twidget prev, next;
 
   if (w->Parent) {
-    Prev = w->Prev;
-    Next = w->Next;
+    prev = w->Prev;
+    next = w->Next;
     w->Remove();
     DrawAreaWidget(w);
   }
   w->Left = x;
   w->Up = y;
   if (w->Parent) {
-    InsertMiddle(w, w, w->Parent, Prev, Next);
+    InsertMiddle(w, w, w->Parent, prev, next);
     DrawAreaWidget(w);
   }
 }
@@ -485,7 +451,7 @@ static void RemoveHookWidget(Twidget w, HookFn Hook, HookFn *WhereHook) {
 }
 
 static struct SwidgetFn _FnWidget = {
-    widget_magic,      InsertWidget,     RemoveWidget,          DeleteWidget, //
+    widget_magic,      InsertWidget,   //
     &_FnObj,           DrawSelfWidget, /* exported by draw.c */
     FindWidgetAt,                      /* exported by draw.c */
     FindGadgetByCode,  SetXYWidget,      SetFillWidget,         FocusWidget,   TtyKbdFocus,
@@ -496,25 +462,6 @@ static struct SwidgetFn _FnWidget = {
 };
 
 /* Tgadget */
-
-static void DeleteGadget(Tgadget g) {
-  byte i;
-
-  g->UnMap();
-  if (G_USE(g, USETEXT)) {
-    for (i = 0; i < 4; i++) {
-      if (g->USE.T.Text[i])
-        FreeMem(g->USE.T.Text[i]);
-      if (g->USE.T.Color[i])
-        FreeMem(g->USE.T.Color[i]);
-    }
-  }
-  if (g->Group) {
-    g->Group->RemoveGadget(g);
-  }
-
-  DeleteWidget((Twidget)g);
-}
 
 static Tgadget CreateEmptyButton(Tmsgport Owner, dat XWidth, dat YWidth, tcolor BgCol) {
   Tgadget g = NULL;
@@ -623,7 +570,6 @@ static Tgadget CreateButton(Twidget Parent, dat XWidth, dat YWidth, const char *
 static struct SgadgetFn _FnGadget = {
     gadget_magic,                                               //
     (void (*)(Tgadget, Twidget, Twidget, Twidget))InsertWidget, //
-    (void (*)(Tgadget))RemoveWidget, DeleteGadget,
     /* Twidget */
     &_FnObj, DrawSelfGadget,                      /* exported by draw.c */
     (Twidget (*)(Tgadget, dat, dat))FindWidgetAt, /* exported by draw.c */
@@ -644,23 +590,6 @@ static struct SgadgetFn _FnGadget = {
 };
 
 /* Twindow */
-
-static void DeleteWindow(Twindow w) {
-  w->UnMap();
-  if (w->Name)
-    FreeMem(w->Name);
-  if (w->ColName)
-    FreeMem(w->ColName);
-  if (W_USE(w, USECONTENTS)) {
-    if (w->USE.C.TtyData)
-      FreeMem(w->USE.C.TtyData);
-    if (w->USE.C.Contents)
-      FreeMem(w->USE.C.Contents);
-  } else if (W_USE(w, USEROWS)) {
-    DeleteList(w->USE.R.FirstRow);
-  }
-  DeleteWidget((Twidget)w);
-}
 
 static void SetTitleWindow(Twindow w, dat titlelen, char *title) {
   Twidget P;
@@ -723,11 +652,11 @@ static void SetColorsWindow(Twindow w, udat Bitmap, tcolor ColGadgets, tcolor Co
 }
 
 static void SetXYWindow(Twindow w, dat x, dat y) {
-  Twidget Prev, Next;
+  Twidget prev, next;
 
   if (w->Parent) {
-    Prev = w->Prev;
-    Next = w->Next;
+    prev = w->Prev;
+    next = w->Next;
     w->Remove();
     DrawAreaWindow2(w);
   }
@@ -738,19 +667,19 @@ static void SetXYWindow(Twindow w, dat x, dat y) {
       w->Left += w->Parent->XLogic;
       w->Up += w->Parent->YLogic;
     }
-    InsertMiddle(w, w, w->Parent, Prev, Next);
+    InsertMiddle(w, w, w->Parent, prev, next);
     DrawAreaWindow2(w);
   }
 }
 
 static void ConfigureWindow(Twindow w, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
                             dat MaxXWidth, dat MaxYWidth) {
-  Twidget Prev, Next;
+  Twidget prev, next;
   dat HasBorder = 2 * !(w->Flags & WINDOWFL_BORDERLESS);
 
   if (w->Parent) {
-    Prev = w->Prev;
-    Next = w->Next;
+    prev = w->Prev;
+    next = w->Next;
     w->Remove();
     DrawAreaWindow2(w);
   }
@@ -791,7 +720,7 @@ static void ConfigureWindow(Twindow w, byte Bitmap, dat Left, dat Up, dat MinXWi
     w->YWidth = Min2(MaxYWidth, w->YWidth);
   }
   if (w->Parent) {
-    InsertMiddle(w, w, w->Parent, Prev, Next);
+    InsertMiddle(w, w, w->Parent, prev, next);
     DrawAreaWindow2(w);
   }
 }
@@ -877,7 +806,7 @@ tpos FakeFindBorderWindow(Twindow w, dat u, dat v, byte Border, tcell *PtrAttr) 
   return v ? POS_ROOT : POS_TITLE;
 }
 
-static Trow FindRow(Twindow window, ldat Row) {
+static Trow FindRow(Twindow window, ldat row_i) {
   Trow CurrRow, ElPossib[4];
   byte Index;
   ldat k, ElNumRows[4], ElDist[4];
@@ -890,48 +819,46 @@ static Trow FindRow(Twindow window, ldat Row) {
   ElNumRows[1] = window->USE.R.NumRowSplit;
   ElNumRows[2] = (ldat)0;
   ElNumRows[3] = window->HLogic - (ldat)1;
-  ElDist[0] = (ElPossib[0] && ElNumRows[0] ? Abs(ElNumRows[0] - Row) : TW_MAXLDAT);
-  ElDist[1] = (ElPossib[1] && ElNumRows[1] ? Abs(ElNumRows[1] - Row) : TW_MAXLDAT);
-  ElDist[2] = Row;
-  ElDist[3] = Abs(ElNumRows[3] - Row);
+  ElDist[0] = (ElPossib[0] && ElNumRows[0] ? Abs(ElNumRows[0] - row_i) : TW_MAXLDAT);
+  ElDist[1] = (ElPossib[1] && ElNumRows[1] ? Abs(ElNumRows[1] - row_i) : TW_MAXLDAT);
+  ElDist[2] = row_i;
+  ElDist[3] = Abs(ElNumRows[3] - row_i);
 
   Index = Minimum((byte)4, ElDist);
   CurrRow = ElPossib[Index];
   k = ElNumRows[Index];
 
   if (CurrRow) {
-    if (k < Row)
-      while (k < Row && (CurrRow = CurrRow->Next))
+    if (k < row_i)
+      while (k < row_i && (CurrRow = CurrRow->Next))
         k++;
-    else if (k > Row)
-      while (k > Row && (CurrRow = CurrRow->Prev))
+    else if (k > row_i)
+      while (k > row_i && (CurrRow = CurrRow->Prev))
         k--;
   }
   if (CurrRow && IS_MENUITEM(CurrRow))
-    ((Tmenuitem)CurrRow)->WCurY = Row;
+    ((Tmenuitem)CurrRow)->WCurY = row_i;
   return CurrRow;
 }
 
-static Trow FindRowByCode(Twindow window, udat Code, ldat *NumRow) {
-  Trow Row;
-  ldat Num = (ldat)0;
+static Trow FindRowByCode(Twindow window, udat Code, ldat *row_i) {
+  Trow row;
+  ldat i = 0;
 
-  if ((Row = window->USE.R.FirstRow))
-    while (Row && Row->Code != Code) {
-      Row = Row->Next;
-      Num++;
+  if ((row = window->USE.R.FirstRow))
+    while (row && row->Code != Code) {
+      row = row->Next;
+      i++;
     }
-  if (Row && NumRow)
-    *NumRow = Num;
+  if (row && row_i)
+    *row_i = i;
 
-  return Row;
+  return row;
 }
 
 static struct SwindowFn _FnWindow = {
     window_magic,
     (void (*)(Twindow, Twidget, Twidget, Twidget))InsertWidget,
-    (void (*)(Twindow))RemoveWidget,
-    DeleteWindow,
     /* Twidget */
     &_FnObj,
     DrawSelfWindow,
@@ -994,32 +921,12 @@ static void BgImageScreen(Tscreen screen, dat BgWidth, dat BgHeight, const tcell
   }
 }
 
-static void InsertScreen(Tscreen screen, Tall Parent, Tscreen Prev, Tscreen Next) {
+static void InsertScreen(Tscreen screen, Tall Parent, Tscreen prev, Tscreen next) {
   if (!screen->All && Parent) {
-    InsertGeneric((TobjEntry)screen, (TobjList)&Parent->FirstScreen, (TobjEntry)Prev,
-                  (TobjEntry)Next, NULL);
+    InsertGeneric((TobjEntry)screen, (TobjList)&Parent->FirstScreen, (TobjEntry)prev,
+                  (TobjEntry)next, NULL);
     screen->All = Parent;
   }
-}
-
-static void RemoveScreen(Tscreen screen) {
-  if (screen->All) {
-    RemoveGeneric((TobjEntry)screen, (TobjList)&screen->All->FirstScreen, NULL);
-    screen->All = (Tall)0;
-  }
-}
-
-static void DeleteScreen(Tscreen screen) {
-  while (screen->FirstW)
-    screen->FirstW->UnMap();
-
-  screen->Remove();
-
-  if (S_USE(screen, USEBG) && screen->USE.B.Bg) {
-    FreeMem(screen->USE.B.Bg);
-    screen->USE.B.Bg = NULL;
-  }
-  DeleteWidget((Twidget)screen);
 }
 
 static void SetXYScreen(Tscreen screen, dat x, dat y) {
@@ -1094,8 +1001,6 @@ static void DeActivateMenuScreen(Tscreen screen) {
 static struct SscreenFn _FnScreen = {
     screen_magic,
     InsertScreen,
-    RemoveScreen,
-    DeleteScreen,
     /* Twidget */
     &_FnObj,
     DrawSelfScreen,
@@ -1130,27 +1035,12 @@ static struct SscreenFn _FnScreen = {
 
 /* Tgroup */
 
-static void InsertGroup(Tgroup group, Tmsgport MsgPort, Tgroup Prev, Tgroup Next) {
+static void InsertGroup(Tgroup group, Tmsgport MsgPort, Tgroup prev, Tgroup next) {
   if (!group->MsgPort && MsgPort) {
-    InsertGeneric((TobjEntry)group, (TobjList)&MsgPort->FirstGroup, (TobjEntry)Prev,
-                  (TobjEntry)Next, NULL);
+    InsertGeneric((TobjEntry)group, (TobjList)&MsgPort->FirstGroup, (TobjEntry)prev,
+                  (TobjEntry)next, NULL);
     group->MsgPort = MsgPort;
   }
-}
-
-static void RemoveGroup(Tgroup group) {
-  if (group->MsgPort) {
-    RemoveGeneric((TobjEntry)group, (TobjList)&group->MsgPort->FirstGroup, NULL);
-    group->MsgPort = NULL;
-  }
-}
-
-static void DeleteGroup(Tgroup group) {
-  group->Remove();
-  while (group->FirstG)
-    group->RemoveGadget(group->FirstG);
-
-  DeleteObj((Tobj)group);
 }
 
 static void InsertGadgetGroup(Tgroup group, Tgadget g) {
@@ -1196,76 +1086,53 @@ static void SetSelectedGadget(Tgroup group, Tgadget g) {
 }
 
 static struct SgroupFn _FnGroup = {
-    ggroup_magic, InsertGroup,       RemoveGroup,       DeleteGroup, //
+    ggroup_magic, InsertGroup, //
     &_FnObj,      InsertGadgetGroup, RemoveGadgetGroup, GetSelectedGadget, SetSelectedGadget,
 };
 
 /* Trow */
 
-static void InsertRow(Trow Row, Twindow Parent, Trow Prev, Trow Next) {
-  if (!Row->Window && Parent && W_USE(Parent, USEROWS)) {
-    InsertGeneric((TobjEntry)Row, (TobjList)&Parent->USE.R.FirstRow, (TobjEntry)Prev,
-                  (TobjEntry)Next, &Parent->HLogic);
-    Row->Window = Parent;
-    Parent->USE.R.NumRowOne = Parent->USE.R.NumRowSplit = (ldat)0;
+static void InsertRow(Trow row, Tobj parent, Trow prev, Trow next) {
+  Twindow window = IS_WINDOW(parent) ? (Twindow)parent : (Twindow)0;
+
+  if (window && W_USE(window, USEROWS) && !row->Parent) {
+    InsertGeneric((TobjEntry)row, (TobjList)&window->USE.R.FirstRow, (TobjEntry)prev,
+                  (TobjEntry)next, &window->HLogic);
+    row->Parent = window;
+    window->USE.R.NumRowOne = window->USE.R.NumRowSplit = (ldat)0;
   }
 }
 
-static void RemoveRow(Trow Row) {
-  if (Row->Window && W_USE(Row->Window, USEROWS)) {
-    Row->Window->USE.R.NumRowOne = Row->Window->USE.R.NumRowSplit = (ldat)0;
-    RemoveGeneric((TobjEntry)Row, (TobjList)&Row->Window->USE.R.FirstRow, &Row->Window->HLogic);
-    Row->Window = NULL;
-  }
-}
-
-static void DeleteRow(Trow Row) {
-  if (Row) {
-    Twindow w = Row->Window;
-
-    Row->Remove();
-    if (Row->Text)
-      FreeMem(Row->Text);
-    if (Row->ColText)
-      FreeMem(Row->ColText);
-
-    DeleteObj((Tobj)Row);
-
-    if (w && w->Parent && (w->Flags & WINDOWFL_MENU))
-      ResizeRelWindow(w, 0, -1);
-  }
-}
-
-static byte SetTextRow(Trow Row, uldat Len, const char *Text, byte DefaultCol) {
-  if (EnsureLenRow(Row, Len, DefaultCol)) {
+static byte SetTextRow(Trow row, uldat Len, const char *Text, byte DefaultCol) {
+  if (EnsureLenRow(row, Len, DefaultCol)) {
     if (Len) {
 
-      trune *RowText = Row->Text;
+      trune *RowText = row->Text;
       ldat i = Len;
       while (i-- > 0) {
         *RowText++ = Tutf_CP437_to_UTF_32[(byte)*Text++];
       }
-      if (!(Row->Flags & ROW_DEFCOL) && !DefaultCol)
+      if (!(row->Flags & ROW_DEFCOL) && !DefaultCol)
         /* will not work correctly if sizeof(tcolor) != 1 */
-        memset(Row->ColText, TCOL(twhite, tblack), Len * sizeof(tcolor));
+        memset(row->ColText, TCOL(twhite, tblack), Len * sizeof(tcolor));
     }
-    Row->Len = Len;
-    Row->Gap = Row->LenGap = 0;
+    row->Len = Len;
+    row->Gap = row->LenGap = 0;
     return ttrue;
   }
   return tfalse;
 }
 
-static byte SetTRuneRow(Trow Row, uldat Len, const trune *TRune, byte DefaultCol) {
-  if (EnsureLenRow(Row, Len, DefaultCol)) {
+static byte SetTRuneRow(Trow row, uldat Len, const trune *TRune, byte DefaultCol) {
+  if (EnsureLenRow(row, Len, DefaultCol)) {
     if (Len) {
-      CopyMem(TRune, Row->Text, Len * sizeof(trune));
-      if (!(Row->Flags & ROW_DEFCOL) && !DefaultCol)
+      CopyMem(TRune, row->Text, Len * sizeof(trune));
+      if (!(row->Flags & ROW_DEFCOL) && !DefaultCol)
         /* will not work correctly if sizeof(tcolor) != 1 */
-        memset(Row->ColText, TCOL(twhite, tblack), Len * sizeof(tcolor));
+        memset(row->ColText, TCOL(twhite, tblack), Len * sizeof(tcolor));
     }
-    Row->Len = Len;
-    Row->Gap = Row->LenGap = 0;
+    row->Len = Len;
+    row->Gap = row->LenGap = 0;
     return ttrue;
   }
   return tfalse;
@@ -1277,18 +1144,18 @@ static byte SetTRuneRow(Trow Row, uldat Len, const trune *TRune, byte DefaultCol
  */
 static void RaiseMenuItem(Tmenuitem M) {
   Tobj Parent;
-  Tmenuitem Next;
+  Tmenuitem next;
 
   if (M && (Parent = (Tobj)M->Parent)) {
     if (IS_MENU(Parent))
-      Next = ((Tmenu)Parent)->FirstI;
+      next = ((Tmenu)Parent)->FirstI;
     else if (IS_WINDOW(Parent) && W_USE((Twindow)Parent, USEROWS))
-      Next = (Tmenuitem)((Twindow)Parent)->USE.R.FirstRow;
+      next = (Tmenuitem)((Twindow)Parent)->USE.R.FirstRow;
     else
       return;
 
     M->Remove();
-    M->Insert(Parent, (Tmenuitem)0, Next);
+    M->Insert(Parent, (Tmenuitem)0, next);
 
     if (IS_MENU(Parent))
       SyncMenu((Tmenu)Parent);
@@ -1303,18 +1170,18 @@ static void RaiseMenuItem(Tmenuitem M) {
  */
 static void LowerMenuItem(Tmenuitem M) {
   Tobj Parent;
-  Tmenuitem Prev;
+  Tmenuitem prev;
 
   if (M && (Parent = (Tobj)M->Parent)) {
     if (IS_MENU(Parent))
-      Prev = ((Tmenu)Parent)->LastI;
+      prev = ((Tmenu)Parent)->LastI;
     else if (IS_WINDOW(Parent) && W_USE((Twindow)Parent, USEROWS))
-      Prev = (Tmenuitem)((Twindow)Parent)->USE.R.LastRow;
+      prev = (Tmenuitem)((Twindow)Parent)->USE.R.LastRow;
     else
       return;
 
     M->Remove();
-    M->Insert(Parent, Prev, NULL);
+    M->Insert(Parent, prev, NULL);
 
     if (IS_MENU(Parent))
       SyncMenu((Tmenu)Parent);
@@ -1326,8 +1193,6 @@ static void LowerMenuItem(Tmenuitem M) {
 static struct SrowFn _FnRow = {
     row_magic,
     InsertRow,
-    RemoveRow,
-    DeleteRow,
     /* Trow */
     &_FnObj,
     SetTextRow,
@@ -1346,41 +1211,15 @@ byte FindInfo(Tmenu Menu, dat i) {
 
 /* Tmenuitem */
 
-static void InsertMenuItem(Tmenuitem MenuItem, Tobj Parent, Tmenuitem Prev, Tmenuitem Next) {
+static void InsertMenuItem(Tmenuitem MenuItem, Tobj Parent, Tmenuitem prev, Tmenuitem next) {
   if (!MenuItem->Parent && Parent) {
     if (IS_MENU(Parent)) {
-      InsertGeneric((TobjEntry)MenuItem, (TobjList) & ((Tmenu)Parent)->FirstI, (TobjEntry)Prev,
-                    (TobjEntry)Next, NULL);
+      InsertGeneric((TobjEntry)MenuItem, (TobjList) & ((Tmenu)Parent)->FirstI, (TobjEntry)prev,
+                    (TobjEntry)next, NULL);
       MenuItem->Parent = Parent;
     } else if (IS_WINDOW(Parent)) {
-      InsertRow((Trow)MenuItem, (Twindow)Parent, (Trow)Prev, (Trow)Next);
+      InsertRow((Trow)MenuItem, (Twindow)Parent, (Trow)prev, (Trow)next);
     }
-  }
-}
-
-static void RemoveMenuItem(Tmenuitem MenuItem) {
-  if (MenuItem->Parent) {
-    if (IS_MENU(MenuItem->Parent)) {
-      RemoveGeneric((TobjEntry)MenuItem, (TobjList) & ((Tmenu)MenuItem->Parent)->FirstI, NULL);
-      MenuItem->Parent = (Tobj)0;
-    } else {
-      RemoveRow((Trow)MenuItem);
-    }
-  }
-}
-
-static void DeleteMenuItem(Tmenuitem MenuItem) {
-  if (MenuItem) {
-    Tobj Parent = MenuItem->Parent;
-
-    MenuItem->Remove();
-    if (IS_MENU(Parent))
-      SyncMenu((Tmenu)Parent);
-
-    if (MenuItem->Window)
-      MenuItem->Window->Delete();
-
-    DeleteRow((Trow)MenuItem);
   }
 }
 
@@ -1417,97 +1256,42 @@ static uldat Create4MenuCommonMenuItem(Tmenu Menu) {
 }
 
 static struct SmenuitemFn _FnMenuItem = {
-    menuitem_magic, InsertMenuItem, RemoveMenuItem,      DeleteMenuItem,
+    menuitem_magic, InsertMenuItem, //
     &_FnObj,        SetTextRow,     SetTRuneRow,         RaiseMenuItem,
     LowerMenuItem,  &_FnRow,        Create4MenuMenuItem, Create4MenuCommonMenuItem,
 };
 
 /* Tmenu */
 
-static void InsertMenu(Tmenu Menu, Tmsgport MsgPort, Tmenu Prev, Tmenu Next) {
+static void InsertMenu(Tmenu Menu, Tmsgport MsgPort, Tmenu prev, Tmenu next) {
   if (!Menu->MsgPort && MsgPort) {
-    InsertGeneric((TobjEntry)Menu, (TobjList)&MsgPort->FirstMenu, (TobjEntry)Prev, (TobjEntry)Next,
+    InsertGeneric((TobjEntry)Menu, (TobjList)&MsgPort->FirstMenu, (TobjEntry)prev, (TobjEntry)next,
                   NULL);
     Menu->MsgPort = MsgPort;
   }
 }
 
-static void RemoveMenu(Tmenu Menu) {
-  if (Menu->MsgPort) {
-    RemoveGeneric((TobjEntry)Menu, (TobjList)&Menu->MsgPort->FirstMenu, NULL);
-    Menu->MsgPort = (Tmsgport)0;
-  }
-}
-
-static void DeleteMenu(Tmenu Menu) {
-  uldat count = 30;
-
-  if (Menu) {
-    Tmsgport MsgPort = Menu->MsgPort;
-    Twidget w, WNext;
-
-    /*
-     * warning:
-     * the only way to get the list of windows that
-     * are using this Tmenu is to scan the whole MsgPort.
-     * We must UnMap() all those windows
-     * as a Twindow without Tmenu cannot be displayed.
-     *
-     * optimization: if we are going to UnMap() a lot of windows,
-     * we set QueuedDrawArea2FullScreen = ttrue, so that the UnMap()
-     * calls do not have to redraw every time.
-     */
-    if (!QueuedDrawArea2FullScreen) {
-      for (w = MsgPort->FirstW; w && count; w = WNext) {
-        WNext = w->O_Next;
-        if (IS_WINDOW(w) && ((Twindow)w)->Menu == Menu) {
-          if (w->Parent && IS_SCREEN(w->Parent)) {
-            count--;
-          }
-        }
-      }
-      if (!count)
-        QueuedDrawArea2FullScreen = ttrue;
-    }
-    for (w = MsgPort->FirstW; w; w = WNext) {
-      WNext = w->O_Next;
-      if (IS_WINDOW(w) && ((Twindow)w)->Menu == Menu) {
-        if (w->Parent && IS_SCREEN(w->Parent)) {
-          w->UnMap();
-          ((Twindow)w)->Menu = NULL;
-        }
-      }
-    }
-    Menu->Remove();
-    DeleteList(Menu->FirstI);
-    if (Menu->Info)
-      Menu->Info->Delete();
-
-    DeleteObj((Tobj)Menu);
-  }
-}
-
 static Trow SetInfoMenu(Tmenu Menu, byte Flags, ldat Len, const char *Text, const tcolor *ColText) {
-  Trow Row;
-  if ((Row = New(row)(0, Flags))) {
-    if ((!Text || (Row->Text = CloneStr2TRune(Text, Len))) &&
-        (!ColText || (Row->ColText = (tcolor *)CloneMem(ColText, Len * sizeof(tcolor))))) {
-      Row->Len = Row->MaxLen = Len;
+  Trow row;
+  if ((row = New(row)(0, Flags))) {
+    if ((!Text || (row->Text = CloneStr2TRune(Text, Len))) &&
+        (!ColText || (row->ColText = (tcolor *)CloneMem(ColText, Len * sizeof(tcolor))))) {
+      row->Len = row->MaxLen = Len;
       if (Menu->Info)
         Menu->Info->Delete();
-      return Menu->Info = Row;
+      return Menu->Info = row;
     }
-    Row->Delete();
-    Row = (Trow)0;
+    row->Delete();
+    row = (Trow)0;
   }
-  return Row;
+  return row;
 }
 
 static Tmenuitem FindItem(Tmenu Menu, dat i) {
   Tmenuitem item = (Tmenuitem)0;
 
   if (Menu) {
-    for (item = Menu->FirstI; item; item = item->Next) {
+    for (item = Menu->FirstI; item; item = item->Next()) {
       if (i >= item->Left && (uldat)(i - item->Left) < item->Len)
         break;
     }
@@ -1520,7 +1304,7 @@ static Tmenuitem FindItem(Tmenu Menu, dat i) {
         /* search in All->CommonMenu */
         if (item)
           i -= item->Left + (dat)item->Len;
-        for (item = All->CommonMenu->FirstI; item; item = item->Next) {
+        for (item = All->CommonMenu->FirstI; item; item = item->Next()) {
           if (i >= item->Left && (uldat)(i - item->Left) < item->Len)
             break;
         }
@@ -1586,8 +1370,6 @@ static void SetSelectedItem(Tmenu Menu, Tmenuitem item) {
 static struct SmenuFn _FnMenu = {
     menu_magic,
     InsertMenu,
-    RemoveMenu,
-    DeleteMenu,
     /* Tmenu */
     &_FnObj,
     SetInfoMenu,
@@ -1599,131 +1381,51 @@ static struct SmenuFn _FnMenu = {
 
 /* Tmsg */
 
-static void InsertMsg(Tmsg msg, Tmsgport Parent, Tmsg Prev, Tmsg Next) {
+static void InsertMsg(Tmsg msg, Tmsgport Parent, Tmsg prev, Tmsg next) {
   if (!msg->MsgPort && Parent) {
     /* if adding the first Tmsg, move the Tmsgport to the head
      * of Tmsgport list, so that the scheduler will run it */
     if (!Parent->FirstMsg && Parent->All)
       MoveFirst(MsgPort, All, Parent);
 
-    InsertGeneric((TobjEntry)msg, (TobjList)&Parent->FirstMsg, (TobjEntry)Prev, (TobjEntry)Next,
+    InsertGeneric((TobjEntry)msg, (TobjList)&Parent->FirstMsg, (TobjEntry)prev, (TobjEntry)next,
                   NULL);
     msg->MsgPort = Parent;
-  }
-}
-
-static void RemoveMsg(Tmsg msg) {
-  if (msg->MsgPort) {
-    RemoveGeneric((TobjEntry)msg, (TobjList)&msg->MsgPort->FirstMsg, NULL);
-    msg->MsgPort = NULL;
-  }
-}
-
-static void DeleteMsg(Tmsg msg) {
-  if (msg) {
-    msg->Remove();
-    DeleteObj((Tobj)msg);
   }
 }
 
 static struct SmsgFn _FnMsg = {
     msg_magic,
     InsertMsg,
-    RemoveMsg,
-    DeleteMsg,
     /* Tmsg */
     &_FnObj,
 };
 
 /* Tmsgport */
 
-static void InsertMsgPort(Tmsgport MsgPort, Tall Parent, Tmsgport Prev, Tmsgport Next) {
+static void InsertMsgPort(Tmsgport MsgPort, Tall Parent, Tmsgport prev, Tmsgport next) {
   if (!MsgPort->All && Parent) {
-    InsertGeneric((TobjEntry)MsgPort, (TobjList)&Parent->FirstMsgPort, (TobjEntry)Prev,
-                  (TobjEntry)Next, NULL);
+    InsertGeneric((TobjEntry)MsgPort, (TobjList)&Parent->FirstMsgPort, (TobjEntry)prev,
+                  (TobjEntry)next, NULL);
     MsgPort->All = Parent;
-  }
-}
-
-static void RemoveMsgPort(Tmsgport MsgPort) {
-  if (MsgPort->All) {
-    if (All->RunMsgPort == MsgPort)
-      All->RunMsgPort = MsgPort->Next;
-    RemoveGeneric((TobjEntry)MsgPort, (TobjList)&MsgPort->All->FirstMsgPort, NULL);
-    MsgPort->All = (Tall)0;
-  }
-}
-
-static void DeleteMsgPort(Tmsgport MsgPort) {
-  uldat count = 20;
-  Twidget w;
-
-  if (MsgPort) {
-    /*
-     * optimization: if we are going to UnMap() a lot of windows,
-     * we set QueuedDrawArea2FullScreen = ttrue, so that the UnMap()
-     * calls do not have to redraw every time.
-     */
-    for (w = MsgPort->FirstW; w && count; w = w->O_Next) {
-      if (IS_WINDOW(w) && w->Parent && IS_SCREEN(w->Parent)) {
-        count--;
-      }
-    }
-    if (!count)
-      QueuedDrawArea2FullScreen = ttrue;
-
-    if (MsgPort->ShutDownHook)
-      MsgPort->ShutDownHook(MsgPort);
-
-    /*
-     * must delete the Menus first, as among widgets there are also
-     * Tmenuitem windows, which cannot be deleted before deleting
-     * the corresponding Tmenuitem.
-     */
-    DeleteList(MsgPort->FirstMsg);
-    DeleteList(MsgPort->FirstMenu);
-    DeleteList(MsgPort->FirstW);
-    DeleteList(MsgPort->FirstGroup);
-    DeleteList(MsgPort->FirstMutex);
-
-    MsgPort->Remove();
-    if (MsgPort->Name)
-      FreeMem(MsgPort->Name);
-
-    DeleteObj((Tobj)MsgPort);
   }
 }
 
 static struct SmsgportFn _FnMsgPort = {
     msgport_magic,
     InsertMsgPort,
-    RemoveMsgPort,
-    DeleteMsgPort,
     /* Tmsgport */
     &_FnObj,
 };
 
 /* Tmutex */
 
-static void InsertMutex(Tmutex Mutex, Tall Parent, Tmutex Prev, Tmutex Next) {
+static void InsertMutex(Tmutex Mutex, Tall Parent, Tmutex prev, Tmutex next) {
   if (!Mutex->All && Parent) {
-    InsertGeneric((TobjEntry)Mutex, (TobjList)&Mutex->All->FirstMutex, (TobjEntry)Prev,
-                  (TobjEntry)Next, NULL);
+    InsertGeneric((TobjEntry)Mutex, (TobjList)&Mutex->All->FirstMutex, (TobjEntry)prev,
+                  (TobjEntry)next, NULL);
     Mutex->All = Parent;
   }
-}
-
-static void RemoveMutex(Tmutex Mutex) {
-  if (Mutex->All) {
-    RemoveGeneric((TobjEntry)Mutex, (TobjList)&Mutex->All->FirstMutex, NULL);
-    Mutex->All = (Tall)0;
-  }
-}
-
-static void DeleteMutex(Tmutex Mutex) {
-  Mutex->DisOwn();
-  Mutex->Remove();
-  DeleteObj((Tobj)Mutex);
 }
 
 static void OwnMutex(Tmutex Mutex, Tmsgport Parent) {
@@ -1763,8 +1465,6 @@ static void DisOwnMutex(Tmutex Mutex) {
 static struct SmutexFn _FnMutex = {
     mutex_magic,
     InsertMutex,
-    RemoveMutex,
-    DeleteMutex,
     /* Tmutex */
     &_FnObj,
     OwnMutex,
@@ -1773,38 +1473,17 @@ static struct SmutexFn _FnMutex = {
 
 /* Tmodule */
 
-static void InsertModule(Tmodule Module, Tall Parent, Tmodule Prev, Tmodule Next) {
+static void InsertModule(Tmodule Module, Tall Parent, Tmodule prev, Tmodule next) {
   if (!Module->All && Parent) {
-    InsertGeneric((TobjEntry)Module, (TobjList)&Parent->FirstModule, (TobjEntry)Prev,
-                  (TobjEntry)Next, NULL);
+    InsertGeneric((TobjEntry)Module, (TobjList)&Parent->FirstModule, (TobjEntry)prev,
+                  (TobjEntry)next, NULL);
     Module->All = Parent;
-  }
-}
-
-static void RemoveModule(Tmodule Module) {
-  if (Module->All) {
-    RemoveGeneric((TobjEntry)Module, (TobjList)&Module->All->FirstModule, NULL);
-    Module->All = (Tall)0;
-  }
-}
-
-static void DeleteModule(Tmodule Module) {
-  if (!Module->Used) {
-
-    Module->DlClose();
-    Module->Remove();
-    if (Module->Name)
-      FreeMem(Module->Name);
-
-    DeleteObj((Tobj)Module);
   }
 }
 
 static struct SmoduleFn _FnModule = {
     module_magic,
     InsertModule,
-    RemoveModule,
-    DeleteModule,
     /* Tmodule */
     &_FnObj,
     DlOpen,
@@ -1813,10 +1492,10 @@ static struct SmoduleFn _FnModule = {
 
 /* Tdisplay */
 
-static void InsertDisplayHW(Tdisplay DisplayHW, Tall Parent, Tdisplay Prev, Tdisplay Next) {
+static void InsertDisplayHW(Tdisplay DisplayHW, Tall Parent, Tdisplay prev, Tdisplay next) {
   if (!DisplayHW->All && Parent) {
-    InsertGeneric((TobjEntry)DisplayHW, (TobjList)&Parent->FirstDisplay, (TobjEntry)Prev,
-                  (TobjEntry)Next, NULL);
+    InsertGeneric((TobjEntry)DisplayHW, (TobjList)&Parent->FirstDisplay, (TobjEntry)prev,
+                  (TobjEntry)next, NULL);
     DisplayHW->All = Parent;
 #if 0
         /*
@@ -1829,52 +1508,13 @@ static void InsertDisplayHW(Tdisplay DisplayHW, Tall Parent, Tdisplay Prev, Tdis
   }
 }
 
-static void RemoveDisplayHW(Tdisplay DisplayHW) {
-  if (DisplayHW->All) {
-    RemoveGeneric((TobjEntry)DisplayHW, (TobjList)&DisplayHW->All->FirstDisplay, NULL);
-    DisplayHW->All = (Tall)0;
-
-    if (All->HookDisplayFn)
-      All->HookDisplayFn(All->HookDisplay);
-  }
-}
-
-static void DeleteDisplayHW(Tdisplay DisplayHW) {
-  byte isCTTY = DisplayHW->DisplayIsCTTY && DisplayHW == DisplayHWCTTY;
-  byte Quitted = DisplayHW->Quitted;
-
-  if (!Quitted)
-    DisplayHW->DoQuit();
-
-  /* avoid getting stale pointers */
-  if (All->MouseDisplay == DisplayHW)
-    All->MouseDisplay = NULL;
-  if (All->ExclusiveDisplay == DisplayHW)
-    All->ExclusiveDisplay = NULL;
-
-  DisplayHW->Remove();
-  String().swap(DisplayHW->Name); // destroy DisplayHW->Name
-
-  DeleteObj((Tobj)DisplayHW);
-
-  if (!Quitted) {
-    if (!All->FirstDisplay || isCTTY)
-      RunNoHW(tfalse);
-    else if (All->FirstDisplay && ResizeDisplay()) {
-      QueuedDrawArea2FullScreen = ttrue;
-    }
-  }
-}
-
 static struct SdisplayFn _FnDisplay = {
     display_hw_magic,
     InsertDisplayHW,
-    RemoveDisplayHW,
-    DeleteDisplayHW,
     /* Tdisplay */
     &_FnObj,
-    InitDisplayHW,
-    QuitDisplayHW,
+    InitDisplay,
+    QuitDisplay,
 };
 
 TstructFn FnStruct = {

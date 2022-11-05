@@ -44,3 +44,18 @@ Tgroup Sgroup::Init(Tmsgport owner) {
   InsertLast(Group, this, owner);
   return this;
 }
+
+void Sgroup::Remove() {
+  if (MsgPort) {
+    RemoveGeneric((TobjEntry)this, (TobjList)&MsgPort->FirstGroup, NULL);
+    MsgPort = NULL;
+  }
+}
+
+void Sgroup::Delete() {
+  Remove();
+  while (FirstG) {
+    RemoveGadget(FirstG);
+  }
+  Sobj::Delete();
+}

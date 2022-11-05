@@ -275,7 +275,7 @@ int main(int argc, char *argv[]) {
     Quit(0);
 
   /* not needed... done by InitHW() */
-  /* QueuedDrawArea2FullScreen = ttrue; */
+  /* QueuedDrawArea2FullScreen = true; */
 
   InstantNow(Now); /* read again... */
   SortAllMsgPortsByCallTime();
@@ -319,7 +319,7 @@ int main(int argc, char *argv[]) {
 
       if (NeedHW & NEEDResizeDisplay) {
         ResizeDisplay();
-        QueuedDrawArea2FullScreen = ttrue;
+        QueuedDrawArea2FullScreen = true;
       }
 
       if (NeedHW & NEEDSelectionExport)

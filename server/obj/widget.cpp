@@ -58,25 +58,44 @@ Twidget Swidget::Init(Tmsgport owner, dat xwidth, dat ywidth, uldat attr, uldat 
   return NULL;
 }
 
+void Swidget::Delete() {
+  UnMap();
+  if (Hook) {
+    RemoveHook(Hook, WhereHook);
+  }
+  if (ShutDownHook) {
+    ShutDownHook(this);
+  }
+  DisOwn();
+  while (FirstW) {
+    FirstW->UnMap();
+  }
+  Sobj::Delete();
+}
+
+void Swidget::Remove() {
+  if (Parent) {
+    RemoveGeneric((TobjEntry)this, (TobjList)&Parent->FirstW, NULL);
+  }
+}
+
 void Swidget::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
-  Twidget w = this;
-  if (w)
-    switch (field) {
-    case TWS_widget_Left:
-    case TWS_widget_Up:
-    case TWS_widget_Width:
-    case TWS_widget_Height:
-      break;
-    case TWS_widget_USE_Fill: {
-      uldat i = tcell((w->USE_Fill & ~clear_mask) ^ xor_mask);
-      SetFillWidget(w, i);
-      break;
-    }
-    case TWS_widget_XLogic:
-    case TWS_widget_YLogic:
-      break;
-    default:
-      Sobj::ChangeField(field, clear_mask, xor_mask);
-      break;
-    }
+  switch (field) {
+  case TWS_widget_Left:
+  case TWS_widget_Up:
+  case TWS_widget_Width:
+  case TWS_widget_Height:
+    break;
+  case TWS_widget_USE_Fill: {
+    uldat i = tcell((USE_Fill & ~clear_mask) ^ xor_mask);
+    SetFillWidget(this, i);
+    break;
+  }
+  case TWS_widget_XLogic:
+  case TWS_widget_YLogic:
+    break;
+  default:
+    Sobj::ChangeField(field, clear_mask, xor_mask);
+    break;
+  }
 }

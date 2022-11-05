@@ -64,6 +64,12 @@ Tall Sall::Init() {
   return this;
 };
 
+void Sall::Remove() {
+}
+
+void Sall::Delete() {
+}
+
 static struct Sall _All;
 
 Tall const All = _All.Init();

@@ -12,9 +12,11 @@
 
 #include "obj/all.h" // extern All
 #include "obj/display.h"
-#include "alloc.h"   // AllocMem0(), CloneStrL()
-#include "methods.h" // InsertLast()
-#include "twin.h"    // NOSLOT
+#include "alloc.h"    // AllocMem0(), CloneStrL()
+#include "methods.h"  // InsertLast()
+#include "twin.h"     // NOSLOT
+#include "hw.h"       // DisplayHWCTTY
+#include "hw_multi.h" // ResizeDisplay(), RunNoHW()
 
 #include <new>
 
@@ -48,4 +50,41 @@ Tdisplay Sdisplay::Init(uldat namelen, const char *name) {
    */
   InsertLast(Display, this, ::All);
   return this;
+}
+
+void Sdisplay::Remove() {
+  if (All) {
+    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstDisplay, NULL);
+    All = (Tall)0;
+
+    if (::All->HookDisplayFn)
+      ::All->HookDisplayFn(::All->HookDisplay);
+  }
+}
+
+void Sdisplay::Delete() {
+  byte isCTTY = DisplayIsCTTY && this == DisplayHWCTTY;
+  byte quitted = Quitted;
+
+  if (!quitted) {
+    DoQuit();
+  }
+  /* avoid getting stale pointers */
+  if (::All->MouseDisplay == this)
+    ::All->MouseDisplay = NULL;
+  if (::All->ExclusiveDisplay == this)
+    ::All->ExclusiveDisplay = NULL;
+
+  Remove();
+  String().swap(Name); // destroy Name
+
+  Sobj::Delete();
+
+  if (!quitted) {
+    if (!::All->FirstDisplay || isCTTY) {
+      RunNoHW(tfalse);
+    } else if (::All->FirstDisplay && ResizeDisplay()) {
+      QueuedDrawArea2FullScreen = true;
+    }
+  }
 }

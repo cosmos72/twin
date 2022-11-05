@@ -22,8 +22,6 @@
 struct SmsgFn {
   uldat Magic;
   void (*Insert)(Tmsg, Tmsgport, Tmsg Prev, Tmsg Next);
-  void (*Remove)(Tmsg);
-  void (*Delete)(Tmsg);
   /* Tmsg */
   TobjFn Fn_Obj;
 };
@@ -47,12 +45,8 @@ struct Smsg : public Sobj {
   void Insert(Tmsgport port, Tmsg prev, Tmsg next) {
     Fn->Insert(this, port, prev, next);
   }
-  void Remove() {
-    Fn->Remove(this);
-  }
-  void Delete() {
-    Fn->Delete(this);
-  }
+  virtual void Remove() OVERRIDE;
+  virtual void Delete() OVERRIDE;
 };
 
 #endif /* TWIN_MSG_H */

@@ -66,3 +66,16 @@ Tmutex Smutex::Init(Tmsgport owner, byte namelen, const char *name, byte perm) {
   this->Own(owner);
   return this;
 }
+
+void Smutex::Remove() {
+  if (All) {
+    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstMutex, NULL);
+    All = (Tall)0;
+  }
+}
+
+void Smutex::Delete() {
+  DisOwn();
+  Remove();
+  Sobj::Delete();
+}

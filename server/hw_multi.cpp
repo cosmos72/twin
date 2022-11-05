@@ -192,10 +192,10 @@ static void warn_NoHW(const char *arg, uldat len) {
 }
 
 /*
- * InitDisplayHW runs HW specific InitXXX() functions, starting from best setup
+ * InitDisplay runs HW specific InitXXX() functions, starting from best setup
  * and falling back in case some of them fails.
  */
-byte InitDisplayHW(Tdisplay D_HW) {
+byte InitDisplay(Tdisplay D_HW) {
   Chars arg = D_HW->Name;
   byte success;
 
@@ -240,7 +240,7 @@ byte InitDisplayHW(Tdisplay D_HW) {
   return success;
 }
 
-void QuitDisplayHW(Tdisplay D_HW) {
+void QuitDisplay(Tdisplay D_HW) {
   Tmsgport MsgPort;
   uldat slot;
   SaveHW;
@@ -324,7 +324,7 @@ Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
       }
 
       if (ResizeDisplay()) {
-        QueuedDrawArea2FullScreen = ttrue;
+        QueuedDrawArea2FullScreen = true;
       }
       return D_HW;
     }
@@ -444,7 +444,7 @@ byte RestartHW(byte verbose) {
     }
     if (ret) {
       ResizeDisplay();
-      QueuedDrawArea2FullScreen = ttrue;
+      QueuedDrawArea2FullScreen = true;
     } else {
       log(WARNING) << "\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n"
                       "\ntwin: continuing in background with no display.\n";
@@ -859,7 +859,7 @@ void FlushHW(void) {
   }
 
   if (QueuedDrawArea2FullScreen) {
-    QueuedDrawArea2FullScreen = tfalse;
+    QueuedDrawArea2FullScreen = false;
     DirtyVideo(0, 0, DisplayWidth - 1, DisplayHeight - 1);
     DrawArea2(FULL_SCREEN);
     UpdateCursor();
@@ -994,7 +994,7 @@ void FillOldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, tcell Attr) {
 
 void RefreshVideo(void) {
   ValidOldVideo = tfalse;
-  QueuedDrawArea2FullScreen = ttrue;
+  QueuedDrawArea2FullScreen = true;
   /* safer than DirtyVideo(0, 0, DisplayWidth - 1, DisplayHeight - 1),
    * and also updates the cursor */
 }

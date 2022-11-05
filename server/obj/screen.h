@@ -18,8 +18,6 @@
 struct SscreenFn {
   uldat Magic;
   void (*Insert)(Tscreen, Tall parent, Tscreen Prev, Tscreen Next);
-  void (*Remove)(Tscreen);
-  void (*Delete)(Tscreen);
   /* Twidget */
   TobjFn Fn_Obj;
   void (*DrawSelf)(Sdraw *D);
@@ -64,12 +62,16 @@ struct Sscreen : public Swidget {
   static Tscreen Create(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
   Tscreen Init(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
 
-  /* Twidget */
   void Insert(Tall parent, Tscreen prev, Tscreen next) {
     fn()->Insert(this, parent, prev, next);
   }
 
+  virtual void Remove() OVERRIDE;
+  virtual void Delete() OVERRIDE;
+
   virtual void ChangeField(udat field, uldat clear_mask, uldat xor_mask) OVERRIDE;
+
+  /* Twidget */
 
   /* Tscreen */
   const TscreenFn fn() const {

@@ -18,8 +18,6 @@
 struct SmutexFn {
   uldat Magic;
   void (*Insert)(Tmutex, Tall, Tmutex Prev, Tmutex Next);
-  void (*Remove)(Tmutex);
-  void (*Delete)(Tmutex);
   /* Tmutex */
   TobjFn Fn_Obj;
   void (*Own)(Tmutex, Tmsgport);
@@ -46,12 +44,9 @@ struct Smutex : public Sobj {
   void Insert(Tall a, Tmutex prev, Tmutex next) {
     Fn->Insert(this, a, prev, next);
   }
-  void Remove() {
-    Fn->Remove(this);
-  }
-  void Delete() {
-    Fn->Delete(this);
-  }
+  virtual void Remove() OVERRIDE;
+  virtual void Delete() OVERRIDE;
+
   /* Tmutex */
   void Own(Tmsgport owner) {
     Fn->Own(this, owner);

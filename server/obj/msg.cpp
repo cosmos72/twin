@@ -12,9 +12,11 @@
 
 #include "alloc.h" // AllocMem()
 #include "log.h"
-#include "fn.h"     // Fn_Tmsg
-#include "obj/id.h" // AssignId()
+#include "fn.h"      // Fn_Tmsg
+#include "methods.h" // RemoveGeneric()
+#include "obj/id.h"  // AssignId()
 #include "obj/msg.h"
+#include "obj/msgport.h"
 #include "stl/fmt.h"
 
 #include <new> // placement new
@@ -47,4 +49,16 @@ Tmsg Smsg::Init(udat type, uldat eventlen) {
     return this;
   }
   return NULL;
+}
+
+void Smsg::Remove() {
+  if (MsgPort) {
+    RemoveGeneric((TobjEntry)this, (TobjList)&MsgPort->FirstMsg, NULL);
+    MsgPort = (Tmsgport)0;
+  }
+}
+
+void Smsg::Delete() {
+  Remove();
+  Sobj::Delete();
 }

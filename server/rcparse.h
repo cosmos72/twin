@@ -1296,7 +1296,7 @@ static byte NewCommonMenu(void *const *shm_M, Tmenu *res_CommonMenu, node **res_
   for (M = new_MenuList; M; M = M->next) {
     if ((w = Win4Menu(Menu)) && (item = Item4Menu(Menu, w, ttrue, strlen(M->name), M->name))) {
 
-      if (!item->Prev)
+      if (!item->Prev())
         item->Left = 0; /* remove padding */
 
       maxlen = 0;
@@ -1410,7 +1410,7 @@ static byte ReadGlobals(void) {
 
   shm_TSR();
 
-  QueuedDrawArea2FullScreen = ttrue;
+  QueuedDrawArea2FullScreen = true;
 
   return ttrue;
 }

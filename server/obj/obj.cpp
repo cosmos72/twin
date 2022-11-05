@@ -38,6 +38,11 @@ Tobj Sobj::Init() {
   return NULL;
 }
 
+void Sobj::Remove() {
+}
+
 void Sobj::Delete() {
-  ((TobjEntry)this)->Fn->Delete(this);
+  /* not a good idea to Remove() here */
+  DropId(this);
+  FreeMem(this);
 }

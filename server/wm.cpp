@@ -386,7 +386,7 @@ void MaximizeWindow(Twindow w, byte full_screen) {
       w->XWidth = All->DisplayWidth;
       w->YWidth = All->DisplayHeight - 1 - screen->Up;
     }
-    QueuedDrawArea2FullScreen = ttrue;
+    QueuedDrawArea2FullScreen = true;
     Check4Resize(w);
   }
 }
@@ -1418,36 +1418,35 @@ static void ContinueReleaseMouseState(wm_ctx *C, byte State) {
   }
 }
 
-static Tmenuitem PrevItem(Tmenuitem item, Tmenu Menu) {
-  Tmenuitem Prev;
+static Tmenuitem PrevItem(Tmenuitem item, Tmenu menu) {
+  Tmenuitem prev;
 
-  if (!(Prev = item->Prev)) {
-    if (item->Parent == (Tobj)Menu) {
-      if (Menu->CommonItems && All->CommonMenu)
-        Prev = All->CommonMenu->LastI;
+  if (!(prev = item->Prev())) {
+    if (item->Parent == menu) {
+      if (menu->CommonItems && All->CommonMenu)
+        prev = All->CommonMenu->LastI;
     } else
-      Prev = Menu->LastI;
+      prev = menu->LastI;
   }
 
-  if (Prev)
-    return Prev;
+  if (prev)
+    return prev;
   return item;
 }
 
-static Tmenuitem NextItem(Tmenuitem item, Tmenu Menu) {
-  Tmenuitem Next;
+static Tmenuitem NextItem(Tmenuitem item, Tmenu menu) {
+  Tmenuitem next;
 
-  if (!(Next = item->Next)) {
-    if (item->Parent == (Tobj)Menu) {
-      if (Menu->CommonItems && All->CommonMenu)
-        Next = All->CommonMenu->FirstI;
-    } else
-      Next = Menu->FirstI;
+  if (!(next = item->Next())) {
+    if (item->Parent == (Tobj)menu) {
+      if (menu->CommonItems && All->CommonMenu) {
+        next = All->CommonMenu->FirstI;
+      }
+    } else {
+      next = menu->FirstI;
+    }
   }
-
-  if (Next)
-    return Next;
-  return item;
+  return next ? next : item;
 }
 
 static void EnterItem(Tmenuitem item) {
@@ -1462,7 +1461,7 @@ static void EnterItem(Tmenuitem item) {
 /* this is keyboard only */
 static byte ActivateKeyState(wm_ctx *C, byte State) {
   Twindow w = (Twindow)All->FirstScreen->FocusW();
-  ldat NumRow;
+  ldat numrow;
   dat XDelta = 0, YDelta = 0, depth;
   udat Key = C->Code;
   byte used = tfalse;
@@ -1571,12 +1570,12 @@ static byte ActivateKeyState(wm_ctx *C, byte State) {
     case TW_Up:
       if (!w->HLogic || (All->State & state_fl_bymouse))
         break;
-      NumRow = w->CurY;
-      if (NumRow && NumRow < w->HLogic)
-        NumRow--;
+      numrow = w->CurY;
+      if (numrow && numrow < w->HLogic)
+        numrow--;
       else
-        NumRow = w->HLogic - 1;
-      M = (Tmenuitem)Act(FindRow, w)(w, NumRow);
+        numrow = w->HLogic - 1;
+      M = (Tmenuitem)Act(FindRow, w)(w, numrow);
       if (M && IS_MENUITEM(M))
         SetMenuState(M, tfalse);
       used = ttrue;
@@ -1584,12 +1583,12 @@ static byte ActivateKeyState(wm_ctx *C, byte State) {
     case TW_Down:
       if (!w->HLogic || (All->State & state_fl_bymouse))
         break;
-      NumRow = w->CurY;
-      if (NumRow < w->HLogic - 1)
-        NumRow++;
+      numrow = w->CurY;
+      if (numrow < w->HLogic - 1)
+        numrow++;
       else
-        NumRow = 0;
-      M = (Tmenuitem)Act(FindRow, w)(w, NumRow);
+        numrow = 0;
+      M = (Tmenuitem)Act(FindRow, w)(w, numrow);
       if (M && IS_MENUITEM(M))
         SetMenuState(M, tfalse);
       used = ttrue;
@@ -1795,7 +1794,7 @@ static void WManagerH(Tmsgport MsgPort) {
     for (used = 30, msg = MapQueue->FirstMsg; msg && used; msg = msg->Next, used--)
       ;
     if (!used)
-      QueuedDrawArea2FullScreen = ttrue;
+      QueuedDrawArea2FullScreen = true;
     while ((msg = MapQueue->FirstMsg)) {
       C->W = msg->Event.EventMap.W;
       SmartPlace((Twidget)C->W, msg->Event.EventMap.Screen);

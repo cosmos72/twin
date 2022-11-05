@@ -21,8 +21,6 @@
 struct SgroupFn {
   uldat Magic;
   void (*Insert)(Tgroup, Tmsgport MsgPort, Tgroup Prev, Tgroup Next);
-  void (*Remove)(Tgroup);
-  void (*Delete)(Tgroup);
   /* Tgroup */
   TobjFn Fn_Obj; /* backup of overloaded functions */
   void (*InsertGadget)(Tgroup, Tgadget);
@@ -46,15 +44,13 @@ struct Sgroup : public Sobj {
   uldat Magic() const {
     return Fn->Magic;
   }
+
   void Insert(Tmsgport owner, Tgroup prev, Tgroup next) {
     Fn->Insert(this, owner, prev, next);
   }
-  void Remove() {
-    Fn->Remove(this);
-  }
-  void Delete() {
-    Fn->Delete(this);
-  }
+  virtual void Remove() OVERRIDE;
+  virtual void Delete() OVERRIDE;
+
   /* group */
   void InsertGadget(Tgadget g) {
     Fn->InsertGadget(this, g);

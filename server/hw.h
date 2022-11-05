@@ -9,6 +9,8 @@
 #ifndef TWIN_HW_H
 #define TWIN_HW_H
 
+#include "compiler.h" // VOLATILE
+
 #define setFlush() (HW->NeedHW |= NEEDFlushHW)
 #define clrFlush() (HW->NeedHW &= ~NEEDFlushHW)
 

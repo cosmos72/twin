@@ -1861,7 +1861,7 @@ void RestackRows(Tobj O, uldat N, const Trow *arrayR) {
       /*
        * Allow only children that really have the given parent.
        */
-      if ((CR = *arrayR) && (Tobj)CR->Window == O) {
+      if ((CR = *arrayR) && (Tobj)CR->Window() == O) {
         if (FR && CR != FR->Next) {
           /* restack after arrayR[0] */
           CR->Remove();
@@ -2083,7 +2083,7 @@ void SyncMenu(Tmenu Menu) {
   Tscreen screen;
 
   if (Menu) {
-    for (I = Menu->FirstI; I; I = I->Next) {
+    for (I = Menu->FirstI; I; I = I->Next()) {
       if (PrevI)
         I->Left = PrevI->Left + PrevI->Len;
       else

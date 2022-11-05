@@ -10,9 +10,10 @@
  *
  */
 
-#include "algo.h"  // Max2()
-#include "alloc.h" // AllocMem0(), CloneStr2TRune()
-#include "fn.h"    // Fn_Tmenuitem
+#include "algo.h"    // Max2()
+#include "alloc.h"   // AllocMem0(), CloneStr2TRune()
+#include "fn.h"      // Fn_Tmenuitem
+#include "methods.h" // RemoveGeneric()
 #include "obj/menuitem.h"
 #include "resize.h" // SyncMenu()
 #include "twin.h"   // IS_WINDOW()
@@ -29,7 +30,7 @@ Tmenuitem Smenuitem::Create(Tobj parent, Twindow w, udat code, byte flags, dat l
     void *addr = AllocMem0(sizeof(Smenuitem));
     if (addr) {
       item = new (addr) Smenuitem();
-      item->Fn = Fn_Tmenuitem;
+      item->Fn = (TrowFn)Fn_Tmenuitem;
       if (!item->Init(parent, w, code, flags, left, len, shortcut, name)) {
         item->Delete();
         item = NULL;
@@ -72,4 +73,38 @@ Tmenuitem Smenuitem::Init(Tobj parent, Twindow w, udat code, byte flags, dat lef
     return this;
   }
   return NULL;
+}
+
+void Smenuitem::Remove() {
+  if (Parent) {
+    if (IS_MENU(Parent)) {
+      RemoveGeneric((TobjEntry)this, (TobjList) & ((Tmenu)Parent)->FirstI, NULL);
+      Parent = (Tobj)0;
+    } else {
+      Srow::Remove();
+    }
+  }
+}
+
+void Smenuitem::Delete() {
+  Tobj parent = Parent;
+  Remove();
+  if (IS_MENU(parent)) {
+    SyncMenu((Tmenu)parent);
+  }
+  if (Window) {
+    Window->Delete();
+    Window = (Twindow)0;
+  }
+  Srow::Delete();
+}
+
+Tmenuitem Smenuitem::Prev() const {
+  Trow prev = Srow::Prev;
+  return prev && IS_MENUITEM(prev) ? (Tmenuitem)prev : (Tmenuitem)0;
+}
+
+Tmenuitem Smenuitem::Next() const {
+  Trow next = Srow::Next;
+  return next && IS_MENUITEM(next) ? (Tmenuitem)next : (Tmenuitem)0;
 }

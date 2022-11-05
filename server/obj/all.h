@@ -124,6 +124,11 @@ struct Sall : public Sobj {
   trune *Gtranslations[USER_MAP + 1];
 
   Tall Init();
+  // Sall::Remove() does nothing
+  virtual void Remove() OVERRIDE;
+
+  // Sall::Delete() does nothing
+  virtual void Delete() OVERRIDE;
 };
 
 extern Tall const All;

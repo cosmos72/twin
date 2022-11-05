@@ -10,10 +10,13 @@
  *
  */
 
+#include "obj/screen.h"
+
 #include "alloc.h"   // AllocMem0(), AllocMem(), CloneStrL(), CopyMem()
 #include "builtin.h" // Builtin_MsgPort
 #include "fn.h"      // Fn_Tscreen
-#include "obj/screen.h"
+#include "methods.h" // RemoveGeneric()
+#include "obj/all.h"
 
 #include <new>
 #include <Tw/datasizes.h> // TW_MAXDAT
@@ -56,6 +59,25 @@ Tscreen Sscreen::Init(dat namelen, const char *name, dat bgwidth, dat bgheight, 
   CopyMem(bg, this->USE.B.Bg, size);
   this->All = NULL;
   return this;
+}
+
+void Sscreen::Remove() {
+  if (All) {
+    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstScreen, NULL);
+    All = (Tall)0;
+  }
+}
+
+void Sscreen::Delete() {
+  while (FirstW) {
+    FirstW->UnMap();
+  }
+  Remove();
+  if (S_USE(this, USEBG) && USE.B.Bg) {
+    FreeMem(USE.B.Bg);
+    USE.B.Bg = NULL;
+  }
+  Swidget::Delete();
 }
 
 void Sscreen::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {

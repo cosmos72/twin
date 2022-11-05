@@ -103,8 +103,6 @@ struct Sdraw {
 struct SwidgetFn {
   uldat Magic;
   void (*Insert)(Twidget self, Twidget parent, Twidget Prev, Twidget Next);
-  void (*Remove)(Twidget self);
-  void (*Delete)(Twidget self);
   /* Twidget */
   TobjFn Fn_Obj; /* backup of overloaded functions */
   void (*DrawSelf)(Sdraw *d);
@@ -162,15 +160,11 @@ struct Swidget : public Sobj {
                         dat Up, tcell USE_Fill);
   Twidget Init(Tmsgport Owner, dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left, dat Up,
                tcell USE_Fill);
+  virtual void Delete() OVERRIDE;
   void Insert(Twidget parent, Twidget prev, Twidget next) {
     Fn->Insert(this, parent, prev, next);
   }
-  void Remove() {
-    Fn->Remove(this);
-  }
-  void Delete() {
-    Fn->Delete(this);
-  }
+  virtual void Remove() OVERRIDE;
   virtual void ChangeField(udat field, uldat clear_mask, uldat xor_mask) OVERRIDE;
 
   /* Twidget */

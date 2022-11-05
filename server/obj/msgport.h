@@ -20,8 +20,6 @@
 struct SmsgportFn {
   uldat Magic;
   void (*Insert)(Tmsgport, Tall, Tmsgport Prev, Tmsgport Next);
-  void (*Remove)(Tmsgport);
-  void (*Delete)(Tmsgport);
   /* Tmsgport */
   TobjFn Fn_Obj;
 };
@@ -57,12 +55,9 @@ struct Smsgport : public Sobj {
   void Insert(Tall a, Tmsgport prev, Tmsgport next) {
     Fn->Insert(this, a, prev, next);
   }
-  void Remove() {
-    Fn->Remove(this);
-  }
-  void Delete() {
-    Fn->Delete(this);
-  }
+  virtual void Remove() OVERRIDE;
+  virtual void Delete() OVERRIDE;
+
   /* Tmsgport */
 };
 

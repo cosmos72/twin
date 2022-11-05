@@ -322,7 +322,7 @@ static void OptionH(Tmsg msg) {
 
     UpdateOptionWin();
     if (redraw == ttrue)
-      QueuedDrawArea2FullScreen = ttrue;
+      QueuedDrawArea2FullScreen = true;
     else {
       DrawFullWindow2(OptionWin);
       UpdateCursor();
@@ -420,7 +420,7 @@ static void BordersH(Tmsg msg) {
 
   All->ButtonVec[Code >> 2].pos += op;
 
-  QueuedDrawArea2FullScreen = ttrue;
+  QueuedDrawArea2FullScreen = true;
   UpdateButtonWin();
 }
 

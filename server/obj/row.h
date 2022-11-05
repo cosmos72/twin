@@ -19,21 +19,20 @@
 
 struct SrowFn {
   uldat Magic;
-  void (*Insert)(Trow, Twindow, Trow prev, Trow next);
-  void (*Remove)(Trow);
-  void (*Delete)(Trow);
+  void (*Insert)(Trow self, Tobj parent, Trow prev, Trow next);
   /* Trow */
   TobjFn Fn_Obj;
-  byte (*SetText)(Trow, uldat len, const char *text, byte defaultcol);
-  byte (*SetTRune)(Trow, uldat len, const trune *runes, byte defaultcol);
-  void (*Raise)(Trow);
-  void (*Lower)(Trow);
+  byte (*SetText)(Trow self, uldat len, const char *text, byte defaultcol);
+  byte (*SetTRune)(Trow self, uldat len, const trune *runes, byte defaultcol);
+  void (*Raise)(Trow self);
+  void (*Lower)(Trow self);
 };
 
 struct Srow : public Sobj {
   TrowFn Fn;
   Trow Prev, Next;
-  Twindow Window;
+  Tobj Parent;
+
   /* Trow */
   udat Code;
   byte Flags;
@@ -49,16 +48,13 @@ struct Srow : public Sobj {
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(Twindow w, Trow prev, Trow next) {
-    Fn->Insert(this, w, prev, next);
-  }
-  void Remove() {
-    Fn->Remove(this);
-  }
-  void Delete() {
-    Fn->Delete(this);
-  }
+  void Insert(Twindow w, Trow prev, Trow next);
+  virtual void Remove() OVERRIDE;
+  virtual void Delete() OVERRIDE;
+
   /* Trow */
+  Twindow Window() const; // cast this->Parent to Twindow
+
   byte SetText(uldat len, const char *text, byte defaultcol) {
     return Fn->SetText(this, len, text, defaultcol);
   }

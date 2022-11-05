@@ -54,8 +54,6 @@ struct Sremotedata {
 struct SwindowFn {
   uldat Magic;
   void (*Insert)(Twindow, Twidget Parent, Twidget Prev, Twidget Next);
-  void (*Remove)(Twindow);
-  void (*Delete)(Twindow);
   /* Twidget */
   TobjFn Fn_Obj;
   void (*DrawSelf)(Sdraw *D);
@@ -131,6 +129,8 @@ struct Swindow : public Swidget {
   Twindow Init(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle, Tmenu menu,
                tcolor coltext, uldat cursortype, uldat attr, uldat flags, dat xwidth, dat ywidth,
                dat scrollbacklines);
+
+  virtual void Delete() OVERRIDE;
 
   virtual void ChangeField(udat field, uldat clear_mask, uldat xor_mask) OVERRIDE;
 

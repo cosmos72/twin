@@ -857,7 +857,7 @@ static void RCReload(void) {
     DlUnload(RCParseSo);
 
   if (success) {
-    QueuedDrawArea2FullScreen = ttrue;
+    QueuedDrawArea2FullScreen = true;
 
     ResetBorderPattern();
     RCKillAll();
@@ -975,7 +975,7 @@ byte RC_VMQueue(const wm_ctx *C) {
       if (All->State != state_default)
         /*
          * return to state_default, and rely on RCReload()
-         * to set QueuedDrawArea2FullScreen = ttrue
+         * to set QueuedDrawArea2FullScreen = true
          */
         ForceRelease(C);
 

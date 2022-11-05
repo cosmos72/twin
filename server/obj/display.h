@@ -21,8 +21,6 @@
 struct SdisplayFn {
   uldat Magic;
   void (*Insert)(Tdisplay, Tall, Tdisplay Prev, Tdisplay Next);
-  void (*Remove)(Tdisplay);
-  void (*Delete)(Tdisplay);
   /* Tdisplay */
   TobjFn Fn_Obj;
   byte (*DoInit)(Tdisplay);
@@ -162,18 +160,16 @@ struct Sdisplay : public Sobj {
   Tdisplay Init(uldat namelen, const char *name);
 
   /* Tobj */
+
   uldat Magic() const {
     return Fn->Magic;
   }
   void Insert(Tall a, Tdisplay prev, Tdisplay next) {
     Fn->Insert(this, a, prev, next);
   }
-  void Remove() {
-    Fn->Remove(this);
-  }
-  void Delete() {
-    Fn->Delete(this);
-  }
+  virtual void Remove() OVERRIDE;
+  virtual void Delete() OVERRIDE;
+
   /* Tdisplay */
   byte DoInit() {
     return Fn->DoInit(this);

@@ -25,8 +25,8 @@ extern tany StrategyDelay;
 void StrategyReset(void) NOTHROW;
 byte Strategy4Video(dat Xstart, dat Ystart, dat Xend, dat Yend) NOTHROW;
 
-byte InitDisplayHW(Tdisplay);
-void QuitDisplayHW(Tdisplay);
+byte InitDisplay(Tdisplay);
+void QuitDisplay(Tdisplay);
 
 byte InitHW(void);
 void QuitHW(void);

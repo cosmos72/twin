@@ -13,6 +13,7 @@
 #include "obj/msgport.h"
 
 #include "alloc.h"   // AllocMem0(), CloneStrL()
+#include "hw.h"      // QueuedDrawArea2FullScreen
 #include "methods.h" // InsertMiddle()
 #include "obj/all.h" // extern All
 #include "util.h"    // SumTime()
@@ -40,34 +41,82 @@ Tmsgport Smsgport::Create(byte namelen, const char *name, tany pausesec, tany pa
 Tmsgport Smsgport::Init(byte namelen, const char *name, tany pausesec, tany pausefraction,
                         byte wakeup, void (*handler)(Tmsgport)) {
 
-  if (!handler || !((Tobj)this)->Init()) {
+  if (!handler || !Sobj::Init()) {
     return NULL;
   }
-  if (name && !(this->Name = CloneStrL(name, namelen))) {
+  if (name && !(Name = CloneStrL(name, namelen))) {
     return NULL;
   }
-  this->WakeUp = wakeup;
-  this->NameLen = namelen;
-  this->Handler = handler;
-  // this->ShutDownHook = (void (*)(Tmsgport))0;
-  this->PauseDuration.Seconds = pausesec;
-  this->PauseDuration.Fraction = pausefraction;
-  (void)SumTime(&this->CallTime, &::All->Now, &this->PauseDuration);
-  this->RemoteData.Fd = NOFD;
-  this->RemoteData.ChildPid = NOPID;
-  this->RemoteData.FdSlot = NOSLOT;
+  WakeUp = wakeup;
+  NameLen = namelen;
+  Handler = handler;
+  // ShutDownHook = (void (*)(Tmsgport))0;
+  PauseDuration.Seconds = pausesec;
+  PauseDuration.Fraction = pausefraction;
+  (void)SumTime(&CallTime, &::All->Now, &PauseDuration);
+  RemoteData.Fd = NOFD;
+  RemoteData.ChildPid = NOPID;
+  RemoteData.FdSlot = NOSLOT;
   /*
-  this->FirstMsg = this->LastMsg = NULL;
-  this->FirstMenu = this->LastMenu = NULL;
-  this->FirstW = this->LastW = NULL;
-  this->FirstGroup = this->LastGroup = NULL;
-  this->FirstMutex = this->LastMutex = NULL;
-  this->CountE = this->SizeE = (uldat)0;
-  this->Es = NULL;
-  this->AttachHW = NULL;
+  FirstMsg = LastMsg = NULL;
+  FirstMenu = LastMenu = NULL;
+  FirstW = LastW = NULL;
+  FirstGroup = LastGroup = NULL;
+  FirstMutex = LastMutex = NULL;
+  CountE = SizeE = (uldat)0;
+  Es = NULL;
+  AttachHW = NULL;
   */
   InsertMiddle(MsgPort, this, ::All, WakeUp ? (Tmsgport)0 : ::All->LastMsgPort,
                WakeUp ? ::All->FirstMsgPort : (Tmsgport)0);
   SortMsgPortByCallTime(this);
   return this;
+}
+
+void Smsgport::Remove() {
+  if (::All->RunMsgPort == this) {
+    ::All->RunMsgPort = Next;
+  }
+  if (All) {
+    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstMsgPort, NULL);
+    All = (Tall)0;
+  }
+}
+
+void Smsgport::Delete() {
+  Twidget w;
+  uldat count = 20;
+
+  /*
+   * optimization: if we are going to UnMap() a lot of windows,
+   * we set QueuedDrawArea2FullScreen = true, so that the UnMap()
+   * calls do not have to redraw every time.
+   */
+  for (w = FirstW; w && count; w = w->O_Next) {
+    if (IS_WINDOW(w) && w->Parent && IS_SCREEN(w->Parent)) {
+      count--;
+    }
+  }
+  if (!count) {
+    QueuedDrawArea2FullScreen = true;
+  }
+  if (ShutDownHook) {
+    ShutDownHook(this);
+  }
+  /*
+   * must delete the Menus first, as among widgets there are also
+   * Tmenuitem windows, which cannot be deleted before deleting
+   * the corresponding Tmenuitem.
+   */
+  DeleteList(FirstMsg);
+  DeleteList(FirstMenu);
+  DeleteList(FirstW);
+  DeleteList(FirstGroup);
+  DeleteList(FirstMutex);
+
+  Remove();
+  if (Name) {
+    FreeMem(Name);
+  }
+  Sobj::Delete();
 }

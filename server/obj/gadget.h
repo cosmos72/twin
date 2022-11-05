@@ -18,8 +18,6 @@
 struct SgadgetFn {
   uldat Magic;
   void (*Insert)(Tgadget, Twidget Parent, Twidget Prev, Twidget Next);
-  void (*Remove)(Tgadget);
-  void (*Delete)(Tgadget);
   /* Twidget */
   TobjFn Fn_Obj;
   void (*DrawSelf)(Sdraw *D);
@@ -71,6 +69,7 @@ struct Sgadget : public Swidget {
                uldat Attr, uldat Flags, udat Code, tcolor ColText, tcolor ColTextSelect,
                tcolor ColTextDisabled, tcolor ColTextSelectDisabled, dat Left, dat Up);
 
+  virtual void Delete() OVERRIDE;
   virtual void ChangeField(udat field, uldat clear_mask, uldat xor_mask) OVERRIDE;
 
   /* Tgadget */

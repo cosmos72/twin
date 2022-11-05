@@ -215,24 +215,38 @@ static void RemoteEvent(int FdCount, fd_set *FdSet) {
   }
 }
 
-static struct SmoduleFn _FnModule = {
-    module_magic,
-    (void (*)(Tmodule, Tall, Tmodule, Tmodule))NoOp, /* InsertModule */
-    (void (*)(Tmodule))NoOp,                         /* RemoveModule */
-    (void (*)(Tmodule))NoOp,                         /* DeleteModule */
-    NULL,                                            /* Fn_Obj       */
-    (bool (*)(Tmodule))NoOp,                         /* DlOpen       */
-    (void (*)(Tmodule))NoOp,                         /* DlClose      */
-};
+////////////////////////////////////////////////////////////////////////////////
+/// Sobj methods
 
 Tobj Sobj::Init() {
   return this;
 }
 
+void Sobj::Remove() {
+}
+void Sobj::Delete() {
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Smodule methods
+
+static struct SmoduleFn _FnModule = {
+    module_magic,
+    (void (*)(Tmodule, Tall, Tmodule, Tmodule))NoOp, /* InsertModule */
+    NULL,                                            /* Fn_Obj       */
+    (bool (*)(Tmodule))NoOp,                         /* DlOpen       */
+    (void (*)(Tmodule))NoOp,                         /* DlClose      */
+};
+
 Tmodule Smodule::Init(uldat /*namelen*/, const char * /*name*/) {
   Fn = &_FnModule;
   Sobj::Init();
   return this;
+}
+
+void Smodule::Remove() {
+}
+void Smodule::Delete() {
 }
 
 static Smodule _Module;
@@ -311,19 +325,20 @@ static bool module_InitHW(Chars arg) {
   return false;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/// Sdisplay methods
+
 static Tdisplay CreateDisplayHW(Chars name);
-static byte InitDisplayHW(Tdisplay);
-static void QuitDisplayHW(Tdisplay);
+static byte InitDisplay(Tdisplay);
+static void QuitDisplay(Tdisplay);
 
 static struct SdisplayFn _FnDisplay = {
     /*-------------------*/
     display_hw_magic,
     (void (*)(Tdisplay, Tall, Tdisplay, Tdisplay))NoOp, /* InsertDisplayHW */
-    (void (*)(Tdisplay))NoOp,                           /* RemoveDisplayHW */
-    (void (*)(Tdisplay))NoOp,                           /* DeleteDisplayHW */
     NULL,                                               /* Fn_Obj */
-    InitDisplayHW,
-    QuitDisplayHW,
+    InitDisplay,
+    QuitDisplay,
 };
 
 Tdisplay Sdisplay::Init(uldat namelen, const char *name) {
@@ -342,6 +357,11 @@ Tdisplay Sdisplay::Init(uldat namelen, const char *name) {
   this->Quitted = ttrue;
   this->AttachSlot = NOSLOT;
   return this;
+}
+
+void Sdisplay::Remove() {
+}
+void Sdisplay::Delete() {
 }
 
 static Sdisplay _HW;
@@ -363,10 +383,10 @@ static void UpdateFlagsHW(void) NOTHROW {
 }
 
 /*
- * InitDisplayHW runs HW specific InitXXX() functions, starting from best setup
+ * InitDisplay runs HW specific InitXXX() functions, starting from best setup
  * and falling back in case some of them fails.
  */
-static byte InitDisplayHW(Tdisplay D_HW) {
+static byte InitDisplay(Tdisplay D_HW) {
   Chars arg = D_HW->Name;
   uldat tried = 0;
   byte success;
@@ -405,7 +425,7 @@ static byte InitDisplayHW(Tdisplay D_HW) {
   return success;
 }
 
-static void QuitDisplayHW(Tdisplay D_HW) {
+static void QuitDisplay(Tdisplay D_HW) {
   if (D_HW && D_HW->QuitHW) {
     HW = D_HW;
     D_HW->QuitHW();
@@ -445,7 +465,7 @@ static Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
   }
   if (IsValidHW(arg) && CreateDisplayHW(arg)) {
     HW->AttachSlot = slot;
-    if (InitDisplayHW(HW))
+    if (InitDisplay(HW))
       return HW;
   }
   return NULL;
@@ -526,7 +546,7 @@ void FlushHW(void) {
     return;
 
   if (QueuedDrawArea2FullScreen) {
-    QueuedDrawArea2FullScreen = tfalse;
+    QueuedDrawArea2FullScreen = false;
     DirtyVideo(0, 0, DisplayWidth - 1, DisplayHeight - 1);
     ValidOldVideo = tfalse;
   } else if (HW->RedrawVideo) {
@@ -976,7 +996,7 @@ static void MainLoop(int Fd) {
        * however, if width <= 0 : means we lost connection, so exit..
        */
       if (TwGetDisplayWidth() <= 0) {
-        QuitDisplayHW(HW);
+        QuitDisplay(HW);
         log(ERROR) << "twdisplay: lost connection to TWIN.. \n";
         exit(1);
       }
@@ -1001,14 +1021,14 @@ static void MainLoop(int Fd) {
     Quit(0);
 
   if (num_fds < 0 && errno != EINTR) {
-    QuitDisplayHW(HW);
+    QuitDisplay(HW);
     log(ERROR) << "twdisplay: select(): " << Chars::from_c(strerror(errno)) << "\n";
     exit(1);
   }
   if (TwInPanic()) {
     err = TwErrno;
     detail = TwErrnoDetail;
-    QuitDisplayHW(HW);
+    QuitDisplay(HW);
     printk("" SS ": libtw error: " SS "" SS "\n", MYname, TwStrError(err),
            TwStrErrorDetail(err, detail));
     exit(1);
@@ -1016,7 +1036,7 @@ static void MainLoop(int Fd) {
   err = TwErrno;
   detail = TwErrnoDetail;
   sys_errno = errno;
-  QuitDisplayHW(HW);
+  QuitDisplay(HW);
   printk("" SS ": shouldn't happen! Please report:\n"
          "\tlibtw TwErrno: %d(%d),\t" SS "" SS "\n"
          "\tsystem  errno: %d,\t" SS "\n",
@@ -1275,7 +1295,7 @@ int main(int argc, char *argv[]) {
         return 1;
       }
       if (!(buf = (char *)AllocMem(HW->Name.size() + 80))) {
-        QuitDisplayHW(HW);
+        QuitDisplay(HW);
         TwClose();
         OutOfMemory();
         return 1;
@@ -1349,7 +1369,7 @@ int main(int argc, char *argv[]) {
 }
 
 void Quit(int status) {
-  QuitDisplayHW(HW);
+  QuitDisplay(HW);
   if (status < 0)
     return; /* give control back to signal handler */
   exit(status);

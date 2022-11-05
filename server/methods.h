@@ -25,6 +25,8 @@ void SetFillWidget(Twidget w, tcell Fill);
 void IncMouseMotionN(void);
 void DecMouseMotionN(void);
 
+void RemoveGeneric(TobjEntry obj, TobjList parent, ldat *ObjCount);
+
 #define Do(Command, objtype) (Fn_T##objtype->Command)
 
 #define New(objtype) S##objtype::Create
