@@ -650,7 +650,7 @@ void TwinSelectionSetOwner(Tobj Owner, tany Time, tany Frac) {
   }
 
   if (CmpTime(&T, &All->Selection->Time) > 0) {
-    if (!Owner || Owner->Id >> magic_shift == msgport_magic >> magic_shift) {
+    if (!Owner || Owner->Id >> class_byte_shift == Tmsgport_class_byte) {
       if (All->Selection->Owner)
         SelectionClear(All->Selection->Owner);
 
@@ -659,7 +659,7 @@ void TwinSelectionSetOwner(Tobj Owner, tany Time, tany Frac) {
       All->Selection->Owner = (Tmsgport)Owner;
       All->Selection->OwnerOnce = NULL;
       CopyMem(&T, &All->Selection->Time, sizeof(timevalue));
-    } else if (Owner->Id >> magic_shift == display_hw_magic >> magic_shift) {
+    } else if (Owner->Id >> class_byte_shift == Tdisplay_class_byte) {
       /* don't NEEDSelectionExport here! */
       All->Selection->OwnerOnce = (Tdisplay)0;
     }
@@ -674,7 +674,7 @@ void TwinSelectionNotify(Tobj requestor, uldat reqprivate, e_id magic, Chars mim
 #endif
   if (!requestor) {
     (void)SelectionStore(magic, mime, data);
-  } else if (requestor->Id >> magic_shift == msgport_magic >> magic_shift) {
+  } else if (requestor->Id >> class_byte_shift == Tmsgport_class_byte) {
 
     const size_t len = mime.size() + data.size();
 
@@ -695,7 +695,7 @@ void TwinSelectionNotify(Tobj requestor, uldat reqprivate, e_id magic, Chars mim
       }
       SendMsg((Tmsgport)requestor, NewMsg);
     }
-  } else if (requestor->Id >> magic_shift == display_hw_magic >> magic_shift) {
+  } else if (requestor->Id >> class_byte_shift == Tdisplay_class_byte) {
     SaveHW;
     SetHW((Tdisplay)requestor);
     HW->HWSelectionNotify(reqprivate, magic, mime, data);
@@ -709,7 +709,7 @@ void TwinSelectionRequest(Tobj requestor, uldat reqprivate, Tobj Owner) {
             << ", owner is 0x" << (Owner ? Owner->Id : NOID) << "\n";
 #endif
   if (Owner) {
-    if (Owner->Id >> magic_shift == msgport_magic >> magic_shift) {
+    if (Owner->Id >> class_byte_shift == Tmsgport_class_byte) {
       Tmsg NewMsg;
       event_any *event;
       if ((NewMsg = New(msg)(msg_selection_request, 0))) {
@@ -722,7 +722,7 @@ void TwinSelectionRequest(Tobj requestor, uldat reqprivate, Tobj Owner) {
         event->EventSelectionRequest.ReqPrivate = reqprivate;
         SendMsg((Tmsgport)Owner, NewMsg);
       }
-    } else if (Owner->Id >> magic_shift == display_hw_magic >> magic_shift) {
+    } else if (Owner->Id >> class_byte_shift == Tdisplay_class_byte) {
       SaveHW;
       SetHW((Tdisplay)Owner);
       HW->HWSelectionRequest(requestor, reqprivate);

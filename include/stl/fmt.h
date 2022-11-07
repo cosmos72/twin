@@ -34,8 +34,8 @@ public:
   explicit Fmt(Void unused) NOTHROW {
   }
 
-  to_chars_result write_to(Span<char> dst) const OVERRIDE NOTHROW;
-  size_t size() const OVERRIDE NOTHROW;
+  to_chars_result write_to(Span<char> dst) const NOTHROW OVERRIDE;
+  size_t size() const NOTHROW OVERRIDE;
 };
 
 /**
@@ -46,8 +46,8 @@ public:
   explicit Fmt(long val, unsigned base = 10) NOTHROW : val_(val), base_(base) {
   }
 
-  to_chars_result write_to(Span<char> dst) const OVERRIDE NOTHROW;
-  size_t size() const OVERRIDE NOTHROW;
+  to_chars_result write_to(Span<char> dst) const NOTHROW OVERRIDE;
+  size_t size() const NOTHROW OVERRIDE;
 
 private:
   long val_;
@@ -62,8 +62,8 @@ public:
   explicit Fmt(unsigned long val, unsigned base = 10) NOTHROW : val_(val), base_(base) {
   }
 
-  to_chars_result write_to(Span<char> dst) const OVERRIDE NOTHROW;
-  size_t size() const OVERRIDE NOTHROW;
+  to_chars_result write_to(Span<char> dst) const NOTHROW OVERRIDE;
+  size_t size() const NOTHROW OVERRIDE;
 
 private:
   unsigned long val_;
@@ -78,8 +78,8 @@ public:
   explicit Fmt(View<char> val) NOTHROW : val_(val) {
   }
 
-  to_chars_result write_to(Span<char> dst) const OVERRIDE NOTHROW;
-  size_t size() const OVERRIDE NOTHROW;
+  to_chars_result write_to(Span<char> dst) const NOTHROW OVERRIDE;
+  size_t size() const NOTHROW OVERRIDE;
 
 private:
   View<char> val_;

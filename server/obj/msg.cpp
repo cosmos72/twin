@@ -14,10 +14,12 @@
 #include "log.h"
 #include "fn.h"      // Fn_Tmsg
 #include "methods.h" // RemoveGeneric()
-#include "obj/id.h"  // AssignId()
+#include "obj/all.h"
+#include "obj/id.h" // AssignId()
 #include "obj/msg.h"
 #include "obj/msgport.h"
 #include "stl/fmt.h"
+#include "twin.h" // IS_MSG(), IS_MSGPORT()
 
 #include <new> // placement new
 
@@ -41,7 +43,7 @@ Tmsg Smsg::Create(udat type, size_t eventlen) {
 }
 
 Tmsg Smsg::Init(udat type, uldat eventlen) {
-  if (AssignId(e_id(Fn->Magic), (Tobj)this)) {
+  if (AssignId(Tmsg_class_id, this)) {
     // this->Prev = this->Next = NULL;
     // this->MsgPort = NULL;
     this->Type = type;
@@ -51,14 +53,30 @@ Tmsg Smsg::Init(udat type, uldat eventlen) {
   return NULL;
 }
 
+void Smsg::Delete() {
+  Remove();
+  Sobj::Delete();
+}
+
+void Smsg::Insert(Tmsgport parent, Tmsg prev, Tmsg next) {
+  if (parent && !MsgPort) {
+    /* if adding the first Tmsg, move the Tmsgport to the head
+     * of Tmsgport list, so that the scheduler will run it */
+    Tall all = parent->All;
+    if (all && !parent->FirstMsg) {
+      // MoveFirst is a macro, parent->All would be evaluated *after* it's set to NULL
+      MoveFirst(MsgPort, all, parent);
+    }
+
+    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstMsg, (TobjEntry)prev, (TobjEntry)next,
+                  NULL);
+    MsgPort = parent;
+  }
+}
+
 void Smsg::Remove() {
   if (MsgPort) {
     RemoveGeneric((TobjEntry)this, (TobjList)&MsgPort->FirstMsg, NULL);
     MsgPort = (Tmsgport)0;
   }
-}
-
-void Smsg::Delete() {
-  Remove();
-  Sobj::Delete();
 }

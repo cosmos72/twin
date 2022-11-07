@@ -13,7 +13,7 @@
 #include "obj/all.h" // extern All
 #include "obj/display.h"
 #include "alloc.h"    // AllocMem0(), CloneStrL()
-#include "methods.h"  // InsertLast()
+#include "methods.h"  // InsertGeneric(), InsertLast(), RemoveGeneric()
 #include "twin.h"     // NOSLOT
 #include "hw.h"       // DisplayHWCTTY
 #include "hw_multi.h" // ResizeDisplay(), RunNoHW()
@@ -35,31 +35,18 @@ Tdisplay Sdisplay::Create(uldat namelen, const char *name) {
 }
 
 Tdisplay Sdisplay::Init(uldat namelen, const char *name) {
-  if (!((Tobj)this)->Init()) {
+  if (!Sobj::Init(Tdisplay_class_id) || !Name.format(Chars(name, namelen))) {
     return NULL;
   }
-  if (!this->Name.format(Chars(name, namelen))) {
-    return NULL;
-  }
-  this->Module = NULL;
-  this->Quitted = ttrue;
-  this->AttachSlot = NOSLOT;
+  Module = NULL;
+  Quitted = ttrue;
+  AttachSlot = NOSLOT;
   /*
    * ->Quitted will be set to tfalse only
-   * after this->InitHW() has succeeded
+   * after InitHW() has succeeded
    */
   InsertLast(Display, this, ::All);
   return this;
-}
-
-void Sdisplay::Remove() {
-  if (All) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstDisplay, NULL);
-    All = (Tall)0;
-
-    if (::All->HookDisplayFn)
-      ::All->HookDisplayFn(::All->HookDisplay);
-  }
 }
 
 void Sdisplay::Delete() {
@@ -86,5 +73,32 @@ void Sdisplay::Delete() {
     } else if (::All->FirstDisplay && ResizeDisplay()) {
       QueuedDrawArea2FullScreen = true;
     }
+  }
+}
+
+void Sdisplay::Insert(Tall parent, Tdisplay prev, Tdisplay next) {
+  if (parent && !All) {
+    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstDisplay, //
+                  (TobjEntry)prev, (TobjEntry)next, NULL);
+    All = parent;
+#if 0
+    /*
+     * here we would call uninitialized display routines like MoveToXY,
+     * put this after InitHW()
+     */
+    if (All->HookDisplayFn) {
+      All->HookDisplayFn(All->HookDisplay);
+    }
+#endif
+  }
+}
+
+void Sdisplay::Remove() {
+  if (All) {
+    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstDisplay, NULL);
+    All = (Tall)0;
+
+    if (::All->HookDisplayFn)
+      ::All->HookDisplayFn(::All->HookDisplay);
   }
 }

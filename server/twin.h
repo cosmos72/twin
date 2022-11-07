@@ -64,21 +64,22 @@ enum {
 #endif
 #define NOSLOT TW_MAXULDAT
 
-#define IS_OBJ(type, O) (((O)->Id >> magic_shift) == type##_magic_byte)
+#define IS_OBJ(type, O) (((O)->Id >> class_byte_shift) == type##_class_byte)
+#define IS_ALL(O) IS_OBJ(Tall, O)
+#define IS_DISPLAY(O) IS_OBJ(Tdisplay, O)
 #define IS_WIDGET(O)                                                                               \
   (IS_OBJ(Twidget, O) || IS_OBJ(Tgadget, O) || IS_OBJ(Twindow, O) || IS_OBJ(Tscreen, O))
 #define IS_GADGET(O) IS_OBJ(Tgadget, O)
-#define IS_WINDOW(O) IS_OBJ(Twindow, O)
-#define IS_SCREEN(O) IS_OBJ(Tscreen, O)
-#define IS_ROW(O) (IS_OBJ(Trow, O) || IS_OBJ(Tmenuitem, O))
-#define IS_MENUITEM(O) IS_OBJ(Tmenuitem, O)
+#define IS_GROUP(O) IS_OBJ(Tgroup, O)
 #define IS_MENU(O) IS_OBJ(Tmenu, O)
+#define IS_MENUITEM(O) IS_OBJ(Tmenuitem, O)
+#define IS_MODULE(O) IS_OBJ(Tmodule, O)
+#define IS_MSG(O) IS_OBJ(Tmsg, O)
 #define IS_MSGPORT(O) IS_OBJ(Tmsgport, O)
 #define IS_MUTEX(O) IS_OBJ(Tmutex, O)
-#define IS_MSG(O) IS_OBJ(Tmsg, O)
-#define IS_MODULE(O) IS_OBJ(Tmodule, O)
-#define IS_DISPLAY(O) IS_OBJ(Tdisplay, O)
-#define IS_ALL(O) IS_OBJ(Tall, O)
+#define IS_ROW(O) (IS_OBJ(Trow, O) || IS_OBJ(Tmenuitem, O))
+#define IS_SCREEN(O) IS_OBJ(Tscreen, O)
+#define IS_WINDOW(O) IS_OBJ(Twindow, O)
 
 /************** Keys **************/
 

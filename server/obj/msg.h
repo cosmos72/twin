@@ -20,8 +20,6 @@
 #include <Tw/datatypes.h>
 
 struct SmsgFn {
-  uldat Magic;
-  void (*Insert)(Tmsg, Tmsgport, Tmsg Prev, Tmsg Next);
   /* Tmsg */
   TobjFn Fn_Obj;
 };
@@ -35,18 +33,18 @@ struct Smsg : public Sobj {
   uldat Len;       /* length of subsequent Event, in bytes */
   event_any Event; /* more bytes may be allocated - enough for actual Type */
 
-  /* Tobj */
-  uldat Magic() const {
-    return Fn->Magic;
-  }
-  static Tmsg Create(udat type, size_t eventlen);
+private:
   Tmsg Init(udat type, uldat eventlen);
 
-  void Insert(Tmsgport port, Tmsg prev, Tmsg next) {
-    Fn->Insert(this, port, prev, next);
-  }
-  virtual void Remove() OVERRIDE;
+public:
+  static Tmsg Create(udat type, size_t eventlen);
+
+  /* Tobj */
   virtual void Delete() OVERRIDE;
+  virtual void Remove() OVERRIDE;
+
+  /* Tmsg */
+  void Insert(Tmsgport port, Tmsg prev, Tmsg next);
 };
 
 #endif /* TWIN_MSG_H */

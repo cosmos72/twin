@@ -17,6 +17,7 @@
 #include "fn.h"      // Fn_Tscreen
 #include "methods.h" // RemoveGeneric()
 #include "obj/all.h"
+#include "twin.h" // IS_ALL(), IS_SCREEN()
 
 #include <new>
 #include <Tw/datasizes.h> // TW_MAXDAT
@@ -40,8 +41,8 @@ Tscreen Sscreen::Create(dat namelen, const char *name, dat bgwidth, dat bgheight
 Tscreen Sscreen::Init(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg) {
   size_t size = (size_t)bgwidth * bgheight * sizeof(tcell);
 
-  if (!size || !((Twidget)this)
-                    ->Init(Builtin_MsgPort, TW_MAXDAT, TW_MAXDAT, 0, SCREENFL_USEBG, 0, 0, bg[0])) {
+  if (!size || !Swidget::Init(Builtin_MsgPort, TW_MAXDAT, TW_MAXDAT, 0, SCREENFL_USEBG, 0, 0, bg[0],
+                              Tscreen_class_id)) {
     return NULL;
   }
   if (name && !(this->Name = CloneStrL(name, namelen))) {
@@ -61,13 +62,6 @@ Tscreen Sscreen::Init(dat namelen, const char *name, dat bgwidth, dat bgheight, 
   return this;
 }
 
-void Sscreen::Remove() {
-  if (All) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstScreen, NULL);
-    All = (Tall)0;
-  }
-}
-
 void Sscreen::Delete() {
   while (FirstW) {
     FirstW->UnMap();
@@ -78,6 +72,27 @@ void Sscreen::Delete() {
     USE.B.Bg = NULL;
   }
   Swidget::Delete();
+}
+
+void Sscreen::InsertWidget(Tobj parent, Twidget prev, Twidget next) {
+  if ((parent && IS_ALL(parent)) && (!prev || IS_SCREEN(prev)) && (!next || IS_SCREEN(next))) {
+    Insert((Tall)parent, (Tscreen)prev, (Tscreen)next);
+  }
+}
+
+void Sscreen::Insert(Tall parent, Tscreen prev, Tscreen next) {
+  if (parent && !All) {
+    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstScreen, (TobjEntry)prev, (TobjEntry)next,
+                  NULL);
+    All = parent;
+  }
+}
+
+void Sscreen::Remove() {
+  if (All) {
+    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstScreen, NULL);
+    All = (Tall)0;
+  }
 }
 
 void Sscreen::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {

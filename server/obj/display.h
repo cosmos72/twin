@@ -19,8 +19,6 @@
 #include "stl_types.h"
 
 struct SdisplayFn {
-  uldat Magic;
-  void (*Insert)(Tdisplay, Tall, Tdisplay Prev, Tdisplay Next);
   /* Tdisplay */
   TobjFn Fn_Obj;
   byte (*DoInit)(Tdisplay);
@@ -156,19 +154,14 @@ struct Sdisplay : public Sobj {
   dat XY[2]; /* hw-dependent cursor position */
   uldat TT;  /* hw-dependent cursor type */
 
-  static Tdisplay Create(uldat namelen, const char *name);
   Tdisplay Init(uldat namelen, const char *name);
+  static Tdisplay Create(uldat namelen, const char *name);
 
   /* Tobj */
 
-  uldat Magic() const {
-    return Fn->Magic;
-  }
-  void Insert(Tall a, Tdisplay prev, Tdisplay next) {
-    Fn->Insert(this, a, prev, next);
-  }
-  virtual void Remove() OVERRIDE;
   virtual void Delete() OVERRIDE;
+  void Insert(Tall a, Tdisplay prev, Tdisplay next);
+  virtual void Remove() OVERRIDE;
 
   /* Tdisplay */
   byte DoInit() {

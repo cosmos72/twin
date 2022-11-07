@@ -32,33 +32,33 @@ enum e_id /*: uldat*/ {
   SEL_IDMAGIC = 0x64496449,
   SEL_FILEMAGIC = 0x656C6946,
 
-  obj_magic = 0x0DEAD0B1ul,
-  widget_magic = 0x161D9743ul,
-  gadget_magic = 0x29867551ul,
-  window_magic = 0x31357531ul,
-  screen_magic = 0x42659871ul,
-  ggroup_magic = 0x5741F326ul,
-  row_magic = 0x68074FFAul,
-  menuitem_magic = 0x7ABC8FDEul,
-  menu_magic = 0x8BAD0BEDul,
-  msgport_magic = 0x90981437ul,
+  Tobj_class_id = 0x0DEAD0B1ul,
+  Twidget_class_id = 0x161D9743ul,
+  Tgadget_class_id = 0x29867551ul,
+  Twindow_class_id = 0x31357531ul,
+  Tscreen_class_id = 0x42659871ul,
+  Tgroup_class_id = 0x5741F326ul,
+  Trow_class_id = 0x68074FFAul,
+  Tmenuitem_class_id = 0x7ABC8FDEul,
+  Tmenu_class_id = 0x8BAD0BEDul,
+  Tmsgport_class_id = 0x90981437ul,
   /*
    *   B I G   F A T   WARNING:
    *
-   * msg_magic is the magic number for user-created (tmsg) structures,
+   * Tmsg_class_id is the magic number for user-created (tmsg) structures,
    * while MSG_MAGIC (defined in socklist_m4.h) is the serial number reserved by
    * libtw to receive server messages (which are still (tmsg) structures).
    */
-  msg_magic = 0xA3A61CE4ul, /* this must match tmsg_magic in include/Tw/Tw_defs.h */
-  mutex_magic = 0xB0FADED0ul,
-  module_magic = 0xCB0F1278ul,
-  display_hw_magic = 0xEDBCC609ul,
-  all_magic = 0xFA11FA11ul,
+  Tmsg_class_id = 0xA3A61CE4ul, /* this must match tmsg_magic in include/Tw/Tw_defs.h */
+  Tmutex_class_id = 0xB0FADED0ul,
+  Tmodule_class_id = 0xCB0F1278ul,
+  Tdisplay_class_id = 0xEDBCC609ul,
+  Tall_class_id = 0xFA11FA11ul,
 };
 
-bool AssignId(const e_id class_magic_id, Tobj Obj);
-bool AssignId_all(Tall Obj);
-void DropId(Tobj Obj);
-Tobj Id2Obj(e_magic_byte expected_magic_byte, uldat Id);
+bool AssignId(const e_id class_id, Tobj o);
+bool AssignId_all(Tall all);
+void DropId(Tobj o);
+Tobj Id2Obj(e_class_byte expected_magic_byte, uldat id);
 
 #endif /* TWIN_ID_H */

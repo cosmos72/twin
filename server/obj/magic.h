@@ -13,27 +13,27 @@
 #ifndef TWIN_MAGIC_H
 #define TWIN_MAGIC_H
 
-#define magic_mask ((uldat)0xF0000000ul)
-#define magic_shift 28
+#define class_byte_mask ((uldat)0xF0000000ul)
+#define class_byte_shift 28
 
-enum e_magic_byte /*: unsigned char*/ {
-  Tobj_magic_byte = 0,
-  Twidget_magic_byte = 1,
-  Tgadget_magic_byte = 2,
-  Twindow_magic_byte = 3,
-  Tscreen_magic_byte = 4,
-  Tgroup_magic_byte = 5,
-  Trow_magic_byte = 6,
-  Tmenuitem_magic_byte = 7,
-  Tmenu_magic_byte = 8,
-  Tmsgport_magic_byte = 9,
-  Tmsg_magic_byte = 0xA,
-  Tmutex_magic_byte = 0xB,
-  Tmodule_magic_byte = 0xC,
-  Tdisplay_magic_byte = 0xE,
-  Tall_magic_byte = 0xF,
+enum e_class_byte /*: unsigned char*/ {
+  Tobj_class_byte = 0,
+  Twidget_class_byte = 1,
+  Tgadget_class_byte = 2,
+  Twindow_class_byte = 3,
+  Tscreen_class_byte = 4,
+  Tgroup_class_byte = 5,
+  Trow_class_byte = 6,
+  Tmenuitem_class_byte = 7,
+  Tmenu_class_byte = 8,
+  Tmsgport_class_byte = 9,
+  Tmsg_class_byte = 0xA,
+  Tmutex_class_byte = 0xB,
+  Tmodule_class_byte = 0xC,
+  Tdisplay_class_byte = 0xE,
+  Tall_class_byte = 0xF,
 
-  magic_n = 16, /* 1 + max of the *_magic_byte values above */
+  class_byte_n = 16, /* 1 + max of the *_class_byte values above */
 };
 
 /*

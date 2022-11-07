@@ -25,10 +25,7 @@ typedef struct SobjFn *TobjFn;
 typedef struct SobjEntry *TobjEntry;
 typedef struct SobjList *TobjList;
 
-struct SobjFn {
-  uldat Magic;
-  void (*Insert)(Tobj self, Tobj parent, Tobj prev, Tobj next);
-};
+struct SobjFn {};
 
 struct Sobj {
 protected:
@@ -42,20 +39,13 @@ public:
   //  TobjFn Fn;
 
   static Tobj Create();
-  Tobj Init();
-
-#if 0
-  virtual e_id Magic() const = 0;
-
-  void Insert(Tobj parent, Tobj prev, Tobj next) {
-    ((TobjEntry)this)->Fn->Insert(this, parent, prev, next);
-  }
-#endif // 0
-
-  // default implementation does nothing
-  virtual void Remove();
+  Tobj Init(e_id class_id);
 
   virtual void Delete();
+
+  // default implementation does nothing
+  virtual void Remove() {
+  }
 
   // default implementation does nothing
   virtual void ChangeField(udat field, uldat clear_mask, uldat xor_mask) {

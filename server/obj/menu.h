@@ -16,8 +16,6 @@
 #include "obj/obj.h"
 
 struct SmenuFn {
-  uldat Magic;
-  void (*Insert)(Tmenu, Tmsgport, Tmenu Prev, Tmenu Next);
   /* Tmenu */
   TobjFn Fn_Obj;
   Trow (*SetInfo)(Tmenu, byte Flags, ldat Len, const char *Text, const tcolor *ColText);
@@ -45,14 +43,9 @@ struct Smenu : public Sobj {
              tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut, byte flagdefcolinfo);
 
   /* obj */
-  uldat Magic() const {
-    return Fn->Magic;
-  }
-  void Insert(Tmsgport owner, Tmenu prev, Tmenu next) {
-    Fn->Insert(this, owner, prev, next);
-  }
-  virtual void Remove() OVERRIDE;
   virtual void Delete() OVERRIDE;
+  void Insert(Tmsgport owner, Tmenu prev, Tmenu next);
+  virtual void Remove() OVERRIDE;
 
   /* Tmenu */
   Trow SetInfo(byte flags, ldat len, const char *text, const tcolor *coltext) {

@@ -23,7 +23,7 @@ Tobj Sobj::Create() {
   if (addr) {
     o = new (addr) SobjEntry();
     o->Fn = Fn_Tobj;
-    if (!o->Init()) {
+    if (!o->Init(Tobj_class_id)) {
       o->Delete();
       o = NULL;
     }
@@ -31,18 +31,15 @@ Tobj Sobj::Create() {
   return o;
 }
 
-Tobj Sobj::Init() {
-  if (AssignId(e_id(((TobjEntry)this)->Fn->Magic), this)) {
+Tobj Sobj::Init(e_id class_id) {
+  if (AssignId(class_id, this)) {
     return this;
   }
   return NULL;
 }
 
-void Sobj::Remove() {
-}
-
 void Sobj::Delete() {
-  /* not a good idea to Remove() here */
+  /* not a good idea to Remove() here: too late */
   DropId(this);
   FreeMem(this);
 }

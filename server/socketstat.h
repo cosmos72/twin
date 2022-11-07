@@ -489,39 +489,39 @@ static void sockStat(Tobj x, udat n, const byte *in) {
   if (ok) {
     for (i = j = 0; j < n; j++) {
       Pop(in, udat, TSF[i].label);
-      switch (x->Id >> magic_shift) {
-      case Twidget_magic_byte:
+      switch (x->Id >> class_byte_shift) {
+      case Twidget_class_byte:
         ok = sockStatWidget((Twidget)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
-      case Tgadget_magic_byte:
+      case Tgadget_class_byte:
         ok = sockStatGadget((Tgadget)x, TSF + i) || sockStatWidget((Twidget)x, TSF + i) ||
              sockStatObj(x, TSF + i);
         break;
-      case Twindow_magic_byte:
+      case Twindow_class_byte:
         ok = sockStatWindow((Twindow)x, TSF + i) || sockStatWidget((Twidget)x, TSF + i) ||
              sockStatObj(x, TSF + i);
         break;
-      case Tscreen_magic_byte:
+      case Tscreen_class_byte:
         ok = sockStatScreen((Tscreen)x, TSF + i) || sockStatWidget((Twidget)x, TSF + i) ||
              sockStatObj(x, TSF + i);
         break;
-      case Tgroup_magic_byte:
+      case Tgroup_class_byte:
         ok = sockStatGroup((Tgroup)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
-      case Tmenuitem_magic_byte:
+      case Tmenuitem_class_byte:
         ok = sockStatMenuItem((Tmenuitem)x, TSF + i) || sockStatRow((Trow)x, TSF + i) ||
              sockStatObj(x, TSF + i);
         break;
-      case Tmenu_magic_byte:
+      case Tmenu_class_byte:
         ok = sockStatMenu((Tmenu)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
-      case Tmsgport_magic_byte:
+      case Tmsgport_class_byte:
         ok = sockStatMsgPort((Tmsgport)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
-      case Tmutex_magic_byte:
+      case Tmutex_class_byte:
         ok = sockStatMutex((Tmutex)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
-      case Tall_magic_byte:
+      case Tall_class_byte:
         ok = sockStatAll((Tall)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
       default:

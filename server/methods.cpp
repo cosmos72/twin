@@ -100,26 +100,9 @@ void RemoveGeneric(TobjEntry obj, TobjList parent, ldat *objcount) {
 
 /* Tobj */
 
-static void InsertObj(Tobj obj, Tobj parent, Tobj prev, Tobj next) {
-  log(ERROR) << "twin: internal error: pure virtual function InsertObj() called!\n";
-}
-
-static struct SobjFn _FnObj = {
-    obj_magic,
-    InsertObj,
-};
+static struct SobjFn _FnObj = {};
 
 /* Twidget */
-
-static void InsertWidget(Twidget w, Twidget parent, Twidget prev, Twidget next) {
-  if (parent) {
-    /*
-     * don't check w->Parent here, as Raise() and Lower() call
-     * Swidget::Remove() then Swidget::Insert() but Swidget::Remove() does not reset w->Parent
-     */
-    InsertGeneric((TobjEntry)w, (TobjList)&parent->FirstW, (TobjEntry)prev, (TobjEntry)next, NULL);
-  }
-}
 
 void SetFillWidget(Twidget w, tcell Fill) {
   if (w->USE_Fill != Fill) {
@@ -451,7 +434,6 @@ static void RemoveHookWidget(Twidget w, HookFn Hook, HookFn *WhereHook) {
 }
 
 static struct SwidgetFn _FnWidget = {
-    widget_magic,      InsertWidget,   //
     &_FnObj,           DrawSelfWidget, /* exported by draw.c */
     FindWidgetAt,                      /* exported by draw.c */
     FindGadgetByCode,  SetXYWidget,      SetFillWidget,         FocusWidget,   TtyKbdFocus,
@@ -477,7 +459,7 @@ static Tgadget CreateEmptyButton(Tmsgport Owner, dat XWidth, dat YWidth, tcolor 
     g->Fn = (TwidgetFn)Fn_Tgadget;
     if (!((Twidget)g)
              ->Init(Owner, ++XWidth, ++YWidth, 0, GADGETFL_USETEXT | GADGETFL_BUTTON, 0, 0,
-                    (tcell)0)) {
+                    (tcell)0, Tgadget_class_id)) {
       g->Delete();
       return NULL;
     }
@@ -568,8 +550,6 @@ static Tgadget CreateButton(Twidget Parent, dat XWidth, dat YWidth, const char *
 }
 
 static struct SgadgetFn _FnGadget = {
-    gadget_magic,                                               //
-    (void (*)(Tgadget, Twidget, Twidget, Twidget))InsertWidget, //
     /* Twidget */
     &_FnObj, DrawSelfGadget,                      /* exported by draw.c */
     (Twidget (*)(Tgadget, dat, dat))FindWidgetAt, /* exported by draw.c */
@@ -857,8 +837,6 @@ static Trow FindRowByCode(Twindow window, udat Code, ldat *row_i) {
 }
 
 static struct SwindowFn _FnWindow = {
-    window_magic,
-    (void (*)(Twindow, Twidget, Twidget, Twidget))InsertWidget,
     /* Twidget */
     &_FnObj,
     DrawSelfWindow,
@@ -918,14 +896,6 @@ static void BgImageScreen(Tscreen screen, dat BgWidth, dat BgHeight, const tcell
     screen->USE.B.BgHeight = BgHeight;
     CopyMem(Bg, screen->USE.B.Bg, size);
     DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, 0, screen->Up + 1, TW_MAXDAT, TW_MAXDAT, tfalse);
-  }
-}
-
-static void InsertScreen(Tscreen screen, Tall Parent, Tscreen prev, Tscreen next) {
-  if (!screen->All && Parent) {
-    InsertGeneric((TobjEntry)screen, (TobjList)&Parent->FirstScreen, (TobjEntry)prev,
-                  (TobjEntry)next, NULL);
-    screen->All = Parent;
   }
 }
 
@@ -999,8 +969,6 @@ static void DeActivateMenuScreen(Tscreen screen) {
 }
 
 static struct SscreenFn _FnScreen = {
-    screen_magic,
-    InsertScreen,
     /* Twidget */
     &_FnObj,
     DrawSelfScreen,
@@ -1034,14 +1002,6 @@ static struct SscreenFn _FnScreen = {
 };
 
 /* Tgroup */
-
-static void InsertGroup(Tgroup group, Tmsgport MsgPort, Tgroup prev, Tgroup next) {
-  if (!group->MsgPort && MsgPort) {
-    InsertGeneric((TobjEntry)group, (TobjList)&MsgPort->FirstGroup, (TobjEntry)prev,
-                  (TobjEntry)next, NULL);
-    group->MsgPort = MsgPort;
-  }
-}
 
 static void InsertGadgetGroup(Tgroup group, Tgadget g) {
   if (g && !g->Group && !g->G_Prev && !g->G_Next) {
@@ -1086,22 +1046,10 @@ static void SetSelectedGadget(Tgroup group, Tgadget g) {
 }
 
 static struct SgroupFn _FnGroup = {
-    ggroup_magic, InsertGroup, //
-    &_FnObj,      InsertGadgetGroup, RemoveGadgetGroup, GetSelectedGadget, SetSelectedGadget,
+    &_FnObj, InsertGadgetGroup, RemoveGadgetGroup, GetSelectedGadget, SetSelectedGadget,
 };
 
 /* Trow */
-
-static void InsertRow(Trow row, Tobj parent, Trow prev, Trow next) {
-  Twindow window = IS_WINDOW(parent) ? (Twindow)parent : (Twindow)0;
-
-  if (window && W_USE(window, USEROWS) && !row->Parent) {
-    InsertGeneric((TobjEntry)row, (TobjList)&window->USE.R.FirstRow, (TobjEntry)prev,
-                  (TobjEntry)next, &window->HLogic);
-    row->Parent = window;
-    window->USE.R.NumRowOne = window->USE.R.NumRowSplit = (ldat)0;
-  }
-}
 
 static byte SetTextRow(Trow row, uldat Len, const char *Text, byte DefaultCol) {
   if (EnsureLenRow(row, Len, DefaultCol)) {
@@ -1191,14 +1139,8 @@ static void LowerMenuItem(Tmenuitem M) {
 }
 
 static struct SrowFn _FnRow = {
-    row_magic,
-    InsertRow,
     /* Trow */
-    &_FnObj,
-    SetTextRow,
-    SetTRuneRow,
-    (void (*)(Trow))RaiseMenuItem,
-    (void (*)(Trow))LowerMenuItem,
+    &_FnObj, SetTextRow, SetTRuneRow, (void (*)(Trow))RaiseMenuItem, (void (*)(Trow))LowerMenuItem,
 };
 
 byte FindInfo(Tmenu Menu, dat i) {
@@ -1210,18 +1152,6 @@ byte FindInfo(Tmenu Menu, dat i) {
 }
 
 /* Tmenuitem */
-
-static void InsertMenuItem(Tmenuitem MenuItem, Tobj Parent, Tmenuitem prev, Tmenuitem next) {
-  if (!MenuItem->Parent && Parent) {
-    if (IS_MENU(Parent)) {
-      InsertGeneric((TobjEntry)MenuItem, (TobjList) & ((Tmenu)Parent)->FirstI, (TobjEntry)prev,
-                    (TobjEntry)next, NULL);
-      MenuItem->Parent = Parent;
-    } else if (IS_WINDOW(Parent)) {
-      InsertRow((Trow)MenuItem, (Twindow)Parent, (Trow)prev, (Trow)next);
-    }
-  }
-}
 
 Tmenuitem Create4MenuMenuItem(Tobj Parent, Twindow window, udat Code, byte Flags, ldat Len,
                               const char *Name) {
@@ -1256,20 +1186,11 @@ static uldat Create4MenuCommonMenuItem(Tmenu Menu) {
 }
 
 static struct SmenuitemFn _FnMenuItem = {
-    menuitem_magic, InsertMenuItem, //
-    &_FnObj,        SetTextRow,     SetTRuneRow,         RaiseMenuItem,
-    LowerMenuItem,  &_FnRow,        Create4MenuMenuItem, Create4MenuCommonMenuItem,
+    &_FnObj,       SetTextRow, SetTRuneRow,         RaiseMenuItem,
+    LowerMenuItem, &_FnRow,    Create4MenuMenuItem, Create4MenuCommonMenuItem,
 };
 
 /* Tmenu */
-
-static void InsertMenu(Tmenu Menu, Tmsgport MsgPort, Tmenu prev, Tmenu next) {
-  if (!Menu->MsgPort && MsgPort) {
-    InsertGeneric((TobjEntry)Menu, (TobjList)&MsgPort->FirstMenu, (TobjEntry)prev, (TobjEntry)next,
-                  NULL);
-    Menu->MsgPort = MsgPort;
-  }
-}
 
 static Trow SetInfoMenu(Tmenu Menu, byte Flags, ldat Len, const char *Text, const tcolor *ColText) {
   Trow row;
@@ -1368,65 +1289,25 @@ static void SetSelectedItem(Tmenu Menu, Tmenuitem item) {
 }
 
 static struct SmenuFn _FnMenu = {
-    menu_magic,
-    InsertMenu,
     /* Tmenu */
-    &_FnObj,
-    SetInfoMenu,
-    FindItem,
-    GetSelectedItem,
-    RecursiveGetSelectedItem,
-    SetSelectedItem,
+    &_FnObj, SetInfoMenu, FindItem, GetSelectedItem, RecursiveGetSelectedItem, SetSelectedItem,
 };
 
 /* Tmsg */
 
-static void InsertMsg(Tmsg msg, Tmsgport Parent, Tmsg prev, Tmsg next) {
-  if (!msg->MsgPort && Parent) {
-    /* if adding the first Tmsg, move the Tmsgport to the head
-     * of Tmsgport list, so that the scheduler will run it */
-    if (!Parent->FirstMsg && Parent->All)
-      MoveFirst(MsgPort, All, Parent);
-
-    InsertGeneric((TobjEntry)msg, (TobjList)&Parent->FirstMsg, (TobjEntry)prev, (TobjEntry)next,
-                  NULL);
-    msg->MsgPort = Parent;
-  }
-}
-
 static struct SmsgFn _FnMsg = {
-    msg_magic,
-    InsertMsg,
     /* Tmsg */
     &_FnObj,
 };
 
 /* Tmsgport */
 
-static void InsertMsgPort(Tmsgport MsgPort, Tall Parent, Tmsgport prev, Tmsgport next) {
-  if (!MsgPort->All && Parent) {
-    InsertGeneric((TobjEntry)MsgPort, (TobjList)&Parent->FirstMsgPort, (TobjEntry)prev,
-                  (TobjEntry)next, NULL);
-    MsgPort->All = Parent;
-  }
-}
-
 static struct SmsgportFn _FnMsgPort = {
-    msgport_magic,
-    InsertMsgPort,
     /* Tmsgport */
     &_FnObj,
 };
 
 /* Tmutex */
-
-static void InsertMutex(Tmutex Mutex, Tall Parent, Tmutex prev, Tmutex next) {
-  if (!Mutex->All && Parent) {
-    InsertGeneric((TobjEntry)Mutex, (TobjList)&Mutex->All->FirstMutex, (TobjEntry)prev,
-                  (TobjEntry)next, NULL);
-    Mutex->All = Parent;
-  }
-}
 
 static void OwnMutex(Tmutex Mutex, Tmsgport Parent) {
   if (!Mutex->Owner && Parent) {
@@ -1463,8 +1344,6 @@ static void DisOwnMutex(Tmutex Mutex) {
 }
 
 static struct SmutexFn _FnMutex = {
-    mutex_magic,
-    InsertMutex,
     /* Tmutex */
     &_FnObj,
     OwnMutex,
@@ -1473,17 +1352,7 @@ static struct SmutexFn _FnMutex = {
 
 /* Tmodule */
 
-static void InsertModule(Tmodule Module, Tall Parent, Tmodule prev, Tmodule next) {
-  if (!Module->All && Parent) {
-    InsertGeneric((TobjEntry)Module, (TobjList)&Parent->FirstModule, (TobjEntry)prev,
-                  (TobjEntry)next, NULL);
-    Module->All = Parent;
-  }
-}
-
 static struct SmoduleFn _FnModule = {
-    module_magic,
-    InsertModule,
     /* Tmodule */
     &_FnObj,
     DlOpen,
@@ -1492,25 +1361,7 @@ static struct SmoduleFn _FnModule = {
 
 /* Tdisplay */
 
-static void InsertDisplayHW(Tdisplay DisplayHW, Tall Parent, Tdisplay prev, Tdisplay next) {
-  if (!DisplayHW->All && Parent) {
-    InsertGeneric((TobjEntry)DisplayHW, (TobjList)&Parent->FirstDisplay, (TobjEntry)prev,
-                  (TobjEntry)next, NULL);
-    DisplayHW->All = Parent;
-#if 0
-        /*
-         * here we would call uninitialized DisplayHW routines like MoveToXY,
-         * put this after DisplayHW->InitHW()
-         */
-        if (All->HookDisplayFn)
-            All->HookDisplayFn(All->HookDisplay);
-#endif
-  }
-}
-
 static struct SdisplayFn _FnDisplay = {
-    display_hw_magic,
-    InsertDisplayHW,
     /* Tdisplay */
     &_FnObj,
     InitDisplay,

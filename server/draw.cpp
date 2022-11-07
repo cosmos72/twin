@@ -84,7 +84,7 @@ static void FindFontInfo(Tmenu Menu, dat i, bool select, tcell *PtrAttr) NOTHROW
 }
 
 void DrawDesktop(Tscreen screen, dat X1, dat Y1, dat X2, dat Y2, bool shaded) {
-  tcell *Attr, attr;
+  tcell *p_attr, attr;
   tcolor col;
   ldat dwidth, dheight, BgWidth, BgHeight; /* (ldat) to avoid multiplication overflows */
   dat ylimit = -1;
@@ -107,7 +107,7 @@ void DrawDesktop(Tscreen screen, dat X1, dat Y1, dat X2, dat Y2, bool shaded) {
   Y2 = Min2(Y2, dheight - 1);
 
   if (screen && S_USE(screen, USEBG)) {
-    Attr = screen->USE.B.Bg;
+    p_attr = screen->USE.B.Bg;
     BgWidth = screen->USE.B.BgWidth;
     BgHeight = screen->USE.B.BgHeight;
   }
@@ -135,7 +135,7 @@ void DrawDesktop(Tscreen screen, dat X1, dat Y1, dat X2, dat Y2, bool shaded) {
         for (X = X1; X <= X2; X++, x++) {
           if (x >= BgWidth)
             x -= BgWidth;
-          attr = Attr[x + y];
+          attr = p_attr[x + y];
           col = DoShadowColor(TCOLOR(attr), shaded, shaded);
 
           Video[X + Y] = TCELL(col, TRUNEEXTRA(attr));
@@ -145,7 +145,7 @@ void DrawDesktop(Tscreen screen, dat X1, dat Y1, dat X2, dat Y2, bool shaded) {
           if (x >= BgWidth)
             x -= BgWidth;
 
-          Video[X + Y] = Attr[x + y];
+          Video[X + Y] = p_attr[x + y];
         }
       }
     }
@@ -604,7 +604,7 @@ static void DrawSelfBorder(Twindow w, ldat Left, ldat up, ldat rgt, ldat dwn, da
                            dat X2, dat Y2, byte Border, bool winActive, bool shaded) {
 
   ldat i, j, u, v, dwidth = All->DisplayWidth; /* (ldat) to avoid multiplication overflows */
-  tcell Attr;
+  tcell attr;
   tcolor Color;
 
   if (QueuedDrawArea2FullScreen || (w->Flags & WIDGETFL_NOTVISIBLE))
@@ -613,9 +613,9 @@ static void DrawSelfBorder(Twindow w, ldat Left, ldat up, ldat rgt, ldat dwn, da
   if ((ldat)Y1 == up) {
     j = Y1 * dwidth;
     for (i = X1, u = i - Left; i <= X2; i++, u++) {
-      w->FindBorder(u, 0, Border, &Attr);
-      Color = DoShadowColor(TCOLOR(Attr), shaded || !winActive, shaded);
-      Video[i + j] = TCELL(Color, 0) | (Attr & ~TCELL(TW_MAXWCOL, 0));
+      w->FindBorder(u, 0, Border, &attr);
+      Color = DoShadowColor(TCOLOR(attr), shaded || !winActive, shaded);
+      Video[i + j] = TCELL(Color, 0) | (attr & ~TCELL(TW_MAXWCOL, 0));
     }
     DirtyVideo(X1, Y1, X2, Y1);
     Y1++;
@@ -627,9 +627,9 @@ static void DrawSelfBorder(Twindow w, ldat Left, ldat up, ldat rgt, ldat dwn, da
     v = (ldat)Y2 - up;
     j = Y2 * dwidth;
     for (i = X1, u = i - Left; i <= X2; i++, u++) {
-      w->FindBorder(u, v, Border, &Attr);
-      Color = DoShadowColor(TCOLOR(Attr), shaded || !winActive, shaded);
-      Video[i + j] = TCELL(Color, 0) | (Attr & ~TCELL(TW_MAXWCOL, 0));
+      w->FindBorder(u, v, Border, &attr);
+      Color = DoShadowColor(TCOLOR(attr), shaded || !winActive, shaded);
+      Video[i + j] = TCELL(Color, 0) | (attr & ~TCELL(TW_MAXWCOL, 0));
     }
     DirtyVideo(X1, Y2, X2, Y2);
     Y2--;
@@ -639,9 +639,9 @@ static void DrawSelfBorder(Twindow w, ldat Left, ldat up, ldat rgt, ldat dwn, da
 
   if ((ldat)X1 == Left) {
     for (j = Y1, v = j - up; j <= Y2; j++, v++) {
-      w->FindBorder(0, v, Border, &Attr);
-      Color = DoShadowColor(TCOLOR(Attr), shaded || !winActive, shaded);
-      Video[X1 + j * dwidth] = TCELL(Color, 0) | (Attr & ~TCELL(TW_MAXWCOL, 0));
+      w->FindBorder(0, v, Border, &attr);
+      Color = DoShadowColor(TCOLOR(attr), shaded || !winActive, shaded);
+      Video[X1 + j * dwidth] = TCELL(Color, 0) | (attr & ~TCELL(TW_MAXWCOL, 0));
     }
     DirtyVideo(X1, Y1, X1, Y2);
     X1++;
@@ -652,9 +652,9 @@ static void DrawSelfBorder(Twindow w, ldat Left, ldat up, ldat rgt, ldat dwn, da
   if ((ldat)X2 == rgt) {
     u = (ldat)X2 - Left;
     for (j = Y1, v = j - up; j <= Y2; j++, v++) {
-      w->FindBorder(u, v, Border, &Attr);
-      Color = DoShadowColor(TCOLOR(Attr), shaded || !winActive, shaded);
-      Video[X2 + j * dwidth] = TCELL(Color, 0) | (Attr & ~TCELL(TW_MAXWCOL, 0));
+      w->FindBorder(u, v, Border, &attr);
+      Color = DoShadowColor(TCOLOR(attr), shaded || !winActive, shaded);
+      Video[X2 + j * dwidth] = TCELL(Color, 0) | (attr & ~TCELL(TW_MAXWCOL, 0));
     }
     DirtyVideo(X2, Y1, X2, Y2);
     X2--;
@@ -1766,7 +1766,7 @@ void DrawMenuScreen(Tscreen screen, dat Xstart, dat Xend) {
   Tmenu Menu;
   Tmenuitem item;
   dat dwidth, dheight, i, j, x;
-  tcell Attr;
+  tcell attr;
   trune Font;
   tcolor Color;
   byte select, State, MenuInfo;
@@ -1816,9 +1816,9 @@ void DrawMenuScreen(Tscreen screen, dat Xstart, dat Xend) {
         Font = ' ';
     } else if (MenuInfo && FindInfo(Menu, i)) {
       select = State == state_screen;
-      FindFontInfo(Menu, i, select, &Attr);
-      Font = TRUNE(Attr);
-      Color = TCOLOR(Attr);
+      FindFontInfo(Menu, i, select, &attr);
+      Font = TRUNE(attr);
+      Color = TCOLOR(attr);
     } else {
       if (!MenuInfo) {
         item = Menu->FindItem(i);
@@ -1836,9 +1836,9 @@ void DrawMenuScreen(Tscreen screen, dat Xstart, dat Xend) {
            * CHEAT: item may be in CommonMenu, not in Menu...
            * steal item color from Menu.
            */
-          FindFontMenuItem(Menu, item, i - x, select, &Attr);
-          Font = TRUNE(Attr);
-          Color = TCOLOR(Attr);
+          FindFontMenuItem(Menu, item, i - x, select, &attr);
+          Font = TRUNE(attr);
+          Color = TCOLOR(attr);
         }
       }
       if (MenuInfo || !item) {

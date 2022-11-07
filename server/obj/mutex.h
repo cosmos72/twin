@@ -16,8 +16,6 @@
 #include "obj/obj.h"
 
 struct SmutexFn {
-  uldat Magic;
-  void (*Insert)(Tmutex, Tall, Tmutex Prev, Tmutex Next);
   /* Tmutex */
   TobjFn Fn_Obj;
   void (*Own)(Tmutex, Tmsgport);
@@ -34,20 +32,19 @@ struct Smutex : public Sobj {
   byte Perm, NameLen;
   char *Name;
 
-  static Tmutex Create(Tmsgport owner, byte namelen, const char *name, byte perm);
+private:
   Tmutex Init(Tmsgport owner, byte namelen, const char *name, byte perm);
 
+public:
+  static Tmutex Create(Tmsgport owner, byte namelen, const char *name, byte perm);
+
   /* Tobj */
-  uldat Magic() const {
-    return Fn->Magic;
-  }
-  void Insert(Tall a, Tmutex prev, Tmutex next) {
-    Fn->Insert(this, a, prev, next);
-  }
-  virtual void Remove() OVERRIDE;
   virtual void Delete() OVERRIDE;
+  virtual void Remove() OVERRIDE;
 
   /* Tmutex */
+  void Insert(Tall a, Tmutex prev, Tmutex next);
+
   void Own(Tmsgport owner) {
     Fn->Own(this, owner);
   }

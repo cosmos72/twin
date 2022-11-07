@@ -52,8 +52,6 @@ struct Sremotedata {
 };
 
 struct SwindowFn {
-  uldat Magic;
-  void (*Insert)(Twindow, Twidget Parent, Twidget Prev, Twidget Next);
   /* Twidget */
   TobjFn Fn_Obj;
   void (*DrawSelf)(Sdraw *D);
@@ -121,17 +119,19 @@ struct Swindow : public Swidget {
   ldat WLogic, HLogic;  /* Twindow interior logic size */
   trune const *Charset; /* the byte -> trune translation to use */
 
-  /* Tobj */
-  static Twindow Create(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle,
-                        Tmenu menu, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
-                        dat xwidth, dat ywidth, dat scrollbacklines);
-  static Twindow Create4Menu(Tmenu);
+private:
   Twindow Init(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle, Tmenu menu,
                tcolor coltext, uldat cursortype, uldat attr, uldat flags, dat xwidth, dat ywidth,
                dat scrollbacklines);
 
-  virtual void Delete() OVERRIDE;
+public:
+  static Twindow Create(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle,
+                        Tmenu menu, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
+                        dat xwidth, dat ywidth, dat scrollbacklines);
+  static Twindow Create4Menu(Tmenu);
 
+  /* Tobj */
+  virtual void Delete() OVERRIDE;
   virtual void ChangeField(udat field, uldat clear_mask, uldat xor_mask) OVERRIDE;
 
   /* Twindow */

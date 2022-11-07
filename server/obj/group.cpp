@@ -15,6 +15,7 @@
 #include "methods.h" // InsertLast()
 #include "obj/group.h"
 #include "obj/msgport.h"
+#include "twin.h" // IS_MSGPORT(), IS_GROUP()
 
 #include <new>
 
@@ -35,14 +36,19 @@ Tgroup Sgroup::Create(Tmsgport owner) {
 }
 
 Tgroup Sgroup::Init(Tmsgport owner) {
-  if (!owner || !((Tobj)this)->Init()) {
+  if (!owner || !Sobj::Init(Tgroup_class_id)) {
     return NULL;
   }
-  // this->FirstG = this->LastG = this->SelectG = NULL;
-  // this->MsgPort = NULL;
-
   InsertLast(Group, this, owner);
   return this;
+}
+
+void Sgroup::Insert(Tmsgport parent, Tgroup prev, Tgroup next) {
+  if (parent && !MsgPort) {
+    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstGroup, //
+                  (TobjEntry)prev, (TobjEntry)next, NULL);
+    MsgPort = parent;
+  }
 }
 
 void Sgroup::Remove() {

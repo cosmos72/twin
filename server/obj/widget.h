@@ -101,8 +101,6 @@ struct Sdraw {
 };
 
 struct SwidgetFn {
-  uldat Magic;
-  void (*Insert)(Twidget self, Twidget parent, Twidget Prev, Twidget Next);
   /* Twidget */
   TobjFn Fn_Obj; /* backup of overloaded functions */
   void (*DrawSelf)(Sdraw *d);
@@ -152,22 +150,23 @@ struct Swidget : public Sobj {
     s_GT T; // Sgadget only
   } USE;
 
-  /* Tobj */
-  uldat Magic() const {
-    return Fn->Magic;
-  }
+  Twidget Init(Tmsgport Owner, dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left, dat Up,
+               tcell USE_Fill, e_id class_id);
   static Twidget Create(Tmsgport Owner, dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left,
                         dat Up, tcell USE_Fill);
-  Twidget Init(Tmsgport Owner, dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left, dat Up,
-               tcell USE_Fill);
+
+  /* Tobj */
   virtual void Delete() OVERRIDE;
-  void Insert(Twidget parent, Twidget prev, Twidget next) {
-    Fn->Insert(this, parent, prev, next);
-  }
   virtual void Remove() OVERRIDE;
   virtual void ChangeField(udat field, uldat clear_mask, uldat xor_mask) OVERRIDE;
 
   /* Twidget */
+protected:
+  virtual void InsertWidget(Tobj parent, Twidget prev, Twidget next);
+
+public:
+  void Insert(Twidget parent, Twidget prev, Twidget next);
+
   void DrawSelf(Sdraw *D) {
     Fn->DrawSelf(D);
   }

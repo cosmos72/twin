@@ -18,8 +18,6 @@
 #include <Tw/datatypes.h>
 
 struct SmsgportFn {
-  uldat Magic;
-  void (*Insert)(Tmsgport, Tall, Tmsgport Prev, Tmsgport Next);
   /* Tmsgport */
   TobjFn Fn_Obj;
 };
@@ -49,16 +47,11 @@ struct Smsgport : public Sobj {
                 void (*Handler)(Tmsgport));
 
   /* Tobj */
-  uldat Magic() const {
-    return Fn->Magic;
-  }
-  void Insert(Tall a, Tmsgport prev, Tmsgport next) {
-    Fn->Insert(this, a, prev, next);
-  }
-  virtual void Remove() OVERRIDE;
   virtual void Delete() OVERRIDE;
+  virtual void Remove() OVERRIDE;
 
   /* Tmsgport */
+  void Insert(Tall a, Tmsgport prev, Tmsgport next);
 };
 
 /* MsgPort->WakeUp: */

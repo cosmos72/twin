@@ -19,8 +19,6 @@
 /* Tgroup -- group of Tgadget:s */
 
 struct SgroupFn {
-  uldat Magic;
-  void (*Insert)(Tgroup, Tmsgport MsgPort, Tgroup Prev, Tgroup Next);
   /* Tgroup */
   TobjFn Fn_Obj; /* backup of overloaded functions */
   void (*InsertGadget)(Tgroup, Tgadget);
@@ -37,19 +35,16 @@ struct Sgroup : public Sobj {
   Tgadget FirstG, LastG; /* list in this Tgroup */
   Tgadget SelectG;
 
-  static Tgroup Create(Tmsgport Parent);
+private:
   Tgroup Init(Tmsgport Parent);
 
-  /* obj */
-  uldat Magic() const {
-    return Fn->Magic;
-  }
+public:
+  static Tgroup Create(Tmsgport Parent);
 
-  void Insert(Tmsgport owner, Tgroup prev, Tgroup next) {
-    Fn->Insert(this, owner, prev, next);
-  }
-  virtual void Remove() OVERRIDE;
+  /* obj */
   virtual void Delete() OVERRIDE;
+  void Insert(Tmsgport owner, Tgroup prev, Tgroup next);
+  virtual void Remove() OVERRIDE;
 
   /* group */
   void InsertGadget(Tgadget g) {

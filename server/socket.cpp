@@ -592,7 +592,7 @@ static Tobj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
     S = (const byte *)VV;
     while (n--) {
       Pop(S, uldat, i);
-      *X++ = Id2Obj(e_magic_byte(c), i);
+      *X++ = Id2Obj(e_class_byte(c), i);
     }
     *alloced = ttrue;
   } else
@@ -643,7 +643,7 @@ inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, ulda
       uldat a0;
       Pop(s, uldat, a0);
       c = (byte)*Format - base_magic_CHR;
-      a[n] _obj = Id2Obj(e_magic_byte(c), a0);
+      a[n] _obj = Id2Obj(e_class_byte(c), a0);
       a[n] _type = obj_;
       break;
     }
@@ -1005,13 +1005,13 @@ static Tmsgport sockGetMsgPortObj(Tobj p) {
     if (IS_MSGPORT(e)) {
       return (Tmsgport)e;
     }
-    switch (e->Id >> magic_shift) {
-    case Trow_magic_byte:
-    case Tmenuitem_magic_byte:
-    case Tmenu_magic_byte:
+    switch (e->Id >> class_byte_shift) {
+    case Trow_class_byte:
+    case Tmenuitem_class_byte:
+    case Tmenu_class_byte:
       e = (TobjEntry)e->Parent;
       break;
-    case Tmutex_magic_byte:
+    case Tmutex_class_byte:
       e = (TobjEntry)((Tmutex)e)->Owner;
       break;
     default:
@@ -1497,7 +1497,7 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
 
   do
     if (MsgPort && Len && tw_msg && Len >= tmsgEventDelta && Len == tw_msg->Len &&
-        tw_msg->Magic == msg_magic) {
+        tw_msg->Magic == Tmsg_class_id) {
 
       Sender = RemoteGetMsgPort(Slot);
       if (Sender && Sender->AttachHW && MsgPort->Handler != SocketH)
@@ -1562,7 +1562,7 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
 
       if ((msg = New(msg)(tw_msg->Type, _Len))) {
 
-        msg->Event.EventCommon.W = (Twidget)Id2Obj(Twidget_magic_byte, tw_msg->Event.EventCommon.W);
+        msg->Event.EventCommon.W = (Twidget)Id2Obj(Twidget_class_byte, tw_msg->Event.EventCommon.W);
 
         switch (tw_msg->Type) {
         case TW_MSG_DISPLAY:

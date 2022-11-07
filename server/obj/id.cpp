@@ -25,24 +25,24 @@ struct s_idvec {
   Tobj *Vec;
   uldat Bottom, Top, Size;
 
-  bool assign_id(e_magic_byte magic_byte, Tobj o);
-  void drop_id(e_magic_byte magic_byte, Tobj o);
+  bool assign_id(e_class_byte class_byte, Tobj o);
+  void drop_id(e_class_byte class_byte, Tobj o);
 
 private:
   // returns old size, or NOSLOT if resize failed
-  uldat grow(e_magic_byte magic_byte);
-  void shrink(e_magic_byte magic_byte);
+  uldat grow(e_class_byte class_byte);
+  void shrink(e_class_byte class_byte);
 
   // return first available id, growing if needed
-  uldat get(e_magic_byte magic_byte);
+  uldat get(e_class_byte class_byte);
 };
 
-static s_idvec IdVec[magic_n];
+static s_idvec IdVec[class_byte_n];
 
-uldat s_idvec::grow(e_magic_byte magic_byte) {
+uldat s_idvec::grow(e_class_byte class_byte) {
   uldat old_size = Size;
 
-  if (old_size >= MAXID || magic_byte == Tobj_magic_byte || magic_byte == Tall_magic_byte) {
+  if (old_size >= MAXID || class_byte == Tobj_class_byte || class_byte == Tall_class_byte) {
     // do not assign IDs to Obj and All
     return NOSLOT;
   }
@@ -59,7 +59,7 @@ uldat s_idvec::grow(e_magic_byte magic_byte) {
   return old_size;
 }
 
-void s_idvec::shrink(e_magic_byte magic_byte) {
+void s_idvec::shrink(e_class_byte class_byte) {
   Tobj *new_vec;
   uldat new_size = Max2(TW_BIGBUFF, Top << 1);
 
@@ -70,14 +70,14 @@ void s_idvec::shrink(e_magic_byte magic_byte) {
   }
 }
 
-uldat s_idvec::get(e_magic_byte magic_byte) {
-  return Bottom < Size ? Bottom : grow(magic_byte);
+uldat s_idvec::get(e_class_byte class_byte) {
+  return Bottom < Size ? Bottom : grow(class_byte);
 }
 
-bool s_idvec::assign_id(e_magic_byte magic_byte, Tobj o) {
-  const uldat id = get(magic_byte);
+bool s_idvec::assign_id(e_class_byte class_byte, Tobj o) {
+  const uldat id = get(class_byte);
   if (id != NOSLOT) {
-    o->Id = id | ((uldat)magic_byte << magic_shift);
+    o->Id = id | ((uldat)class_byte << class_byte_shift);
     Vec[id] = o;
     if (Top <= id) {
       Top = id + 1;
@@ -95,7 +95,7 @@ bool s_idvec::assign_id(e_magic_byte magic_byte, Tobj o) {
   return false;
 }
 
-void s_idvec::drop_id(e_magic_byte magic_byte, Tobj o) {
+void s_idvec::drop_id(e_class_byte class_byte, Tobj o) {
   uldat id = o->Id & MAXID;
 
   if (id < Top && Vec[id] == o /* paranoia */) {
@@ -113,36 +113,37 @@ void s_idvec::drop_id(e_magic_byte magic_byte, Tobj o) {
     Top = (hi == Bottom) ? hi : hi + 1;
 
     if (Size > (Top << 4) && Size > TW_BIGBUFF)
-      shrink(magic_byte);
+      shrink(class_byte);
   }
 }
 
-bool AssignId(const e_id class_magic_id, Tobj o) {
+bool AssignId(const e_id class_id, Tobj o) {
   if (o) {
-    const e_magic_byte magic_byte = e_magic_byte(class_magic_id >> magic_shift);
-    switch (magic_byte) {
-    case Tobj_magic_byte:
+    e_class_byte class_byte = e_class_byte(class_id >> class_byte_shift);
+
+    switch (class_byte) {
+    case Tobj_class_byte:
       /* 'Tobj' is an abstract type, you can't create one */
       break;
-    case Trow_magic_byte:
-    case Tmodule_magic_byte:
-    case Tdisplay_magic_byte:
-    case Tmsg_magic_byte:
+    case Trow_class_byte:
+    case Tmodule_class_byte:
+    case Tdisplay_class_byte:
+    case Tmsg_class_byte:
       // We don't use Ids for rows and msgs as we expect to create *lots* of them.
       //
       // Remote access to module and Tdisplay is unsafe, so no Ids for them too.
-      o->Id = class_magic_id;
+      o->Id = class_id;
       return true;
-    case Twidget_magic_byte:
-    case Tgadget_magic_byte:
-    case Twindow_magic_byte:
-    case Tscreen_magic_byte:
-    case Tgroup_magic_byte:
-    case Tmenuitem_magic_byte:
-    case Tmenu_magic_byte:
-    case Tmsgport_magic_byte:
-    case Tmutex_magic_byte:
-      return IdVec[magic_byte].assign_id(magic_byte, o);
+    case Twidget_class_byte:
+    case Tgadget_class_byte:
+    case Twindow_class_byte:
+    case Tscreen_class_byte:
+    case Tgroup_class_byte:
+    case Tmenuitem_class_byte:
+    case Tmenu_class_byte:
+    case Tmsgport_class_byte:
+    case Tmutex_class_byte:
+      return IdVec[class_byte].assign_id(class_byte, o);
     default:
       break;
     }
@@ -153,31 +154,31 @@ bool AssignId(const e_id class_magic_id, Tobj o) {
 void DropId(Tobj o) {
   TobjEntry e = (TobjEntry)o;
   if (o && e->Fn) {
-    const e_magic_byte magic_byte = e_magic_byte(e->Fn->Magic >> magic_shift);
+    const e_class_byte class_byte = e_class_byte(e->Id >> class_byte_shift);
 
-    switch (magic_byte) {
-    case Tobj_magic_byte:
+    switch (class_byte) {
+    case Tobj_class_byte:
       /* 'Tobj' is an abstract class, you can't create one */
       break;
-    case Trow_magic_byte:
-    case Tmodule_magic_byte:
-    case Tdisplay_magic_byte:
-    case Tmsg_magic_byte:
+    case Trow_class_byte:
+    case Tmodule_class_byte:
+    case Tdisplay_class_byte:
+    case Tmsg_class_byte:
       /* we don't use Ids for rows and msgs as we expect to create *lots* of them */
       /* it's unsafe to allow modules access remotely, so no Ids for them too */
       o->Id = NOID;
       break;
-    case Twidget_magic_byte:
-    case Tgadget_magic_byte:
-    case Twindow_magic_byte:
-    case Tscreen_magic_byte:
-    case Tgroup_magic_byte:
-    case Tmenuitem_magic_byte:
-    case Tmenu_magic_byte:
-    case Tmsgport_magic_byte:
-    case Tmutex_magic_byte:
-      if (magic_byte == e_magic_byte(o->Id >> magic_shift)) {
-        IdVec[magic_byte].drop_id(magic_byte, o);
+    case Twidget_class_byte:
+    case Tgadget_class_byte:
+    case Twindow_class_byte:
+    case Tscreen_class_byte:
+    case Tgroup_class_byte:
+    case Tmenuitem_class_byte:
+    case Tmenu_class_byte:
+    case Tmsgport_class_byte:
+    case Tmutex_class_byte:
+      if (class_byte == e_class_byte(o->Id >> class_byte_shift)) {
+        IdVec[class_byte].drop_id(class_byte, o);
       }
       break;
     default:
@@ -186,22 +187,22 @@ void DropId(Tobj o) {
   }
 }
 
-Tobj Id2Obj(e_magic_byte expected_magic_byte, uldat id) {
-  e_magic_byte magic_byte = e_magic_byte(id >> magic_shift);
+Tobj Id2Obj(e_class_byte expected_magic_byte, uldat id) {
+  e_class_byte class_byte = e_class_byte(id >> class_byte_shift);
 
-  if (expected_magic_byte < magic_n && magic_byte < magic_n) {
+  if (expected_magic_byte < class_byte_n && class_byte < class_byte_n) {
     /* everything is a valid (Tobj) */
     /* gadgets, windows, screens are valid (widget) */
     /* menuitems are valid (Trow) */
-    if (expected_magic_byte == magic_byte || expected_magic_byte == Tobj_magic_byte ||
-        (expected_magic_byte == Twidget_magic_byte &&
-         (magic_byte == Tgadget_magic_byte || magic_byte == Twindow_magic_byte ||
-          magic_byte == Tscreen_magic_byte)) ||
-        (expected_magic_byte == Trow_magic_byte && magic_byte == Tmenuitem_magic_byte)) {
+    if (expected_magic_byte == class_byte || expected_magic_byte == Tobj_class_byte ||
+        (expected_magic_byte == Twidget_class_byte &&
+         (class_byte == Tgadget_class_byte || class_byte == Twindow_class_byte ||
+          class_byte == Tscreen_class_byte)) ||
+        (expected_magic_byte == Trow_class_byte && class_byte == Tmenuitem_class_byte)) {
 
       id &= MAXID;
-      if (id < IdVec[magic_byte].Top) {
-        return IdVec[magic_byte].Vec[id];
+      if (id < IdVec[class_byte].Top) {
+        return IdVec[class_byte].Vec[id];
       }
     }
   }
@@ -211,13 +212,13 @@ Tobj Id2Obj(e_magic_byte expected_magic_byte, uldat id) {
 static Tobj IdVec_all[1];
 
 bool AssignId_all(Tall a) {
-  const e_magic_byte magic_byte = Tall_magic_byte;
-  s_idvec &my = IdVec[magic_byte];
+  const e_class_byte class_byte = Tall_class_byte;
+  s_idvec &my = IdVec[class_byte];
 
   if (!my.Vec) {
     my.Vec = IdVec_all;
     my.Size = 1;
-    return my.assign_id(magic_byte, a);
+    return my.assign_id(class_byte, a);
   }
   return false;
 }

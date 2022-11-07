@@ -44,14 +44,14 @@ Tmenuitem Smenuitem::Init(Tobj parent, Twindow w, udat code, byte flags, dat lef
                           dat shortcut, const char *name) {
 
   if (parent && (IS_MENU(parent) || (IS_WINDOW(parent) && W_USE((Twindow)parent, USEROWS))) &&
-      (!w || IS_WINDOW(w)) && name && (this->Text = CloneStr2TRune(name, len)) &&
-      ((Trow)this)->Init(code, flags)) {
+      (!w || IS_WINDOW(w)) && name && (Text = CloneStr2TRune(name, len)) &&
+      Srow::Init(code, flags, Tmenuitem_class_id)) {
 
-    this->Len = len;
-    this->Window = w;
-    this->Left = left;
-    this->ShortCut = shortcut;
-    this->WCurY = TW_MAXLDAT;
+    Len = len;
+    Window = w;
+    Left = left;
+    ShortCut = shortcut;
+    WCurY = TW_MAXLDAT;
 
     if (w)
       w->MenuItem = this;
@@ -65,25 +65,14 @@ Tmenuitem Smenuitem::Init(Tobj parent, Twindow w, udat code, byte flags, dat lef
       if ((ldat)w->YWidth < (len = Min2(TW_MAXDAT, w->HLogic + (ldat)3)))
         w->YWidth = len;
 
-      this->Insert((Tobj)w, (Tmenuitem)w->USE.R.LastRow, NULL);
+      Insert((Tobj)w, (Tmenuitem)w->USE.R.LastRow, NULL);
     } else {
-      this->Insert(parent, ((Tmenu)parent)->LastI, NULL);
+      Insert(parent, ((Tmenu)parent)->LastI, NULL);
       SyncMenu((Tmenu)parent);
     }
     return this;
   }
   return NULL;
-}
-
-void Smenuitem::Remove() {
-  if (Parent) {
-    if (IS_MENU(Parent)) {
-      RemoveGeneric((TobjEntry)this, (TobjList) & ((Tmenu)Parent)->FirstI, NULL);
-      Parent = (Tobj)0;
-    } else {
-      Srow::Remove();
-    }
-  }
 }
 
 void Smenuitem::Delete() {
@@ -107,4 +96,28 @@ Tmenuitem Smenuitem::Prev() const {
 Tmenuitem Smenuitem::Next() const {
   Trow next = Srow::Next;
   return next && IS_MENUITEM(next) ? (Tmenuitem)next : (Tmenuitem)0;
+}
+
+void Smenuitem::Insert(Tobj parent, Tmenuitem prev, Tmenuitem next) {
+  if (parent && !Parent) {
+    if (IS_MENU(parent)) {
+      InsertGeneric((TobjEntry)this, (TobjList) & ((Tmenu)parent)->FirstI, (TobjEntry)prev,
+                    (TobjEntry)next, NULL);
+      Parent = parent;
+    } else if (IS_WINDOW(parent)) {
+      // call superclass implementation
+      Srow::Insert((Twindow)parent, prev, next);
+    }
+  }
+}
+
+void Smenuitem::Remove() {
+  if (Parent) {
+    if (IS_MENU(Parent)) {
+      RemoveGeneric((TobjEntry)this, (TobjList) & ((Tmenu)Parent)->FirstI, NULL);
+      Parent = (Tobj)0;
+    } else {
+      Srow::Remove();
+    }
+  }
 }

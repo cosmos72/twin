@@ -20,8 +20,6 @@
 /* Tmodule */
 
 struct SmoduleFn {
-  uldat Magic;
-  void (*Insert)(Tmodule, Tall, Tmodule Prev, Tmodule Next);
   /* Tmodule */
   TobjFn Fn_Obj;
   bool (*DlOpen)(Tmodule);
@@ -42,16 +40,12 @@ struct Smodule : public Sobj {
   Tmodule Init(uldat namelen, const char *name);
 
   /* Tobj */
-  uldat Magic() const {
-    return Fn->Magic;
-  }
-  void Insert(Tall a, Tmodule prev, Tmodule next) {
-    Fn->Insert(this, a, prev, next);
-  }
-  virtual void Remove() OVERRIDE;
   virtual void Delete() OVERRIDE;
+  virtual void Remove() OVERRIDE;
 
   /* Tmodule */
+  void Insert(Tall parent, Tmodule prev, Tmodule next);
+
   bool DlOpen() {
     return Fn->DlOpen(this);
   }

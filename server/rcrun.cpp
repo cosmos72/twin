@@ -379,7 +379,7 @@ static Tscreen RCFindScreenName(cstr name) {
 
 inline Twidget RCCheck4WidgetId(run *r) {
   Twidget w;
-  if (!(w = (Twidget)Id2Obj(Twidget_magic_byte, r->W)) || !w->Parent || !IS_SCREEN(w->Parent))
+  if (!(w = (Twidget)Id2Obj(Twidget_class_byte, r->W)) || !w->Parent || !IS_SCREEN(w->Parent))
 
     r->W = NOID;
   return w;

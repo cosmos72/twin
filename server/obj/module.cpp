@@ -14,6 +14,7 @@
 #include "obj/module.h"
 #include "alloc.h"   // CloneStrL()
 #include "methods.h" // InsertLast(), RemoveGeneric()
+#include "twin.h"    // IS_ALL(), IS_MODULE()
 
 #include <new>
 
@@ -34,10 +35,7 @@ Tmodule Smodule::Create(uldat namelen, const char *name) {
 }
 
 Tmodule Smodule::Init(uldat namelen, const char *name) {
-  if (!name || !((Tobj)this)->Init()) {
-    return NULL;
-  }
-  if (!(this->Name = CloneStrL(name, namelen))) {
+  if (!name || !Sobj::Init(Tmodule_class_id) || !(Name = CloneStrL(name, namelen))) {
     return NULL;
   }
   this->NameLen = namelen;
@@ -48,13 +46,6 @@ Tmodule Smodule::Init(uldat namelen, const char *name) {
   return this;
 }
 
-void Smodule::Remove() {
-  if (All) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstModule, NULL);
-    All = (Tall)0;
-  }
-}
-
 void Smodule::Delete() {
   if (!Used) {
     DlClose();
@@ -63,5 +54,20 @@ void Smodule::Delete() {
       FreeMem(Name);
     }
     Sobj::Delete();
+  }
+}
+
+void Smodule::Insert(Tall parent, Tmodule prev, Tmodule next) {
+  if (parent && !All) {
+    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstModule, //
+                  (TobjEntry)prev, (TobjEntry)next, NULL);
+    All = parent;
+  }
+}
+
+void Smodule::Remove() {
+  if (All) {
+    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstModule, NULL);
+    All = (Tall)0;
   }
 }

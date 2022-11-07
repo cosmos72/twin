@@ -14,6 +14,7 @@
 #include "obj/all.h" // extern All
 #include "obj/mutex.h"
 #include "methods.h" // Act(), InsertLast()
+#include "twin.h"    // IS_ALL(), IS_MUTEX()
 
 #include <new>
 #include <cstring> // memcmp()
@@ -57,14 +58,28 @@ Tmutex Smutex::Create(Tmsgport owner, byte namelen, const char *name, byte perm)
 }
 
 Tmutex Smutex::Init(Tmsgport owner, byte namelen, const char *name, byte perm) {
-  if (!((Tobj)this)->Init()) {
+  if (!Sobj::Init(Tmutex_class_id)) {
     return NULL;
   }
-  this->Perm = perm;
+  Perm = perm;
   InsertLast(Mutex, this, ::All);
-  // this->Owner = NULL;
-  this->Own(owner);
+  // Owner = NULL;
+  Own(owner);
   return this;
+}
+
+void Smutex::Delete() {
+  DisOwn();
+  Remove();
+  Sobj::Delete();
+}
+
+void Smutex::Insert(Tall parent, Tmutex prev, Tmutex next) {
+  if (parent && !All) {
+    InsertGeneric((TobjEntry)this, (TobjList)&All->FirstMutex, //
+                  (TobjEntry)prev, (TobjEntry)next, NULL);
+    All = parent;
+  }
 }
 
 void Smutex::Remove() {
@@ -72,10 +87,4 @@ void Smutex::Remove() {
     RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstMutex, NULL);
     All = (Tall)0;
   }
-}
-
-void Smutex::Delete() {
-  DisOwn();
-  Remove();
-  Sobj::Delete();
 }

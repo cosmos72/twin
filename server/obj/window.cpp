@@ -61,8 +61,8 @@ Twindow Swindow::Init(Tmsgport owner, dat titlelen, const char *title, const tco
     if ((dat)(ywidth + hasborder) > 0)
       ywidth += hasborder;
   }
-  if (!((Twidget)this)
-           ->Init(owner, xwidth, ywidth, attr, flags, 0, TW_MAXDAT, TCELL(coltext, ' '))) {
+  if (!Swidget::Init(owner, xwidth, ywidth, attr, flags, 0, TW_MAXDAT, TCELL(coltext, ' '),
+                     Twindow_class_id)) {
     return NULL;
   }
   if (title && !(Name = CloneStrL(title, titlelen))) {

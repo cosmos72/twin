@@ -16,8 +16,6 @@
 #include "obj/widget.h"
 
 struct SscreenFn {
-  uldat Magic;
-  void (*Insert)(Tscreen, Tall parent, Tscreen Prev, Tscreen Next);
   /* Twidget */
   TobjFn Fn_Obj;
   void (*DrawSelf)(Sdraw *D);
@@ -58,22 +56,25 @@ struct Sscreen : public Swidget {
   HookFn FnHookW; /* allow hooks on children Map()/UnMap() inside this Twidget */
   Twidget HookW;
 
-  /* Tobj */
-  static Tscreen Create(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
+private:
   Tscreen Init(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
 
-  void Insert(Tall parent, Tscreen prev, Tscreen next) {
-    fn()->Insert(this, parent, prev, next);
-  }
+public:
+  static Tscreen Create(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
 
-  virtual void Remove() OVERRIDE;
+  /* Tobj */
   virtual void Delete() OVERRIDE;
-
+  virtual void Remove() OVERRIDE;
   virtual void ChangeField(udat field, uldat clear_mask, uldat xor_mask) OVERRIDE;
 
   /* Twidget */
+protected:
+  virtual void InsertWidget(Tobj parent, Twidget prev, Twidget next) OVERRIDE;
 
   /* Tscreen */
+public:
+  void Insert(Tall parent, Tscreen prev, Tscreen next);
+
   const TscreenFn fn() const {
     return (TscreenFn)Fn;
   }

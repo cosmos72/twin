@@ -27,7 +27,7 @@
 #include "hw.h"
 #include "hw_private.h"
 #include "log.h"
-#include "obj/id.h"
+#include "obj/id.h" // T*_class_id
 #include "stl/string.h"
 #include "version.h"
 #include "unaligned.h"
@@ -218,12 +218,11 @@ static void RemoteEvent(int FdCount, fd_set *FdSet) {
 ////////////////////////////////////////////////////////////////////////////////
 /// Sobj methods
 
-Tobj Sobj::Init() {
+Tobj Sobj::Init(e_id class_id) {
+  Id = class_id;
   return this;
 }
 
-void Sobj::Remove() {
-}
 void Sobj::Delete() {
 }
 
@@ -231,22 +230,21 @@ void Sobj::Delete() {
 /// Smodule methods
 
 static struct SmoduleFn _FnModule = {
-    module_magic,
-    (void (*)(Tmodule, Tall, Tmodule, Tmodule))NoOp, /* InsertModule */
-    NULL,                                            /* Fn_Obj       */
-    (bool (*)(Tmodule))NoOp,                         /* DlOpen       */
-    (void (*)(Tmodule))NoOp,                         /* DlClose      */
+    NULL,                    /* Fn_Obj       */
+    (bool (*)(Tmodule))NoOp, /* DlOpen       */
+    (void (*)(Tmodule))NoOp, /* DlClose      */
 };
 
 Tmodule Smodule::Init(uldat /*namelen*/, const char * /*name*/) {
   Fn = &_FnModule;
-  Sobj::Init();
+  Sobj::Init(Tmodule_class_id);
   return this;
 }
 
-void Smodule::Remove() {
-}
 void Smodule::Delete() {
+}
+
+void Smodule::Remove() {
 }
 
 static Smodule _Module;
@@ -333,35 +331,30 @@ static byte InitDisplay(Tdisplay);
 static void QuitDisplay(Tdisplay);
 
 static struct SdisplayFn _FnDisplay = {
-    /*-------------------*/
-    display_hw_magic,
-    (void (*)(Tdisplay, Tall, Tdisplay, Tdisplay))NoOp, /* InsertDisplayHW */
-    NULL,                                               /* Fn_Obj */
+    NULL, /* Fn_Obj */
     InitDisplay,
     QuitDisplay,
 };
 
 Tdisplay Sdisplay::Init(uldat namelen, const char *name) {
   Fn = &_FnDisplay;
-  if (!Sobj::Init()) {
+  if (!Sobj::Init(Tdisplay_class_id) || !Name.assign(name, namelen)) {
     return NULL;
   }
-  if (!this->Name.assign(name, namelen)) {
-    return NULL;
-  }
-  this->Module = NULL;
+  Module = NULL;
   /*
    * ->Quitted will be set to tfalse only
    * after DisplayHW->InitHW() has succeeded.
    */
-  this->Quitted = ttrue;
-  this->AttachSlot = NOSLOT;
+  Quitted = ttrue;
+  AttachSlot = NOSLOT;
   return this;
 }
 
-void Sdisplay::Remove() {
-}
 void Sdisplay::Delete() {
+}
+
+void Sdisplay::Remove() {
 }
 
 static Sdisplay _HW;

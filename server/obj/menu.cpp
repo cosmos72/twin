@@ -42,7 +42,7 @@ Tmenu Smenu::Create(Tmsgport owner, tcolor colitem, tcolor colselect, tcolor col
 Tmenu Smenu::Init(Tmsgport owner, tcolor colitem, tcolor colselect, tcolor coldisabled,
                   tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
                   byte flagdefcolinfo) {
-  if (!owner || !Sobj::Init()) {
+  if (!owner || !Sobj::Init(Tmenu_class_id)) {
     return NULL;
   }
   ColItem = colitem;
@@ -57,13 +57,6 @@ Tmenu Smenu::Init(Tmsgport owner, tcolor colitem, tcolor colselect, tcolor coldi
   // Info = NULL;
   InsertLast(Menu, this, owner);
   return this;
-}
-
-void Smenu::Remove() {
-  if (MsgPort) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&MsgPort->FirstMenu, NULL);
-    MsgPort = (Tmsgport)0;
-  }
 }
 
 void Smenu::Delete() {
@@ -111,4 +104,19 @@ void Smenu::Delete() {
     Info->Delete();
   }
   Sobj::Delete();
+}
+
+void Smenu::Insert(Tmsgport parent, Tmenu prev, Tmenu next) {
+  if (!MsgPort && parent) {
+    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstMenu, (TobjEntry)prev, (TobjEntry)next,
+                  NULL);
+    MsgPort = parent;
+  }
+}
+
+void Smenu::Remove() {
+  if (MsgPort) {
+    RemoveGeneric((TobjEntry)this, (TobjList)&MsgPort->FirstMenu, NULL);
+    MsgPort = (Tmsgport)0;
+  }
 }

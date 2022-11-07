@@ -509,7 +509,7 @@ static byte CheckForwardMsg(wm_ctx *C, Tmsg msg, byte WasUsed) {
   if (msg->Type != msg_key && msg->Type != msg_mouse)
     return inUse;
 
-  last_w = (Twidget)Id2Obj(Twidget_magic_byte, LastWId);
+  last_w = (Twidget)Id2Obj(Twidget_class_byte, LastWId);
 
   w = All->FirstScreen->FocusW();
 
@@ -671,11 +671,12 @@ static void InitCtx(const Tmsg msg, wm_ctx *C) {
 static void DetailCtx(wm_ctx *C) {
   if (C->W) {
     /* ensure IS_SCREEN(C->W->Parent) is true. */
-    C->Screen = (Tscreen)C->W->Parent;
-    if (!C->Screen || !IS_SCREEN(C->Screen)) {
+    Twidget parent = C->W->Parent;
+    if (!parent || !IS_SCREEN(parent)) {
       log(ERROR) << "twin: wm.c: DetailCtx(): internal error: C->W is a subwidget!\n";
       return;
     }
+    C->Screen = (Tscreen)parent;
   }
 
   C->DW = NULL;
@@ -864,15 +865,15 @@ static void ContinueMenu(wm_ctx *C) {
 static void ReleaseMenu(wm_ctx *C) {
   Twindow MW = All->FirstScreen->MenuWindow;
   Twindow FW = (Twindow)All->FirstScreen->FocusW();
-  Tmenu Menu;
+  Tmenu menu;
   Tmenuitem item;
   Trow Row;
   Tmsg msg;
   event_menu *Event;
   udat Code;
 
-  if (FW && IS_WINDOW(FW) && FW->CurY < TW_MAXLDAT && (Menu = FW->Menu) &&
-      (item = Act(GetSelectedItem, Menu)(Menu)) && (item->Flags & ROW_ACTIVE) &&
+  if (FW && IS_WINDOW(FW) && FW->CurY < TW_MAXLDAT && (menu = FW->Menu) &&
+      (item = Act(GetSelectedItem, menu)(menu)) && (item->Flags & ROW_ACTIVE) &&
       (Row = Act(FindRow, FW)(FW, FW->CurY)) && (Row->Flags & ROW_ACTIVE) && Row->Code)
 
     Code = Row->Code;
@@ -891,12 +892,12 @@ static void ReleaseMenu(wm_ctx *C) {
       Event = &msg->Event.EventMenu;
       Event->W = MW;
       Event->Code = Code;
-      Event->Menu = Menu;
+      Event->Menu = menu;
       Event->Row = Row;
       if (MW)
         SendMsg(MW->Owner, msg);
       else
-        SendMsg(Menu->MsgPort, msg);
+        SendMsg(menu->MsgPort, msg);
     }
   }
 }

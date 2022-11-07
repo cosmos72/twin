@@ -28,7 +28,7 @@ Trow Srow::Create(udat code, byte flags) {
     if (addr) {
       r = new (addr) Srow();
       r->Fn = Fn_Trow;
-      if (!r->Init(code, flags)) {
+      if (!r->Init(code, flags, Trow_class_id)) {
         r->Delete();
         r = NULL;
       }
@@ -37,16 +37,16 @@ Trow Srow::Create(udat code, byte flags) {
   return r;
 }
 
-Trow Srow::Init(udat code, byte flags) {
-  if (code < COD_RESERVED && ((Tobj)this)->Init()) {
-    this->Code = code;
-    this->Flags = flags;
-    // this->Gap = this->LenGap = this->Len = this->MaxLen = 0;
-    // this->Text = NULL;
-    // this->ColText = NULL;
-    return this;
+Trow Srow::Init(udat code, byte flags, e_id class_id) {
+  if (code >= COD_RESERVED || !Sobj::Init(class_id)) {
+    return NULL;
   }
-  return NULL;
+  Code = code;
+  Flags = flags;
+  // Gap = LenGap = Len = MaxLen = 0;
+  // Text = NULL;
+  // ColText = NULL;
+  return this;
 }
 
 Twindow Srow::Window() const {
@@ -54,8 +54,13 @@ Twindow Srow::Window() const {
   return parent && IS_WINDOW(parent) ? (Twindow)parent : (Twindow)0;
 }
 
-void Srow::Insert(Twindow w, Trow prev, Trow next) {
-  Fn->Insert(this, w, prev, next);
+void Srow::Insert(Twindow parent, Trow prev, Trow next) {
+  if (parent && W_USE(parent, USEROWS) && !Parent) {
+    InsertGeneric((TobjEntry)this, (TobjList)&parent->USE.R.FirstRow, (TobjEntry)prev,
+                  (TobjEntry)next, &parent->HLogic);
+    Parent = parent;
+    parent->USE.R.NumRowOne = parent->USE.R.NumRowSplit = (ldat)0;
+  }
 }
 
 void Srow::Remove() {

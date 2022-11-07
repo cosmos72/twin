@@ -338,7 +338,7 @@ inline ldat alienDecodeArg(uldat id, const char *Format, uldat n, tsfield a, uld
     if (Left(SIZEOF(uldat))) {
       POP(s, uldat, a0);
       c = (byte)*Format - base_magic_CHR;
-      a[n] _obj = Id2Obj(e_magic_byte(c), a0);
+      a[n] _obj = Id2Obj(e_class_byte(c), a0);
       a[n] _type = obj_;
       break;
     }

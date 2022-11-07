@@ -41,14 +41,14 @@ Tmsgport Smsgport::Create(byte namelen, const char *name, tany pausesec, tany pa
 Tmsgport Smsgport::Init(byte namelen, const char *name, tany pausesec, tany pausefraction,
                         byte wakeup, void (*handler)(Tmsgport)) {
 
-  if (!handler || !Sobj::Init()) {
+  if (!handler || !Sobj::Init(Tmsgport_class_id)) {
     return NULL;
   }
   if (name && !(Name = CloneStrL(name, namelen))) {
     return NULL;
   }
-  WakeUp = wakeup;
   NameLen = namelen;
+  WakeUp = wakeup;
   Handler = handler;
   // ShutDownHook = (void (*)(Tmsgport))0;
   PauseDuration.Seconds = pausesec;
@@ -71,16 +71,6 @@ Tmsgport Smsgport::Init(byte namelen, const char *name, tany pausesec, tany paus
                WakeUp ? ::All->FirstMsgPort : (Tmsgport)0);
   SortMsgPortByCallTime(this);
   return this;
-}
-
-void Smsgport::Remove() {
-  if (::All->RunMsgPort == this) {
-    ::All->RunMsgPort = Next;
-  }
-  if (All) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstMsgPort, NULL);
-    All = (Tall)0;
-  }
 }
 
 void Smsgport::Delete() {
@@ -119,4 +109,22 @@ void Smsgport::Delete() {
     FreeMem(Name);
   }
   Sobj::Delete();
+}
+
+void Smsgport::Insert(Tall parent, Tmsgport prev, Tmsgport next) {
+  if (parent && !All) {
+    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstMsgPort, (TobjEntry)prev,
+                  (TobjEntry)next, NULL);
+    All = parent;
+  }
+}
+
+void Smsgport::Remove() {
+  if (::All->RunMsgPort == this) {
+    ::All->RunMsgPort = Next;
+  }
+  if (All) {
+    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstMsgPort, NULL);
+    All = (Tall)0;
+  }
 }

@@ -16,8 +16,6 @@
 #include "obj/row.h"
 
 struct SmenuitemFn {
-  uldat Magic;
-  void (*Insert)(Tmenuitem, Tobj, Tmenuitem Prev, Tmenuitem Next);
   /* Trow */
   TobjFn Fn_Obj;
   byte (*SetText)(Trow, uldat Len, const char *Text, byte DefaultCol);
@@ -38,22 +36,21 @@ struct Smenuitem : public Srow {
   dat Left, ShortCut;
   ldat WCurY;
 
-  static Tmenuitem Create(Tobj Parent, Twindow Window, udat Code, byte Flags, dat Left, ldat Len,
-                          dat ShortCut, const char *Name);
+private:
   Tmenuitem Init(Tobj Parent, Twindow Window, udat Code, byte Flags, dat Left, ldat Len,
                  dat ShortCut, const char *Name);
 
+public:
+  static Tmenuitem Create(Tobj Parent, Twindow Window, udat Code, byte Flags, dat Left, ldat Len,
+                          dat ShortCut, const char *Name);
+
   /* Tobj */
-  uldat Magic() const {
-    return Fn->Magic;
-  }
-  void Insert(Tobj parent, Tmenuitem prev, Tmenuitem next) {
-    Fn->Insert(this, parent, prev, next);
-  }
-  virtual void Remove() OVERRIDE;
   virtual void Delete() OVERRIDE;
+  virtual void Remove() OVERRIDE;
 
   /* Tmenuitem */
+  void Insert(Tobj parent, Tmenuitem prev, Tmenuitem next);
+
   Tmenuitem Prev() const; // cast this->Prev to Tmenuitem
   Tmenuitem Next() const; // cast this->Next to Tmenuitem
 };

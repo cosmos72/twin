@@ -15,6 +15,7 @@
 #include "alloc.h"   // AllocMem0()
 #include "fn.h"      // Fn_Twidget
 #include "methods.h" // SetFillWidget()
+#include "twin.h"    //IS_WIDGET()
 
 #include <Tw/Twstat_defs.h> // TWS_widget_*
 
@@ -29,7 +30,7 @@ Twidget Swidget::Create(Tmsgport owner, dat xwidth, dat ywidth, uldat attr, ulda
     if (addr) {
       w = new (addr) Swidget();
       w->Fn = Fn_Twidget;
-      if (!w->Init(owner, xwidth, ywidth, attr, flags, left, up, fill)) {
+      if (!w->Init(owner, xwidth, ywidth, attr, flags, left, up, fill, Twidget_class_id)) {
         w->Delete();
         w = NULL;
       }
@@ -39,23 +40,23 @@ Twidget Swidget::Create(Tmsgport owner, dat xwidth, dat ywidth, uldat attr, ulda
 }
 
 Twidget Swidget::Init(Tmsgport owner, dat xwidth, dat ywidth, uldat attr, uldat flags, dat left,
-                      dat up, tcell fill) {
-  if (owner && ((Tobj)this)->Init()) {
-    Left = left;
-    Up = up;
-    XWidth = xwidth;
-    YWidth = ywidth;
-    Attr = attr;
-    Flags = flags;
-    USE_Fill = fill;
-    /*
-    if (w_USE(this, USEEXPOSE))
-      memset(&USE.E, '\0', sizeof(USE.E));
-    */
-    Own(owner);
-    return this;
+                      dat up, tcell fill, e_id class_id) {
+  if (!owner || !Sobj::Init(class_id)) {
+    return NULL;
   }
-  return NULL;
+  Left = left;
+  Up = up;
+  XWidth = xwidth;
+  YWidth = ywidth;
+  Attr = attr;
+  Flags = flags;
+  USE_Fill = fill;
+  /*
+  if (w_USE(this, USEEXPOSE))
+    memset(&USE.E, '\0', sizeof(USE.E));
+  */
+  Own(owner);
+  return this;
 }
 
 void Swidget::Delete() {
@@ -71,6 +72,22 @@ void Swidget::Delete() {
     FirstW->UnMap();
   }
   Sobj::Delete();
+}
+
+void Swidget::InsertWidget(Tobj parent, Twidget prev, Twidget next) {
+  if (parent && IS_WIDGET(parent)) {
+    /*
+     * don't check this->Parent here, because Raise() and Lower() call Swidget::Remove()
+     * then calls Swidget::Insert() but Swidget::Remove() does not reset w->Parent
+     */
+    InsertGeneric((TobjEntry)this, (TobjList) & ((Twidget)parent)->FirstW, //
+                  (TobjEntry)prev, (TobjEntry)next, NULL);
+  }
+}
+
+void Swidget::Insert(Twidget parent, Twidget prev, Twidget next) {
+  // 'this' may be a subclass of Swidget
+  InsertWidget(parent, prev, next);
 }
 
 void Swidget::Remove() {

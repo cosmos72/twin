@@ -16,8 +16,6 @@
 #include "obj/widget.h"
 
 struct SgadgetFn {
-  uldat Magic;
-  void (*Insert)(Tgadget, Twidget Parent, Twidget Prev, Twidget Next);
   /* Twidget */
   TobjFn Fn_Obj;
   void (*DrawSelf)(Sdraw *D);
@@ -60,7 +58,6 @@ struct Sgadget : public Swidget {
   Tgadget G_Prev, G_Next; /* list in the same Tgroup */
   Tgroup Group;
 
-  /* Tobj */
   static Tgadget Create(Tmsgport owner, Twidget Parent, dat xwidth, dat ywidth,
                         const char *TextNormal, uldat Attr, uldat Flags, udat Code, tcolor ColText,
                         tcolor ColTextSelect, tcolor ColTextDisabled, tcolor ColTextSelectDisabled,
@@ -69,6 +66,7 @@ struct Sgadget : public Swidget {
                uldat Attr, uldat Flags, udat Code, tcolor ColText, tcolor ColTextSelect,
                tcolor ColTextDisabled, tcolor ColTextSelectDisabled, dat Left, dat Up);
 
+  /* Tobj */
   virtual void Delete() OVERRIDE;
   virtual void ChangeField(udat field, uldat clear_mask, uldat xor_mask) OVERRIDE;
 

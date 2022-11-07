@@ -18,8 +18,6 @@
 /* Trow */
 
 struct SrowFn {
-  uldat Magic;
-  void (*Insert)(Trow self, Tobj parent, Trow prev, Trow next);
   /* Trow */
   TobjFn Fn_Obj;
   byte (*SetText)(Trow self, uldat len, const char *text, byte defaultcol);
@@ -41,19 +39,20 @@ struct Srow : public Sobj {
   trune *Text;
   tcolor *ColText;
 
+protected:
+  Trow Init(udat code, byte flags, e_id class_id);
+
+public:
   static Trow Create(udat code, byte flags);
-  Trow Init(udat code, byte flags);
 
   /* Tobj */
-  uldat Magic() const {
-    return Fn->Magic;
-  }
-  void Insert(Twindow w, Trow prev, Trow next);
-  virtual void Remove() OVERRIDE;
   virtual void Delete() OVERRIDE;
+  virtual void Remove() OVERRIDE;
 
   /* Trow */
   Twindow Window() const; // cast this->Parent to Twindow
+
+  void Insert(Twindow w, Trow prev, Trow next);
 
   byte SetText(uldat len, const char *text, byte defaultcol) {
     return Fn->SetText(this, len, text, defaultcol);
