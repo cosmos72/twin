@@ -18,9 +18,6 @@
 struct SgadgetFn {
   /* Twidget */
   TobjFn Fn_Obj;
-  void (*SetXY)(Tgadget, dat X, dat Y);
-  void (*SetFill)(Tgadget, tcell Fill);
-  Twidget (*Focus)(Tgadget);
   Twidget (*KbdFocus)(Tgadget);
   void (*Map)(Tgadget, Twidget Parent);
   void (*UnMap)(Tgadget);

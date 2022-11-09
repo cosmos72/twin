@@ -697,7 +697,7 @@ static byte RCSteps(run *r) {
           if (flag == FL_ON) {
             w->Focus();
           } else {
-            Do(Focus, window)(NULL);
+            Swindow::Focus(NULL);
           }
         }
         break;

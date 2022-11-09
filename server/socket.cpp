@@ -1054,7 +1054,7 @@ static void sockSetXYWidget(Twidget w, dat x, dat y) {
       x += w->Parent->XLogic;
       y += w->Parent->YLogic;
     }
-    Act(SetXY, w)(w, x, y);
+    w->SetXY(x, y);
   }
 }
 static void sockDrawWidget(Twidget w, dat XWidth, dat YWidth, dat Left, dat Up, const char *Text,

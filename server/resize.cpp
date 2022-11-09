@@ -46,7 +46,7 @@
 
 /***************/
 
-byte NeedUpdateCursor;
+bool NeedUpdateCursor;
 
 void FlushCursor(void) {
   Sdraw d;
@@ -58,7 +58,7 @@ void FlushCursor(void) {
   byte HasBorder;
 
   if (NeedUpdateCursor) {
-    NeedUpdateCursor = tfalse;
+    NeedUpdateCursor = false;
 
     screen = All->FirstScreen;
     Window = FindCursorWindow();
@@ -1681,10 +1681,10 @@ void CloseMenu(void) {
 
   if (M) {
     if ((w = S->MenuWindow)) {
-      Act(KbdFocus, w)(w);
+      w->KbdFocus();
       S->MenuWindow = NULL;
     } else
-      Do(KbdFocus, window)(NULL);
+      Swindow::KbdFocus(NULL);
 
     /* close whole currently open Tmenu tree */
     item = Act(GetSelectedItem, M)(M);
@@ -1722,18 +1722,6 @@ void SetMenuState(Tmenuitem item, bool by_mouse) {
 }
 
 /* ---------------- */
-
-void UnFocusWidget(Twidget w) {
-  if (w && w->Parent == (Twidget)All->FirstScreen && w == All->FirstScreen->FocusW()) {
-    if (IS_WINDOW(w)) {
-      Act(KbdFocus, w)((Twidget)0);
-      DrawBorderWindow((Twindow)w, BORDER_ANY);
-      Act(DrawMenu, (Tscreen)w->Parent)((Tscreen)w->Parent, 0, TW_MAXDAT);
-      UpdateCursor();
-    } else
-      All->FirstScreen->FocusW((Twidget)0);
-  }
-}
 
 void RollUpWindow(Twindow w, byte on_off) {
   if (w && !(w->Flags & WINDOWFL_BORDERLESS)) {
@@ -1813,7 +1801,7 @@ void LowerWidget(Twidget w, byte alsoUnFocus) {
         if (_W && IS_WINDOW(_W) && _W != w)
           _W->Focus();
         else
-          Do(Focus, window)(NULL);
+          Swindow::Focus(NULL);
       } else
         UpdateCursor();
     }

@@ -19,8 +19,8 @@ void ExposeWidget2(Twidget w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitc
 void ExposeWindow2(Twindow window, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
                    const char *utf8_bytes, const trune *runes, const tcell *cells);
 
-extern byte NeedUpdateCursor;
-#define UpdateCursor() (NeedUpdateCursor = ttrue)
+extern bool NeedUpdateCursor;
+#define UpdateCursor() (NeedUpdateCursor = true)
 void FlushCursor(void);
 
 byte CheckResizeWindowContents(Twindow window);
@@ -55,7 +55,6 @@ void ScrollWindow(Twindow window, ldat DeltaX, ldat DeltaY);
 
 void ScrollWidget(Twidget w, ldat DeltaX, ldat DeltaY);
 
-void UnFocusWidget(Twidget w);
 void RollUpWindow(Twindow window, byte on_off);
 
 void SetVisibleWidget(Twidget w, byte on_off);

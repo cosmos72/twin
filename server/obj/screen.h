@@ -18,9 +18,6 @@
 struct SscreenFn {
   /* Twidget */
   TobjFn Fn_Obj;
-  void (*SetXY)(Tscreen, dat X, dat Y);
-  void (*SetFill)(Tscreen, tcell Fill);
-  Twidget (*Focus)(Tscreen);
   Twidget (*KbdFocus)(Tscreen);
   void (*Map)(Tscreen, Twidget Parent);
   void (*UnMap)(Tscreen);
@@ -62,11 +59,9 @@ public:
   virtual void ChangeField(udat field, uldat clear_mask, uldat xor_mask) OVERRIDE;
 
   /* Twidget */
-protected:
-  virtual void InsertWidget(Tobj parent, Twidget prev, Twidget next) OVERRIDE;
-
-public:
   virtual void DrawSelf(Sdraw *d) OVERRIDE; // defined in draw.cpp
+  virtual void SetXY(dat x, dat y) OVERRIDE;
+  virtual Twidget Focus() OVERRIDE;
 
   /* Tscreen */
   void Insert(Tall parent, Tscreen prev, Tscreen next);
@@ -120,6 +115,9 @@ public:
   void DeActivateMenu() {
     fn()->DeActivateMenu(this);
   }
+
+protected:
+  virtual void InsertWidget(Tobj parent, Twidget prev, Twidget next) OVERRIDE;
 };
 
 /* screen->Attr */

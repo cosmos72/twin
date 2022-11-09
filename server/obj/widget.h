@@ -103,10 +103,7 @@ struct Sdraw {
 struct SwidgetFn {
   /* Twidget */
   TobjFn Fn_Obj; /* backup of overloaded functions */
-  void (*SetXY)(Twidget self, dat x, dat y);
-  void (*SetFill)(Twidget self, tcell fill);
-  Twidget (*Focus)(Twidget self);
-  Twidget (*KbdFocus)(Twidget self);
+  Twidget (*KbdFocus)(Twidget);
   void (*Map)(Twidget self, Twidget parent);
   void (*UnMap)(Twidget self);
   void (*MapTopReal)(Twidget self, Tscreen screen);
@@ -157,27 +154,19 @@ struct Swidget : public Sobj {
   virtual void ChangeField(udat field, uldat clear_mask, uldat xor_mask) OVERRIDE;
 
   /* Twidget */
-protected:
-  virtual void InsertWidget(Tobj parent, Twidget prev, Twidget next);
-
-public:
   void Insert(Twidget parent, Twidget prev, Twidget next);
   virtual void DrawSelf(Sdraw *d);    // defined in draw.cpp
   Twidget FindWidgetAt(dat x, dat y); // defined in draw.cpp
   Tgadget FindGadgetByCode(udat code);
+  virtual void SetXY(dat x, dat y);
+  void SetFill(tcell fill);
 
-  void SetXY(dat x, dat y) {
-    Fn->SetXY(this, x, y);
-  }
-  void SetFill(tcell fill) {
-    Fn->SetFill(this, fill);
-  }
-  Twidget Focus() {
-    return Fn->Focus(this);
-  }
-  Twidget KbdFocus() {
-    return Fn->KbdFocus(this);
-  }
+  virtual Twidget Focus();         // return previously focused widget
+  static Twidget Focus(Twidget w); // return previously focused widget
+  void UnFocus();
+  virtual Twidget KbdFocus();         // return previously focused widget
+  static Twidget KbdFocus(Twidget w); // return previously focused widget
+
   void Map(Twidget parent) {
     Fn->Map(this, parent);
   }
@@ -208,6 +197,9 @@ public:
   }
   bool InstallHook(HookFn hook, HookData *where);
   void RemoveHook(HookFn hook, HookData *where);
+
+protected:
+  virtual void InsertWidget(Tobj parent, Twidget prev, Twidget next);
 };
 
 #endif /* TWIN_WIDGET_H */

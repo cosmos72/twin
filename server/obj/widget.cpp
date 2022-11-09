@@ -14,8 +14,10 @@
 
 #include "alloc.h"   // AllocMem0()
 #include "fn.h"      // Fn_Twidget
-#include "methods.h" // SetFillWidget()
-#include "twin.h"    //IS_WIDGET()
+#include "methods.h" // InsertGeneric(), RemoveGeneric()
+#include "resize.h"  // UpdateCursor()
+#include "twin.h"    // IS_WIDGET()
+#include "draw.h"    // DrawAreaWidget()
 
 #include <Tw/Twstat_defs.h> // TWS_widget_*
 
@@ -105,7 +107,7 @@ void Swidget::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
     break;
   case TWS_widget_USE_Fill: {
     uldat i = tcell((USE_Fill & ~clear_mask) ^ xor_mask);
-    SetFillWidget(this, i);
+    SetFill(i);
     break;
   }
   case TWS_widget_XLogic:
@@ -124,6 +126,74 @@ Tgadget Swidget::FindGadgetByCode(udat Code) {
     }
   }
   return (Tgadget)0;
+}
+
+void Swidget::SetXY(dat x, dat y) {
+  Twidget parent = Parent, prev = NULL, next = NULL;
+  if (parent) {
+    prev = Prev;
+    next = Next;
+    Remove();
+    DrawAreaWidget(this);
+  }
+  Left = x;
+  Up = y;
+  if (parent) {
+    Insert(parent, prev, next);
+    DrawAreaWidget(this);
+  }
+}
+
+void Swidget::SetFill(tcell fill) {
+  if (USE_Fill != fill) {
+    USE_Fill = fill;
+    if (Parent) {
+      DrawAreaWidget(this);
+    }
+  }
+}
+
+Twidget Swidget::Focus() {
+  return Focus(this);
+}
+
+Twidget Swidget::Focus(Twidget w) {
+  Twidget old = KbdFocus(w);
+
+  if (old != w && (!w || w->Parent == ::All->FirstScreen)) {
+    if (w && IS_WINDOW(w))
+      DrawBorderWindow((Twindow)w, BORDER_ANY);
+    if (old && IS_WINDOW(old))
+      DrawBorderWindow((Twindow)old, BORDER_ANY);
+    if ((w && IS_WINDOW(w)) || (old && IS_WINDOW(old))) {
+      UpdateCursor();
+      if (!w || !IS_WINDOW(w) || !(((Twindow)w)->Flags & WINDOWFL_MENU)) {
+        ::All->FirstScreen->DrawMenu(0, TW_MAXDAT);
+      }
+    }
+  }
+  return old;
+}
+
+void Swidget::UnFocus() {
+  if (Parent == ::All->FirstScreen && this == ::All->FirstScreen->FocusW()) {
+    if (IS_WINDOW(this)) {
+      KbdFocus((Twidget)0);
+      DrawBorderWindow((Twindow)this, BORDER_ANY);
+      ((Tscreen)Parent)->DrawMenu(0, TW_MAXDAT);
+      UpdateCursor();
+    } else {
+      ::All->FirstScreen->FocusW((Twidget)0);
+    }
+  }
+}
+
+Twidget Swidget::KbdFocus() {
+  return Fn->KbdFocus(this);
+}
+
+Twidget Swidget::KbdFocus(Twidget w) {
+  return Fn_Twidget->KbdFocus(w);
 }
 
 bool Swidget::InstallHook(HookFn hook, HookData *where) {

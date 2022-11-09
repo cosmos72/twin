@@ -12,12 +12,15 @@
 
 #include "obj/screen.h"
 
+#include "algo.h"    // Max2()
 #include "alloc.h"   // AllocMem0(), AllocMem(), CloneStrL(), CopyMem()
 #include "builtin.h" // Builtin_MsgPort
+#include "draw.h"    // DrawArea2()
 #include "fn.h"      // Fn_Tscreen
 #include "methods.h" // RemoveGeneric()
-#include "obj/all.h"
-#include "twin.h" // IS_ALL(), IS_SCREEN()
+#include "obj/all.h" // All
+#include "resize.h"  // ResizeFirstScreen()
+#include "twin.h"    // IS_ALL(), IS_SCREEN()
 
 #include <new>
 #include <Tw/datasizes.h> // TW_MAXDAT
@@ -95,11 +98,28 @@ void Sscreen::Remove() {
 }
 
 void Sscreen::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
-  Tscreen screen = this;
-  if (screen)
-    switch (field) {
-    default:
-      Swidget::ChangeField(field, clear_mask, xor_mask);
-      break;
-    }
+  switch (field) {
+  default:
+    Swidget::ChangeField(field, clear_mask, xor_mask);
+    break;
+  }
+}
+
+void Sscreen::SetXY(dat x, dat y) {
+  if (this == ::All->FirstScreen) {
+    y = Max2(y, -1);
+    y = Min2(y, ::All->DisplayHeight - 1);
+    ResizeFirstScreen(y - Up);
+  }
+}
+
+Twidget Sscreen::Focus() {
+  Tscreen old = ::All->FirstScreen;
+  if (old != this) {
+    MoveFirst(Screen, ::All, this);
+    DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, 0, Min2(old->Up, this->Up), //
+              TW_MAXDAT, TW_MAXDAT, false);
+    UpdateCursor();
+  }
+  return (Twidget)old;
 }

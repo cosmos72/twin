@@ -104,14 +104,6 @@ static struct SobjFn _FnObj = {};
 
 /* Twidget */
 
-void SetFillWidget(Twidget w, tcell Fill) {
-  if (w->USE_Fill != Fill) {
-    w->USE_Fill = Fill;
-    if (w->Parent)
-      DrawAreaWidget(w);
-  }
-}
-
 void IncMouseMotionN(void) {
   if (!All->MouseMotionN++)
     EnableMouseMotionEvents(ttrue);
@@ -120,27 +112,6 @@ void IncMouseMotionN(void) {
 void DecMouseMotionN(void) {
   if (All->MouseMotionN && !--All->MouseMotionN)
     EnableMouseMotionEvents(tfalse);
-}
-
-Twidget FocusWidget(Twidget w) {
-  Twidget oldW;
-  if (w)
-    oldW = w->KbdFocus();
-  else
-    oldW = Do(KbdFocus, widget)(NULL);
-
-  if (w != oldW && (!w || w->Parent == (Twidget)All->FirstScreen)) {
-    if (w && IS_WINDOW(w))
-      DrawBorderWindow((Twindow)w, BORDER_ANY);
-    if (oldW && IS_WINDOW(oldW))
-      DrawBorderWindow((Twindow)oldW, BORDER_ANY);
-    if ((w && IS_WINDOW(w)) || (oldW && IS_WINDOW(oldW))) {
-      UpdateCursor();
-      if (!w || !IS_WINDOW(w) || !(((Twindow)w)->Flags & WINDOWFL_MENU))
-        All->FirstScreen->DrawMenu(0, TW_MAXDAT);
-    }
-  }
-  return oldW;
 }
 
 #define TtyKbdFocus FakeKbdFocus
@@ -343,23 +314,6 @@ static void LowerW(Twidget w) {
   LowerWidget(w, tfalse);
 }
 
-static void SetXYWidget(Twidget w, dat x, dat y) {
-  Twidget prev, next;
-
-  if (w->Parent) {
-    prev = w->Prev;
-    next = w->Next;
-    w->Remove();
-    DrawAreaWidget(w);
-  }
-  w->Left = x;
-  w->Up = y;
-  if (w->Parent) {
-    InsertMiddle(w, w, w->Parent, prev, next);
-    DrawAreaWidget(w);
-  }
-}
-
 static void OwnWidget(Twidget Widget, Tmsgport Owner) {
   if (!Widget->Owner) {
     if ((Widget->O_Next = Owner->FirstW))
@@ -403,10 +357,9 @@ static void RecursiveDeleteWidget(Twidget w, Tmsgport maybeOwner) {
 
 static struct SwidgetFn _FnWidget = {
     &_FnObj, //
-    SetXYWidget,  SetFillWidget,         FocusWidget,   TtyKbdFocus, MapWidget,
-    UnMapWidget,  MapTopRealWidget,      RaiseW,        LowerW,      OwnWidget,
-    DisOwnWidget, RecursiveDeleteWidget, ExposeWidget2, /* exported by
-                                                           resize.c */
+    TtyKbdFocus, MapWidget,    UnMapWidget,           MapTopRealWidget, RaiseW, LowerW,
+    OwnWidget,   DisOwnWidget, RecursiveDeleteWidget, ExposeWidget2, /* exported by
+                                                                        resize.c */
 };
 
 /* Tgadget */
@@ -518,9 +471,6 @@ static Tgadget CreateButton(Twidget Parent, dat XWidth, dat YWidth, const char *
 static struct SgadgetFn _FnGadget = {
     /* Twidget */
     &_FnObj,                                            //
-    (void (*)(Tgadget, dat, dat))SetXYWidget,           //
-    (void (*)(Tgadget, tcell))SetFillWidget,            //
-    (Twidget (*)(Tgadget))FocusWidget,                  //
     (Twidget (*)(Tgadget))TtyKbdFocus,                  //
     (void (*)(Tgadget, Twidget))MapWidget,              //
     (void (*)(Tgadget))UnMapWidget,                     //
@@ -597,27 +547,6 @@ static void SetColorsWindow(Twindow w, udat Bitmap, tcolor ColGadgets, tcolor Co
     w->ColSelectDisabled = ColSelectDisabled;
   if (w->Parent)
     DrawBorderWindow(w, BORDER_ANY);
-}
-
-static void SetXYWindow(Twindow w, dat x, dat y) {
-  Twidget prev, next;
-
-  if (w->Parent) {
-    prev = w->Prev;
-    next = w->Next;
-    w->Remove();
-    DrawAreaWindow2(w);
-  }
-  w->Left = x;
-  w->Up = y;
-  if (w->Parent) {
-    if (IS_SCREEN(w->Parent)) {
-      w->Left += w->Parent->XLogic;
-      w->Up += w->Parent->YLogic;
-    }
-    InsertMiddle(w, w, w->Parent, prev, next);
-    DrawAreaWindow2(w);
-  }
 }
 
 static void ConfigureWindow(Twindow w, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
@@ -807,9 +736,6 @@ static Trow FindRowByCode(Twindow window, udat Code, ldat *row_i) {
 static struct SwindowFn _FnWindow = {
     /* Twidget */
     &_FnObj,
-    SetXYWindow,
-    (void (*)(Twindow, tcell))SetFillWidget,
-    (Twidget(*)(Twindow))FocusWidget,
     (Twidget(*)(Twindow))TtyKbdFocus,
     (void (*)(Twindow, Twidget))MapWidget,
     (void (*)(Twindow))UnMapWidget,
@@ -862,14 +788,6 @@ static void BgImageScreen(Tscreen screen, dat BgWidth, dat BgHeight, const tcell
   }
 }
 
-static void SetXYScreen(Tscreen screen, dat x, dat y) {
-  if (screen == All->FirstScreen) {
-    y = Max2(y, -1);
-    y = Min2(y, All->DisplayHeight - 1);
-    ResizeFirstScreen(y - screen->Up);
-  }
-}
-
 static Tmenu FindMenuScreen(Tscreen screen) {
   if (screen) {
     if (screen->MenuWindow && IS_WINDOW(screen->MenuWindow))
@@ -904,17 +822,6 @@ static Tscreen FindScreen(dat j) {
   return (Tscreen)0;
 }
 
-static Twidget FocusScreen(Tscreen screen_tofocus) {
-  Tscreen screen = All->FirstScreen;
-  if (screen_tofocus && screen != screen_tofocus) {
-    MoveFirst(Screen, All, screen_tofocus);
-    DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, 0, Min2(screen->Up, screen_tofocus->Up),
-              TW_MAXDAT, TW_MAXDAT, tfalse);
-    UpdateCursor();
-  }
-  return (Twidget)screen;
-}
-
 static void ActivateMenuScreen(Tscreen screen, Tmenuitem item, bool by_mouse) {
 
   if ((All->State & state_any) != state_default)
@@ -934,10 +841,7 @@ static void DeActivateMenuScreen(Tscreen screen) {
 static struct SscreenFn _FnScreen = {
     /* Twidget */
     &_FnObj,
-    SetXYScreen,
-    (void (*)(Tscreen, tcell))SetFillWidget,
-    FocusScreen,
-    (Twidget(*)(Tscreen))NoOp,        /* KbdFocusWidget */
+    (Twidget(*)(Tscreen))NoOp,        /* KbdFocus */
     (void (*)(Tscreen, Twidget))NoOp, /* MapWidget */
     (void (*)(Tscreen))NoOp,          /* UnMapWidget */
     (void (*)(Tscreen, Tscreen))NoOp, /* MapTopRealWidget */

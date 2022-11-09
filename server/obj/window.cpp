@@ -15,7 +15,7 @@
 #include "algo.h"    // Max2()
 #include "alloc.h"   // AllocMem0(), CloneStrL()
 #include "data.h"    // DEFAULT_Col*
-#include "draw.h"    // ContainsCursor(), DrawAreaWidget()
+#include "draw.h"    // ContainsCursor(), DrawAreaWidget(), DrawAreaWindow2()
 #include "fn.h"      // Fn_Twindow
 #include "methods.h" // IncMouseMotionN(), DecMouseMotionN()
 #include "resize.h"  // UpdateCursor(), RollUpWindow()
@@ -314,5 +314,25 @@ void Swindow::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
   default:
     Swidget::ChangeField(field, clear_mask, xor_mask);
     break;
+  }
+}
+
+void Swindow::SetXY(dat x, dat y) {
+  Twidget parent = Parent, prev = NULL, next = NULL;
+  if (parent) {
+    prev = Prev;
+    next = Next;
+    Remove();
+    DrawAreaWindow2(this);
+  }
+  Left = x;
+  Up = y;
+  if (parent) {
+    if (IS_SCREEN(parent)) {
+      Left += parent->XLogic;
+      Up += parent->YLogic;
+    }
+    Insert(parent, prev, next);
+    DrawAreaWindow2(this);
   }
 }
