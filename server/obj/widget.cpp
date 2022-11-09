@@ -117,6 +117,15 @@ void Swidget::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
   }
 }
 
+Tgadget Swidget::FindGadgetByCode(udat Code) {
+  for (Twidget w = FirstW; w; w = w->Next) {
+    if (IS_GADGET(w) && ((Tgadget)w)->Code == Code) {
+      return (Tgadget)w;
+    }
+  }
+  return (Tgadget)0;
+}
+
 bool Swidget::InstallHook(HookFn hook, HookData *where) {
   if (hook && where && !where->Fn && !where->W && !Hook && !WhereHook) {
     Hook = where->Fn = hook;

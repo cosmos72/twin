@@ -161,17 +161,17 @@ static void SelectWinList(void) {
   }
 }
 
-static void ExecuteGadgetH(event_gadget *EventG) {
-  Tgadget G;
+static void ExecuteGadgetH(event_gadget *event_g) {
+  Tgadget g;
 
-  if (EventG->Code == COD_E_TTY && (G = ExecuteWin->FindGadgetByCode(COD_E_TTY))) {
+  if (event_g->Code == COD_E_TTY && (g = ExecuteWin->FindGadgetByCode(COD_E_TTY))) {
 
-    if (G->USE.T.Text[0][1] == ' ')
-      G->USE.T.Text[0][1] = _CHECK;
+    if (g->USE.T.Text[0][1] == ' ')
+      g->USE.T.Text[0][1] = _CHECK;
     else
-      G->USE.T.Text[0][1] = ' ';
+      g->USE.T.Text[0][1] = ' ';
 
-    DrawAreaWidget((Twidget)G);
+    DrawAreaWidget(g);
   }
 }
 

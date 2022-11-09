@@ -55,7 +55,6 @@ struct SwindowFn {
   /* Twidget */
   TobjFn Fn_Obj;
   void (*DrawSelf)(Sdraw *D);
-  Tgadget (*FindGadgetByCode)(Twindow Parent, udat Code);
   void (*SetXY)(Twindow, dat X, dat Y);
   void (*SetFill)(Twindow, tcell Fill);
   Twidget (*Focus)(Twindow);
