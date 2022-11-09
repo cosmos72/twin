@@ -100,12 +100,10 @@ struct Sall : public Sobj {
   Tmutex FirstMutex, LastMutex;
 
   Tmodule FirstModule, LastModule;
-  HookFn HookModuleFn;
-  Twidget HookModule;
+  HookData HookModule;
 
   Tdisplay FirstDisplay, LastDisplay, MouseDisplay, ExclusiveDisplay;
-  HookFn HookDisplayFn;
-  Twidget HookDisplay;
+  HookData HookDisplay;
 
   dat DisplayWidth, DisplayHeight;
   byte State;

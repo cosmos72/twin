@@ -61,7 +61,7 @@ Twidget Swidget::Init(Tmsgport owner, dat xwidth, dat ywidth, uldat attr, uldat 
 
 void Swidget::Delete() {
   UnMap();
-  if (Hook) {
+  if (Hook && WhereHook) {
     RemoveHook(Hook, WhereHook);
   }
   if (ShutDownHook) {
@@ -114,5 +114,25 @@ void Swidget::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
   default:
     Sobj::ChangeField(field, clear_mask, xor_mask);
     break;
+  }
+}
+
+bool Swidget::InstallHook(HookFn hook, HookData *where) {
+  if (hook && where && !where->Fn && !where->W && !Hook && !WhereHook) {
+    Hook = where->Fn = hook;
+    WhereHook = where;
+    where->W = this;
+    return true;
+  }
+  return false;
+}
+
+void Swidget::RemoveHook(HookFn hook, HookData *where) {
+  if (hook && where && Hook == hook && WhereHook == where && where->Fn == hook &&
+      where->W == this) {
+
+    Hook = where->Fn = (HookFn)0;
+    WhereHook = (HookData *)0;
+    where->W = (Twidget)0;
   }
 }

@@ -120,8 +120,6 @@ struct SwidgetFn {
   void (*RecursiveDelete)(Twidget self, Tmsgport port);
   void (*Expose)(Twidget self, dat xwidth, dat ywidth, dat left, dat up, dat pitch, const char *,
                  const trune *, const tcell *);
-  byte (*InstallHook)(Twidget, HookFn, HookFn *where);
-  void (*RemoveHook)(Twidget, HookFn, HookFn *where);
 };
 
 struct Swidget : public Sobj {
@@ -138,7 +136,8 @@ struct Swidget : public Sobj {
   Twidget O_Prev, O_Next; /* list with the same Tmsgport (owner) */
   Tmsgport Owner;
   HookFn ShutDownHook; /* hooks for this Twidget */
-  HookFn Hook, *WhereHook;
+  HookFn Hook;
+  HookData *WhereHook;
   HookFn MapUnMapHook;
   Tmsg MapQueueMsg;
   tcell USE_Fill;
@@ -216,12 +215,8 @@ public:
               const trune *runes, const tcell *cells) {
     Fn->Expose(this, xwidth, ywidth, left, up, pitch, ascii, runes, cells);
   }
-  byte InstallHook(HookFn hook, HookFn *where) {
-    return Fn->InstallHook(this, hook, where);
-  }
-  void RemoveHook(HookFn hook, HookFn *where) {
-    Fn->RemoveHook(this, hook, where);
-  }
+  bool InstallHook(HookFn hook, HookData *where);
+  void RemoveHook(HookFn hook, HookData *where);
 };
 
 #endif /* TWIN_WIDGET_H */

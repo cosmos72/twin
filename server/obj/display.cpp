@@ -86,9 +86,7 @@ void Sdisplay::Insert(Tall parent, Tdisplay prev, Tdisplay next) {
      * here we would call uninitialized display routines like MoveToXY,
      * put this after InitHW()
      */
-    if (All->HookDisplayFn) {
-      All->HookDisplayFn(All->HookDisplay);
-    }
+    All->HookDisplay();
 #endif
   }
 }
@@ -98,7 +96,6 @@ void Sdisplay::Remove() {
     RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstDisplay, NULL);
     All = (Tall)0;
 
-    if (::All->HookDisplayFn)
-      ::All->HookDisplayFn(::All->HookDisplay);
+    ::All->HookDisplay();
   }
 }

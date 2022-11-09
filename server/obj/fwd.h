@@ -55,4 +55,15 @@ typedef struct Sall *Tall;
 
 typedef void (*HookFn)(Twidget);
 
+struct HookData {
+  HookFn Fn;
+  Twidget W;
+
+  void operator()() const {
+    if (Fn && W) {
+      Fn(W);
+    }
+  }
+};
+
 #endif /* TWIN_FWD_H */

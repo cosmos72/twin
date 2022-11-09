@@ -743,7 +743,7 @@ void FullUpdateWinList(Twidget listWin);
 void InstallRemoveWinListHook(Twidget listWin) {
   if (listWin == (Twidget)WinList) {
     if (WinList->Parent && IS_SCREEN(WinList->Parent))
-      WinList->InstallHook(FullUpdateWinList, &((Tscreen)WinList->Parent)->FnHookW);
+      WinList->InstallHook(FullUpdateWinList, &((Tscreen)WinList->Parent)->HookMap);
     else
       WinList->RemoveHook(FullUpdateWinList, WinList->WhereHook);
   }
@@ -849,7 +849,7 @@ bool InitBuiltin(void) {
       Row4Menu(w, COD_QUIT, ROW_ACTIVE, 10, " Quit     ") &&
       (Builtin_File = Item4Menu(Builtin_Menu, w, ttrue, 6, " File ")) &&
 
-      (w = Win4Menu(Builtin_Menu)) && (w->InstallHook(UpdateMenuRows, &All->HookModuleFn), ttrue) &&
+      (w = Win4Menu(Builtin_Menu)) && (w->InstallHook(UpdateMenuRows, &All->HookModule), ttrue) &&
       Row4Menu(w, COD_TERM_ON, ROW_ACTIVE, 20, " Run Twin Term      ") &&
       Row4Menu(w, COD_TERM_OFF, ROW_INACTIVE, 20, " Stop Twin Term     ") &&
       Row4Menu(
@@ -992,7 +992,7 @@ bool InitBuiltin(void) {
     Act(Configure, DisplaySubWin)(DisplaySubWin, 1 << 0 | 1 << 1, -1, -1, 0, 0, 0, 0);
     Act(Map, DisplaySubWin)(DisplaySubWin, (Twidget)DisplayWin);
 
-    Act(InstallHook, DisplayWin)(DisplayWin, UpdateDisplayWin, &All->HookDisplayFn);
+    DisplayWin->InstallHook(UpdateDisplayWin, &All->HookDisplay);
     WinList->MapUnMapHook = InstallRemoveWinListHook;
 
     Act(FillButton, ButtonOK_About)(ButtonOK_About, (Twidget)AboutWin, COD_OK, 15, 11, 0,

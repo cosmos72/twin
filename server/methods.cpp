@@ -146,8 +146,9 @@ Twidget FocusWidget(Twidget w) {
 #define TtyKbdFocus FakeKbdFocus
 Twidget FakeKbdFocus(Twidget w) {
   Twidget oldW;
-  Twidget P;
-  Tscreen screen = w && (P = w->Parent) && IS_SCREEN(P) ? (Tscreen)P : All->FirstScreen;
+  Twidget parent;
+  Tscreen screen =
+      w && (parent = w->Parent) && IS_SCREEN(parent) ? (Tscreen)parent : All->FirstScreen;
 
   if (screen) {
     oldW = screen->FocusW();
@@ -244,8 +245,7 @@ static void MapTopRealWidget(Twidget w, Tscreen screen) {
     if (w->MapUnMapHook)
       w->MapUnMapHook(w);
 
-    if (screen->FnHookW)
-      screen->FnHookW(screen->HookW);
+    screen->HookMap();
   }
 }
 
@@ -321,8 +321,7 @@ static void UnMapWidget(Twidget w) {
       if (w->MapUnMapHook)
         w->MapUnMapHook(w);
 
-      if (screen->FnHookW)
-        screen->FnHookW(screen->HookW);
+      screen->HookMap();
 
     } else {
       /* UnMap() a sub-window */
@@ -412,35 +411,13 @@ static void RecursiveDeleteWidget(Twidget w, Tmsgport maybeOwner) {
     w->UnMap();
 }
 
-static byte InstallHookWidget(Twidget w, HookFn Hook, HookFn *WhereHook) {
-  if (w && !w->Hook && !w->WhereHook && Hook && WhereHook && !WhereHook[0] && !WhereHook[1]) {
-
-    w->Hook = WhereHook[0] = Hook;
-    w->WhereHook = WhereHook;
-    WhereHook[1] = (HookFn)w;
-    return ttrue;
-  }
-  return tfalse;
-}
-
-static void RemoveHookWidget(Twidget w, HookFn Hook, HookFn *WhereHook) {
-  if (w && Hook && w->Hook == Hook && WhereHook && w->WhereHook == WhereHook &&
-      WhereHook[0] == Hook && WhereHook[1] == (void *)w) {
-
-    w->Hook = *WhereHook = (HookFn)0;
-    w->WhereHook = (HookFn *)0;
-    WhereHook[1] = (HookFn)0;
-  }
-}
-
 static struct SwidgetFn _FnWidget = {
-    &_FnObj,           DrawSelfWidget, /* exported by draw.c */
-    FindWidgetAt,                      /* exported by draw.c */
-    FindGadgetByCode,  SetXYWidget,      SetFillWidget,         FocusWidget,   TtyKbdFocus,
-    MapWidget,         UnMapWidget,      MapTopRealWidget,      RaiseW,        LowerW,
-    OwnWidget,         DisOwnWidget,     RecursiveDeleteWidget, ExposeWidget2, /* exported by
-                                                                                  resize.c */
-    InstallHookWidget, RemoveHookWidget,
+    &_FnObj,          DrawSelfWidget, /* exported by draw.c */
+    FindWidgetAt,                     /* exported by draw.c */
+    FindGadgetByCode, SetXYWidget,    SetFillWidget,         FocusWidget,   TtyKbdFocus,
+    MapWidget,        UnMapWidget,    MapTopRealWidget,      RaiseW,        LowerW,
+    OwnWidget,        DisOwnWidget,   RecursiveDeleteWidget, ExposeWidget2, /* exported by
+                                                                               resize.c */
 };
 
 /* Tgadget */
@@ -561,8 +538,6 @@ static struct SgadgetFn _FnGadget = {
     (void (*)(Tgadget))DisOwnWidget, (void (*)(Tgadget, Tmsgport))RecursiveDeleteWidget,
     (void (*)(Tgadget, dat, dat, dat, dat, const char *, const trune *,
               const tcell *))ExposeWidget2, /* exported by resize.c */
-    (byte (*)(Tgadget, HookFn, void (**)(Twidget)))InstallHookWidget,
-    (void (*)(Tgadget, HookFn, void (**)(Twidget)))RemoveHookWidget,
     /* Tgadget */
     &_FnWidget, CreateEmptyButton, FillButton, CreateButton,
     WriteTextsGadget,  /* exported by resize.c */
@@ -572,7 +547,7 @@ static struct SgadgetFn _FnGadget = {
 /* Twindow */
 
 static void SetTitleWindow(Twindow w, dat titlelen, char *title) {
-  Twidget P;
+  Twidget parent;
 
   if (w->Name)
     FreeMem(w->Name);
@@ -592,10 +567,9 @@ static void SetTitleWindow(Twindow w, dat titlelen, char *title) {
   DrawBorderWindow(w, BORDER_ANY);
 #endif
 
-  if ((P = w->Parent) && IS_SCREEN(P)) {
+  if ((parent = w->Parent) && IS_SCREEN(parent)) {
     /* need to update Twindow list with new name ? */
-    if (((Tscreen)P)->FnHookW)
-      ((Tscreen)P)->FnHookW(((Tscreen)P)->HookW);
+    ((Tscreen)parent)->HookMap();
   }
 }
 
@@ -856,8 +830,6 @@ static struct SwindowFn _FnWindow = {
     (void (*)(Twindow, Tmsgport))RecursiveDeleteWidget,
     (void (*)(Twindow, dat, dat, dat, dat, const char *, const trune *,
               const tcell *))ExposeWindow2, /* exported by resize.c */
-    (byte (*)(Twindow, HookFn, void (**)(Twidget)))InstallHookWidget,
-    (void (*)(Twindow, HookFn, void (**)(Twidget)))RemoveHookWidget,
     /* Twindow */
     &_FnWidget,
     FakeWriteCharset,
@@ -988,8 +960,7 @@ static struct SscreenFn _FnScreen = {
     (void (*)(Tscreen, Tmsgport))RecursiveDeleteWidget,
     (void (*)(Tscreen, dat, dat, dat, dat, const char *, const trune *,
               const tcell *))ExposeWidget2, /* exported by resize.c */
-    (byte (*)(Tscreen, HookFn, void (**)(Twidget)))InstallHookWidget,
-    (void (*)(Tscreen, HookFn, void (**)(Twidget)))RemoveHookWidget,
+
     /* Tscreen */
     &_FnWidget,
     FindMenuScreen,

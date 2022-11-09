@@ -228,8 +228,7 @@ byte InitDisplay(Tdisplay D_HW) {
 
     if (!DisplayHWCTTY && D_HW->DisplayIsCTTY)
       DisplayHWCTTY = D_HW;
-    if (All->HookDisplayFn)
-      All->HookDisplayFn(All->HookDisplay);
+    All->HookDisplay();
     UpdateFlagsHW(); /* this garbles HW... not a problem here */
   } else {
     warn_NoHW(arg.data(), arg.size());

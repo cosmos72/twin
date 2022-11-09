@@ -1790,8 +1790,7 @@ void RaiseWidget(Twidget w, byte alsoFocus) {
       UpdateCursor();
     }
 
-    if (screen->FnHookW)
-      screen->FnHookW(screen->HookW);
+    screen->HookMap();
   }
 }
 
@@ -1819,8 +1818,7 @@ void LowerWidget(Twidget w, byte alsoUnFocus) {
         UpdateCursor();
     }
 
-    if (screen->FnHookW)
-      screen->FnHookW(screen->HookW);
+    screen->HookMap();
   }
 }
 

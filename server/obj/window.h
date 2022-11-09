@@ -71,8 +71,6 @@ struct SwindowFn {
   void (*RecursiveDelete)(Twindow, Tmsgport);
   void (*Expose)(Twindow, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
                  const tcell *);
-  byte (*InstallHook)(Twindow, HookFn, HookFn *Where);
-  void (*RemoveHook)(Twindow, HookFn, HookFn *Where);
   /* Twindow */
   TwidgetFn Fn_Widget;
   byte (*TtyWriteCharset)(Twindow, uldat Len, const char *charset_bytes);

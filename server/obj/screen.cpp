@@ -53,8 +53,7 @@ Tscreen Sscreen::Init(dat namelen, const char *name, dat bgwidth, dat bgheight, 
   }
   this->NameLen = namelen;
   // this->MenuWindow = this->ClickWindow = NULL;
-  // this->HookW = NULL;
-  // this->FnHookW = NULL;
+  // this->HookMap.clear();
   this->USE.B.BgWidth = bgwidth;
   this->USE.B.BgHeight = bgheight;
   CopyMem(bg, this->USE.B.Bg, size);

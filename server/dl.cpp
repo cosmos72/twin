@@ -130,8 +130,7 @@ Tmodule DlLoad(uldat code) {
     const Chars name = DlCode2Name(code);
     M = DlLoadAny(name.size(), name.data());
     if ((So[code] = M)) {
-      if (All->HookModuleFn)
-        All->HookModuleFn(All->HookModule);
+      All->HookModule();
     } else {
       log(ERROR) << "failed to load module " << name << ": " //
                  << (Errstr ? Errstr : Chars("unknown error"));
@@ -145,8 +144,7 @@ void DlUnload(uldat code) {
     if (So[code]) {
       So[code]->Delete();
       So[code] = NULL;
-      if (All->HookModuleFn)
-        All->HookModuleFn(All->HookModule);
+      All->HookModule();
     }
   }
 }

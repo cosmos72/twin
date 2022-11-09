@@ -35,8 +35,6 @@ struct SscreenFn {
   void (*RecursiveDelete)(Tscreen, Tmsgport);
   void (*Expose)(Tscreen, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
                  const tcell *);
-  byte (*InstallHook)(Tscreen, HookFn, HookFn *Where);
-  void (*RemoveHook)(Tscreen, HookFn, HookFn *Where);
   /* Tscreen */
   TwidgetFn Fn_Widget;
   Tmenu (*FindMenu)(Tscreen);
@@ -53,8 +51,7 @@ struct Sscreen : public Swidget {
   char *Name;
   Twindow MenuWindow, ClickWindow;
   Tall All;
-  HookFn FnHookW; /* allow hooks on children Map()/UnMap() inside this Twidget */
-  Twidget HookW;
+  HookData HookMap; /* allow hooks on children Map()/UnMap() inside this Tscreen */
 
 private:
   Tscreen Init(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
