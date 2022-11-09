@@ -15,7 +15,7 @@
 #include "stl/fwd.h"
 
 // keep the name 'errnum_e' as it's part of the ABI:
-// C++ mangled name for function 'bool Error(errnum err)' below contains it
+// C++ mangled name for function 'bool Error(e_errnum err)' below contains it
 typedef enum errnum_e /*: unsigned*/ {
   SUCCESS = 0,
   NOMEMORY = 1,   //< memory allocation failed
@@ -23,10 +23,10 @@ typedef enum errnum_e /*: unsigned*/ {
   DLERROR = 3,    //< error loading shared library at runtime
   SYSERROR = 4,   //< libc/OS error, see errno.
   INVALERROR = 5, //< invalid value passed to function/method
-} errnum;
+} e_errnum;
 
-extern errnum Err;
+extern e_errnum Err;
 extern Chars Errstr;
-bool Error(errnum err) NOTHROW; // always returns false
+bool Error(e_errnum err) NOTHROW; // always returns false
 
 #endif /* TWIN_STL_ERR_H */

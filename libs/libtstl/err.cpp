@@ -23,13 +23,13 @@
 #ifdef TW_HAVE_STRING_H
 #include <cstring>
 #else
-char *strerror(int errnum);
+char *strerror(int error_no);
 #endif
 
-errnum Err;
+e_errnum Err;
 Chars Errstr;
 
-bool Error(errnum err) NOTHROW {
+bool Error(e_errnum err) NOTHROW {
   switch ((Err = err)) {
   case NOMEMORY:
     Errstr = Chars("Out of memory!");

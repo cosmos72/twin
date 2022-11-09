@@ -15,9 +15,9 @@
 
 struct to_chars_result {
   size_t written;
-  errnum err;
+  e_errnum err;
 
-  explicit to_chars_result(size_t written_ = 0, errnum err_ = SUCCESS) NOTHROW //
+  explicit to_chars_result(size_t written_ = 0, e_errnum err_ = SUCCESS) NOTHROW //
       : written(written_),
         err(err_) {
   }

@@ -857,7 +857,7 @@ void Sscreen::DrawSelf(Sdraw *d) {
 
 static void _DrawWCtx_(Sdraw **FirstD, Twidget w, Twidget child_next, Twidget only_child, ldat left,
                        ldat up, ldat rgt, ldat dwn, dat x1, dat y1, dat x2, dat Y2,
-                       bool no_children, bool borderDone, byte shaded, errnum *lError) {
+                       bool no_children, bool borderDone, byte shaded, e_errnum *lError) {
   Sdraw *d;
   if (!QueuedDrawArea2FullScreen) {
     if ((d = (Sdraw *)AllocMem(sizeof(Sdraw)))) {
@@ -898,7 +898,7 @@ void Sdraw::Draw() {
   dat x1, y1, x2, y2;
   ldat cL, cU, cR, cD;
   dat dwidth, dheight;
-  errnum lError = SUCCESS;
+  e_errnum lError = SUCCESS;
   byte border;
   bool shaded, winActive, no_children;
   byte child_found = false, first_cycle = true;
@@ -1082,7 +1082,7 @@ void DrawAreaWidget(Twidget w) {
 }
 
 static void _DrawAreaCtx_(Sdraw **FirstD, Tscreen screen, Twidget w, Twidget onlyW, dat x1, dat Y1,
-                          dat X2, dat Y2, bool shaded, errnum *lError) {
+                          dat X2, dat Y2, bool shaded, e_errnum *lError) {
   Sdraw *d;
   if (!QueuedDrawArea2FullScreen) {
     if ((d = (Sdraw *)AllocMem(sizeof(Sdraw)))) {
@@ -1169,7 +1169,7 @@ void Sdraw::DrawArea() {
   ldat vs_x1, vs_x2, vs_y1;
   dat left, up, rgt, dwn;
   dat x1, y1, x2, y2;
-  errnum lError = SUCCESS;
+  e_errnum lError = SUCCESS;
   byte WidgetFound, shade;
   byte deltaXShade, deltaYShade;
   bool first_cycle = true, shaded;
