@@ -25,14 +25,14 @@
 #include <Tutf/Tutf.h>
 #include <Tutf/Tutf_defs.h>
 
-inline tcolor DoShadowColor(tcolor Color, bool Fg, bool Bg) NOTHROW {
-  return (Bg   ? (Color & TCOL(0, tmaxcol)) > TCOL(0, thigh | tblack) ? TCOL(0, thigh | tblack)
+inline tcolor DoShadowColor(tcolor color, bool Fg, bool Bg) NOTHROW {
+  return (Bg   ? (color & TCOL(0, tmaxcol)) > TCOL(0, thigh | tblack) ? TCOL(0, thigh | tblack)
                                                                       : TCOL(0, tblack)
-            : Fg ? Color & TCOL(0, twhite)
-               : Color & TCOL(0, tmaxcol)) |
-         (Fg ? (Color & TCOL(tmaxcol, 0)) > TCOL(thigh | tblack, 0) ? TCOL(twhite, 0)
+            : Fg ? color & TCOL(0, twhite)
+               : color & TCOL(0, tmaxcol)) |
+         (Fg ? (color & TCOL(tmaxcol, 0)) > TCOL(thigh | tblack, 0) ? TCOL(twhite, 0)
                                                                     : TCOL(thigh | tblack, 0)
-             : Color & TCOL(tmaxcol, 0));
+             : color & TCOL(tmaxcol, 0));
 }
 
 /*
@@ -41,7 +41,7 @@ inline tcolor DoShadowColor(tcolor Color, bool Fg, bool Bg) NOTHROW {
  */
 static void FindFontMenuItem(Tmenu Menu, Tmenuitem MenuItem, dat i, bool select,
                              tcell *PtrAttr) NOTHROW {
-  tcolor Color;
+  tcolor color;
   byte ShortCutFound;
 
   if (Menu && MenuItem && i >= MenuItem->Left && i < (ldat)(MenuItem->Left + MenuItem->Len)) {
@@ -49,37 +49,37 @@ static void FindFontMenuItem(Tmenu Menu, Tmenuitem MenuItem, dat i, bool select,
     if (MenuItem->Flags & ROW_ACTIVE) {
       if (ShortCutFound) {
         if (select)
-          Color = Menu->ColSelShtCut;
+          color = Menu->ColSelShtCut;
         else
-          Color = Menu->ColShtCut;
+          color = Menu->ColShtCut;
       } else if (select)
-        Color = Menu->ColSelect;
+        color = Menu->ColSelect;
       else
-        Color = Menu->ColItem;
+        color = Menu->ColItem;
     } else if (select)
-      Color = Menu->ColSelectDisabled;
+      color = Menu->ColSelectDisabled;
     else
-      Color = Menu->ColDisabled;
+      color = Menu->ColDisabled;
 
-    *PtrAttr = TCELL(Color, MenuItem->Text[i - MenuItem->Left]);
+    *PtrAttr = TCELL(color, MenuItem->Text[i - MenuItem->Left]);
   }
 }
 
 static void FindFontInfo(Tmenu Menu, dat i, bool select, tcell *PtrAttr) NOTHROW {
   Trow Info;
-  tcolor Color;
+  tcolor color;
 
   if (Menu && (Info = Menu->Info) && i >= 0 && (uldat)i < Info->Len) {
     if (select)
-      Color = Info->Flags & ROW_ACTIVE ? Menu->ColSelect : Menu->ColSelectDisabled;
+      color = Info->Flags & ROW_ACTIVE ? Menu->ColSelect : Menu->ColSelectDisabled;
     else if (!(Info->Flags & ROW_ACTIVE))
-      Color = Menu->ColDisabled;
+      color = Menu->ColDisabled;
     else if (Menu->FlagDefColInfo || !Info->ColText)
-      Color = Menu->ColItem;
+      color = Menu->ColItem;
     else
-      Color = Info->ColText[i];
+      color = Info->ColText[i];
 
-    *PtrAttr = TCELL(Color, Info->Text[i]);
+    *PtrAttr = TCELL(color, Info->Text[i]);
   }
 }
 
@@ -373,519 +373,501 @@ Twidget RecursiveFindWidgetAt(Twidget parent, dat x, dat y) {
   return parent;
 }
 
-void DrawSelfWidget(Sdraw *d) {
+void Swidget::DrawSelf(Sdraw *d) {
   Twidget w = d->TopW;
 
-  if (QueuedDrawArea2FullScreen || (w->Flags & WIDGETFL_NOTVISIBLE))
+  if (!w || QueuedDrawArea2FullScreen || (w->Flags & WIDGETFL_NOTVISIBLE))
     return;
 
-  if (w_USE(w, USEEXPOSE)) {
-    const char *Text = NULL;
-    const trune *TRune = NULL;
-    const tcell *TCell = NULL;
-    ldat Left, up, _X1, _X2, _Y1, _Y2;
-    ldat Pitch, dwidth, i, j, v; /* (ldat) to avoid multiplication overflows */
-    dat X1, X2, Y1, Y2, dX, dY;
-    tcell h;
-    tcolor Color;
-    bool shaded;
+  if (!w_USE(w, USEEXPOSE)) {
+    FillVideo(d->X1, d->Y1, d->X2, d->Y2, w->USE_Fill);
+    return;
+  }
 
-    switch (w->USE.E.Flags) {
-    case WIDGET_USEEXPOSE_TEXT:
-      Text = w->USE.E.E.Text;
-      break;
-    case WIDGET_USEEXPOSE_TRUNE:
-      TRune = w->USE.E.E.TRune;
-      break;
-    case WIDGET_USEEXPOSE_TCELL:
-      TCell = w->USE.E.E.TCell;
-      break;
-    default:
-      break;
-    }
-    Left = d->Left;
-    up = d->Up;
-    X1 = d->X1;
-    Y1 = d->Y1;
-    X2 = d->X2;
-    Y2 = d->Y2;
-    shaded = d->Shaded;
-    dwidth = d->DWidth;
+  const char *text = NULL;
+  const trune *runes = NULL;
+  const tcell *cells = NULL;
+
+  switch (w->USE.E.Flags) {
+  case WIDGET_USEEXPOSE_TEXT:
+    text = w->USE.E.E.Text;
+    break;
+  case WIDGET_USEEXPOSE_TRUNE:
+    runes = w->USE.E.E.TRune;
+    break;
+  case WIDGET_USEEXPOSE_TCELL:
+    cells = w->USE.E.E.TCell;
+    break;
+  default:
+    break;
+  }
+  ldat left = d->Left, up = d->Up;
+  ldat x1 = d->X1, y1 = d->Y1, x2 = d->X2, y2 = d->Y2;
+  ldat dwidth = d->DWidth; // (ldat) to avoid multiplication overflows
+  bool shaded = d->Shaded;
 
 #if 0
-        /*
-         * this would suppress EXPOSE messages during resize (good)
-         * but also clears the whole Twidget during non-top resize (bad)
-         */
-        if ((All->State & state_any) == state_resize && (Twidget)All->FirstScreen->ClickWindow == w) {
-            /* user is interactively resizing this Twindow... pad with spaces */
-            FillVideo(X1, Y1, X2, Y2, w->USE_Fill);
-            return;
-        }
+  /*
+    * this would suppress EXPOSE messages during resize (good)
+    * but also clears the whole Twidget during non-top resize (bad)
+    */
+  if ((All->State & state_any) == state_resize && (Twidget)All->FirstScreen->ClickWindow == w) {
+      /* user is interactively resizing this Twindow... pad with spaces */
+      FillVideo(x1, y1, x2, y2, w->USE_Fill);
+      return;
+  }
 #endif
 
-    if (Text || TRune || TCell) {
-      Pitch = w->USE.E.Pitch;
-
-      _X1 = Max2(w->USE.E.X1 + Left, X1);
-      _X2 = Min2(w->USE.E.X2 + Left, X2);
-      _Y1 = Max2(w->USE.E.Y1 + up, Y1);
-      _Y2 = Min2(w->USE.E.Y2 + up, Y2);
-
-      dX = _X1 - w->USE.E.X1 - Left;
-      dY = _Y1 - w->USE.E.Y1 - up;
-
-      h = w->USE_Fill;
-      if (_X1 > _X2 || _Y1 > _Y2) {
-        /* no valid ->USE.E, fill with spaces */
-        FillVideo(X1, Y1, X2, Y2, h);
-        return;
-      }
-
-      DirtyVideo(X1, Y1, X2, Y2);
-
-      /*
-       * check if the ->USE.E is smaller than the Twidget size...
-       * pad with SPACEs as needed
-       */
-      if (Y1 < _Y1) {
-        FillVideo(X1, Y1, X2, _Y1 - 1, h);
-        Y1 = _Y1;
-      }
-      if (Y2 > _Y2) {
-        FillVideo(X1, _Y2 + 1, X2, Y2, h);
-        Y2 = _Y2;
-      }
-      if (X1 < _X1) {
-        FillVideo(X1, Y1, _X1 - 1, Y2, h);
-        X1 = _X1;
-      }
-      if (X2 > _X2) {
-        FillVideo(_X2 + 1, Y1, X2, Y2, h);
-        X2 = _X2;
-      }
-
-      if (Text) {
-        Color = TCOLOR(w->USE_Fill);
-        if (shaded)
-          Color = DoShadowColor(Color, shaded, shaded);
-        Text += dY * Pitch;
-        for (j = Y1; j <= Y2; j++) {
-          Text += dX;
-          for (i = X1, v = 0; i <= X2; i++, v++)
-            Video[i + j * (ldat)dwidth] = TCELL(Color, Text[v]);
-          Text += Pitch - dX;
-        }
-      } else if (TRune) {
-        Color = TCOLOR(w->USE_Fill);
-        if (shaded)
-          Color = DoShadowColor(Color, shaded, shaded);
-        TRune += dY * Pitch;
-        for (j = Y1; j <= Y2; j++) {
-          TRune += dX;
-          for (i = X1, v = 0; i <= X2; i++, v++)
-            Video[i + j * (ldat)dwidth] = TCELL(Color, TRune[v]);
-          TRune += Pitch - dX;
-        }
-      } else if (TCell && !shaded) {
-        TCell += dX + dY * Pitch;
-        for (j = Y1; j <= Y2; j++) {
-          CopyMem(TCell, &Video[X1 + j * (ldat)dwidth], (uldat)sizeof(tcell) * (X2 - X1 + 1));
-          TCell += Pitch;
-        }
-      } else if (TCell) {
-        /* shaded == true */
-        TCell += dY * Pitch;
-        for (j = Y1; j <= Y2; j++) {
-          TCell += dX;
-          for (i = X1, v = 0; i <= X2; i++, v++) {
-            Color = DoShadowColor(TCOLOR(TCell[v]), shaded, shaded);
-            Video[i + j * (ldat)dwidth] = TCELL(Color, 0) | TCELL_FONTMASK(TCell[v]);
-          }
-          TCell += Pitch - dX;
-        }
-      }
-    } else {
-      /* ask the client to draw */
-      Tmsg msg;
-      event_widget *EventW;
-
-      if ((msg = New(msg)(msg_widget_change, 0))) {
-        EventW = &msg->Event.EventWidget;
-        EventW->W = w;
-        EventW->Code = MSG_WIDGET_EXPOSE;
-        EventW->Flags = shaded ? MSG_WIDGETFL_SHADED : 0;
-        EventW->XWidth = X2 - X1 + 1;
-        EventW->YWidth = Y2 - Y1 + 1;
-        EventW->X = X1 - Left;
-        EventW->Y = Y1 - up;
-        SendMsg(w->Owner, msg);
-      }
+  if (!text && !runes && !cells) {
+    /* ask the client to draw */
+    Tmsg msg;
+    if ((msg = New(msg)(msg_widget_change, 0))) {
+      event_widget *event = &msg->Event.EventWidget;
+      event->W = w;
+      event->Code = MSG_WIDGET_EXPOSE;
+      event->Flags = shaded ? MSG_WIDGETFL_SHADED : 0;
+      event->XWidth = x2 - x1 + 1;
+      event->YWidth = y2 - y1 + 1;
+      event->X = x1 - left;
+      event->Y = y1 - up;
+      SendMsg(w->Owner, msg);
     }
-  } else
-    FillVideo(d->X1, d->Y1, d->X2, d->Y2, w->USE_Fill);
+    return;
+  }
+
+  // clipped region
+  ldat x1c = Max2(w->USE.E.X1 + left, x1);
+  ldat x2c = Min2(w->USE.E.X2 + left, x2);
+  ldat y1c = Max2(w->USE.E.Y1 + up, y1);
+  ldat y2c = Min2(w->USE.E.Y2 + up, y2);
+
+  ldat pitch = w->USE.E.Pitch;
+
+  tcell h = w->USE_Fill;
+  if (x1c > x2c || y1c > y2c) {
+    /* no valid ->USE.E, fill with spaces */
+    FillVideo(x1, y1, x2, y2, h);
+    return;
+  }
+
+  DirtyVideo(x1, y1, x2, y2);
+
+  /*
+   * check if the ->USE.E is smaller than the Twidget size...
+   * pad with SPACEs as needed
+   */
+  if (y1 < y1c) {
+    FillVideo(x1, y1, x2, y1c - 1, h);
+    y1 = y1c;
+  }
+  if (y2 > y2c) {
+    FillVideo(x1, y2c + 1, x2, y2, h);
+    y2 = y2c;
+  }
+  if (x1 < x1c) {
+    FillVideo(x1, y1, x1c - 1, y2, h);
+    x1 = x1c;
+  }
+  if (x2 > x2c) {
+    FillVideo(x2c + 1, y1, x2, y2, h);
+    x2 = x2c;
+  }
+
+  ldat dx = x1c - w->USE.E.X1 - left;
+  ldat dy = y1c - w->USE.E.Y1 - up;
+
+  if (text) {
+    tcolor color = TCOLOR(w->USE_Fill);
+    if (shaded)
+      color = DoShadowColor(color, shaded, shaded);
+    text += dy * pitch;
+    for (ldat j = y1; j <= y2; j++) {
+      text += dx;
+      for (ldat i = x1, v = 0; i <= x2; i++, v++)
+        Video[i + j * (ldat)dwidth] = TCELL(color, text[v]);
+      text += pitch - dx;
+    }
+  } else if (runes) {
+    tcolor color = TCOLOR(w->USE_Fill);
+    if (shaded)
+      color = DoShadowColor(color, shaded, shaded);
+    runes += dy * pitch;
+    for (ldat j = y1; j <= y2; j++) {
+      runes += dx;
+      for (ldat i = x1, v = 0; i <= x2; i++, v++)
+        Video[i + j * (ldat)dwidth] = TCELL(color, runes[v]);
+      runes += pitch - dx;
+    }
+  } else if (cells && !shaded) {
+    cells += dx + dy * pitch;
+    for (ldat j = y1; j <= y2; j++) {
+      CopyMem(cells, &Video[x1 + j * (ldat)dwidth], (uldat)sizeof(tcell) * (x2 - x1 + 1));
+      cells += pitch;
+    }
+  } else if (cells) {
+    /* shaded == true */
+    cells += dy * pitch;
+    for (ldat j = y1; j <= y2; j++) {
+      cells += dx;
+      for (ldat i = x1, v = 0; i <= x2; i++, v++) {
+        tcolor color = DoShadowColor(TCOLOR(cells[v]), shaded, shaded);
+        Video[i + j * (ldat)dwidth] = TCELL(color, 0) | TCELL_FONTMASK(cells[v]);
+      }
+      cells += pitch - dx;
+    }
+  }
 }
 
-void DrawSelfGadget(Sdraw *d) {
+void Sgadget::DrawSelf(Sdraw *d) {
+
+  if (!d->TopW || !IS_GADGET(d->TopW) || QueuedDrawArea2FullScreen) {
+    return;
+  }
   Tgadget g = (Tgadget)d->TopW;
-
-  if (QueuedDrawArea2FullScreen || (g->Flags & WIDGETFL_NOTVISIBLE))
+  if (g->Flags & WIDGETFL_NOTVISIBLE) {
     return;
-
-  if (!G_USE(g, USETEXT)) {
-    g->widget_fn()->DrawSelf(d);
+  } else if (!G_USE(g, USETEXT)) {
+    Swidget::DrawSelf(d);
     return;
   }
 
-  {
-    ldat width, dwidth, Offset; /* (ldat) to avoid multiplication overflows */
-    dat i, i_min, i_max, j, j_min, j_max;
-    bool select, disabled, absent;
-    trune Font, *Text, **GadgetText;
-    tcolor *ColText, **GadgetColor;
-    tcolor Color;
+  ldat width, dwidth, offset; /* (ldat) to avoid multiplication overflows */
+  dat i, i_min, i_max, j, j_min, j_max;
+  bool select, disabled, absent;
+  trune font, *text, **gadgetText;
+  tcolor *colText, **gadgetColor;
+  tcolor color;
 
-    select = !!(g->Flags & GADGETFL_PRESSED);
-    disabled = !!(g->Flags & GADGETFL_DISABLED);
-    absent = !!(g->Flags & GADGETFL_TEXT_DEFCOL);
+  select = !!(g->Flags & GADGETFL_PRESSED);
+  disabled = !!(g->Flags & GADGETFL_DISABLED);
+  absent = !!(g->Flags & GADGETFL_TEXT_DEFCOL);
 
-    i_min = d->X1 - d->Left;
-    i_max = d->X2 - d->Left;
+  i_min = d->X1 - d->Left;
+  i_max = d->X2 - d->Left;
 
-    j_min = d->Y1 - d->Up;
-    j_max = d->Y2 - d->Up;
+  j_min = d->Y1 - d->Up;
+  j_max = d->Y2 - d->Up;
 
-    width = g->XWidth;
-    dwidth = d->DWidth;
+  width = g->XWidth;
+  dwidth = d->DWidth;
 
-    Offset = d->Left + d->Up * (ldat)dwidth;
+  offset = d->Left + d->Up * (ldat)dwidth;
 
-    GadgetText = g->USE.T.Text;
-    GadgetColor = g->USE.T.Color;
+  gadgetText = g->USE.T.Text;
+  gadgetColor = g->USE.T.Color;
 
-    Text = select                      ? disabled && GadgetText[3] ? GadgetText[3]
-                                         : GadgetText[1]           ? GadgetText[1]
-                                                                   : GadgetText[0]
-                                : disabled && GadgetText[2] ? GadgetText[2]
-                                       : GadgetText[0];
+  text = select ? (disabled && gadgetText[3] ? gadgetText[3]
+                                             : (gadgetText[1] ? gadgetText[1] : gadgetText[0]))
+                : (disabled && gadgetText[2] ? gadgetText[2] : gadgetText[0]);
 
-    if (!Text)
-      Font = ' ';
+  if (!text)
+    font = ' ';
 
-    ColText = absent                       ? NULL
-              : select                     ? disabled && GadgetColor[3] ? GadgetColor[3]
-                                             : GadgetColor[1]           ? GadgetColor[1]
-                                                                        : GadgetColor[0]
-                                  : disabled && GadgetColor[2] ? GadgetColor[2]
-                                           : GadgetColor[0];
+  colText = absent ? NULL
+            : select
+                ? (disabled && gadgetColor[3] ? gadgetColor[3]
+                                              : (gadgetColor[1] ? gadgetColor[1] : gadgetColor[0]))
+                : (disabled && gadgetColor[2] ? gadgetColor[2] : gadgetColor[0]);
 
-    if (!ColText) {
-      absent = true;
-      Color = select     ? disabled ? g->ColSelectDisabled : g->ColSelect
-              : disabled ? g->ColDisabled
-                         : g->ColText;
-      Color = DoShadowColor(Color, d->Shaded, d->Shaded);
-    }
-
-    for (j = j_min; j <= j_max; j++) {
-      for (i = i_min; i <= i_max; i++) {
-        if (Text)
-          Font = Text[i + j * width];
-        if (!absent)
-          Color = DoShadowColor(ColText[i + j * width], d->Shaded, d->Shaded);
-        Video[i + j * (ldat)dwidth + Offset] = TCELL(Color, Font);
-      }
-    }
-    DirtyVideo(d->X1, d->Y1, d->X2, d->Y2);
+  if (!colText) {
+    absent = true;
+    color = select ? (disabled ? g->ColSelectDisabled : g->ColSelect)
+                   : (disabled ? g->ColDisabled : g->ColText);
+    color = DoShadowColor(color, d->Shaded, d->Shaded);
   }
+
+  for (j = j_min; j <= j_max; j++) {
+    for (i = i_min; i <= i_max; i++) {
+      if (text)
+        font = text[i + j * width];
+      if (!absent)
+        color = DoShadowColor(colText[i + j * width], d->Shaded, d->Shaded);
+      Video[i + j * (ldat)dwidth + offset] = TCELL(color, font);
+    }
+  }
+  DirtyVideo(d->X1, d->Y1, d->X2, d->Y2);
 }
 
-static void DrawSelfBorder(Twindow w, ldat Left, ldat up, ldat rgt, ldat dwn, dat X1, dat Y1,
-                           dat X2, dat Y2, byte Border, bool winActive, bool shaded) {
+static void DrawSelfBorder(Twindow w, ldat left, ldat up, ldat rgt, ldat dwn, dat x1, dat y1,
+                           dat x2, dat Y2, byte border, bool winActive, bool shaded) {
 
   ldat i, j, u, v, dwidth = All->DisplayWidth; /* (ldat) to avoid multiplication overflows */
   tcell attr;
-  tcolor Color;
+  tcolor color;
 
-  if (QueuedDrawArea2FullScreen || (w->Flags & WIDGETFL_NOTVISIBLE))
+  if (QueuedDrawArea2FullScreen || (w->Flags & WIDGETFL_NOTVISIBLE)) {
     return;
+  }
 
-  if ((ldat)Y1 == up) {
-    j = Y1 * dwidth;
-    for (i = X1, u = i - Left; i <= X2; i++, u++) {
-      w->FindBorder(u, 0, Border, &attr);
-      Color = DoShadowColor(TCOLOR(attr), shaded || !winActive, shaded);
-      Video[i + j] = TCELL(Color, 0) | (attr & ~TCELL(TW_MAXWCOL, 0));
+  if ((ldat)y1 == up) {
+    j = y1 * dwidth;
+    for (i = x1, u = i - left; i <= x2; i++, u++) {
+      w->FindBorder(u, 0, border, &attr);
+      color = DoShadowColor(TCOLOR(attr), shaded || !winActive, shaded);
+      Video[i + j] = TCELL(color, 0) | (attr & ~TCELL(TW_MAXWCOL, 0));
     }
-    DirtyVideo(X1, Y1, X2, Y1);
-    Y1++;
-    if (Y1 > Y2)
+    DirtyVideo(x1, y1, x2, y1);
+    y1++;
+    if (y1 > Y2)
       return;
   }
 
   if ((ldat)Y2 == dwn) {
     v = (ldat)Y2 - up;
     j = Y2 * dwidth;
-    for (i = X1, u = i - Left; i <= X2; i++, u++) {
-      w->FindBorder(u, v, Border, &attr);
-      Color = DoShadowColor(TCOLOR(attr), shaded || !winActive, shaded);
-      Video[i + j] = TCELL(Color, 0) | (attr & ~TCELL(TW_MAXWCOL, 0));
+    for (i = x1, u = i - left; i <= x2; i++, u++) {
+      w->FindBorder(u, v, border, &attr);
+      color = DoShadowColor(TCOLOR(attr), shaded || !winActive, shaded);
+      Video[i + j] = TCELL(color, 0) | (attr & ~TCELL(TW_MAXWCOL, 0));
     }
-    DirtyVideo(X1, Y2, X2, Y2);
+    DirtyVideo(x1, Y2, x2, Y2);
     Y2--;
-    if (Y1 > Y2)
+    if (y1 > Y2)
       return;
   }
 
-  if ((ldat)X1 == Left) {
-    for (j = Y1, v = j - up; j <= Y2; j++, v++) {
-      w->FindBorder(0, v, Border, &attr);
-      Color = DoShadowColor(TCOLOR(attr), shaded || !winActive, shaded);
-      Video[X1 + j * dwidth] = TCELL(Color, 0) | (attr & ~TCELL(TW_MAXWCOL, 0));
+  if ((ldat)x1 == left) {
+    for (j = y1, v = j - up; j <= Y2; j++, v++) {
+      w->FindBorder(0, v, border, &attr);
+      color = DoShadowColor(TCOLOR(attr), shaded || !winActive, shaded);
+      Video[x1 + j * dwidth] = TCELL(color, 0) | (attr & ~TCELL(TW_MAXWCOL, 0));
     }
-    DirtyVideo(X1, Y1, X1, Y2);
-    X1++;
-    if (X1 > X2)
+    DirtyVideo(x1, y1, x1, Y2);
+    x1++;
+    if (x1 > x2)
       return;
   }
 
-  if ((ldat)X2 == rgt) {
-    u = (ldat)X2 - Left;
-    for (j = Y1, v = j - up; j <= Y2; j++, v++) {
-      w->FindBorder(u, v, Border, &attr);
-      Color = DoShadowColor(TCOLOR(attr), shaded || !winActive, shaded);
-      Video[X2 + j * dwidth] = TCELL(Color, 0) | (attr & ~TCELL(TW_MAXWCOL, 0));
+  if ((ldat)x2 == rgt) {
+    u = (ldat)x2 - left;
+    for (j = y1, v = j - up; j <= Y2; j++, v++) {
+      w->FindBorder(u, v, border, &attr);
+      color = DoShadowColor(TCOLOR(attr), shaded || !winActive, shaded);
+      Video[x2 + j * dwidth] = TCELL(color, 0) | (attr & ~TCELL(TW_MAXWCOL, 0));
     }
-    DirtyVideo(X2, Y1, X2, Y2);
-    X2--;
-    if (X1 > X2)
+    DirtyVideo(x2, y1, x2, Y2);
+    x2--;
+    if (x1 > x2)
       return;
   }
 }
 
-void DrawSelfWindow(Sdraw *d) {
-  Twindow w = (Twindow)d->TopW;
-
-  if (QueuedDrawArea2FullScreen || (w->Flags & WIDGETFL_NOTVISIBLE))
+void Swindow::DrawSelf(Sdraw *d) {
+  if (!d->TopW || !IS_WINDOW(d->TopW) || QueuedDrawArea2FullScreen) {
     return;
-
-  if (!W_USE(w, USEROWS) && !W_USE(w, USECONTENTS)) {
-    w->widget_fn()->DrawSelf(d);
+  }
+  Twindow w = (Twindow)d->TopW;
+  if ((w->Flags & WIDGETFL_NOTVISIBLE)) {
+    return;
+  } else if (!W_USE(w, USEROWS) && !W_USE(w, USECONTENTS)) {
+    Swidget::DrawSelf(d);
     return;
   }
 
-  {
-    const tcell *Contents, *CurrCont;
-    const trune *TRune;
-    tcolor *ColText;
-    ldat Left, up, rgt;
-    ldat dwidth, i, j, u, v; /* (ldat) to avoid multiplication overflows */
-    ldat row, PosInRow;
-    trune Font;
-    Trow CurrRow;
-    dat X1, Y1, X2, Y2;
-    bool shaded, absent, select, rowDisabled;
-    tcolor Color;
+  const tcell *contents = NULL, *currCont = NULL;
+  const trune *runes = NULL;
+  tcolor *colText = NULL;
+  ldat row, posInRow;
+  trune font;
+  Trow curr_row;
 
-    X1 = d->X1;
-    Y1 = d->Y1;
-    X2 = d->X2;
-    Y2 = d->Y2;
-    Left = d->Left;
-    up = d->Up;
-    rgt = d->Rgt;
-    shaded = d->Shaded;
-    dwidth = d->DWidth;
+  ldat left = d->Left, up = d->Up, rgt = d->Rgt;
+  ldat x1 = d->X1, y1 = d->Y1, x2 = d->X2, Y2 = d->Y2;
+  ldat dwidth = d->DWidth;
 
-    /* not here... already done in Sdraw.Draw() */
+  tcolor color;
+  bool shaded = d->Shaded, absent, select, rowDisabled;
+
+  ldat i, j, u, v; /* (ldat) to avoid multiplication overflows */
+
+  /* not here... already done in Sdraw.Draw() */
+  /*
+   * left -= w->XLogic; rgt -= w->XLogic;
+   * up   -= w->YLogic; dwn -= w->YLogic;
+   */
+
+  if (W_USE(w, USECONTENTS) && (contents = w->USE.C.Contents)) {
     /*
-     * Left -= w->XLogic; rgt -= w->XLogic;
-     * up   -= w->YLogic; dwn -= w->YLogic;
+     * For xterm-like windows, Contents is a buffer of (x=WLogic) * (y=HLogic)
+     * tcell:screen, in the same format as Video: TCELL(color, Ascii).
+     * Room in excess is used as scrollback.
+     *
+     * To avoid frequent mem-mem copies, VGA-like splitline method is used:
+     * USE.C.Split is the first used line of Contents, and after the end
+     * of Contents we restart from zero.
+     *
+     * HLogic also has the usual meaning:
+     * number of total lines (visible + scrollback)
      */
+    if (Y2 - up >= w->HLogic) {
+      /* the ->Contents buffer is smaller than the Twindow size... pad with SPACEs */
+      dat Ynew = up + w->HLogic;
+      FillVideo(x1, Ynew, x2, Y2, TCELL(w->ColText, ' '));
+      Y2 = Ynew - 1;
+    }
+    if (x2 - left >= w->WLogic) {
+      /* the ->Contents buffer is smaller than the Twindow size... pad with SPACEs */
+      dat Xnew = left + w->WLogic;
+      FillVideo(Xnew, y1, x2, Y2, TCELL(w->ColText, ' '));
+      x2 = Xnew - 1;
+    }
+    if (x1 <= x2 && y1 <= Y2) {
+      row = y1 - up + w->USE.C.HSplit; /* row number in Contents */
+      if (row >= w->HLogic)
+        row -= w->HLogic;
+      currCont = contents + row * w->WLogic;
 
-    if (W_USE(w, USECONTENTS) && (Contents = w->USE.C.Contents)) {
-      /*
-       * For xterm-like windows, Contents is a buffer of (x=WLogic) * (y=HLogic)
-       * tcell:screen, in the same format as Video: TCELL(Color, Ascii).
-       * Room in excess is used as scrollback.
-       *
-       * To avoid frequent mem-mem copies, VGA-like splitline method is used:
-       * USE.C.Split is the first used line of Contents, and after the end
-       * of Contents we restart from zero.
-       *
-       * HLogic also has the usual meaning:
-       * number of total lines (visible + scrollback)
-       */
-      if (Y2 - up >= w->HLogic) {
-        /* the ->Contents buffer is smaller than the Twindow size... pad with SPACEs */
-        dat Ynew = up + w->HLogic;
-        FillVideo(X1, Ynew, X2, Y2, TCELL(w->ColText, ' '));
-        Y2 = Ynew - 1;
-      }
-      if (X2 - Left >= w->WLogic) {
-        /* the ->Contents buffer is smaller than the Twindow size... pad with SPACEs */
-        dat Xnew = Left + w->WLogic;
-        FillVideo(Xnew, Y1, X2, Y2, TCELL(w->ColText, ' '));
-        X2 = Xnew - 1;
-      }
-      if (X1 <= X2 && Y1 <= Y2) {
-        row = Y1 - up + w->USE.C.HSplit; /* row number in Contents */
-        if (row >= w->HLogic)
-          row -= w->HLogic;
-        CurrCont = Contents + row * w->WLogic;
+      row = w->HLogic - 1 - row; /* rows still readable */
 
-        row = w->HLogic - 1 - row; /* rows still readable */
+      if (!shaded) {
+        for (j = y1, u = y1 - up; j <= Y2; j++, u++, row--) {
+          if (!(w->State & WINDOW_DO_SEL) || u < w->YstSel || u > w->YendSel) {
 
-        if (!shaded) {
-          for (j = Y1, u = Y1 - up; j <= Y2; j++, u++, row--) {
-            if (!(w->State & WINDOW_DO_SEL) || u < w->YstSel || u > w->YendSel) {
+            CopyMem(currCont + x1 - left, &Video[x1 + j * (ldat)dwidth],
+                    sizeof(tcell) * (x2 - x1 + 1));
 
-              CopyMem(CurrCont + X1 - Left, &Video[X1 + j * (ldat)dwidth],
-                      sizeof(tcell) * (X2 - X1 + 1));
-
-            } else {
-              for (i = X1, v = X1 - Left; i <= X2; i++, v++) {
-                select = (w->State & WINDOW_DO_SEL) &&
-                         ((u > w->YstSel || (u == w->YstSel && v >= w->XstSel)) &&
-                          (u < w->YendSel || (u == w->YendSel && v <= w->XendSel)));
-                if (select)
-                  Color = w->ColSelect;
-                else
-                  Color = TCOLOR(CurrCont[v]);
-
-                Video[i + j * (ldat)dwidth] = TCELL(Color, TRUNEEXTRA(CurrCont[v]));
-              }
-            }
-            CurrCont += w->WLogic;
-            if (!row)
-              CurrCont -= (row = w->HLogic) * w->WLogic;
-          }
-        } else {
-          for (j = Y1, u = Y1 - up; j <= Y2; j++, u++, row--) {
-            for (i = X1, v = X1 - Left; i <= X2; i++, v++) {
-
+          } else {
+            for (i = x1, v = x1 - left; i <= x2; i++, v++) {
               select = (w->State & WINDOW_DO_SEL) &&
                        ((u > w->YstSel || (u == w->YstSel && v >= w->XstSel)) &&
                         (u < w->YendSel || (u == w->YendSel && v <= w->XendSel)));
-
               if (select)
-                Color = w->ColSelect;
+                color = w->ColSelect;
               else
-                Color = TCOLOR(CurrCont[v]);
-              Color = DoShadowColor(Color, shaded, shaded);
+                color = TCOLOR(currCont[v]);
 
-              Video[i + j * (ldat)dwidth] = TCELL(Color, TRUNEEXTRA(CurrCont[v]));
+              Video[i + j * (ldat)dwidth] = TCELL(color, TRUNEEXTRA(currCont[v]));
             }
-            CurrCont += w->WLogic;
-            if (!row)
-              CurrCont -= (row = w->HLogic) * w->WLogic;
           }
+          currCont += w->WLogic;
+          if (!row)
+            currCont -= (row = w->HLogic) * w->WLogic;
         }
-        DirtyVideo(X1, Y1, X2, Y2);
-      }
-    } else if (W_USE(w, USEROWS) && w->USE.R.FirstRow) {
-      /*
-       * editor-like windows. no length limit in the rows and in XLogic.
-       */
-      row = Y1 - up;
+      } else {
+        for (j = y1, u = y1 - up; j <= Y2; j++, u++, row--) {
+          for (i = x1, v = x1 - left; i <= x2; i++, v++) {
 
-      if (row >= w->HLogic)
-        CurrRow = (Trow)0;
-      else if (w->USE.R.NumRowSplit && w->USE.R.RowSplit && row == w->USE.R.NumRowSplit)
-        CurrRow = w->USE.R.RowSplit;
-      else if (w->USE.R.NumRowSplit && w->USE.R.RowSplit && w->USE.R.RowSplit->Next &&
-               row == w->USE.R.NumRowSplit + (ldat)1)
-        CurrRow = w->USE.R.RowSplit->Next;
-      else if (w->USE.R.NumRowOne && w->USE.R.RowOne && row == w->USE.R.NumRowOne)
-        CurrRow = w->USE.R.RowOne;
-      else if (row == (ldat)0)
-        CurrRow = w->USE.R.FirstRow;
-      else if (row + (ldat)1 == w->HLogic)
-        CurrRow = w->USE.R.LastRow;
-      else
-        CurrRow = w->FindRow(row);
-
-      for (j = Y1; j <= Y2; j++, row++) {
-
-        rowDisabled = (w->Flags & WINDOWFL_DISABLED) ||
-                      (CurrRow && !(CurrRow->Flags & (ROW_ACTIVE | ROW_IGNORE)));
-
-        if (CurrRow) {
-          TRune = CurrRow->Text;
-          ColText = CurrRow->ColText;
-        }
-
-        PosInRow = X1 - Left;
-        if (CurrRow && PosInRow >= 0 && (uldat)PosInRow >= CurrRow->Gap)
-          PosInRow += CurrRow->LenGap;
-
-        for (i = X1; i <= X2; i++, PosInRow++) {
-
-          absent = !CurrRow || (PosInRow >= 0 && (uldat)PosInRow >= CurrRow->Len);
-
-          if (CurrRow && IS_MENUITEM(CurrRow) && ((Tmenuitem)CurrRow)->Window && i == rgt) {
-            Font = T_UTF_32_BLACK_RIGHT_POINTING_TRIANGLE;
-          } else if (absent)
-            Font = ' ';
-          else
-            Font = TRune[PosInRow];
-
-          if (w->Flags & WINDOWFL_ROWS_SELCURRENT)
-            select = row == w->CurY;
-          else {
             select = (w->State & WINDOW_DO_SEL) &&
-                     ((row > w->YstSel || (row == w->YstSel && PosInRow >= w->XstSel)) &&
-                      (row < w->YendSel || (row == w->YendSel && PosInRow <= w->XendSel)));
+                     ((u > w->YstSel || (u == w->YstSel && v >= w->XstSel)) &&
+                      (u < w->YendSel || (u == w->YendSel && v <= w->XendSel)));
+
+            if (select)
+              color = w->ColSelect;
+            else
+              color = TCOLOR(currCont[v]);
+            color = DoShadowColor(color, shaded, shaded);
+
+            Video[i + j * (ldat)dwidth] = TCELL(color, TRUNEEXTRA(currCont[v]));
           }
-          if (CurrRow)
-            select &= !(CurrRow->Flags & ROW_IGNORE);
-
-          if (select)
-            Color = rowDisabled ? w->ColSelectDisabled : w->ColSelect;
-          else if (rowDisabled)
-            Color = w->ColDisabled;
-          else if ((w->Flags & WINDOWFL_ROWS_DEFCOL) || absent)
-            Color = w->ColText;
-          else
-            Color = ColText[PosInRow];
-
-          Color = DoShadowColor(Color, shaded, shaded);
-          Video[i + j * (ldat)dwidth] = TCELL(Color, Font);
-        }
-        if (CurrRow) {
-          w->USE.R.RowSplit = CurrRow;
-          w->USE.R.NumRowSplit = row;
-          CurrRow = CurrRow->Next;
+          currCont += w->WLogic;
+          if (!row)
+            currCont -= (row = w->HLogic) * w->WLogic;
         }
       }
-      DirtyVideo(X1, Y1, X2, Y2);
-    } else {
-      /* either an unknown Twindow type or just one of the above, but empty */
-      Color = w->ColText;
-      Color = DoShadowColor(Color, shaded, shaded);
-      FillVideo(X1, Y1, X2, Y2, TCELL(Color, ' '));
+      DirtyVideo(x1, y1, x2, Y2);
     }
+  } else if (W_USE(w, USEROWS) && w->USE.R.FirstRow) {
+    /*
+     * editor-like windows. no length limit in the rows and in XLogic.
+     */
+    row = y1 - up;
+
+    if (row >= w->HLogic)
+      curr_row = (Trow)0;
+    else if (w->USE.R.NumRowSplit && w->USE.R.RowSplit && row == w->USE.R.NumRowSplit)
+      curr_row = w->USE.R.RowSplit;
+    else if (w->USE.R.NumRowSplit && w->USE.R.RowSplit && w->USE.R.RowSplit->Next &&
+             row == w->USE.R.NumRowSplit + (ldat)1)
+      curr_row = w->USE.R.RowSplit->Next;
+    else if (w->USE.R.NumRowOne && w->USE.R.RowOne && row == w->USE.R.NumRowOne)
+      curr_row = w->USE.R.RowOne;
+    else if (row == (ldat)0)
+      curr_row = w->USE.R.FirstRow;
+    else if (row + (ldat)1 == w->HLogic)
+      curr_row = w->USE.R.LastRow;
+    else
+      curr_row = w->FindRow(row);
+
+    for (j = y1; j <= Y2; j++, row++) {
+
+      rowDisabled = (w->Flags & WINDOWFL_DISABLED) ||
+                    (curr_row && !(curr_row->Flags & (ROW_ACTIVE | ROW_IGNORE)));
+
+      if (curr_row) {
+        runes = curr_row->Text;
+        colText = curr_row->ColText;
+      }
+
+      posInRow = x1 - left;
+      if (curr_row && posInRow >= 0 && (uldat)posInRow >= curr_row->Gap)
+        posInRow += curr_row->LenGap;
+
+      for (i = x1; i <= x2; i++, posInRow++) {
+
+        absent = !curr_row || (posInRow >= 0 && (uldat)posInRow >= curr_row->Len);
+
+        if (curr_row && IS_MENUITEM(curr_row) && ((Tmenuitem)curr_row)->Window && i == rgt) {
+          font = T_UTF_32_BLACK_RIGHT_POINTING_TRIANGLE;
+        } else if (absent)
+          font = ' ';
+        else
+          font = runes[posInRow];
+
+        if (w->Flags & WINDOWFL_ROWS_SELCURRENT)
+          select = row == w->CurY;
+        else {
+          select = (w->State & WINDOW_DO_SEL) &&
+                   ((row > w->YstSel || (row == w->YstSel && posInRow >= w->XstSel)) &&
+                    (row < w->YendSel || (row == w->YendSel && posInRow <= w->XendSel)));
+        }
+        if (curr_row)
+          select &= !(curr_row->Flags & ROW_IGNORE);
+
+        if (select)
+          color = rowDisabled ? w->ColSelectDisabled : w->ColSelect;
+        else if (rowDisabled)
+          color = w->ColDisabled;
+        else if ((w->Flags & WINDOWFL_ROWS_DEFCOL) || absent)
+          color = w->ColText;
+        else
+          color = colText[posInRow];
+
+        color = DoShadowColor(color, shaded, shaded);
+        Video[i + j * (ldat)dwidth] = TCELL(color, font);
+      }
+      if (curr_row) {
+        w->USE.R.RowSplit = curr_row;
+        w->USE.R.NumRowSplit = row;
+        curr_row = curr_row->Next;
+      }
+    }
+    DirtyVideo(x1, y1, x2, Y2);
+  } else {
+    /* either an unknown Twindow type or just one of the above, but empty */
+    color = w->ColText;
+    color = DoShadowColor(color, shaded, shaded);
+    FillVideo(x1, y1, x2, Y2, TCELL(color, ' '));
   }
 }
 
-void DrawSelfScreen(Sdraw *d) {
+void Sscreen::DrawSelf(Sdraw *d) {
   /* should never be called */
-  log(ERROR) << "twin: DrawSelfScreen() called! This should not happen.\n";
+  log(ERROR) << "twin: Sscreen::DrawSelf() called! This should not happen.\n";
 }
 
-static void _DrawWCtx_(Sdraw **FirstD, Twidget w, Twidget childNext, Twidget onlyChild, ldat left,
-                       ldat up, ldat rgt, ldat dwn, dat X1, dat Y1, dat X2, dat Y2, bool noChildren,
-                       bool borderDone, byte shaded, errnum *lError) {
+static void _DrawWCtx_(Sdraw **FirstD, Twidget w, Twidget child_next, Twidget only_child, ldat left,
+                       ldat up, ldat rgt, ldat dwn, dat x1, dat y1, dat x2, dat Y2,
+                       bool no_children, bool borderDone, byte shaded, errnum *lError) {
   Sdraw *d;
   if (!QueuedDrawArea2FullScreen) {
     if ((d = (Sdraw *)AllocMem(sizeof(Sdraw)))) {
       d->TopW = w;
-      d->W = childNext;
-      d->OnlyW = onlyChild;
+      d->W = child_next;
+      d->OnlyW = only_child;
       d->Screen = (Tscreen)0;
-      d->X1 = X1;
-      d->Y1 = Y1;
-      d->X2 = X2;
+      d->X1 = x1;
+      d->Y1 = y1;
+      d->X2 = x2;
       d->Y2 = Y2;
       d->Left = left;
       d->Up = up;
@@ -893,14 +875,14 @@ static void _DrawWCtx_(Sdraw **FirstD, Twidget w, Twidget childNext, Twidget onl
       d->Dwn = dwn;
       d->DWidth = All->DisplayWidth;
       d->DHeight = All->DisplayHeight;
-      d->NoChildren = noChildren;
+      d->NoChildren = no_children;
       d->BorderDone = borderDone;
       d->Shaded = shaded;
 
       d->Next = *FirstD;
       *FirstD = d;
     } else {
-      DrawDesktop((Tscreen)0, X1, Y1, X2, Y2, shaded);
+      DrawDesktop((Tscreen)0, x1, y1, x2, Y2, shaded);
       *lError = NOMEMORY;
     }
   }
@@ -910,24 +892,24 @@ void Sdraw::Draw() {
   Sdraw *d = this;
   Sdraw *FirstD = d;
   Twidget w;
-  Twidget onlyChild, childNext;
-  Twindow Window;
+  Twidget only_child, child_next;
+  Twindow window;
   ldat left, up, rgt, dwn;
   dat x1, y1, x2, y2;
   ldat cL, cU, cR, cD;
   dat dwidth, dheight;
   errnum lError = SUCCESS;
-  byte Border;
-  bool shaded, winActive, noChildren;
-  byte ChildFound = tfalse, FirstCycle = ttrue;
+  byte border;
+  bool shaded, winActive, no_children;
+  byte child_found = false, first_cycle = true;
 
   if (QueuedDrawArea2FullScreen)
     return;
 
   do {
     w = d->TopW;
-    childNext = d->W;
-    onlyChild = d->OnlyW;
+    child_next = d->W;
+    only_child = d->OnlyW;
     x1 = d->X1;
     y1 = d->Y1;
     x2 = d->X2;
@@ -939,10 +921,10 @@ void Sdraw::Draw() {
     dwidth = d->DWidth;
     dheight = d->DHeight;
     shaded = d->Shaded;
-    noChildren = d->NoChildren;
+    no_children = d->NoChildren;
 
-    if (onlyChild == w) /* got it */
-      onlyChild = NULL;
+    if (only_child == w) /* got it */
+      only_child = NULL;
 
 #ifdef DEBUG_DRAW
     FillVideo(x1, y1, x2, y2, TCELL(TCOL(twhite, tyellow), ' '));
@@ -957,13 +939,13 @@ void Sdraw::Draw() {
     if (!d->BorderDone) {
       d->BorderDone = true;
 
-      if (IS_WINDOW(w) && !((Window = (Twindow)w)->Flags & WINDOWFL_BORDERLESS)) {
+      if (IS_WINDOW(w) && !((window = (Twindow)w)->Flags & WINDOWFL_BORDERLESS)) {
 
-        if (!onlyChild) {
-          winActive = Window == (Twindow)All->FirstScreen->FocusW() ||
-                      Window == All->FirstScreen->MenuWindow;
-          Border = (Window->Flags & WINDOWFL_MENU) || !winActive;
-          DrawSelfBorder(Window, left, up, rgt, dwn, x1, y1, x2, y2, Border, winActive, shaded);
+        if (!only_child) {
+          winActive = window == (Twindow)All->FirstScreen->FocusW() ||
+                      window == All->FirstScreen->MenuWindow;
+          border = (window->Flags & WINDOWFL_MENU) || !winActive;
+          DrawSelfBorder(window, left, up, rgt, dwn, x1, y1, x2, y2, border, winActive, shaded);
         }
 
         if ((ldat)x1 == left++)
@@ -990,79 +972,79 @@ void Sdraw::Draw() {
     }
 
     if (x1 > x2 || y1 > y2 || x1 >= dwidth || y1 >= dheight || x2 < 0 || y2 < 0) {
-      if (!FirstCycle)
+      if (!first_cycle)
         FreeMem(d);
       else
-        FirstCycle = tfalse;
+        first_cycle = false;
       continue;
     }
 
-    ChildFound = tfalse;
-    if (noChildren)
-      childNext = NULL;
+    child_found = false;
+    if (no_children)
+      child_next = NULL;
     else {
-      if (!childNext)
-        childNext = w->FirstW;
+      if (!child_next)
+        child_next = w->FirstW;
 
-      if (!noChildren && childNext) {
-        while (childNext && !ChildFound) {
-          cL = left + childNext->Left;
-          cR = cL + childNext->XWidth - 1;
-          cU = up + childNext->Up;
-          cD = cU + childNext->YWidth - 1;
-          if (cL > x2 || cU > y2 || cR < x1 || cD < y1 || (childNext->Flags & WIDGETFL_NOTVISIBLE))
-            childNext = childNext->Next;
+      if (!no_children && child_next) {
+        while (child_next && !child_found) {
+          cL = left + child_next->Left;
+          cR = cL + child_next->XWidth - 1;
+          cU = up + child_next->Up;
+          cD = cU + child_next->YWidth - 1;
+          if (cL > x2 || cU > y2 || cR < x1 || cD < y1 || (child_next->Flags & WIDGETFL_NOTVISIBLE))
+            child_next = child_next->Next;
           else
-            ChildFound = ttrue;
+            child_found = true;
         }
       }
-      if (!childNext)
-        noChildren = true;
+      if (!child_next)
+        no_children = true;
     }
 
-    if (!ChildFound) {
+    if (!child_found) {
       /* no children... draw this Twidget */
       w->DrawSelf(d);
     }
 
-    if (!FirstCycle)
+    if (!first_cycle)
       FreeMem(d);
     else
-      FirstCycle = tfalse;
+      first_cycle = false;
 
-    if (ChildFound) {
+    if (child_found) {
 
-      /* recursively draw the area below childNext */
+      /* recursively draw the area below child_next */
       if (y2 > cD) {
-        _DrawWCtx_(&FirstD, w, childNext, onlyChild, left, up, rgt, dwn, x1, cD + 1, x2, y2,
-                   noChildren, ttrue, shaded, &lError);
+        _DrawWCtx_(&FirstD, w, child_next, only_child, left, up, rgt, dwn, x1, cD + 1, x2, y2,
+                   no_children, ttrue, shaded, &lError);
         y2 = cD;
       }
 
-      /* recursively draw the area right of childNext */
+      /* recursively draw the area right of child_next */
       if (x2 > cR) {
-        _DrawWCtx_(&FirstD, w, childNext, onlyChild, left, up, rgt, dwn, cR + 1, y1, x2, y2,
-                   noChildren, ttrue, shaded, &lError);
+        _DrawWCtx_(&FirstD, w, child_next, only_child, left, up, rgt, dwn, cR + 1, y1, x2, y2,
+                   no_children, ttrue, shaded, &lError);
         x2 = cR;
       }
 
-      /* recursively draw the area left of childNext */
+      /* recursively draw the area left of child_next */
       if (x1 < cL) {
-        _DrawWCtx_(&FirstD, w, childNext, onlyChild, left, up, rgt, dwn, x1, y1, cL - 1, y2,
-                   noChildren, ttrue, shaded, &lError);
+        _DrawWCtx_(&FirstD, w, child_next, only_child, left, up, rgt, dwn, x1, y1, cL - 1, y2,
+                   no_children, ttrue, shaded, &lError);
         x1 = cL;
       }
 
-      /* recursively draw the area above childNext */
+      /* recursively draw the area above child_next */
       if (y1 < cU) {
-        _DrawWCtx_(&FirstD, w, childNext, onlyChild, left, up, rgt, dwn, x1, y1, x2, cU - 1,
-                   noChildren, ttrue, shaded, &lError);
+        _DrawWCtx_(&FirstD, w, child_next, only_child, left, up, rgt, dwn, x1, y1, x2, cU - 1,
+                   no_children, ttrue, shaded, &lError);
         y1 = cU;
       }
 
-      /* ok, now actually draw childNext */
+      /* ok, now actually draw child_next */
       if (x1 <= x2 && y1 <= y2) {
-        _DrawWCtx_(&FirstD, childNext, NULL, onlyChild, cL, cU, cR, cD, x1, y1, x2, y2, tfalse,
+        _DrawWCtx_(&FirstD, child_next, NULL, only_child, cL, cU, cR, cD, x1, y1, x2, y2, tfalse,
                    tfalse, shaded, &lError);
       }
     }
@@ -1099,7 +1081,7 @@ void DrawAreaWidget(Twidget w) {
   }
 }
 
-static void _DrawAreaCtx_(Sdraw **FirstD, Tscreen screen, Twidget w, Twidget onlyW, dat X1, dat Y1,
+static void _DrawAreaCtx_(Sdraw **FirstD, Tscreen screen, Twidget w, Twidget onlyW, dat x1, dat Y1,
                           dat X2, dat Y2, bool shaded, errnum *lError) {
   Sdraw *d;
   if (!QueuedDrawArea2FullScreen) {
@@ -1107,7 +1089,7 @@ static void _DrawAreaCtx_(Sdraw **FirstD, Tscreen screen, Twidget w, Twidget onl
       d->TopW = w;
       d->W = onlyW;
       d->Screen = screen;
-      d->Left = d->X1 = X1;
+      d->Left = d->X1 = x1;
       d->Up = d->Y1 = Y1;
       d->Rgt = d->X2 = X2;
       d->Dwn = d->Y2 = Y2;
@@ -1119,7 +1101,7 @@ static void _DrawAreaCtx_(Sdraw **FirstD, Tscreen screen, Twidget w, Twidget onl
       *FirstD = d;
 
     } else {
-      DrawDesktop((Tscreen)0, X1, Y1, X2, Y2, shaded);
+      DrawDesktop((Tscreen)0, x1, Y1, X2, Y2, shaded);
       *lError = NOMEMORY;
     }
   }
@@ -1178,19 +1160,19 @@ void Sdraw::DrawArea() {
   Sdraw *FirstD = d;
   Tscreen FirstScreen, screen;
   Twidget w, onlyW, TopOnlyW, NextW;
-  setup *SetUp;
+  Ssetup *SetUp;
   ldat dwidth, dheight, ylimit;
-  ldat shLeft = 0, shUp = 0, shRgt = 0, shDwn = 0;
+  ldat sh_left = 0, sh_up = 0, sh_right = 0, sh_down = 0;
   /* position of Horizontal Shadow */
-  ldat HS_X1, HS_X2, HS_Y1, S_Y2;
+  ldat hs_x1, hs_x2, hs_y1, s_y2;
   /* position of Vertical Shadow */
-  ldat VS_X1, VS_X2, VS_Y1;
+  ldat vs_x1, vs_x2, vs_y1;
   dat left, up, rgt, dwn;
   dat x1, y1, x2, y2;
   errnum lError = SUCCESS;
-  byte WidgetFound, Shade;
-  byte DeltaXShade, DeltaYShade;
-  bool FirstCycle = true, shaded;
+  byte WidgetFound, shade;
+  byte deltaXShade, deltaYShade;
+  bool first_cycle = true, shaded;
 
   if (QueuedDrawArea2FullScreen)
     return;
@@ -1211,10 +1193,10 @@ void Sdraw::DrawArea() {
 
     FirstD = d->Next;
 
-    if (!FirstCycle)
+    if (!first_cycle)
       FreeMem(d);
     else
-      FirstCycle = tfalse;
+      first_cycle = false;
 
     if (x1 > x2 || y1 > y2 || x1 >= dwidth || y1 >= dheight || x2 < 0 || y2 < 0)
       continue;
@@ -1272,9 +1254,9 @@ void Sdraw::DrawArea() {
       }
     }
 
-    Shade = (SetUp->Flags & setup_shadows) && !shaded;
-    DeltaXShade = Shade ? SetUp->DeltaXShade : (byte)0;
-    DeltaYShade = Shade ? SetUp->DeltaYShade : (byte)0;
+    shade = (SetUp->Flags & setup_shadows) && !shaded;
+    deltaXShade = shade ? SetUp->DeltaXShade : (byte)0;
+    deltaYShade = shade ? SetUp->DeltaYShade : (byte)0;
 
     WidgetFound = tfalse;
     while (w && !WidgetFound) {
@@ -1282,30 +1264,30 @@ void Sdraw::DrawArea() {
         w = w->Next;
         continue;
       }
-      shLeft = (ldat)w->Left + (ldat)FirstScreen->Left - FirstScreen->XLogic;
-      shUp = (ldat)w->Up + (ldat)ylimit - FirstScreen->YLogic;
-      shRgt = shLeft + (ldat)w->XWidth - 1;
-      shDwn = shUp +
-              (IS_WINDOW(w) && (((Twindow)w)->Attr & WINDOW_ROLLED_UP) ? 0 : (ldat)w->YWidth - 1);
+      sh_left = (ldat)w->Left + (ldat)FirstScreen->Left - FirstScreen->XLogic;
+      sh_up = (ldat)w->Up + (ldat)ylimit - FirstScreen->YLogic;
+      sh_right = sh_left + (ldat)w->XWidth - 1;
+      sh_down = sh_up +
+                (IS_WINDOW(w) && (((Twindow)w)->Attr & WINDOW_ROLLED_UP) ? 0 : (ldat)w->YWidth - 1);
 
-      if (Shade && IS_WINDOW(w)) {
+      if (shade && IS_WINDOW(w)) {
         /* only windows have shadows */
-        HS_X1 = Max2(shLeft + (ldat)DeltaXShade, (ldat)x1);
-        HS_X2 = Min2(shRgt, (ldat)x2);
-        HS_Y1 = Max2(shUp + (ldat)DeltaYShade, shDwn + (ldat)1);
-        HS_Y1 = Max2(HS_Y1, (ldat)y1);
-        S_Y2 = Min2(shDwn + (ldat)DeltaYShade, (ldat)y2);
+        hs_x1 = Max2(sh_left + (ldat)deltaXShade, (ldat)x1);
+        hs_x2 = Min2(sh_right, (ldat)x2);
+        hs_y1 = Max2(sh_up + (ldat)deltaYShade, sh_down + (ldat)1);
+        hs_y1 = Max2(hs_y1, (ldat)y1);
+        s_y2 = Min2(sh_down + (ldat)deltaYShade, (ldat)y2);
 
-        VS_X1 = Max2(shLeft + (ldat)DeltaXShade, shRgt + (ldat)1);
-        VS_X1 = Max2(VS_X1, (ldat)x1);
-        VS_X2 = Min2(shRgt + (ldat)DeltaXShade, (ldat)x2);
-        VS_Y1 = Max2(shUp + (ldat)DeltaYShade, (ldat)y1);
+        vs_x1 = Max2(sh_left + (ldat)deltaXShade, sh_right + (ldat)1);
+        vs_x1 = Max2(vs_x1, (ldat)x1);
+        vs_x2 = Min2(sh_right + (ldat)deltaXShade, (ldat)x2);
+        vs_y1 = Max2(sh_up + (ldat)deltaYShade, (ldat)y1);
       }
 
-      if (shLeft <= (ldat)x2 && shRgt >= (ldat)x1 && shUp <= (ldat)y2 && shDwn >= (ldat)y1)
+      if (sh_left <= (ldat)x2 && sh_right >= (ldat)x1 && sh_up <= (ldat)y2 && sh_down >= (ldat)y1)
         WidgetFound = ttrue;
-      else if (Shade && IS_WINDOW(w) &&
-               ((HS_X1 <= HS_X2 && HS_Y1 <= S_Y2) || (VS_X1 <= VS_X2 && VS_Y1 <= S_Y2)))
+      else if (shade && IS_WINDOW(w) &&
+               ((hs_x1 <= hs_x2 && hs_y1 <= s_y2) || (vs_x1 <= vs_x2 && vs_y1 <= s_y2)))
         WidgetFound = ttrue + ttrue;
       else
         w = w->Next;
@@ -1313,8 +1295,8 @@ void Sdraw::DrawArea() {
 
     /* again, only windows have shadows */
     if (w && !IS_WINDOW(w)) {
-      Shade = tfalse;
-      DeltaXShade = DeltaYShade = (byte)0;
+      shade = tfalse;
+      deltaXShade = deltaYShade = (byte)0;
     }
 
     if (!WidgetFound && !onlyW) {
@@ -1326,8 +1308,9 @@ void Sdraw::DrawArea() {
 
     if (WidgetFound == ttrue && (!onlyW || TopOnlyW == w)) {
       Sdraw *fd = NULL;
-      _DrawWCtx_(&fd, w, NULL, onlyW, shLeft, shUp, shRgt, shDwn, Max2(x1, shLeft), Max2(y1, shUp),
-                 Min2(x2, shRgt), Min2(y2, shDwn), tfalse, tfalse, shaded, &lError);
+      _DrawWCtx_(&fd, w, NULL, onlyW, sh_left, sh_up, sh_right, sh_down, Max2(x1, sh_left),
+                 Max2(y1, sh_up), Min2(x2, sh_right), Min2(y2, sh_down), tfalse, tfalse, shaded,
+                 &lError);
       if (fd) {
         fd->Draw();
         FreeMem(fd);
@@ -1338,21 +1321,21 @@ void Sdraw::DrawArea() {
 
     NextW = w ? w->Next : w;
 
-    if (WidgetFound && Shade && TopOnlyW != w) {
+    if (WidgetFound && shade && TopOnlyW != w) {
 
-      if (HS_X1 <= HS_X2 && HS_Y1 <= S_Y2) {
+      if (hs_x1 <= hs_x2 && hs_y1 <= s_y2) {
         if (NextW)
-          _DrawAreaCtx_(&FirstD, (Tscreen)0, NextW, onlyW, (dat)HS_X1, (dat)HS_Y1, (dat)HS_X2,
-                        (dat)S_Y2, ttrue, &lError);
+          _DrawAreaCtx_(&FirstD, (Tscreen)0, NextW, onlyW, (dat)hs_x1, (dat)hs_y1, (dat)hs_x2,
+                        (dat)s_y2, ttrue, &lError);
         else
-          DrawDesktop(FirstScreen, (dat)HS_X1, (dat)HS_Y1, (dat)HS_X2, (dat)S_Y2, ttrue);
+          DrawDesktop(FirstScreen, (dat)hs_x1, (dat)hs_y1, (dat)hs_x2, (dat)s_y2, true);
       }
-      if (VS_X1 <= VS_X2 && VS_Y1 <= S_Y2) {
+      if (vs_x1 <= vs_x2 && vs_y1 <= s_y2) {
         if (NextW)
-          _DrawAreaCtx_(&FirstD, (Tscreen)0, NextW, onlyW, (dat)VS_X1, (dat)VS_Y1, (dat)VS_X2,
-                        (dat)S_Y2, ttrue, &lError);
+          _DrawAreaCtx_(&FirstD, (Tscreen)0, NextW, onlyW, (dat)vs_x1, (dat)vs_y1, (dat)vs_x2,
+                        (dat)s_y2, ttrue, &lError);
         else
-          DrawDesktop(FirstScreen, (dat)VS_X1, (dat)VS_Y1, (dat)VS_X2, (dat)S_Y2, ttrue);
+          DrawDesktop(FirstScreen, (dat)vs_x1, (dat)vs_y1, (dat)vs_x2, (dat)s_y2, true);
       }
     }
 
@@ -1361,8 +1344,8 @@ void Sdraw::DrawArea() {
 
     /* Draw the visible area below the Twindow : */
 
-    if (shDwn + (ldat)DeltaYShade < (ldat)y2) {
-      dwn = (dat)shDwn + (dat)DeltaYShade;
+    if (sh_down + (ldat)deltaYShade < (ldat)y2) {
+      dwn = (dat)sh_down + (dat)deltaYShade;
       if (NextW)
         _DrawAreaCtx_(&FirstD, (Tscreen)0, NextW, onlyW, x1, dwn + (dat)1, x2, y2, shaded, &lError);
       else
@@ -1372,8 +1355,8 @@ void Sdraw::DrawArea() {
 
     /* Draw the visible area right of the Twindow : */
 
-    if (shRgt + (ldat)DeltaXShade < (ldat)x2) {
-      rgt = (dat)shRgt + (dat)DeltaXShade;
+    if (sh_right + (ldat)deltaXShade < (ldat)x2) {
+      rgt = (dat)sh_right + (dat)deltaXShade;
       if (NextW)
         _DrawAreaCtx_(&FirstD, (Tscreen)0, NextW, onlyW, rgt + (dat)1, y1, x2, dwn, shaded,
                       &lError);
@@ -1384,8 +1367,8 @@ void Sdraw::DrawArea() {
 
     /* Draw the visible area left of the Twindow : */
 
-    if (shLeft > (ldat)x1) {
-      left = (dat)shLeft;
+    if (sh_left > (ldat)x1) {
+      left = (dat)sh_left;
       if (NextW)
         _DrawAreaCtx_(&FirstD, (Tscreen)0, NextW, onlyW, x1, y1, left - (dat)1, dwn, shaded,
                       &lError);
@@ -1396,8 +1379,8 @@ void Sdraw::DrawArea() {
 
     /* Draw the visible area above the Twindow : */
 
-    if (shUp > (ldat)y1) {
-      up = (dat)shUp;
+    if (sh_up > (ldat)y1) {
+      up = (dat)sh_up;
       if (NextW)
         _DrawAreaCtx_(&FirstD, (Tscreen)0, NextW, onlyW, left, y1, rgt, up - (dat)1, shaded,
                       &lError);
@@ -1406,14 +1389,14 @@ void Sdraw::DrawArea() {
     } else
       up = y1;
 
-    if (Shade) {
+    if (shade) {
 
       ldat X_1, Y_1, X_2, Y_2;
 
-      X_1 = Max2(shLeft, (ldat)x1);
-      X_2 = Min2(shLeft + (ldat)DeltaXShade - (ldat)1, (ldat)x2);
-      Y_1 = Max2(shDwn + (ldat)1, (ldat)y1);
-      Y_2 = Min2(shDwn + (ldat)DeltaYShade, (ldat)y2);
+      X_1 = Max2(sh_left, (ldat)x1);
+      X_2 = Min2(sh_left + (ldat)deltaXShade - (ldat)1, (ldat)x2);
+      Y_1 = Max2(sh_down + (ldat)1, (ldat)y1);
+      Y_2 = Min2(sh_down + (ldat)deltaYShade, (ldat)y2);
 
       /* Draw the visible area below the Twindow, left of the shadow : */
 
@@ -1427,10 +1410,10 @@ void Sdraw::DrawArea() {
 
       /* Draw the visible area right of the Twindow, above the shadow : */
 
-      X_1 = Max2(shRgt + (ldat)1, (ldat)x1);
-      X_2 = Min2(shRgt + (ldat)DeltaXShade, (ldat)x2);
-      Y_1 = Max2(shUp, (ldat)y1);
-      Y_2 = Min2(shUp + (ldat)DeltaYShade - (ldat)1, shDwn);
+      X_1 = Max2(sh_right + (ldat)1, (ldat)x1);
+      X_2 = Min2(sh_right + (ldat)deltaXShade, (ldat)x2);
+      Y_1 = Max2(sh_up, (ldat)y1);
+      Y_2 = Min2(sh_up + (ldat)deltaYShade - (ldat)1, sh_down);
       Y_2 = Min2(Y_2, (ldat)y2);
 
       if (X_1 <= X_2 && Y_1 <= y2) {
@@ -1443,10 +1426,10 @@ void Sdraw::DrawArea() {
 
       /* Draw the visible area between the Twindow and a floating shadow : */
 
-      if (shLeft + (ldat)DeltaXShade > shRgt + (ldat)1 ||
-          shUp + (ldat)DeltaYShade > shDwn + (ldat)1) {
+      if (sh_left + (ldat)deltaXShade > sh_right + (ldat)1 ||
+          sh_up + (ldat)deltaYShade > sh_down + (ldat)1) {
 
-        if (shUp + (ldat)DeltaYShade <= shDwn + (ldat)1) {
+        if (sh_up + (ldat)deltaYShade <= sh_down + (ldat)1) {
           /*
            * the shadow is like
            *
@@ -1457,10 +1440,10 @@ void Sdraw::DrawArea() {
            *
            *  parts A and B are already drawn, now draw c
            */
-          X_1 = Max2(shRgt + (ldat)1, (ldat)x1);
-          X_2 = Min2(shLeft + (ldat)DeltaXShade - (ldat)1, (ldat)x2);
-          Y_1 = Max2(shUp + (ldat)DeltaYShade, (ldat)y1);
-          Y_2 = Min2(shDwn, (ldat)y2);
+          X_1 = Max2(sh_right + (ldat)1, (ldat)x1);
+          X_2 = Min2(sh_left + (ldat)deltaXShade - (ldat)1, (ldat)x2);
+          Y_1 = Max2(sh_up + (ldat)deltaYShade, (ldat)y1);
+          Y_2 = Min2(sh_down, (ldat)y2);
         } else {
           /*
            * the shadow is like
@@ -1475,10 +1458,10 @@ void Sdraw::DrawArea() {
            *
            * and we now draw c
            */
-          X_1 = Max2(shLeft + (ldat)DeltaXShade, (ldat)x1);
-          X_2 = Min2(shRgt + (ldat)DeltaXShade, (ldat)x2);
-          Y_1 = Max2(shDwn + (ldat)1, (ldat)y1);
-          Y_2 = Min2(shUp + (ldat)DeltaYShade - (ldat)1, (ldat)y2);
+          X_1 = Max2(sh_left + (ldat)deltaXShade, (ldat)x1);
+          X_2 = Min2(sh_right + (ldat)deltaXShade, (ldat)x2);
+          Y_1 = Max2(sh_down + (ldat)1, (ldat)y1);
+          Y_2 = Min2(sh_up + (ldat)deltaYShade - (ldat)1, (ldat)y2);
         }
 
         if (X_1 <= X_2 && Y_1 <= y2) {
@@ -1496,7 +1479,7 @@ void Sdraw::DrawArea() {
     Error(lError);
 }
 
-void DrawArea2(Tscreen FirstScreen, Twidget w, Twidget onlyW, dat X1, dat Y1, dat X2, dat Y2,
+void DrawArea2(Tscreen FirstScreen, Twidget w, Twidget onlyW, dat x1, dat y1, dat x2, dat y2,
                bool shaded) {
   Sdraw d;
 
@@ -1506,10 +1489,10 @@ void DrawArea2(Tscreen FirstScreen, Twidget w, Twidget onlyW, dat X1, dat Y1, da
   d.DWidth = All->DisplayWidth;
   d.DHeight = All->DisplayHeight;
 
-  d.X1 = Max2(X1, 0);
-  d.Y1 = Max2(Y1, 0);
-  d.X2 = Min2(X2, d.DWidth - 1);
-  d.Y2 = Min2(Y2, d.DHeight - 1);
+  d.X1 = Max2(x1, 0);
+  d.Y1 = Max2(y1, 0);
+  d.X2 = Min2(x2, d.DWidth - 1);
+  d.Y2 = Min2(y2, d.DHeight - 1);
 
   if (d.X1 <= d.X2 && d.Y1 <= d.Y2) {
     d.Next = NULL;
@@ -1523,7 +1506,7 @@ void DrawArea2(Tscreen FirstScreen, Twidget w, Twidget onlyW, dat X1, dat Y1, da
 }
 
 void DrawBorderWindow(Twindow w, byte Flags) {
-  ldat shLeft, shUp, shRgt, shDwn;
+  ldat sh_left, sh_up, sh_right, sh_down;
   dat left, up, rgt, dwn;
   dat dwidth, dheight;
   dat ylimit;
@@ -1540,115 +1523,114 @@ void DrawBorderWindow(Twindow w, byte Flags) {
   dheight = All->DisplayHeight;
   ylimit = screen->Up; /* FIXED +1 */
 
-  shUp = (ldat)w->Up - screen->YLogic + (ldat)ylimit;
-  shLeft = (ldat)w->Left - screen->XLogic;
-  shRgt = shLeft + (ldat)w->XWidth - (ldat)1;
-  shDwn = shUp + (w->Attr & WINDOW_ROLLED_UP ? 0 : (ldat)w->YWidth - (ldat)1);
+  sh_up = (ldat)w->Up - screen->YLogic + (ldat)ylimit;
+  sh_left = (ldat)w->Left - screen->XLogic;
+  sh_right = sh_left + (ldat)w->XWidth - (ldat)1;
+  sh_down = sh_up + (w->Attr & WINDOW_ROLLED_UP ? 0 : (ldat)w->YWidth - (ldat)1);
 
-  if (shLeft >= (ldat)dwidth || shUp >= (ldat)dheight || shRgt < (ldat)0 || shDwn <= (ldat)ylimit)
+  if (sh_left >= (ldat)dwidth || sh_up >= (ldat)dheight || sh_right < (ldat)0 ||
+      sh_down <= (ldat)ylimit)
     return;
 
   FirstScreen = screen == All->FirstScreen ? screen : (Tscreen)0;
   FirstW = FirstScreen && (Twidget)w == screen->FirstW ? (Twidget)w : (Twidget)0;
 
-  left = (dat)Max2(shLeft, (ldat)0);
-  up = (dat)Max2(shUp, (ldat)ylimit + 1);
-  rgt = (dat)Min2(shRgt, (ldat)dwidth - (ldat)1);
-  dwn = (dat)Min2(shDwn, (ldat)dheight - (ldat)1);
+  left = (dat)Max2(sh_left, (ldat)0);
+  up = (dat)Max2(sh_up, (ldat)ylimit + 1);
+  rgt = (dat)Min2(sh_right, (ldat)dwidth - (ldat)1);
+  dwn = (dat)Min2(sh_down, (ldat)dheight - (ldat)1);
 
-  if ((Flags & BORDER_UP) && shUp >= ylimit)
+  if ((Flags & BORDER_UP) && sh_up >= ylimit)
     DrawArea2(FirstScreen, FirstW, (Twidget)w, left, up, rgt, up, tfalse);
   if (!(w->Flags & WINDOW_ROLLED_UP)) {
-    if ((Flags & BORDER_LEFT) && shLeft >= 0)
+    if ((Flags & BORDER_LEFT) && sh_left >= 0)
       DrawArea2(FirstScreen, FirstW, (Twidget)w, left, up, left, dwn, tfalse);
-    if ((Flags & BORDER_RIGHT) && shRgt < (ldat)dwidth)
+    if ((Flags & BORDER_RIGHT) && sh_right < (ldat)dwidth)
       DrawArea2(FirstScreen, FirstW, (Twidget)w, rgt, up, rgt, dwn, tfalse);
-    if ((Flags & BORDER_DOWN) && shDwn < (ldat)dheight)
+    if ((Flags & BORDER_DOWN) && sh_down < (ldat)dheight)
       DrawArea2(FirstScreen, FirstW, (Twidget)w, left, dwn, rgt, dwn, tfalse);
   }
 }
 
-void DrawAreaShadeWindow(Tscreen screen, Twindow w, dat X1, dat Y1, dat X2, dat Y2, ldat shLeft,
-                         ldat shUp, ldat shRgt, ldat shDwn, byte Internal) {
+void DrawAreaShadeWindow(Tscreen screen, Twindow w, dat x1, dat y1, dat x2, dat y2, ldat sh_left,
+                         ldat sh_up, ldat sh_right, ldat sh_down, byte Internal) {
   dat dheight, dwidth, ylimit;
-  /* position of Horizontal Shadow */
-  ldat HS_X1, HS_X2, HS_Y1, S_Y2;
-  /* position of Vertical Shadow */
-  ldat VS_X1, VS_X2, VS_Y1;
-  byte DeltaXShade, DeltaYShade;
-  setup *SetUp;
+  byte deltaXShade, deltaYShade;
+  Ssetup *SetUp;
 
   SetUp = All->SetUp;
-  if (QueuedDrawArea2FullScreen || !w || (w->Flags & WINDOWFL_NOTVISIBLE) || !screen || X1 > X2 ||
-      Y1 > Y2 || !(SetUp->Flags & setup_shadows))
+  if (QueuedDrawArea2FullScreen || !w || (w->Flags & WINDOWFL_NOTVISIBLE) || !screen || x1 > x2 ||
+      y1 > y2 || !(SetUp->Flags & setup_shadows))
     return;
 
-  DeltaXShade = SetUp->DeltaXShade;
-  DeltaYShade = SetUp->DeltaYShade;
+  deltaXShade = SetUp->DeltaXShade;
+  deltaYShade = SetUp->DeltaYShade;
 
   dwidth = All->DisplayWidth;
   dheight = All->DisplayHeight;
   ylimit = screen->Up;
 
-  X1 = Max2(X1, 0);
-  Y1 = Max2(Y1, ylimit + 1);
-  X2 = Min2(X2, dwidth - 1);
-  Y2 = Min2(Y2, dheight - 1);
+  x1 = Max2(x1, 0);
+  y1 = Max2(y1, ylimit + 1);
+  x2 = Min2(x2, dwidth - 1);
+  y2 = Min2(y2, dheight - 1);
 
-  if (shLeft + (ldat)DeltaXShade > (ldat)X2 || shUp + (ldat)DeltaYShade > (ldat)Y2 ||
-      shRgt + (ldat)DeltaXShade < (ldat)X1 || shDwn + (ldat)DeltaYShade < (ldat)Y1)
+  if (sh_left + (ldat)deltaXShade > (ldat)x2 || sh_up + (ldat)deltaYShade > (ldat)y2 ||
+      sh_right + (ldat)deltaXShade < (ldat)x1 || sh_down + (ldat)deltaYShade < (ldat)y1) {
     return;
-
+  }
   w = (Twindow)w->Next;
 
-  HS_X1 = Max2(shLeft + (ldat)DeltaXShade, (ldat)X1);
-  HS_X2 = Min2(shRgt, (ldat)X2);
-  HS_Y1 = Max2(shUp + (ldat)DeltaYShade, shDwn + (ldat)1);
-  HS_Y1 = Max2(HS_Y1, (ldat)Y1);
-  S_Y2 = Min2(shDwn + (ldat)DeltaYShade, (ldat)Y2);
+  /* position of Horizontal Shadow */
+  ldat hs_x1 = Max2(sh_left + (ldat)deltaXShade, (ldat)x1);
+  ldat hs_x2 = Min2(sh_right, (ldat)x2);
+  ldat hs_y1 = Max3(sh_up + (ldat)deltaYShade, sh_down + (ldat)1, (ldat)y1);
 
-  VS_X1 = Max2(shLeft + (ldat)DeltaXShade, shRgt + (ldat)1);
-  VS_X1 = Max2(VS_X1, (ldat)X1);
-  VS_X2 = Min2(shRgt + (ldat)DeltaXShade, (ldat)X2);
-  VS_Y1 = Max2(shUp + (ldat)DeltaYShade, (ldat)Y1);
+  /* position of Vertical Shadow */
+  ldat vs_x1 = Max3(sh_left + (ldat)deltaXShade, sh_right + (ldat)1, (ldat)x1);
+  ldat vs_x2 = Min2(sh_right + (ldat)deltaXShade, (ldat)x2);
+  ldat vs_y1 = Max2(sh_up + (ldat)deltaYShade, (ldat)y1);
 
-  if (HS_X1 <= HS_X2 && HS_Y1 <= S_Y2) {
+  /* end of Horizontal and Vertical Shadow */
+  ldat s_y2 = Min2(sh_down + (ldat)deltaYShade, (ldat)y2);
+
+  if (hs_x1 <= hs_x2 && hs_y1 <= s_y2) {
     if (!Internal)
-      DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, (dat)HS_X1, (dat)HS_Y1, (dat)HS_X2, (dat)S_Y2,
+      DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, (dat)hs_x1, (dat)hs_y1, (dat)hs_x2, (dat)s_y2,
                 tfalse);
     else if (w)
-      DrawArea2((Tscreen)0, (Twidget)w, (Twidget)0, (dat)HS_X1, (dat)HS_Y1, (dat)HS_X2, (dat)S_Y2,
+      DrawArea2((Tscreen)0, (Twidget)w, (Twidget)0, (dat)hs_x1, (dat)hs_y1, (dat)hs_x2, (dat)s_y2,
                 ttrue);
     else
-      DrawDesktop(screen, (dat)HS_X1, (dat)HS_Y1, (dat)HS_X2, (dat)S_Y2, ttrue);
+      DrawDesktop(screen, (dat)hs_x1, (dat)hs_y1, (dat)hs_x2, (dat)s_y2, true);
   }
 
-  if (VS_X1 <= VS_X2 && VS_Y1 <= S_Y2) {
+  if (vs_x1 <= vs_x2 && vs_y1 <= s_y2) {
     if (!Internal)
-      DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, (dat)VS_X1, (dat)VS_Y1, (dat)VS_X2, (dat)S_Y2,
+      DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, (dat)vs_x1, (dat)vs_y1, (dat)vs_x2, (dat)s_y2,
                 tfalse);
     else if (w)
-      DrawArea2((Tscreen)0, (Twidget)w, (Twidget)0, (dat)VS_X1, (dat)VS_Y1, (dat)VS_X2, (dat)S_Y2,
+      DrawArea2((Tscreen)0, (Twidget)w, (Twidget)0, (dat)vs_x1, (dat)vs_y1, (dat)vs_x2, (dat)s_y2,
                 ttrue);
     else
-      DrawDesktop(screen, (dat)VS_X1, (dat)VS_Y1, (dat)VS_X2, (dat)S_Y2, ttrue);
+      DrawDesktop(screen, (dat)vs_x1, (dat)vs_y1, (dat)vs_x2, (dat)s_y2, true);
   }
 }
 
-void DrawShadeWindow(Twindow w, dat X1, dat Y1, dat X2, dat Y2, byte Internal) {
+void DrawShadeWindow(Twindow w, dat x1, dat y1, dat x2, dat y2, byte internal) {
   Tscreen screen;
   dat ylimit;
-  ldat shLeft, shUp, shRgt, shDwn;
+  ldat sh_left, sh_up, sh_right, sh_down;
 
   if (!QueuedDrawArea2FullScreen && w && (screen = (Tscreen)w->Parent) && IS_SCREEN(screen)) {
 
     ylimit = screen->Up;
-    shUp = (ldat)w->Up - screen->YLogic + (ldat)ylimit;
-    shLeft = (ldat)w->Left - screen->XLogic;
-    shRgt = shLeft + (ldat)w->XWidth - (ldat)1;
-    shDwn = shUp + (w->Attr & WINDOW_ROLLED_UP ? 0 : (ldat)w->YWidth - 1);
+    sh_up = (ldat)w->Up - screen->YLogic + (ldat)ylimit;
+    sh_left = (ldat)w->Left - screen->XLogic;
+    sh_right = sh_left + (ldat)w->XWidth - (ldat)1;
+    sh_down = sh_up + (w->Attr & WINDOW_ROLLED_UP ? 0 : (ldat)w->YWidth - 1);
 
-    DrawAreaShadeWindow(screen, w, X1, Y1, X2, Y2, shLeft, shUp, shRgt, shDwn, Internal);
+    DrawAreaShadeWindow(screen, w, x1, y1, x2, y2, sh_left, sh_up, sh_right, sh_down, internal);
   }
 }
 
@@ -1723,8 +1705,8 @@ void DrawLogicWidget(Twidget w, ldat X1, ldat Y1, ldat X2, ldat Y2) {
 }
 
 void ReDrawRolledUpAreaWindow(Twindow w, bool shaded) {
-  ldat shLeft, shUp, shRgt, shDwn;
-  byte Shade, DeltaXShade, DeltaYShade;
+  ldat sh_left, sh_up, sh_right, sh_down;
+  byte shade, deltaXShade, deltaYShade;
   Tscreen screen;
   dat dwidth, dheight;
   dat ylimit;
@@ -1735,30 +1717,30 @@ void ReDrawRolledUpAreaWindow(Twindow w, bool shaded) {
 
   screen = (Tscreen)w->Parent;
 
-  Shade = All->SetUp->Flags & setup_shadows;
-  DeltaXShade = Shade ? All->SetUp->DeltaXShade : (byte)0;
-  DeltaYShade = Shade ? All->SetUp->DeltaYShade : (byte)0;
+  shade = All->SetUp->Flags & setup_shadows;
+  deltaXShade = shade ? All->SetUp->DeltaXShade : (byte)0;
+  deltaYShade = shade ? All->SetUp->DeltaYShade : (byte)0;
 
   dwidth = All->DisplayWidth;
   dheight = All->DisplayHeight;
   ylimit = screen->Up;
-  shUp = (ldat)w->Up - screen->YLogic + (ldat)ylimit;
-  shLeft = (ldat)w->Left - screen->XLogic;
-  shRgt = shLeft + (ldat)w->XWidth - (ldat)1;
-  shDwn = shUp + (ldat)w->YWidth - (ldat)1;
-  /*shDwn=shUp+(w->Attr & WINDOW_ROLLED_UP ? 0 : (ldat)w->YWidth-(ldat)1);*/
+  sh_up = (ldat)w->Up - screen->YLogic + (ldat)ylimit;
+  sh_left = (ldat)w->Left - screen->XLogic;
+  sh_right = sh_left + (ldat)w->XWidth - (ldat)1;
+  sh_down = sh_up + (ldat)w->YWidth - (ldat)1;
+  /*sh_down=sh_up+(w->Attr & WINDOW_ROLLED_UP ? 0 : (ldat)w->YWidth-(ldat)1);*/
 
-  if (shLeft >= (ldat)dwidth || shUp >= (ldat)dheight || shRgt < -(ldat)DeltaXShade ||
-      shDwn < (ldat)ylimit - (ldat)DeltaYShade)
+  if (sh_left >= (ldat)dwidth || sh_up >= (ldat)dheight || sh_right < -(ldat)deltaXShade ||
+      sh_down < (ldat)ylimit - (ldat)deltaYShade)
     return;
 
-  shLeft = Max2((ldat)0, shLeft);
-  shUp = Max2((ldat)0, shUp + 1);
-  shRgt = Min2((ldat)dwidth - (ldat)1, shRgt + (ldat)DeltaXShade);
-  shDwn = Min2((ldat)dheight - (ldat)1, shDwn + (ldat)DeltaYShade);
+  sh_left = Max2((ldat)0, sh_left);
+  sh_up = Max2((ldat)0, sh_up + 1);
+  sh_right = Min2((ldat)dwidth - (ldat)1, sh_right + (ldat)deltaXShade);
+  sh_down = Min2((ldat)dheight - (ldat)1, sh_down + (ldat)deltaYShade);
 
-  DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, (dat)shLeft, (dat)shUp, (dat)shRgt, (dat)shDwn,
-            shaded);
+  DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, (dat)sh_left, (dat)sh_up, (dat)sh_right,
+            (dat)sh_down, shaded);
 }
 
 void DrawMenuScreen(Tscreen screen, dat Xstart, dat Xend) {
@@ -1767,8 +1749,8 @@ void DrawMenuScreen(Tscreen screen, dat Xstart, dat Xend) {
   Tmenuitem item;
   dat dwidth, dheight, i, j, x;
   tcell attr;
-  trune Font;
-  tcolor Color;
+  trune font;
+  tcolor color;
   byte select, State, MenuInfo;
 
   if (QueuedDrawArea2FullScreen || !screen || !screen->All || Xstart > Xend)
@@ -1798,27 +1780,27 @@ void DrawMenuScreen(Tscreen screen, dat Xstart, dat Xend) {
 
   for (i = Xstart; i <= Xend; i++) {
     if (i + 2 >= dwidth) {
-      Color = State == state_screen ? Menu->ColSelShtCut : Menu->ColShtCut;
+      color = State == state_screen ? Menu->ColSelShtCut : Menu->ColShtCut;
       if ((screen->Flags & (SCREENFL_BACK_SELECT | SCREENFL_BACK_PRESSED)) ==
           (SCREENFL_BACK_SELECT | SCREENFL_BACK_PRESSED)) {
-        Color = TCOL(TCOLBG(Color), TCOLFG(Color));
+        color = TCOL(TCOLBG(color), TCOLFG(color));
       }
-      Font = Screen_Back[2 - (dwidth - i)];
+      font = Screen_Back[2 - (dwidth - i)];
     } else if (dwidth - i <= (dat)3 + lenTWDisplay) {
-      Color = State == state_screen ? Menu->ColSelShtCut : Menu->ColShtCut;
-      Font = TWDisplay[3 + lenTWDisplay - (dwidth - i)];
-      if (!Font)
-        Font = ' ';
+      color = State == state_screen ? Menu->ColSelShtCut : Menu->ColShtCut;
+      font = TWDisplay[3 + lenTWDisplay - (dwidth - i)];
+      if (!font)
+        font = ' ';
     } else if (dwidth - i > 9 && (uldat)(dwidth - i) <= 9 + All->BuiltinRow->Len) {
-      Color = State == state_screen ? Menu->ColSelect : Menu->ColItem;
-      Font = All->BuiltinRow->Text[9 + All->BuiltinRow->Len - (dwidth - i)];
-      if (!Font)
-        Font = ' ';
+      color = State == state_screen ? Menu->ColSelect : Menu->ColItem;
+      font = All->BuiltinRow->Text[9 + All->BuiltinRow->Len - (dwidth - i)];
+      if (!font)
+        font = ' ';
     } else if (MenuInfo && FindInfo(Menu, i)) {
       select = State == state_screen;
       FindFontInfo(Menu, i, select, &attr);
-      Font = TRUNE(attr);
-      Color = TCOLOR(attr);
+      font = TRUNE(attr);
+      color = TCOLOR(attr);
     } else {
       if (!MenuInfo) {
         item = Menu->FindItem(i);
@@ -1837,18 +1819,18 @@ void DrawMenuScreen(Tscreen screen, dat Xstart, dat Xend) {
            * steal item color from Menu.
            */
           FindFontMenuItem(Menu, item, i - x, select, &attr);
-          Font = TRUNE(attr);
-          Color = TCOLOR(attr);
+          font = TRUNE(attr);
+          color = TCOLOR(attr);
         }
       }
       if (MenuInfo || !item) {
-        Color = State == state_screen ? Menu->ColSelect : Menu->ColItem;
-        Font = ' ';
+        color = State == state_screen ? Menu->ColSelect : Menu->ColItem;
+        font = ' ';
       }
     }
     if (screen != All->FirstScreen)
-      Color = Menu->ColDisabled;
-    Video[i + j * (ldat)dwidth] = TCELL(Color, Font);
+      color = Menu->ColDisabled;
+    Video[i + j * (ldat)dwidth] = TCELL(color, font);
   }
   DirtyVideo(Xstart, j, Xend, j);
 }

@@ -18,7 +18,6 @@
 struct SgadgetFn {
   /* Twidget */
   TobjFn Fn_Obj;
-  void (*DrawSelf)(Sdraw *D);
   void (*SetXY)(Tgadget, dat X, dat Y);
   void (*SetFill)(Tgadget, tcell Fill);
   Twidget (*Focus)(Tgadget);
@@ -65,6 +64,9 @@ struct Sgadget : public Swidget {
   /* Tobj */
   virtual void Delete() OVERRIDE;
   virtual void ChangeField(udat field, uldat clear_mask, uldat xor_mask) OVERRIDE;
+
+  /* Twidget */
+  virtual void DrawSelf(Sdraw *d) OVERRIDE; // defined in draw.cpp
 
   /* Tgadget */
   const TgadgetFn fn() const {

@@ -18,14 +18,14 @@
 
 #include <new>
 
-Tmodule Smodule::Create(uldat namelen, const char *name) {
+Tmodule Smodule::Create(Chars name) {
   Tmodule m = NULL;
   if (name) {
     void *addr = AllocMem0(sizeof(Smodule));
     if (addr) {
       m = new (addr) Smodule();
       m->Fn = Fn_Tmodule;
-      if (!m->Init(namelen, name)) {
+      if (!m->Init(name)) {
         m->Delete();
         m = NULL;
       }
@@ -34,11 +34,10 @@ Tmodule Smodule::Create(uldat namelen, const char *name) {
   return m;
 }
 
-Tmodule Smodule::Init(uldat namelen, const char *name) {
-  if (!name || !Sobj::Init(Tmodule_class_id) || !(Name = CloneStrL(name, namelen))) {
+Tmodule Smodule::Init(Chars name) {
+  if (!name || !Sobj::Init(Tmodule_class_id) || !Name.format(name)) {
     return NULL;
   }
-  this->NameLen = namelen;
   this->Used = 0;
   // this->Handle = NULL;
   // this->DoInit = NULL;
@@ -50,9 +49,7 @@ void Smodule::Delete() {
   if (!Used) {
     DlClose();
     Remove();
-    if (Name) {
-      FreeMem(Name);
-    }
+    String().swap(Name); // destroy Name
     Sobj::Delete();
   }
 }

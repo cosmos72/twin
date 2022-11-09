@@ -9,11 +9,6 @@
 #ifndef TWIN_DRAW_H
 #define TWIN_DRAW_H
 
-void DrawSelfWidget(Sdraw *d);
-void DrawSelfGadget(Sdraw *d);
-void DrawSelfWindow(Sdraw *d);
-void DrawSelfScreen(Sdraw *d);
-
 void TranslateCoordsWidget(Twidget w1, Twidget w2, dat *x, dat *y, byte *inside);
 
 void DrawDesktop(Tscreen s, dat xstart, dat ystart, dat xend, dat yend, bool shaded);

@@ -103,7 +103,6 @@ struct Sdraw {
 struct SwidgetFn {
   /* Twidget */
   TobjFn Fn_Obj; /* backup of overloaded functions */
-  void (*DrawSelf)(Sdraw *d);
   void (*SetXY)(Twidget self, dat x, dat y);
   void (*SetFill)(Twidget self, tcell fill);
   Twidget (*Focus)(Twidget self);
@@ -163,10 +162,7 @@ protected:
 
 public:
   void Insert(Twidget parent, Twidget prev, Twidget next);
-
-  void DrawSelf(Sdraw *D) {
-    Fn->DrawSelf(D);
-  }
+  virtual void DrawSelf(Sdraw *d);    // defined in draw.cpp
   Twidget FindWidgetAt(dat x, dat y); // defined in draw.cpp
   Tgadget FindGadgetByCode(udat code);
 

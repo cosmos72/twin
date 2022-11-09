@@ -21,7 +21,7 @@
 
 static trune GtransUser[0x100];
 
-static setup _SetUp = {
+static Ssetup _SetUp = {
     (dat)1,              /* MaxMouseSnap */
     (udat)0x7,           /* MinAllocSize */
     (udat)0,             /* Flags */
@@ -36,7 +36,7 @@ static Sselection _Selection = {{(tany)0, (tany)0}, (Tmsgport)0, (Tdisplay)0,
 static Sselection _Clipboard = {{(tany)0, (tany)0}, (Tmsgport)0, (Tdisplay)0,
                                 SEL_UTF8MAGIC,      String(),    ""};
 
-void Sselection::dup(const selection other) {
+void Sselection::dup(const Tselection other) {
   Time = other->Time;
   Owner = other->Owner;
   OwnerOnce = other->OwnerOnce;

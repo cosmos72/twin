@@ -25,7 +25,7 @@ void DlUnload(uldat code);
 Tmodule DlIsLoaded(uldat code);
 udat DlName2Code(const char *name);
 
-Tmodule DlLoadAny(uldat len, const char *name);
+Tmodule DlLoadAny(Chars name);
 
 void *DlSym(Tmodule Module, const char *name);
 

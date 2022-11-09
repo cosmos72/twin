@@ -86,7 +86,7 @@ struct Sselection {
   String Data;
   char MIME[TW_MAX_MIMELEN];
 
-  void dup(const selection other);
+  void dup(const Tselection other);
   void paste();
 };
 
@@ -108,9 +108,9 @@ struct Sall : public Sobj {
   dat DisplayWidth, DisplayHeight;
   byte State;
   timevalue Now;
-  selection Selection;
-  selection Clipboard;
-  setup *SetUp;
+  Tselection Selection;
+  Tselection Clipboard;
+  Ssetup *SetUp;
   void (*AtQuit)(void);
 
   Tmenu BuiltinMenu, CommonMenu;

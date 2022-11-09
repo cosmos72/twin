@@ -15,6 +15,8 @@
 
 #include "obj/fwd.h"
 #include "obj/obj.h"
+#include "stl/string.h"
+
 #include <Tw/datatypes.h>
 
 /* Tmodule */
@@ -31,13 +33,13 @@ struct Smodule : public Sobj {
   Tmodule Prev, Next; /* in the same All */
   Tall All;
   /* Tmodule */
-  uldat NameLen, Used;
-  char *Name;
+  uldat Used;
+  String Name;
   void *Handle;
   bool (*DoInit)(void);
 
-  static Tmodule Create(uldat namelen, const char *name);
-  Tmodule Init(uldat namelen, const char *name);
+  static Tmodule Create(Chars name);
+  Tmodule Init(Chars name);
 
   /* Tobj */
   virtual void Delete() OVERRIDE;

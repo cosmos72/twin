@@ -49,8 +49,8 @@ typedef struct SmoduleFn *TmoduleFn;
 typedef struct SdisplayFn *TdisplayFn;
 
 typedef struct SstructFn TstructFn;
-typedef struct Ssetup setup;
-typedef struct Sselection *selection;
+typedef struct Ssetup *Tsetup;
+typedef struct Sselection *Tselection;
 typedef struct Sall *Tall;
 
 typedef void (*HookFn)(Twidget);

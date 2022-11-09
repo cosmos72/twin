@@ -235,7 +235,7 @@ static struct SmoduleFn _FnModule = {
     (void (*)(Tmodule))NoOp, /* DlClose      */
 };
 
-Tmodule Smodule::Init(uldat /*namelen*/, const char * /*name*/) {
+Tmodule Smodule::Init(Chars /*name*/) {
   Fn = &_FnModule;
   Sobj::Init(Tmodule_class_id);
   return this;
@@ -248,7 +248,7 @@ void Smodule::Remove() {
 }
 
 static Smodule _Module;
-static Tmodule const GModule = (_Module.Fn = &_FnModule, _Module.Init(0, NULL));
+static Tmodule const GModule = (_Module.Fn = &_FnModule, _Module.Init(Chars()));
 
 static Tmodule DlLoadAny(Chars name) {
   byte (*init_func)(Tmodule);
@@ -257,8 +257,7 @@ static Tmodule DlLoadAny(Chars name) {
 
   if (!dlinit_once()) {
     return NULL;
-  } else if (!(m->Name = CloneStrL(name.data(), name.size())) ||
-             !path.format(plugindir, "/" DL_PREFIX, name, DL_SUFFIX)) {
+  } else if (!m->Name.format(name) || !path.format(plugindir, "/" DL_PREFIX, name, DL_SUFFIX)) {
     Error(NOMEMORY);
   } else if (!(m->Handle = (void *)dlopen(path.data()))) {
     Error(DLERROR);
@@ -336,9 +335,9 @@ static struct SdisplayFn _FnDisplay = {
     QuitDisplay,
 };
 
-Tdisplay Sdisplay::Init(uldat namelen, const char *name) {
+Tdisplay Sdisplay::Init(Chars name) {
   Fn = &_FnDisplay;
-  if (!Sobj::Init(Tdisplay_class_id) || !Name.assign(name, namelen)) {
+  if (!Sobj::Init(Tdisplay_class_id) || !Name.format(name)) {
     return NULL;
   }
   Module = NULL;
@@ -426,7 +425,7 @@ static void QuitDisplay(Tdisplay D_HW) {
 }
 
 static Tdisplay CreateDisplayHW(Chars name) {
-  return HW = _HW.Init(name.size(), name.data());
+  return HW = _HW.Init(name);
 }
 
 static byte IsValidHW(Chars carg) NOTHROW {

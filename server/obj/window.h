@@ -54,7 +54,6 @@ struct Sremotedata {
 struct SwindowFn {
   /* Twidget */
   TobjFn Fn_Obj;
-  void (*DrawSelf)(Sdraw *D);
   void (*SetXY)(Twindow, dat X, dat Y);
   void (*SetFill)(Twindow, tcell Fill);
   Twidget (*Focus)(Twindow);
@@ -129,6 +128,9 @@ public:
   /* Tobj */
   virtual void Delete() OVERRIDE;
   virtual void ChangeField(udat field, uldat clear_mask, uldat xor_mask) OVERRIDE;
+
+  /* Twidget */
+  virtual void DrawSelf(Sdraw *d) OVERRIDE; // defined in draw.cpp
 
   /* Twindow */
   const TwindowFn fn() const {

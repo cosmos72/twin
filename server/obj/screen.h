@@ -18,7 +18,6 @@
 struct SscreenFn {
   /* Twidget */
   TobjFn Fn_Obj;
-  void (*DrawSelf)(Sdraw *D);
   void (*SetXY)(Tscreen, dat X, dat Y);
   void (*SetFill)(Tscreen, tcell Fill);
   Twidget (*Focus)(Tscreen);
@@ -66,8 +65,10 @@ public:
 protected:
   virtual void InsertWidget(Tobj parent, Twidget prev, Twidget next) OVERRIDE;
 
-  /* Tscreen */
 public:
+  virtual void DrawSelf(Sdraw *d) OVERRIDE; // defined in draw.cpp
+
+  /* Tscreen */
   void Insert(Tall parent, Tscreen prev, Tscreen next);
 
   const TscreenFn fn() const {

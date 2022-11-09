@@ -305,7 +305,7 @@ byte SendControlMsg(Tmsgport MsgPort, udat Code, udat Len, const char *Data) {
 }
 
 bool SelectionStore(e_id magic, Chars mime, Chars data) {
-  selection Sel = All->Selection;
+  Tselection Sel = All->Selection;
   uldat len = Min2(mime.size(), TW_MAX_MIMELEN);
   if (mime) {
     CopyMem(mime.data(), Sel->MIME, len);

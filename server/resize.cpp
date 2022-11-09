@@ -780,7 +780,7 @@ void DragFirstWindow(dat i, dat j) {
   ldat Left_, Up_, Rgt_, Dwn_;
   ldat xLeft, xRgt, xUp, xDwn;
   Tscreen screen;
-  setup *SetUp;
+  Ssetup *SetUp;
   Twindow Window;
   dat ylimit;
   dat DWidth, DHeight;
@@ -909,7 +909,7 @@ void DragWindow(Twindow Window, dat i, dat j) {
   ldat Left, Up, Rgt, Dwn;
   ldat Left1, Rgt1;
   Tscreen screen;
-  setup *SetUp;
+  Ssetup *SetUp;
   dat ylimit;
   dat DWidth, DHeight;
   byte Shade, DeltaXShade, DeltaYShade;
@@ -986,7 +986,7 @@ void DragWindow(Twindow Window, dat i, dat j) {
 void ResizeRelFirstWindow(dat i, dat j) {
   ldat Left, Up, Rgt, Dwn;
   Tscreen screen;
-  setup *SetUp;
+  Ssetup *SetUp;
   Twindow Window;
   dat DeltaX, DeltaY;
   dat ylimit, XWidth, YWidth;
@@ -1120,7 +1120,7 @@ void ResizeRelFirstWindow(dat i, dat j) {
 void ResizeRelWindow(Twindow Window, dat i, dat j) {
   ldat Left, Up, Rgt, Dwn;
   Twidget Parent;
-  setup *SetUp;
+  Ssetup *SetUp;
   dat DeltaX, DeltaY;
   dat ylimit, XWidth, YWidth;
   dat MinXWidth, MinYWidth, MaxXWidth, MaxYWidth;

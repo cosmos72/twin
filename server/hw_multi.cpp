@@ -151,7 +151,7 @@ static bool module_InitHW(Chars arg) {
 
   if (alloc_name.format("hw_", name)) {
     name = alloc_name;
-    Module = DlLoadAny(name.size(), name.data());
+    Module = DlLoadAny(name);
 
     if (Module) {
       log(INFO) << "twin: starting display driver module `" << name << "'...\n";
@@ -304,7 +304,7 @@ Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
     return D_HW;
   }
 
-  if (IsValidHW(arg) && (D_HW = New(display)(arg.size(), arg.data()))) {
+  if (IsValidHW(arg) && (D_HW = New(display)(arg))) {
     D_HW->AttachSlot = slot;
     if (D_HW->DoInit()) {
 
@@ -728,7 +728,7 @@ void TwinSelectionRequest(Tobj requestor, uldat reqprivate, Tobj Owner) {
       RestoreHW;
     }
   } else {
-    selection Sel = All->Selection;
+    Tselection Sel = All->Selection;
     TwinSelectionNotify(requestor, reqprivate, e_id(Sel->Magic), Sel->MIME, Sel->Data);
   }
 }

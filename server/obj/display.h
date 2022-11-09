@@ -154,8 +154,8 @@ struct Sdisplay : public Sobj {
   dat XY[2]; /* hw-dependent cursor position */
   uldat TT;  /* hw-dependent cursor type */
 
-  Tdisplay Init(uldat namelen, const char *name);
-  static Tdisplay Create(uldat namelen, const char *name);
+  Tdisplay Init(Chars name);
+  static Tdisplay Create(Chars name);
 
   /* Tobj */
 

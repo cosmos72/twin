@@ -32,8 +32,7 @@ bool DlOpen(Tmodule Module) {
   }
   if (Module && !Module->Handle) {
     if (Module->Name) {
-      if (!name.format(plugindir, "/", DL_PREFIX, //
-                       Chars(Module->Name, Module->NameLen), DL_SUFFIX)) {
+      if (!name.format(plugindir, "/", DL_PREFIX, Module->Name, DL_SUFFIX)) {
         return false;
       }
     } else {
@@ -80,16 +79,15 @@ void DlClose(Tmodule Module) {
   }
 }
 
-Tmodule DlLoadAny(uldat len, const char *name) {
-  Chars cname(name, len);
+Tmodule DlLoadAny(Chars name) {
   Tmodule Module;
 
   for (Module = All->FirstModule; Module; Module = Module->Next) {
-    if (cname == Chars(Module->Name, Module->NameLen)) {
+    if (name == Module->Name) {
       return Module; // already loaded!
     }
   }
-  if ((Module = New(module)(len, name))) {
+  if ((Module = New(module)(name))) {
     if (Module->DlOpen()) {
       return Module;
     }
@@ -128,7 +126,7 @@ Tmodule DlLoad(uldat code) {
   Tmodule M = (Tmodule)0;
   if (code < MAX_So && !(M = So[code])) {
     const Chars name = DlCode2Name(code);
-    M = DlLoadAny(name.size(), name.data());
+    M = DlLoadAny(name);
     if ((So[code] = M)) {
       All->HookModule();
     } else {

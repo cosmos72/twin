@@ -20,13 +20,13 @@
 
 #include <new>
 
-Tdisplay Sdisplay::Create(uldat namelen, const char *name) {
+Tdisplay Sdisplay::Create(Chars name) {
   Tdisplay d = NULL;
   void *addr = AllocMem0(sizeof(Sdisplay));
   if (addr) {
     d = new (addr) Sdisplay();
     d->Fn = Fn_Tdisplay;
-    if (!d->Init(namelen, name)) {
+    if (!d->Init(name)) {
       d->Delete();
       d = NULL;
     }
@@ -34,8 +34,8 @@ Tdisplay Sdisplay::Create(uldat namelen, const char *name) {
   return d;
 }
 
-Tdisplay Sdisplay::Init(uldat namelen, const char *name) {
-  if (!Sobj::Init(Tdisplay_class_id) || !Name.format(Chars(name, namelen))) {
+Tdisplay Sdisplay::Init(Chars name) {
+  if (!Sobj::Init(Tdisplay_class_id) || !Name.format(name)) {
     return NULL;
   }
   Module = NULL;
