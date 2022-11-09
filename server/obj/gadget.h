@@ -19,7 +19,6 @@ struct SgadgetFn {
   /* Twidget */
   TobjFn Fn_Obj;
   void (*DrawSelf)(Sdraw *D);
-  Twidget (*FindWidgetAt)(Tgadget Parent, dat X, dat Y);
   Tgadget (*FindGadgetByCode)(Tgadget Parent, udat Code);
   void (*SetXY)(Tgadget, dat X, dat Y);
   void (*SetFill)(Tgadget, tcell Fill);

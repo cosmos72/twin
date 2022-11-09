@@ -659,7 +659,7 @@ static void InitCtx(const Tmsg msg, wm_ctx *C) {
 
     if ((C->Screen = Do(Find, screen)(C->j)) && C->Screen == All->FirstScreen &&
         C->Screen->Up < C->j) {
-      C->W = Act(FindWidgetAt, C->Screen)(C->Screen, C->i, C->j - C->Screen->Up);
+      C->W = C->Screen->FindWidgetAt(C->i, C->j - C->Screen->Up);
     } else
       C->W = NULL;
   } else {

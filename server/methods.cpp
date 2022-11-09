@@ -412,8 +412,7 @@ static void RecursiveDeleteWidget(Twidget w, Tmsgport maybeOwner) {
 }
 
 static struct SwidgetFn _FnWidget = {
-    &_FnObj,          DrawSelfWidget, /* exported by draw.c */
-    FindWidgetAt,                     /* exported by draw.c */
+    &_FnObj,          DrawSelfWidget, /* exported by draw.cpp */
     FindGadgetByCode, SetXYWidget,    SetFillWidget,         FocusWidget,   TtyKbdFocus,
     MapWidget,        UnMapWidget,    MapTopRealWidget,      RaiseW,        LowerW,
     OwnWidget,        DisOwnWidget,   RecursiveDeleteWidget, ExposeWidget2, /* exported by
@@ -528,8 +527,7 @@ static Tgadget CreateButton(Twidget Parent, dat XWidth, dat YWidth, const char *
 
 static struct SgadgetFn _FnGadget = {
     /* Twidget */
-    &_FnObj, DrawSelfGadget,                      /* exported by draw.c */
-    (Twidget (*)(Tgadget, dat, dat))FindWidgetAt, /* exported by draw.c */
+    &_FnObj, DrawSelfGadget, /* exported by draw.cpp */
     (Tgadget (*)(Tgadget, udat))FindGadgetByCode, (void (*)(Tgadget, dat, dat))SetXYWidget,
     (void (*)(Tgadget, tcell))SetFillWidget, (Twidget(*)(Tgadget))FocusWidget,
     (Twidget(*)(Tgadget))TtyKbdFocus, (void (*)(Tgadget, Twidget))MapWidget,
@@ -814,7 +812,6 @@ static struct SwindowFn _FnWindow = {
     /* Twidget */
     &_FnObj,
     DrawSelfWindow,
-    (Twidget(*)(Twindow, dat, dat))FindWidgetAt,
     (Tgadget(*)(Twindow, udat))FindGadgetByCode,
     SetXYWindow,
     (void (*)(Twindow, tcell))SetFillWidget,
@@ -944,7 +941,6 @@ static struct SscreenFn _FnScreen = {
     /* Twidget */
     &_FnObj,
     DrawSelfScreen,
-    (Twidget(*)(Tscreen, dat, dat))FindWidgetAt,
     (Tgadget(*)(Tscreen, udat))FindGadgetByCode,
     SetXYScreen,
     (void (*)(Tscreen, tcell))SetFillWidget,

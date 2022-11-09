@@ -104,7 +104,6 @@ struct SwidgetFn {
   /* Twidget */
   TobjFn Fn_Obj; /* backup of overloaded functions */
   void (*DrawSelf)(Sdraw *d);
-  Twidget (*FindWidgetAt)(Twidget self, dat x, dat y);
   Tgadget (*FindGadgetByCode)(Twidget self, udat code);
   void (*SetXY)(Twidget self, dat x, dat y);
   void (*SetFill)(Twidget self, tcell fill);
@@ -169,9 +168,7 @@ public:
   void DrawSelf(Sdraw *D) {
     Fn->DrawSelf(D);
   }
-  Twidget FindWidgetAt(dat x, dat y) {
-    return Fn->FindWidgetAt(this, x, y);
-  }
+  Twidget FindWidgetAt(dat x, dat y); // defined in draw.cpp
   Tgadget FindGadgetByCode(udat code) {
     return Fn->FindGadgetByCode(this, code);
   }

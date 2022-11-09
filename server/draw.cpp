@@ -1,5 +1,5 @@
 /*
- *  draw.c  --  functions to draw screens, menus, windows, gadgets, etc.
+ *  draw.cpp  --  functions to draw screens, menus, windows, gadgets, etc.
  *
  *  Copyright (C) 1993-2001 by Massimiliano Ghilardi
  *
@@ -318,29 +318,29 @@ void TranslateCoordsWidget(Twidget W1, Twidget W2, dat *X, dat *Y, byte *Inside)
     *Inside = tfalse;
 }
 
-/*
- * find the Twidget at given coordinates inside Parent
- * --- (0,0) is the Parent top-left corner
+/**
+ * Find the Twidget at given coordinates inside this Twidget.
+ * (0,0) is this Twidget's top-left corner
  */
-Twidget FindWidgetAt(Twidget Parent, dat X, dat Y) {
+Twidget Swidget::FindWidgetAt(dat x, dat y) {
   Twidget w;
   ldat i, j;
   dat height;
 
-  if (IS_WINDOW(Parent) && !(((Twindow)Parent)->Flags & WINDOWFL_BORDERLESS))
-    X--, Y--;
-  else if (IS_SCREEN(Parent) && Y <= 0) {
+  if (IS_WINDOW(this) && !(((Twindow)this)->Flags & WINDOWFL_BORDERLESS))
+    x--, y--;
+  else if (IS_SCREEN(this) && y <= 0) {
     /* got nothing, or the Tmenu... */
     return (Twidget)0;
   }
 
-  for (w = Parent->FirstW; w; w = w->Next) {
+  for (w = FirstW; w; w = w->Next) {
 
     if (w->Flags & WIDGETFL_NOTVISIBLE)
       continue;
 
-    i = X + Parent->XLogic;
-    j = Y + Parent->YLogic;
+    i = x + XLogic;
+    j = y + YLogic;
 
     if (!IS_WINDOW(w) || !(((Twindow)w)->Attr & WINDOW_ROLLED_UP))
       height = w->YWidth;
@@ -354,23 +354,23 @@ Twidget FindWidgetAt(Twidget Parent, dat X, dat Y) {
   return (Twidget)0;
 }
 
-Twidget RecursiveFindWidgetAt(Twidget Parent, dat X, dat Y) {
+Twidget RecursiveFindWidgetAt(Twidget parent, dat x, dat y) {
   Twidget w;
   byte HasBorder;
 
-  while (Parent) {
-    HasBorder = IS_WINDOW(Parent) && !(((Twindow)Parent)->Flags & WINDOWFL_BORDERLESS);
+  while (parent) {
+    HasBorder = IS_WINDOW(parent) && !(((Twindow)parent)->Flags & WINDOWFL_BORDERLESS);
 
-    if (X >= HasBorder && Y >= HasBorder && X < Parent->XWidth - HasBorder &&
-        Y < Parent->YWidth - HasBorder && (w = Parent->FindWidgetAt(X, Y))) {
+    if (x >= HasBorder && y >= HasBorder && x < parent->XWidth - HasBorder &&
+        y < parent->YWidth - HasBorder && (w = parent->FindWidgetAt(x, y))) {
 
-      X += Parent->XLogic - w->Left - HasBorder;
-      Y += Parent->YLogic - w->Up - HasBorder;
-      Parent = w;
+      x += parent->XLogic - w->Left - HasBorder;
+      y += parent->YLogic - w->Up - HasBorder;
+      parent = w;
     } else
       break;
   }
-  return Parent;
+  return parent;
 }
 
 void DrawSelfWidget(Sdraw *d) {

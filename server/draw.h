@@ -9,8 +9,6 @@
 #ifndef TWIN_DRAW_H
 #define TWIN_DRAW_H
 
-Twidget FindWidgetAt(Twidget Parent, dat X, dat Y);
-
 void DrawSelfWidget(Sdraw *d);
 void DrawSelfGadget(Sdraw *d);
 void DrawSelfWindow(Sdraw *d);

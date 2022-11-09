@@ -19,7 +19,6 @@ struct SscreenFn {
   /* Twidget */
   TobjFn Fn_Obj;
   void (*DrawSelf)(Sdraw *D);
-  Twidget (*FindWidgetAt)(Tscreen Parent, dat X, dat Y);
   Tgadget (*FindGadgetByCode)(Tscreen Parent, udat Code);
   void (*SetXY)(Tscreen, dat X, dat Y);
   void (*SetFill)(Tscreen, tcell Fill);
