@@ -12,7 +12,9 @@
 
 #include "stl/err.h"
 #include "stl/chars.h"
-#include <Tw/autoconf.h>
+#include "twconfig.h" /* for CONF_* macros */
+
+#include <Tw/autoconf.h> /* for TW_HAVE_* macros */
 
 #include <cerrno> // errno
 
@@ -23,7 +25,7 @@
 #ifdef TW_HAVE_STRING_H
 #include <cstring>
 #else
-char *strerror(int error_no);
+extern "C" char *strerror(int error_no);
 #endif
 
 e_errnum Err;

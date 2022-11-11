@@ -3,6 +3,7 @@
 # Don't touch it, use 'make config' instead.
 #
 CONF__SHLIBS=y
+CONF__DLOPEN=y
 CONF__MODULES=n
 CONF__ALLOC=n
 CONF__LONG_LONG=n
