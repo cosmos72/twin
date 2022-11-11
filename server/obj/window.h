@@ -55,8 +55,6 @@ struct SwindowFn {
   /* Twidget */
   TobjFn Fn_Obj;
   Twidget (*KbdFocus)(Twindow);
-  void (*Expose)(Twindow, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
-                 const tcell *);
   /* Twindow */
   TwidgetFn Fn_Widget;
   byte (*TtyWriteCharset)(Twindow, uldat Len, const char *charset_bytes);
@@ -121,6 +119,9 @@ public:
   /* Twidget */
   virtual void DrawSelf(Sdraw *d) OVERRIDE; // defined in draw.cpp
   virtual void SetXY(dat x, dat y) OVERRIDE;
+
+  virtual void Expose(dat xwidth, dat ywidth, dat left, dat up, dat pitch, const char *ascii,
+                      const trune *runes, const tcell *cells) OVERRIDE;
 
   /* Twindow */
   const TwindowFn fn() const {

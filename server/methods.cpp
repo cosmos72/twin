@@ -131,8 +131,8 @@ Twidget FakeKbdFocus(Twidget w) {
 }
 
 static struct SwidgetFn _FnWidget = {
-    &_FnObj, TtyKbdFocus, //
-    ExposeWidget2,        // exported by resize.c
+    &_FnObj,
+    TtyKbdFocus,
 };
 
 /* Tgadget */
@@ -245,8 +245,6 @@ static struct SgadgetFn _FnGadget = {
     /* Twidget */
     &_FnObj,                           //
     (Twidget (*)(Tgadget))TtyKbdFocus, //
-    (void (*)(Tgadget, dat, dat, dat, dat, const char *, const trune *,
-              const tcell *))ExposeWidget2, /* exported by resize.c */
     /* Tgadget */
     &_FnWidget, CreateEmptyButton, FillButton, CreateButton,
     WriteTextsGadget,  /* exported by resize.c */
@@ -502,8 +500,6 @@ static struct SwindowFn _FnWindow = {
     /* Twidget */
     &_FnObj,
     (Twidget(*)(Twindow))TtyKbdFocus,
-    (void (*)(Twindow, dat, dat, dat, dat, const char *, const trune *,
-              const tcell *))ExposeWindow2, /* exported by resize.c */
     /* Twindow */
     &_FnWidget,
     FakeWriteCharset,
@@ -599,9 +595,6 @@ static struct SscreenFn _FnScreen = {
     /* Twidget */
     &_FnObj,
     (Twidget(*)(Tscreen))NoOp, /* KbdFocus */
-    (void (*)(Tscreen, dat, dat, dat, dat, const char *, const trune *,
-              const tcell *))ExposeWidget2, /* exported by resize.c */
-
     /* Tscreen */
     &_FnWidget,
     FindMenuScreen,

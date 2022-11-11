@@ -1059,7 +1059,7 @@ static void sockSetXYWidget(Twidget w, dat x, dat y) {
 static void sockDrawWidget(Twidget w, dat XWidth, dat YWidth, dat Left, dat Up, const char *Text,
                            const trune *Font, const tcell *Attr) {
   if (w) {
-    Act(Expose, w)(w, XWidth, YWidth, Left, Up, XWidth, Text, Font, Attr);
+    w->Expose(XWidth, YWidth, Left, Up, XWidth, Text, Font, Attr);
   }
 }
 

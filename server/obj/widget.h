@@ -104,8 +104,6 @@ struct SwidgetFn {
   /* Twidget */
   TobjFn Fn_Obj; /* backup of overloaded functions */
   Twidget (*KbdFocus)(Twidget);
-  void (*Expose)(Twidget self, dat xwidth, dat ywidth, dat left, dat up, dat pitch, const char *,
-                 const trune *, const tcell *);
 };
 
 struct Swidget : public Sobj {
@@ -168,10 +166,9 @@ struct Swidget : public Sobj {
   void DisOwn();
   void RecursiveDelete(Tmsgport port);
 
-  void Expose(dat xwidth, dat ywidth, dat left, dat up, dat pitch, const char *ascii,
-              const trune *runes, const tcell *cells) {
-    Fn->Expose(this, xwidth, ywidth, left, up, pitch, ascii, runes, cells);
-  }
+  virtual void Expose(dat xwidth, dat ywidth, dat left, dat up, dat pitch, const char *ascii,
+                      const trune *runes, const tcell *cells);
+
   bool InstallHook(HookFn hook, HookData *where);
   void RemoveHook(HookFn hook, HookData *where);
 

@@ -336,3 +336,8 @@ void Swindow::SetXY(dat x, dat y) {
     DrawAreaWindow2(this);
   }
 }
+
+void Swindow::Expose(dat xwidth, dat ywidth, dat left, dat up, dat pitch, const char *ascii,
+                     const trune *runes, const tcell *cells) {
+  ExposeWindow2(this, xwidth, ywidth, left, up, pitch, ascii, runes, cells);
+}

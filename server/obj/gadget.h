@@ -19,8 +19,6 @@ struct SgadgetFn {
   /* Twidget */
   TobjFn Fn_Obj;
   Twidget (*KbdFocus)(Tgadget);
-  void (*Expose)(Tgadget, dat xwidth, dat ywidth, dat Left, dat Up, const char *, const trune *,
-                 const tcell *);
   /* Tgadget */
   TwidgetFn Fn_Widget;
   Tgadget (*CreateEmptyButton)(Tmsgport owner, dat xwidth, dat ywidth, tcolor BgCol);

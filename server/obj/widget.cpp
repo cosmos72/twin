@@ -432,6 +432,11 @@ void Swidget::RecursiveDelete(Tmsgport maybeOwner) {
   }
 }
 
+void Swidget::Expose(dat xwidth, dat ywidth, dat left, dat up, dat pitch, const char *ascii,
+                     const trune *runes, const tcell *cells) {
+  ExposeWidget2(this, xwidth, ywidth, left, up, pitch, ascii, runes, cells);
+}
+
 bool Swidget::InstallHook(HookFn hook, HookData *where) {
   if (hook && where && !where->Fn && !where->W && !Hook && !WhereHook) {
     Hook = where->Fn = hook;

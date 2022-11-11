@@ -19,8 +19,6 @@ struct SscreenFn {
   /* Twidget */
   TobjFn Fn_Obj;
   Twidget (*KbdFocus)(Tscreen);
-  void (*Expose)(Tscreen, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
-                 const tcell *);
   /* Tscreen */
   TwidgetFn Fn_Widget;
   Tmenu (*FindMenu)(Tscreen);
