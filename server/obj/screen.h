@@ -19,9 +19,6 @@ struct SscreenFn {
   /* Twidget */
   TobjFn Fn_Obj;
   Twidget (*KbdFocus)(Tscreen);
-  void (*Map)(Tscreen, Twidget Parent);
-  void (*UnMap)(Tscreen);
-  void (*MapTopReal)(Tscreen, Tscreen);
   void (*Raise)(Tscreen);
   void (*Lower)(Tscreen);
   void (*Own)(Tscreen, Tmsgport);

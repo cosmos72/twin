@@ -104,9 +104,6 @@ struct SwidgetFn {
   /* Twidget */
   TobjFn Fn_Obj; /* backup of overloaded functions */
   Twidget (*KbdFocus)(Twidget);
-  void (*Map)(Twidget self, Twidget parent);
-  void (*UnMap)(Twidget self);
-  void (*MapTopReal)(Twidget self, Tscreen screen);
   void (*Raise)(Twidget self);
   void (*Lower)(Twidget self);
   void (*Own)(Twidget self, Tmsgport port);
@@ -167,15 +164,10 @@ struct Swidget : public Sobj {
   virtual Twidget KbdFocus();         // return previously focused widget
   static Twidget KbdFocus(Twidget w); // return previously focused widget
 
-  void Map(Twidget parent) {
-    Fn->Map(this, parent);
-  }
-  void UnMap() {
-    Fn->UnMap(this);
-  }
-  void MapTopReal(Tscreen screen) {
-    Fn->MapTopReal(this, screen);
-  }
+  void Map(Twidget parent);
+  void MapTopReal(Tscreen screen);
+  void UnMap();
+
   void Raise() {
     Fn->Raise(this);
   }

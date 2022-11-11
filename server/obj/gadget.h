@@ -19,9 +19,6 @@ struct SgadgetFn {
   /* Twidget */
   TobjFn Fn_Obj;
   Twidget (*KbdFocus)(Tgadget);
-  void (*Map)(Tgadget, Twidget Parent);
-  void (*UnMap)(Tgadget);
-  void (*MapTopReal)(Tgadget, Tscreen);
   void (*Raise)(Tgadget);
   void (*Lower)(Tgadget);
   void (*Own)(Tgadget, Tmsgport);

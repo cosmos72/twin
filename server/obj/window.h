@@ -55,9 +55,6 @@ struct SwindowFn {
   /* Twidget */
   TobjFn Fn_Obj;
   Twidget (*KbdFocus)(Twindow);
-  void (*Map)(Twindow, Twidget Parent);
-  void (*UnMap)(Twindow);
-  void (*MapTopReal)(Twindow, Tscreen);
   void (*Raise)(Twindow);
   void (*Lower)(Twindow);
   void (*Own)(Twindow, Tmsgport);

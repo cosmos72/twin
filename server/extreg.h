@@ -12,6 +12,8 @@
 
 #include "stl/span.h"
 
+#include <Tw/stattypes.h> // s_tsfield
+
 typedef struct exts exts;
 
 struct exts {
