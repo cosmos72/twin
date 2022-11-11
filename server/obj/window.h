@@ -55,11 +55,6 @@ struct SwindowFn {
   /* Twidget */
   TobjFn Fn_Obj;
   Twidget (*KbdFocus)(Twindow);
-  void (*Raise)(Twindow);
-  void (*Lower)(Twindow);
-  void (*Own)(Twindow, Tmsgport);
-  void (*DisOwn)(Twindow);
-  void (*RecursiveDelete)(Twindow, Tmsgport);
   void (*Expose)(Twindow, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
                  const tcell *);
   /* Twindow */

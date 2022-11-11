@@ -59,8 +59,8 @@ void RollUpWindow(Twindow window, byte on_off);
 
 void SetVisibleWidget(Twidget w, byte on_off);
 
-void RaiseWidget(Twidget w, byte alsoFocus);
-void LowerWidget(Twidget w, byte alsoDeFocus);
+void RaiseWidget(Twidget w, bool alsoFocus);
+void LowerWidget(Twidget w, bool alsoDeFocus);
 void RestackWidgets(Twidget P, uldat N, const Twidget *arrayW);
 
 void RestackRows(Tobj O, uldat N, const Trow *arrayR);

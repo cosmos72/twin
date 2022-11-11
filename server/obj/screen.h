@@ -19,11 +19,6 @@ struct SscreenFn {
   /* Twidget */
   TobjFn Fn_Obj;
   Twidget (*KbdFocus)(Tscreen);
-  void (*Raise)(Tscreen);
-  void (*Lower)(Tscreen);
-  void (*Own)(Tscreen, Tmsgport);
-  void (*DisOwn)(Tscreen);
-  void (*RecursiveDelete)(Tscreen, Tmsgport);
   void (*Expose)(Tscreen, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
                  const tcell *);
   /* Tscreen */

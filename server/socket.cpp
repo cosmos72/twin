@@ -427,7 +427,7 @@ static Tobj sockGetOwnerSelection(void);
 static void sockSetOwnerSelection(tany Time, tany Frac);
 static void sockNotifySelection(Tobj Requestor, uldat ReqPrivate, uldat Magic,
                                 const char MIME[TW_MAX_MIMELEN], uldat Len, const char *Data);
-static void sockRequestSelection(Tobj Owner, uldat ReqPrivate);
+static void sockRequestSelection(Tobj owner, uldat ReqPrivate);
 
 #define sockSetServerUid SetServerUid
 #define sockGetDisplayWidth GetDisplayWidth
@@ -1035,18 +1035,17 @@ static void sockDeleteObj(void *V) {
 
 static Twidget sockCreateWidget(dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left, dat Up,
                                 tcell Fill) {
-  Tmsgport Owner;
-  if ((Owner = RemoteGetMsgPort(Slot)))
-    return New(widget)(Owner, XWidth, YWidth, Attr, Flags, Left, Up, Fill);
+  Tmsgport owner;
+  if ((owner = RemoteGetMsgPort(Slot)))
+    return New(widget)(owner, XWidth, YWidth, Attr, Flags, Left, Up, Fill);
   return (Twidget)0;
 }
 static void sockRecursiveDeleteWidget(Twidget w) {
   Tmsgport MsgPort = RemoteGetMsgPort(Slot);
 
   /* avoid too much visual activity... UnMap top-level Twidget immediately */
-  Act(UnMap, w)(w);
-
-  Act(RecursiveDelete, w)(w, MsgPort);
+  w->UnMap();
+  w->RecursiveDelete(MsgPort);
 }
 static void sockSetXYWidget(Twidget w, dat x, dat y) {
   if (w) {
@@ -1094,38 +1093,40 @@ static void sockResizeWidget(Twidget w, dat X, dat Y) {
 static void sockCirculateChildrenWidget(Twidget w, byte up_or_down) {
   if (w) {
     if (up_or_down == TW_CIRCULATE_RAISE_LAST) {
-      if ((w = w->LastW))
-        Act(Raise, w)(w);
+      if ((w = w->LastW)) {
+        w->Raise();
+      }
     } else if (up_or_down == TW_CIRCULATE_LOWER_FIRST) {
-      if ((w = w->FirstW))
-        Act(Lower, w)(w);
+      if ((w = w->FirstW)) {
+        w->Lower();
+      }
     }
   }
 }
 
-static void sockCirculateChildrenRow(Tobj O, byte up_or_down) {
-  Trow R = (Trow)0;
-  if (O) {
-    if (IS_WINDOW(O) && W_USE((Twindow)O, USEROWS)) {
+static void sockCirculateChildrenRow(Tobj obj, byte up_or_down) {
+  Trow row = (Trow)0;
+  if (obj) {
+    if (IS_WINDOW(obj) && W_USE((Twindow)obj, USEROWS)) {
 
       if (up_or_down == TW_CIRCULATE_RAISE_LAST)
-        R = ((Twindow)O)->USE.R.LastRow;
+        row = ((Twindow)obj)->USE.R.LastRow;
       else if (up_or_down == TW_CIRCULATE_LOWER_FIRST)
-        R = ((Twindow)O)->USE.R.FirstRow;
+        row = ((Twindow)obj)->USE.R.FirstRow;
 
-    } else if (IS_MENU(O)) {
+    } else if (IS_MENU(obj)) {
 
       if (up_or_down == TW_CIRCULATE_RAISE_LAST)
-        R = (Trow)((Tmenu)O)->LastI;
+        row = ((Tmenu)obj)->LastI;
       else if (up_or_down == TW_CIRCULATE_LOWER_FIRST)
-        R = (Trow)((Tmenu)O)->FirstI;
+        row = ((Tmenu)obj)->FirstI;
     }
 
-    if (R) {
+    if (row) {
       if (up_or_down == TW_CIRCULATE_RAISE_LAST)
-        Act(Raise, R)(R);
+        row->Raise();
       else if (up_or_down == TW_CIRCULATE_LOWER_FIRST)
-        Act(Lower, R)(R);
+        row->Lower();
     }
   }
 }
@@ -1134,9 +1135,9 @@ static Tgadget sockCreateGadget(Twidget Parent, dat XWidth, dat YWidth, const ch
                                 uldat Attr, uldat Flags, udat Code, tcolor ColText,
                                 tcolor ColTextSelect, tcolor ColTextDisabled,
                                 tcolor ColTextSelectDisabled, dat Left, dat Up) {
-  Tmsgport Owner;
-  if ((Owner = RemoteGetMsgPort(Slot)))
-    return New(gadget)(Owner, Parent, XWidth, YWidth, TextNormal, Attr, Flags, Code, ColText,
+  Tmsgport owner;
+  if ((owner = RemoteGetMsgPort(Slot)))
+    return New(gadget)(owner, Parent, XWidth, YWidth, TextNormal, Attr, Flags, Code, ColText,
                        ColTextSelect, ColTextDisabled, ColTextSelectDisabled, Left, Up);
   return (Tgadget)0;
 }
@@ -1144,9 +1145,9 @@ static Tgadget sockCreateGadget(Twidget Parent, dat XWidth, dat YWidth, const ch
 static Twindow sockCreateWindow(dat TitleLen, const char *Title, const tcolor *ColTitle, Tmenu Menu,
                                 tcolor ColText, uldat CursorType, uldat Attr, uldat Flags,
                                 dat XWidth, dat YWidth, dat ScrollBackLines) {
-  Tmsgport Owner;
-  if ((Owner = RemoteGetMsgPort(Slot)))
-    return New(window)(Owner, TitleLen, Title, ColTitle, Menu, ColText, CursorType, Attr, Flags,
+  Tmsgport owner;
+  if ((owner = RemoteGetMsgPort(Slot)))
+    return New(window)(owner, TitleLen, Title, ColTitle, Menu, ColText, CursorType, Attr, Flags,
                        XWidth, YWidth, ScrollBackLines);
   return (Twindow)0;
 }
@@ -1211,9 +1212,9 @@ static Tmenuitem sockCreate4MenuAny(Tobj Parent, Twindow Window, udat Code, byte
 static Tmenu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
                             tcolor ColSelectDisabled, tcolor ColShtCut, tcolor ColSelShtCut,
                             byte FlagDefColInfo) {
-  Tmsgport Owner;
-  if ((Owner = RemoteGetMsgPort(Slot)))
-    return New(menu)(Owner, ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut,
+  Tmsgport owner;
+  if ((owner = RemoteGetMsgPort(Slot)))
+    return New(menu)(owner, ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut,
                      ColSelShtCut, FlagDefColInfo);
   return (Tmenu)0;
 }
@@ -1241,9 +1242,9 @@ static Tmsgport sockFindMsgPort(Tmsgport Prev, byte NameLen, const char *Name) {
 }
 
 static Tgroup sockCreateGroup(void) {
-  Tmsgport Owner;
-  if ((Owner = RemoteGetMsgPort(Slot)))
-    return New(group)(Owner);
+  Tmsgport owner;
+  if ((owner = RemoteGetMsgPort(Slot)))
+    return New(group)(owner);
   return (Tgroup)0;
 }
 
@@ -1719,9 +1720,9 @@ static void sockNotifySelection(Tobj requestor, uldat reqprivate, uldat magic,
                       Chars::from_c_maxlen(mime, TW_MAX_MIMELEN), Chars(data, len));
 }
 
-static void sockRequestSelection(Tobj Owner, uldat ReqPrivate) {
+static void sockRequestSelection(Tobj owner, uldat ReqPrivate) {
   if (LS.MsgPort)
-    TwinSelectionRequest((Tobj)LS.MsgPort, ReqPrivate, Owner);
+    TwinSelectionRequest((Tobj)LS.MsgPort, ReqPrivate, owner);
 }
 
 #ifdef CONF_SOCKET_GZ

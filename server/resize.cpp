@@ -1760,31 +1760,32 @@ void SetVisibleWidget(Twidget w, byte on_off) {
   }
 }
 
-void RaiseWidget(Twidget w, byte alsoFocus) {
-  Tscreen screen;
+void RaiseWidget(Twidget w, bool alsoFocus) {
 
-  if (w && (screen = (Tscreen)w->Parent) && IS_SCREEN(screen)) {
-
-    if (screen->FirstW != w) {
-      MoveFirst(W, (Twidget)screen, w);
-      if (IS_WINDOW(w))
-        DrawAreaWindow2((Twindow)w);
-      else
-        DrawAreaWidget(w);
-    }
-    if (screen == All->FirstScreen) {
-      if (alsoFocus)
-        Act(Focus, w)(w);
-      UpdateCursor();
-    }
-
-    screen->HookMap();
+  if (!w || !w->Parent || !IS_SCREEN(w->Parent)) {
+    return;
   }
+  Tscreen screen = (Tscreen)w->Parent;
+
+  if (screen->FirstW != w) {
+    MoveFirst(W, (Twidget)screen, w);
+    if (IS_WINDOW(w))
+      DrawAreaWindow2((Twindow)w);
+    else
+      DrawAreaWidget(w);
+  }
+  if (screen == All->FirstScreen) {
+    if (alsoFocus)
+      Act(Focus, w)(w);
+    UpdateCursor();
+  }
+
+  screen->HookMap();
 }
 
-void LowerWidget(Twidget w, byte alsoUnFocus) {
+void LowerWidget(Twidget w, bool alsoUnFocus) {
   Tscreen screen;
-  Twidget _W;
+  Twidget oldw;
 
   if (w && (screen = (Tscreen)w->Parent) && IS_SCREEN(screen)) {
 
@@ -1797,9 +1798,9 @@ void LowerWidget(Twidget w, byte alsoUnFocus) {
     }
     if (screen == All->FirstScreen) {
       if (alsoUnFocus) {
-        _W = screen->FirstW;
-        if (_W && IS_WINDOW(_W) && _W != w)
-          _W->Focus();
+        oldw = screen->FirstW;
+        if (oldw && IS_WINDOW(oldw) && oldw != w)
+          oldw->Focus();
         else
           Swindow::Focus(NULL);
       } else

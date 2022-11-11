@@ -104,11 +104,6 @@ struct SwidgetFn {
   /* Twidget */
   TobjFn Fn_Obj; /* backup of overloaded functions */
   Twidget (*KbdFocus)(Twidget);
-  void (*Raise)(Twidget self);
-  void (*Lower)(Twidget self);
-  void (*Own)(Twidget self, Tmsgport port);
-  void (*DisOwn)(Twidget self);
-  void (*RecursiveDelete)(Twidget self, Tmsgport port);
   void (*Expose)(Twidget self, dat xwidth, dat ywidth, dat left, dat up, dat pitch, const char *,
                  const trune *, const tcell *);
 };
@@ -167,22 +162,12 @@ struct Swidget : public Sobj {
   void Map(Twidget parent);
   void MapTopReal(Tscreen screen);
   void UnMap();
+  void Raise();
+  void Lower();
+  void Own(Tmsgport port);
+  void DisOwn();
+  void RecursiveDelete(Tmsgport port);
 
-  void Raise() {
-    Fn->Raise(this);
-  }
-  void Lower() {
-    Fn->Lower(this);
-  }
-  void Own(Tmsgport port) {
-    Fn->Own(this, port);
-  }
-  void DisOwn() {
-    Fn->DisOwn(this);
-  }
-  void RecursiveDelete(Tmsgport port) {
-    Fn->RecursiveDelete(this, port);
-  }
   void Expose(dat xwidth, dat ywidth, dat left, dat up, dat pitch, const char *ascii,
               const trune *runes, const tcell *cells) {
     Fn->Expose(this, xwidth, ywidth, left, up, pitch, ascii, runes, cells);

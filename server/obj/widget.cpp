@@ -378,6 +378,60 @@ void Swidget::UnMap() {
   }
 }
 
+void Swidget::Raise() {
+  RaiseWidget(this, false);
+}
+
+void Swidget::Lower() {
+  LowerWidget(this, false);
+}
+
+void Swidget::Own(Tmsgport owner) {
+  Twidget w = this;
+  if (!w->Owner) {
+    if ((w->O_Next = owner->FirstW))
+      owner->FirstW->O_Prev = w;
+    else
+      owner->LastW = w;
+
+    w->O_Prev = (Twidget)0;
+    owner->FirstW = w;
+    w->Owner = owner;
+  }
+}
+
+void Swidget::DisOwn() {
+  Twidget w = this;
+  Tmsgport owner = w->Owner;
+  if (!owner) {
+    return;
+  }
+  if (w->O_Prev)
+    w->O_Prev->O_Next = w->O_Next;
+  else if (owner->FirstW == w)
+    owner->FirstW = w->O_Next;
+
+  if (w->O_Next)
+    w->O_Next->O_Prev = w->O_Prev;
+  else if (owner->LastW == w)
+    owner->LastW = w->O_Prev;
+
+  w->O_Prev = w->O_Next = (Twidget)0;
+  w->Owner = (Tmsgport)0;
+}
+
+void Swidget::RecursiveDelete(Tmsgport maybeOwner) {
+  Twidget w = this;
+  while (w->FirstW) {
+    w->FirstW->RecursiveDelete(maybeOwner);
+  }
+  if (w->Owner == maybeOwner) {
+    w->Delete();
+  } else {
+    w->UnMap();
+  }
+}
+
 bool Swidget::InstallHook(HookFn hook, HookData *where) {
   if (hook && where && !where->Fn && !where->W && !Hook && !WhereHook) {
     Hook = where->Fn = hook;

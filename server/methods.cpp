@@ -130,59 +130,9 @@ Twidget FakeKbdFocus(Twidget w) {
   return oldW;
 }
 
-static void RaiseW(Twidget w) {
-  RaiseWidget(w, tfalse);
-}
-
-static void LowerW(Twidget w) {
-  LowerWidget(w, tfalse);
-}
-
-static void OwnWidget(Twidget Widget, Tmsgport Owner) {
-  if (!Widget->Owner) {
-    if ((Widget->O_Next = Owner->FirstW))
-      Owner->FirstW->O_Prev = Widget;
-    else
-      Owner->LastW = Widget;
-
-    Widget->O_Prev = (Twidget)0;
-    Owner->FirstW = Widget;
-    Widget->Owner = Owner;
-  }
-}
-
-static void DisOwnWidget(Twidget w) {
-  Tmsgport Owner;
-  if ((Owner = w->Owner)) {
-    if (w->O_Prev)
-      w->O_Prev->O_Next = w->O_Next;
-    else if (Owner->FirstW == w)
-      Owner->FirstW = w->O_Next;
-
-    if (w->O_Next)
-      w->O_Next->O_Prev = w->O_Prev;
-    else if (Owner->LastW == w)
-      Owner->LastW = w->O_Prev;
-
-    w->O_Prev = w->O_Next = (Twidget)0;
-    w->Owner = (Tmsgport)0;
-  }
-}
-
-static void RecursiveDeleteWidget(Twidget w, Tmsgport maybeOwner) {
-  while (w->FirstW)
-    w->FirstW->RecursiveDelete(maybeOwner);
-
-  if (w->Owner == maybeOwner)
-    w->Delete();
-  else
-    w->UnMap();
-}
-
 static struct SwidgetFn _FnWidget = {
-    &_FnObj, //
-    TtyKbdFocus,   RaiseW, LowerW, OwnWidget, DisOwnWidget, RecursiveDeleteWidget,
-    ExposeWidget2, /* exported by resize.c */
+    &_FnObj, TtyKbdFocus, //
+    ExposeWidget2,        // exported by resize.c
 };
 
 /* Tgadget */
@@ -293,13 +243,8 @@ static Tgadget CreateButton(Twidget Parent, dat XWidth, dat YWidth, const char *
 
 static struct SgadgetFn _FnGadget = {
     /* Twidget */
-    &_FnObj,                                            //
-    (Twidget (*)(Tgadget))TtyKbdFocus,                  //
-    (void (*)(Tgadget))RaiseW,                          //
-    (void (*)(Tgadget))LowerW,                          //
-    (void (*)(Tgadget, Tmsgport))OwnWidget,             //
-    (void (*)(Tgadget))DisOwnWidget,                    //
-    (void (*)(Tgadget, Tmsgport))RecursiveDeleteWidget, //
+    &_FnObj,                           //
+    (Twidget (*)(Tgadget))TtyKbdFocus, //
     (void (*)(Tgadget, dat, dat, dat, dat, const char *, const trune *,
               const tcell *))ExposeWidget2, /* exported by resize.c */
     /* Tgadget */
@@ -557,11 +502,6 @@ static struct SwindowFn _FnWindow = {
     /* Twidget */
     &_FnObj,
     (Twidget(*)(Twindow))TtyKbdFocus,
-    (void (*)(Twindow))RaiseW,
-    (void (*)(Twindow))LowerW,
-    (void (*)(Twindow, Tmsgport))OwnWidget,
-    (void (*)(Twindow))DisOwnWidget,
-    (void (*)(Twindow, Tmsgport))RecursiveDeleteWidget,
     (void (*)(Twindow, dat, dat, dat, dat, const char *, const trune *,
               const tcell *))ExposeWindow2, /* exported by resize.c */
     /* Twindow */
@@ -659,11 +599,6 @@ static struct SscreenFn _FnScreen = {
     /* Twidget */
     &_FnObj,
     (Twidget(*)(Tscreen))NoOp, /* KbdFocus */
-    (void (*)(Tscreen))RaiseW,
-    (void (*)(Tscreen))LowerW,
-    (void (*)(Tscreen, Tmsgport))OwnWidget,
-    (void (*)(Tscreen))DisOwnWidget,
-    (void (*)(Tscreen, Tmsgport))RecursiveDeleteWidget,
     (void (*)(Tscreen, dat, dat, dat, dat, const char *, const trune *,
               const tcell *))ExposeWidget2, /* exported by resize.c */
 
