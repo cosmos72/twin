@@ -404,28 +404,28 @@ Twindow Create4MenuWindow(Tmenu Menu) {
   return window;
 }
 
-byte FakeWriteCharset(Twindow window, uldat Len, const char *charset_bytes) {
+bool FakeWriteCharset(Twindow window, uldat Len, const char *charset_bytes) {
   if (DlLoad(TermSo) && window->fn()->TtyWriteCharset != FakeWriteCharset)
     return window->TtyWriteCharset(Len, charset_bytes);
-  return tfalse;
+  return false;
 }
 
-byte FakeWriteUtf8(Twindow window, uldat Len, const char *utf8_bytes) {
+bool FakeWriteUtf8(Twindow window, uldat Len, const char *utf8_bytes) {
   if (DlLoad(TermSo) && window->fn()->TtyWriteUtf8 != FakeWriteUtf8)
     return window->TtyWriteUtf8(Len, utf8_bytes);
-  return tfalse;
+  return false;
 }
 
-byte FakeWriteTRune(Twindow window, uldat Len, const trune *runes) {
+bool FakeWriteTRune(Twindow window, uldat Len, const trune *runes) {
   if (DlLoad(TermSo) && window->fn()->TtyWriteTRune != FakeWriteTRune)
     return window->TtyWriteTRune(Len, runes);
-  return tfalse;
+  return false;
 }
 
-byte FakeWriteTCell(Twindow window, dat x, dat y, uldat Len, const tcell *cells) {
+bool FakeWriteTCell(Twindow window, dat x, dat y, uldat Len, const tcell *cells) {
   if (DlLoad(TermSo) && window->fn()->TtyWriteTCell != FakeWriteTCell)
     return window->TtyWriteTCell(x, y, Len, cells);
-  return tfalse;
+  return false;
 }
 
 Twindow FakeOpenTerm(const char *arg0, const char *const *argv) {
@@ -509,7 +509,7 @@ static struct SwindowFn _FnWindow = {
     RowWriteCharset, /* exported by resize.c */
     RowWriteUtf8,
     RowWriteTRune,
-    (byte(*)(Twindow, dat, dat, uldat, const tcell *))AlwaysFalse,
+    RowWriteTCell,
 
     GotoXYWindow,
     SetTitleWindow,

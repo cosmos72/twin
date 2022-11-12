@@ -15,11 +15,11 @@
 byte FindInfo(Tmenu Menu, dat i);
 Twindow FakeOpenTerm(const char *arg0, const char *const *argv);
 Twidget FakeKbdFocus(Twidget w);
-byte FakeWriteCharset(Twindow window, uldat Len, const char *charset_bytes);
-byte FakeWriteUtf8(Twindow window, uldat Len, const char *utf8_bytes);
-byte FakeWriteTRune(Twindow window, uldat Len, const trune *runes);
-byte FakeWriteTCell(Twindow window, dat x, dat y, uldat Len, const tcell *cells);
-tpos FakeFindBorderWindow(Twindow window, dat u, dat v, byte border, tcell *PtrAttr);
+bool FakeWriteCharset(Twindow window, uldat len, const char *charset_bytes);
+bool FakeWriteUtf8(Twindow window, uldat len, const char *utf8_bytes);
+bool FakeWriteTRune(Twindow window, uldat len, const trune *runes);
+bool FakeWriteTCell(Twindow window, dat x, dat y, uldat len, const tcell *cells);
+tpos FakeFindBorderWindow(Twindow window, dat u, dat v, byte border, tcell *ptr_cell);
 
 void IncMouseMotionN(void);
 void DecMouseMotionN(void);

@@ -80,7 +80,7 @@ inline sbyte IsTabPosition(Twindow Window, udat pos, sbyte isX) {
   return pos >= (start = TabStart(Window, isX)) ? pos - start < TabLen(Window, isX) ? 0 : 1 : -1;
 }
 
-static tpos WMFindBorderWindow(Twindow w, dat u, dat v, byte Border, tcell *PtrAttr) {
+static tpos WMFindBorderWindow(Twindow w, dat u, dat v, byte border, tcell *ptr_cell) {
   const trune *BorderFont;
   trune Font;
   ldat k;
@@ -137,9 +137,9 @@ static tpos WMFindBorderWindow(Twindow w, dat u, dat v, byte Border, tcell *PtrA
   Horiz = extra_u = u ? rev_u ? (byte)1 : (byte)2 : (byte)0;
   Vert = v ? rev_v ? (byte)1 : (byte)2 : (byte)0;
 
-  if (!(BorderFont = w->BorderPattern[Border]) && !(BorderFont = RCFindBorderPattern(w, Border)))
+  if (!(BorderFont = w->BorderPattern[border]) && !(BorderFont = RCFindBorderPattern(w, border)))
 
-    BorderFont = w->BorderPattern[Border] = StdBorder[Border];
+    BorderFont = w->BorderPattern[border] = StdBorder[border];
 
   if (w->Parent && IS_SCREEN(w->Parent))
     switch (Vert) {
@@ -256,7 +256,7 @@ static tpos WMFindBorderWindow(Twindow w, dat u, dat v, byte Border, tcell *PtrA
       break;
     }
 
-  if (!PtrAttr)
+  if (!ptr_cell)
     return Found;
 
   if (FlDrag && Found >= POS_TITLE && Found <= POS_SIDE_DOWN) {
@@ -318,7 +318,7 @@ static tpos WMFindBorderWindow(Twindow w, dat u, dat v, byte Border, tcell *PtrA
     FlPressed = ttrue;
   }
 
-  *PtrAttr = TCELL(Color, Font);
+  *ptr_cell = TCELL(Color, Font);
 
   return Found;
 }

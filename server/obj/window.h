@@ -57,15 +57,15 @@ struct SwindowFn {
   Twidget (*KbdFocus)(Twindow);
   /* Twindow */
   TwidgetFn Fn_Widget;
-  byte (*TtyWriteCharset)(Twindow, uldat Len, const char *charset_bytes);
-  byte (*TtyWriteUtf8)(Twindow, uldat Len, const char *utf8_bytes);
-  byte (*TtyWriteTRune)(Twindow, uldat Len, const trune *runes);
-  byte (*TtyWriteTCell)(Twindow, dat x, dat y, uldat Len, const tcell *cells);
+  bool (*TtyWriteCharset)(Twindow, uldat len, const char *charset_bytes);
+  bool (*TtyWriteUtf8)(Twindow, uldat len, const char *utf8_bytes);
+  bool (*TtyWriteTRune)(Twindow, uldat len, const trune *runes);
+  bool (*TtyWriteTCell)(Twindow, dat x, dat y, uldat len, const tcell *cells);
 
-  byte (*RowWriteCharset)(Twindow, uldat Len, const char *charset_bytes);
-  byte (*RowWriteUtf8)(Twindow, uldat Len, const char *utf8_bytes);
-  byte (*RowWriteTRune)(Twindow, uldat Len, const trune *runes);
-  byte (*RowWriteTCell)(Twindow, dat x, dat y, uldat Len, const tcell *cells);
+  bool (*RowWriteCharset)(Twindow, uldat len, const char *charset_bytes);
+  bool (*RowWriteUtf8)(Twindow, uldat len, const char *utf8_bytes);
+  bool (*RowWriteTRune)(Twindow, uldat len, const trune *runes);
+  bool (*RowWriteTCell)(Twindow, dat x, dat y, uldat len, const tcell *cells);
 
   void (*GotoXY)(Twindow, ldat X, ldat Y);
   void (*SetTitle)(Twindow, dat titlelen, char *title);
@@ -131,29 +131,29 @@ public:
     return fn()->Fn_Widget;
   }
 
-  byte TtyWriteCharset(uldat len, const char *charset_bytes) {
+  bool TtyWriteCharset(uldat len, const char *charset_bytes) {
     return fn()->TtyWriteCharset(this, len, charset_bytes);
   }
-  byte TtyWriteUtf8(uldat len, const char *utf8_bytes) {
+  bool TtyWriteUtf8(uldat len, const char *utf8_bytes) {
     return fn()->TtyWriteUtf8(this, len, utf8_bytes);
   }
-  byte TtyWriteTRune(uldat len, const trune *runes) {
+  bool TtyWriteTRune(uldat len, const trune *runes) {
     return fn()->TtyWriteTRune(this, len, runes);
   }
-  byte TtyWriteTCell(dat x, dat y, uldat len, const tcell *cells) {
+  bool TtyWriteTCell(dat x, dat y, uldat len, const tcell *cells) {
     return fn()->TtyWriteTCell(this, x, y, len, cells);
   }
 
-  byte RowWriteCharset(uldat len, const char *charset_bytes) {
+  bool RowWriteCharset(uldat len, const char *charset_bytes) {
     return fn()->RowWriteCharset(this, len, charset_bytes);
   }
-  byte RowWriteUtf8(uldat len, const char *utf8_bytes) {
+  bool RowWriteUtf8(uldat len, const char *utf8_bytes) {
     return fn()->RowWriteUtf8(this, len, utf8_bytes);
   }
-  byte RowWriteTRune(uldat len, const trune *runes) {
+  bool RowWriteTRune(uldat len, const trune *runes) {
     return fn()->RowWriteTRune(this, len, runes);
   }
-  byte RowWriteTCell(dat x, dat y, uldat len, const tcell *attr) {
+  bool RowWriteTCell(dat x, dat y, uldat len, const tcell *attr) {
     return fn()->RowWriteTCell(this, x, y, len, attr);
   }
 

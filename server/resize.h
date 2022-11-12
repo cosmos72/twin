@@ -9,10 +9,11 @@
 #ifndef TWIN_RESIZE_H
 #define TWIN_RESIZE_H
 
-byte EnsureLenRow(Trow r, uldat len, byte default_color);
-byte RowWriteCharset(Twindow window, uldat Len, const char *charset_bytes);
-byte RowWriteUtf8(Twindow window, uldat len, const char *utf8_bytes);
-byte RowWriteTRune(Twindow window, uldat len, const trune *runes);
+bool EnsureLenRow(Trow r, uldat len, byte default_color);
+bool RowWriteCharset(Twindow window, uldat Len, const char *charset_bytes);
+bool RowWriteUtf8(Twindow window, uldat len, const char *utf8_bytes);
+bool RowWriteTRune(Twindow window, uldat len, const trune *runes);
+bool RowWriteTCell(Twindow window, dat x, dat y, uldat len, const tcell *cells); // unimplemented!
 
 void ExposeWidget2(Twidget w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
                    const char *utf8_bytes, const trune *runes, const tcell *cells);

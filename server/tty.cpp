@@ -1593,26 +1593,26 @@ byte TtyWriteCharsetOrUtf8(Twindow w, uldat len, const char *chars, bool force_u
     /* flush_tty(); */
   }
   flush_tty();
-  return ttrue;
+  return true;
 }
 
-byte TtyWriteCharset(Twindow w, uldat len, const char *charset_bytes) {
+bool TtyWriteCharset(Twindow w, uldat len, const char *charset_bytes) {
   return TtyWriteCharsetOrUtf8(w, len, charset_bytes, false);
 }
 
-byte TtyWriteUtf8(Twindow w, uldat len, const char *utf8_bytes) {
+bool TtyWriteUtf8(Twindow w, uldat len, const char *utf8_bytes) {
   return TtyWriteCharsetOrUtf8(w, len, utf8_bytes, true);
 }
 
 /* similar to TtyWriteUtf8(), but writes UTF-32 */
-byte TtyWriteTRune(Twindow w, uldat len, const trune *runes) {
+bool TtyWriteTRune(Twindow w, uldat len, const trune *runes) {
   trune c;
   byte ok;
 
   if (!w || !W_USE(w, USECONTENTS) || !w->USE.C.TtyData)
-    return tfalse;
+    return false;
   if (!len || !runes)
-    return ttrue;
+    return true;
 
   common(w);
 
@@ -1654,14 +1654,14 @@ byte TtyWriteTRune(Twindow w, uldat len, const trune *runes) {
       write_ctrl((byte)c);
   }
   flush_tty();
-  return ttrue;
+  return true;
 }
 
 /*
  * this currently wraps at window width so it can write multiple rows at time.
  * does not move cursor position, nor interacts with wrapglitch.
  */
-byte TtyWriteTCell(Twindow w, dat x, dat y, uldat len, const tcell *text) {
+bool TtyWriteTCell(Twindow w, dat x, dat y, uldat len, const tcell *text) {
   ldat left, max, chunk;
   ldat i;
   tcell *dst;
@@ -1714,7 +1714,7 @@ byte TtyWriteTCell(Twindow w, dat x, dat y, uldat len, const tcell *text) {
     dirty_tty(x, y, x + len - 1, y);
 
   flush_tty();
-  return ttrue;
+  return true;
 }
 
 #if 0

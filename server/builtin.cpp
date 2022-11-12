@@ -905,7 +905,7 @@ bool InitBuiltin(void) {
 #ifdef CONF_PRINTK
       InitMessagesWin() &&
 #endif
-      Act(RowWriteCharset, AboutWin)(AboutWin, grlen, greeting) &&
+      AboutWin->RowWriteCharset(grlen, greeting) &&
 
       (ButtonOK_About =
            Do(CreateEmptyButton, gadget)(Builtin_MsgPort, 8, 1, TCOL(tblack, twhite))) &&
@@ -1005,10 +1005,10 @@ bool InitBuiltin(void) {
 
     OptionWin->CurX = 25;
     OptionWin->CurY = 1;
-    Act(RowWriteCharset, OptionWin)(OptionWin, 10, "  X Shadow");
+    OptionWin->RowWriteCharset(10, "  X Shadow");
     OptionWin->CurX = 25;
     OptionWin->CurY = 2;
-    Act(RowWriteCharset, OptionWin)(OptionWin, 10, "  Y Shadow");
+    OptionWin->RowWriteCharset(10, "  Y Shadow");
 
     All->BuiltinMenu = Builtin_Menu;
 

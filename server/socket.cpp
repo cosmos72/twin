@@ -342,7 +342,7 @@ static void sockShutDown(Tmsgport MsgPort) {
 
 /* prototypes of libtw back-end utility functions */
 
-static uldat sockFindFunction(byte Len, const char *name, byte ProtoLen, const char *Proto);
+static uldat sockFindFunction(byte len, const char *name, byte ProtoLen, const char *Proto);
 static byte sockSyncSocket(void);
 static byte sockServerSizeof(byte Type);
 static byte sockCanCompress(void);
@@ -381,15 +381,15 @@ static Tgadget sockCreateGadget(Twidget Parent, dat XWidth, dat YWidth, const ch
 static Twindow sockCreateWindow(dat TitleLen, const char *Title, const tcolor *ColTitle, Tmenu Menu,
                                 tcolor ColText, uldat CursorType, uldat Attr, uldat Flags,
                                 dat XWidth, dat YWidth, dat ScrollBackLines);
-static void sockWriteCharsetWindow(Twindow Window, uldat Len, const char *charset_bytes);
-static void sockWriteUtf8Window(Twindow Window, uldat Len, const char *utf8_bytes);
-static void sockWriteTRuneWindow(Twindow Window, uldat Len, const trune *runes);
-static void sockWriteTCellWindow(Twindow Window, dat x, dat y, uldat Len, const tcell *cells);
-static void sockSetTitleWindow(Twindow Window, dat titlelen, const char *title);
+static void sockWriteCharsetWindow(Twindow w, uldat len, const char *charset_bytes);
+static void sockWriteUtf8Window(Twindow w, uldat len, const char *utf8_bytes);
+static void sockWriteTRuneWindow(Twindow w, uldat len, const trune *runes);
+static void sockWriteTCellWindow(Twindow w, dat x, dat y, uldat len, const tcell *cells);
+static void sockSetTitleWindow(Twindow w, dat titlelen, const char *title);
 
-static Trow sockFindRowByCodeWindow(Twindow Window, dat Code);
+static Trow sockFindRowByCodeWindow(Twindow w, dat Code);
 
-static Tmenuitem sockCreate4MenuAny(Tobj Parent, Twindow Window, udat Code, byte Flags, ldat Len,
+static Tmenuitem sockCreate4MenuAny(Tobj Parent, Twindow w, udat Code, byte Flags, ldat len,
                                     const char *Name);
 
 #define sockRestackChildrenRow RestackRows
@@ -420,13 +420,13 @@ static Tmutex sockFirstMutex(Tmsgport MsgPort);
 static Tmenuitem sockFirstMenuItem(Tmenu Menu);
 static Tgadget sockFirstGadget(Tgroup group);
 
-static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data);
-static void sockBlindSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data);
+static byte sockSendToMsgPort(Tmsgport MsgPort, udat len, const byte *Data);
+static void sockBlindSendToMsgPort(Tmsgport MsgPort, udat len, const byte *Data);
 
 static Tobj sockGetOwnerSelection(void);
 static void sockSetOwnerSelection(tany Time, tany Frac);
 static void sockNotifySelection(Tobj Requestor, uldat ReqPrivate, uldat Magic,
-                                const char MIME[TW_MAX_MIMELEN], uldat Len, const char *Data);
+                                const char MIME[TW_MAX_MIMELEN], uldat len, const char *Data);
 static void sockRequestSelection(Tobj owner, uldat ReqPrivate);
 
 #define sockSetServerUid SetServerUid
@@ -876,27 +876,27 @@ static void sockMultiplexB(uldat id) {
 
 /* actual libtw back-end utility functions */
 
-static int CmpFormat(const char *F1, const char *F2, uldat Len) {
-  for (; Len; F1++, F2++, Len--) {
-    if (Len > 1 && *F1 == *F2 && (*F1 == 'x' || *F1 == 'X' || *F1 == 'Y')) {
+static int CmpFormat(const char *f1, const char *f2, uldat len) {
+  for (; len; f1++, f2++, len--) {
+    if (len > 1 && *f1 == *f2 && (*f1 == 'x' || *f1 == 'X' || *f1 == 'Y')) {
       /*
        * pointer. must allow any, since libtw
        * generically asks for 'tobj', not specific ones
        */
-      F1++, F2++, Len--;
+      f1++, f2++, len--;
       continue;
     }
-    if (*F1 != *F2)
+    if (*f1 != *f2)
       break;
   }
-  return Len ? *F1 - *F2 : 0;
+  return len ? *f1 - *f2 : 0;
 }
 
-static uldat sockFindFunction(byte Len, const char *Name, byte FormatLen, const char *Format) {
+static uldat sockFindFunction(byte len, const char *Name, byte FormatLen, const char *Format) {
   sockfn *F = sockF;
   if (Name) {
-    while (F->Name && (F->Len != Len || F->FormatLen - 1 != FormatLen ||
-                       memcmp(F->Name, Name, Len) || CmpFormat(F->Format + 1, Format, FormatLen)))
+    while (F->Name && (F->Len != len || F->FormatLen - 1 != FormatLen ||
+                       memcmp(F->Name, Name, len) || CmpFormat(F->Format + 1, Format, FormatLen)))
       F++;
     if (F->Name)
       return (uldat)(F - sockF);
@@ -1152,61 +1152,61 @@ static Twindow sockCreateWindow(dat TitleLen, const char *Title, const tcolor *C
   return (Twindow)0;
 }
 
-static void sockWriteCharsetWindow(Twindow Window, uldat Len, const char *charset_bytes) {
-  if (Window) {
-    if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
-      Act(TtyWriteCharset, Window)(Window, Len, charset_bytes);
-    else if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
-      Act(RowWriteCharset, Window)(Window, Len, charset_bytes);
+static void sockWriteCharsetWindow(Twindow w, uldat len, const char *charset_bytes) {
+  if (w) {
+    if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
+      w->TtyWriteCharset(len, charset_bytes);
+    else if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
+      w->RowWriteCharset(len, charset_bytes);
   }
 }
 
-static void sockWriteUtf8Window(Twindow Window, uldat Len, const char *utf8_bytes) {
-  if (Window) {
-    if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
-      Act(TtyWriteUtf8, Window)(Window, Len, utf8_bytes);
-    else if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
-      Act(RowWriteUtf8, Window)(Window, Len, utf8_bytes);
+static void sockWriteUtf8Window(Twindow w, uldat len, const char *utf8_bytes) {
+  if (w) {
+    if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
+      w->TtyWriteUtf8(len, utf8_bytes);
+    else if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
+      w->RowWriteUtf8(len, utf8_bytes);
   }
 }
 
-static void sockWriteTRuneWindow(Twindow Window, uldat Len, const trune *runes) {
-  if (Window) {
-    if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
-      Act(TtyWriteTRune, Window)(Window, Len, runes);
-    else if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
-      Act(RowWriteTRune, Window)(Window, Len, runes);
+static void sockWriteTRuneWindow(Twindow w, uldat len, const trune *runes) {
+  if (w) {
+    if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
+      w->TtyWriteTRune(len, runes);
+    else if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
+      w->RowWriteTRune(len, runes);
   }
 }
 
-static void sockWriteTCellWindow(Twindow Window, dat x, dat y, uldat Len, const tcell *cells) {
-  if (Window) {
-    if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
-      Act(TtyWriteTCell, Window)(Window, x, y, Len, cells);
-    else if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
-      Act(RowWriteTCell, Window)(Window, x, y, Len, cells);
+static void sockWriteTCellWindow(Twindow w, dat x, dat y, uldat len, const tcell *cells) {
+  if (w) {
+    if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
+      w->TtyWriteTCell(x, y, len, cells);
+    else if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
+      w->RowWriteTCell(x, y, len, cells);
   }
 }
 
-static void sockSetTitleWindow(Twindow Window, dat titlelen, const char *title) {
+static void sockSetTitleWindow(Twindow w, dat titlelen, const char *title) {
   char *_title = NULL;
 
-  if (Window) {
+  if (w) {
     if (!titlelen || (_title = (char *)CloneMem(title, titlelen + 1)))
-      Act(SetTitle, Window)(Window, titlelen, _title);
+      w->SetTitle(titlelen, _title);
   }
 }
 
-static Trow sockFindRowByCodeWindow(Twindow Window, dat Code) {
-  if (Window) {
-    return Act(FindRowByCode, Window)(Window, Code, NULL);
+static Trow sockFindRowByCodeWindow(Twindow w, dat Code) {
+  if (w) {
+    return w->FindRowByCode(Code, NULL);
   }
   return (Trow)0;
 }
 
-static Tmenuitem sockCreate4MenuAny(Tobj Parent, Twindow Window, udat Code, byte Flags, ldat Len,
+static Tmenuitem sockCreate4MenuAny(Tobj Parent, Twindow w, udat Code, byte Flags, ldat len,
                                     const char *Name) {
-  return Do(Create4Menu, menuitem)(Parent, Window, Code, Flags, Len, Name);
+  return Do(Create4Menu, menuitem)(Parent, w, Code, Flags, len, Name);
 }
 
 static Tmenu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
@@ -1242,8 +1242,8 @@ static Tmsgport sockFindMsgPort(Tmsgport Prev, byte NameLen, const char *Name) {
 }
 
 static Tgroup sockCreateGroup(void) {
-  Tmsgport owner;
-  if ((owner = RemoteGetMsgPort(Slot)))
+  Tmsgport owner = RemoteGetMsgPort(Slot);
+  if (owner)
     return New(group)(owner);
   return (Tgroup)0;
 }
@@ -1300,7 +1300,7 @@ static Tall sockGetAll(void) {
  * when an exclusive one is started. Must preserve Slot, Fd and other globals!
  */
 static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
-  uldat Len, Tot;
+  uldat len, tot;
   byte *t;
   uldat save_Slot;
   int save_Fd;
@@ -1312,7 +1312,7 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
   }
 #endif
 
-  Len = 0;
+  len = 0;
   save_Slot = Slot;
   save_Fd = Fd;
 
@@ -1322,11 +1322,11 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
 
   switch (msg->Type) {
   case msg_display:
-    sockReply(msg->Type, Len = sizeof(twindow) + 4 * sizeof(udat) + msg->Event.EventDisplay.Len,
+    sockReply(msg->Type, len = sizeof(twindow) + 4 * sizeof(udat) + msg->Event.EventDisplay.Len,
               NULL);
 
-    if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-      t += Tot - Len;
+    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+      t += tot - len;
 
       Push(t, twindow, NOID); /* not used here */
       Push(t, udat, msg->Event.EventDisplay.Code);
@@ -1338,11 +1338,11 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     break;
   case msg_widget_key:
     sockReply(msg->Type,
-              Len = sizeof(twindow) + 3 * sizeof(udat) + 2 * sizeof(byte) +
+              len = sizeof(twindow) + 3 * sizeof(udat) + 2 * sizeof(byte) +
                     msg->Event.EventKeyboard.SeqLen,
               NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-      t += Tot - Len;
+    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+      t += tot - len;
       Push(t, twidget, Obj2Id(msg->Event.EventKeyboard.W));
       Push(t, udat, msg->Event.EventKeyboard.Code);
       Push(t, udat, msg->Event.EventKeyboard.ShiftFlags);
@@ -1353,9 +1353,9 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     }
     break;
   case msg_widget_mouse:
-    sockReply(msg->Type, Len = sizeof(twindow) + 4 * sizeof(udat), NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-      t += Tot - Len;
+    sockReply(msg->Type, len = sizeof(twindow) + 4 * sizeof(udat), NULL);
+    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+      t += tot - len;
       Push(t, twidget, Obj2Id(msg->Event.EventMouse.W));
       Push(t, udat, msg->Event.EventMouse.Code);
       Push(t, udat, msg->Event.EventMouse.ShiftFlags);
@@ -1364,9 +1364,9 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     }
     break;
   case msg_widget_change:
-    sockReply(msg->Type, Len = sizeof(twindow) + 6 * sizeof(dat), NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-      t += Tot - Len;
+    sockReply(msg->Type, len = sizeof(twindow) + 6 * sizeof(dat), NULL);
+    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+      t += tot - len;
       Push(t, twidget, Obj2Id(msg->Event.EventWidget.W));
       Push(t, udat, msg->Event.EventWidget.Code);
       Push(t, udat, msg->Event.EventWidget.Flags);
@@ -1377,19 +1377,19 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     }
     break;
   case msg_widget_gadget:
-    sockReply(msg->Type, Len = sizeof(twindow) + 2 * sizeof(dat), NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-      t += Tot - Len;
+    sockReply(msg->Type, len = sizeof(twindow) + 2 * sizeof(dat), NULL);
+    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+      t += tot - len;
       Push(t, twidget, Obj2Id(msg->Event.EventGadget.W));
       Push(t, udat, msg->Event.EventGadget.Code);
       Push(t, udat, msg->Event.EventGadget.Flags);
     }
     break;
   case msg_menu_row:
-    sockReply(msg->Type, Len = sizeof(twindow) + 2 * sizeof(dat) + sizeof(tmenu) + sizeof(trow),
+    sockReply(msg->Type, len = sizeof(twindow) + 2 * sizeof(dat) + sizeof(tmenu) + sizeof(trow),
               NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-      t += Tot - Len;
+    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+      t += tot - len;
       Push(t, twindow, Obj2Id(msg->Event.EventMenu.W));
       Push(t, udat, msg->Event.EventMenu.Code);
       Push(t, udat, msg->Event.EventMenu.pad);
@@ -1398,9 +1398,9 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     }
     break;
   case msg_selection:
-    sockReply(msg->Type, Len = sizeof(twindow) + 4 * sizeof(dat), NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-      t += Tot - Len;
+    sockReply(msg->Type, len = sizeof(twindow) + 4 * sizeof(dat), NULL);
+    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+      t += tot - len;
       Push(t, twidget, Obj2Id(msg->Event.EventSelection.W));
       Push(t, udat, msg->Event.EventSelection.Code);
       Push(t, udat, msg->Event.EventSelection.pad);
@@ -1410,11 +1410,11 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     break;
   case msg_selection_notify:
     sockReply(msg->Type,
-              Len = sizeof(twindow) + 2 * sizeof(dat) + 3 * sizeof(ldat) + TW_MAX_MIMELEN +
+              len = sizeof(twindow) + 2 * sizeof(dat) + 3 * sizeof(ldat) + TW_MAX_MIMELEN +
                     msg->Event.EventSelectionNotify.DataLen,
               NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-      t += Tot - Len;
+    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+      t += tot - len;
       Push(t, twidget, Obj2Id(msg->Event.EventSelectionNotify.W));
       Push(t, udat, msg->Event.EventSelectionNotify.Code);
       Push(t, udat, msg->Event.EventSelectionNotify.pad);
@@ -1433,10 +1433,10 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     }
     break;
   case msg_selection_request:
-    sockReply(msg->Type, Len = sizeof(twindow) + 2 * sizeof(dat) + sizeof(tobj) + sizeof(ldat),
+    sockReply(msg->Type, len = sizeof(twindow) + 2 * sizeof(dat) + sizeof(tobj) + sizeof(ldat),
               NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-      t += Tot - Len;
+    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+      t += tot - len;
       Push(t, twidget, Obj2Id(msg->Event.EventSelectionRequest.W));
       Push(t, udat, msg->Event.EventSelectionRequest.Code);
       Push(t, udat, msg->Event.EventSelectionRequest.pad);
@@ -1446,10 +1446,10 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     break;
 
   case msg_user_control:
-    sockReply(msg->Type, Len = sizeof(twindow) + 4 * sizeof(dat) + msg->Event.EventControl.Len,
+    sockReply(msg->Type, len = sizeof(twindow) + 4 * sizeof(dat) + msg->Event.EventControl.Len,
               NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-      t += Tot - Len;
+    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+      t += tot - len;
       Push(t, twidget, Obj2Id(msg->Event.EventControl.W));
       Push(t, udat, msg->Event.EventControl.Code);
       Push(t, udat, msg->Event.EventControl.Len);
@@ -1460,10 +1460,10 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     break;
 
   case msg_user_clientmsg:
-    sockReply(msg->Type, Len = sizeof(twindow) + 2 * sizeof(dat) + msg->Event.EventClientMsg.Len,
+    sockReply(msg->Type, len = sizeof(twindow) + 2 * sizeof(dat) + msg->Event.EventClientMsg.Len,
               NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-      t += Tot - Len;
+    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+      t += tot - len;
       Push(t, twidget, Obj2Id(msg->Event.EventClientMsg.W));
       Push(t, udat, msg->Event.EventClientMsg.Code);
       Push(t, udat, msg->Event.EventClientMsg.Format);
@@ -1483,7 +1483,7 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
 #define tmsgEventOffset(x) ((udat)(size_t) & (((tmsg)0)->Event.x))
 
 /* extract the (tmsg) from Data, turn it into a (Tmsg) and send it to MsgPort */
-static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
+static byte sockSendToMsgPort(Tmsgport MsgPort, udat len, const byte *Data) {
   tmsg tw_msg;
   Tmsgport Sender;
   Tmsg msg;
@@ -1494,10 +1494,10 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
   /* FIXME: must code alienSendToMsgPort() and call it if AlienMagic(Slot) != MagicNative */
 
   /* be careful with alignment! */
-  tw_msg = (tmsg)CloneMem(Data, Len);
+  tw_msg = (tmsg)CloneMem(Data, len);
 
   do
-    if (MsgPort && Len && tw_msg && Len >= tmsgEventDelta && Len == tw_msg->Len &&
+    if (MsgPort && len && tw_msg && len >= tmsgEventDelta && len == tw_msg->Len &&
         tw_msg->Magic == Tmsg_class_id) {
 
       Sender = RemoteGetMsgPort(Slot);
@@ -1512,27 +1512,27 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
       _Len = 0;
       switch (tw_msg->Type) {
       case TW_MSG_WIDGET_KEY:
-        if (Len >= tmsgEventOffset(EventKeyboard.AsciiSeq)) {
-          if (tw_msg->Event.EventKeyboard.SeqLen + tmsgEventOffset(EventKeyboard.AsciiSeq) > Len)
-            tw_msg->Event.EventKeyboard.SeqLen = Len - tmsgEventOffset(EventKeyboard.AsciiSeq);
+        if (len >= tmsgEventOffset(EventKeyboard.AsciiSeq)) {
+          if (tw_msg->Event.EventKeyboard.SeqLen + tmsgEventOffset(EventKeyboard.AsciiSeq) > len)
+            tw_msg->Event.EventKeyboard.SeqLen = len - tmsgEventOffset(EventKeyboard.AsciiSeq);
           _Len += tw_msg->Event.EventKeyboard.SeqLen;
         } else
           /* (tmsg) too short */
           ok = tfalse;
         break;
       case TW_MSG_USER_CONTROL:
-        if (Len >= tmsgEventOffset(EventControl.Data)) {
-          if (tw_msg->Event.EventControl.Len + tmsgEventOffset(EventControl.Data) > Len)
-            tw_msg->Event.EventControl.Len = Len - tmsgEventOffset(EventControl.Data);
+        if (len >= tmsgEventOffset(EventControl.Data)) {
+          if (tw_msg->Event.EventControl.Len + tmsgEventOffset(EventControl.Data) > len)
+            tw_msg->Event.EventControl.Len = len - tmsgEventOffset(EventControl.Data);
           _Len += tw_msg->Event.EventControl.Len;
         } else
           /* (tmsg) too short */
           ok = tfalse;
         break;
       case TW_MSG_USER_CLIENTMSG:
-        if (Len >= tmsgEventOffset(EventClientMsg.Data)) {
-          if (tw_msg->Event.EventClientMsg.Len + tmsgEventOffset(EventClientMsg.Data) > Len)
-            tw_msg->Event.EventClientMsg.Len = Len - tmsgEventOffset(EventClientMsg.Data);
+        if (len >= tmsgEventOffset(EventClientMsg.Data)) {
+          if (tw_msg->Event.EventClientMsg.Len + tmsgEventOffset(EventClientMsg.Data) > len)
+            tw_msg->Event.EventClientMsg.Len = len - tmsgEventOffset(EventClientMsg.Data);
           _Len += tw_msg->Event.EventClientMsg.Len;
         } else
           /* (tmsg) too short */
@@ -1557,7 +1557,7 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
          */
         tw_msg->Len -= AlienSizeof(uldat, Slot);
         tw_msg->Magic = MSG_MAGIC;
-        RemoteWriteQueue(dstSlot, Len, (const byte *)tw_msg);
+        RemoteWriteQueue(dstSlot, len, (const byte *)tw_msg);
         break;
       }
 
@@ -1701,8 +1701,8 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
 #undef tmsgEventDelta
 #undef tmsgEventOffset
 
-static void sockBlindSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data) {
-  (void)sockSendToMsgPort(MsgPort, Len, Data);
+static void sockBlindSendToMsgPort(Tmsgport MsgPort, udat len, const byte *Data) {
+  (void)sockSendToMsgPort(MsgPort, len, Data);
 }
 
 static Tobj sockGetOwnerSelection(void) {
