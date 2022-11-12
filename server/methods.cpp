@@ -506,10 +506,6 @@ static struct SwindowFn _FnWindow = {
     FakeWriteUtf8,
     FakeWriteTRune,
     FakeWriteTCell,
-    RowWriteCharset, /* exported by resize.c */
-    RowWriteUtf8,
-    RowWriteTRune,
-    RowWriteTCell,
 
     GotoXYWindow,
     SetTitleWindow,
@@ -656,39 +652,42 @@ static struct SgroupFn _FnGroup = {
 
 /* Trow */
 
-static byte SetTextRow(Trow row, uldat Len, const char *Text, byte DefaultCol) {
-  if (EnsureLenRow(row, Len, DefaultCol)) {
-    if (Len) {
+static bool SetTextRow(Trow row, uldat len, const char *Text, bool default_color) {
+  if (EnsureLenRow(row, len, default_color)) {
+    if (len) {
 
       trune *RowText = row->Text;
-      ldat i = Len;
+      ldat i = len;
       while (i-- > 0) {
         *RowText++ = Tutf_CP437_to_UTF_32[(byte)*Text++];
       }
-      if (!(row->Flags & ROW_DEFCOL) && !DefaultCol)
+      if (!(row->Flags & ROW_DEFCOL) && !default_color)
         /* will not work correctly if sizeof(tcolor) != 1 */
-        memset(row->ColText, TCOL(twhite, tblack), Len * sizeof(tcolor));
+        memset(row->ColText, TCOL(twhite, tblack), len * sizeof(tcolor));
     }
-    row->Len = Len;
+    row->Len = len;
     row->Gap = row->LenGap = 0;
-    return ttrue;
+    return true;
   }
-  return tfalse;
+  return false;
 }
 
-static byte SetTRuneRow(Trow row, uldat Len, const trune *TRune, byte DefaultCol) {
-  if (EnsureLenRow(row, Len, DefaultCol)) {
-    if (Len) {
-      CopyMem(TRune, row->Text, Len * sizeof(trune));
-      if (!(row->Flags & ROW_DEFCOL) && !DefaultCol)
-        /* will not work correctly if sizeof(tcolor) != 1 */
-        memset(row->ColText, TCOL(twhite, tblack), Len * sizeof(tcolor));
+static bool SetTRuneRow(Trow row, uldat len, const trune *TRune, bool default_color) {
+  if (EnsureLenRow(row, len, default_color)) {
+    if (len) {
+      CopyMem(TRune, row->Text, len * sizeof(trune));
+      if (!(row->Flags & ROW_DEFCOL) && !default_color) {
+        /* memset() will not work correctly if sizeof(tcolor) != 1 */
+        typedef char sizeof_tcolor_is_1[sizeof(tcolor) == 1 ? 1 : -1];
+
+        memset(row->ColText, TCOL(twhite, tblack), len * sizeof(tcolor));
+      }
     }
-    row->Len = Len;
+    row->Len = len;
     row->Gap = row->LenGap = 0;
-    return ttrue;
+    return true;
   }
-  return tfalse;
+  return false;
 }
 
 /*

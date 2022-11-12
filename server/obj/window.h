@@ -16,6 +16,7 @@
 #include <Tw/autoconf.h>
 
 #include "obj/widget.h"
+#include "resize.h" // RowWrite*Window()
 
 #ifdef TW_HAVE_SYS_TYPES_H
 #include <sys/types.h> /* pid_t */
@@ -61,11 +62,6 @@ struct SwindowFn {
   bool (*TtyWriteUtf8)(Twindow, uldat len, const char *utf8_bytes);
   bool (*TtyWriteTRune)(Twindow, uldat len, const trune *runes);
   bool (*TtyWriteTCell)(Twindow, dat x, dat y, uldat len, const tcell *cells);
-
-  bool (*RowWriteCharset)(Twindow, uldat len, const char *charset_bytes);
-  bool (*RowWriteUtf8)(Twindow, uldat len, const char *utf8_bytes);
-  bool (*RowWriteTRune)(Twindow, uldat len, const trune *runes);
-  bool (*RowWriteTCell)(Twindow, dat x, dat y, uldat len, const tcell *cells);
 
   void (*GotoXY)(Twindow, ldat X, ldat Y);
   void (*SetTitle)(Twindow, dat titlelen, char *title);
@@ -145,16 +141,16 @@ public:
   }
 
   bool RowWriteCharset(uldat len, const char *charset_bytes) {
-    return fn()->RowWriteCharset(this, len, charset_bytes);
+    return RowWriteCharsetWindow(this, len, charset_bytes);
   }
   bool RowWriteUtf8(uldat len, const char *utf8_bytes) {
-    return fn()->RowWriteUtf8(this, len, utf8_bytes);
+    return RowWriteUtf8Window(this, len, utf8_bytes);
   }
   bool RowWriteTRune(uldat len, const trune *runes) {
-    return fn()->RowWriteTRune(this, len, runes);
+    return RowWriteTRuneWindow(this, len, runes);
   }
   bool RowWriteTCell(dat x, dat y, uldat len, const tcell *attr) {
-    return fn()->RowWriteTCell(this, x, y, len, attr);
+    return RowWriteTCellWindow(this, x, y, len, attr);
   }
 
   void GotoXY(ldat x, ldat y) {

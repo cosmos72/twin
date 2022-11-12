@@ -104,15 +104,15 @@ static byte SendResizeSignal(Twindow w) {
 #endif
 }
 
-byte CheckResizeWindowContents(Twindow w) {
+bool CheckResizeWindowContents(Twindow w) {
   if (W_USE(w, USECONTENTS) &&
       (w->USE.C.TtyData->SizeY != w->YWidth - 2 || w->USE.C.TtyData->SizeX != w->XWidth - 2)) {
     return ResizeWindowContents(w);
   }
-  return ttrue;
+  return true;
 }
 
-byte ResizeWindowContents(Twindow w) {
+bool ResizeWindowContents(Twindow w) {
   tcell *NewCont, *saveNewCont, *OldCont, *max, h;
   ldat count, common, left;
   ttydata *Data = w->USE.C.TtyData;
@@ -126,7 +126,7 @@ byte ResizeWindowContents(Twindow w) {
   /* safety check: */
   if (x > 0 && y > 0) {
     if (!(saveNewCont = NewCont = (tcell *)AllocMem(x * y * sizeof(tcell))))
-      return tfalse;
+      return false;
 
     /*
      * copy the Contents. Quite non-trivial for two reasons:
@@ -205,7 +205,7 @@ byte ResizeWindowContents(Twindow w) {
       UpdateCursor();
   }
 
-  return ttrue;
+  return true;
 }
 
 static Trow InsertRowsWindow(Twindow w, ldat NumRows) {
@@ -221,49 +221,43 @@ static Trow InsertRowsWindow(Twindow w, ldat NumRows) {
   return row;
 }
 
-bool EnsureLenRow(Trow Row, uldat Len, byte DefaultCol) {
-  trune *tempText;
-  tcolor *tempColText;
-  uldat NewLen;
+bool EnsureLenRow(Trow Row, uldat len, bool default_color) {
+  trune *temp_text;
+  tcolor *temp_color;
+  uldat new_len;
 
-  if (Len > Row->MaxLen) {
-    NewLen = (Len + (Len >> 1)) | All->SetUp->MinAllocSize;
-    if ((tempText = (trune *)ReAllocMem(Row->Text, NewLen * sizeof(trune)))) {
-      if (!(Row->Flags & ROW_DEFCOL) && !DefaultCol) {
-        if ((tempColText = (tcolor *)ReAllocMem(Row->ColText, NewLen * sizeof(tcolor))))
-          Row->ColText = tempColText;
+  if (len > Row->MaxLen) {
+    new_len = (len + (len >> 1)) | All->SetUp->MinAllocSize;
+    if ((temp_text = (trune *)ReAllocMem(Row->Text, new_len * sizeof(trune)))) {
+      if (!(Row->Flags & ROW_DEFCOL) && !default_color) {
+        if ((temp_color = (tcolor *)ReAllocMem(Row->ColText, new_len * sizeof(tcolor))))
+          Row->ColText = temp_color;
         else
           return false;
       }
-      Row->Text = tempText;
-      Row->MaxLen = NewLen;
+      Row->Text = temp_text;
+      Row->MaxLen = new_len;
     } else
       return false;
   }
   return true;
 }
 
-bool RowWriteCharset(Twindow w, uldat Len, const char *charset_bytes) {
-  Trow row;
-  const char *_Text;
-  byte ModeInsert;
-  trune const *to_UTF_32;
-  ldat x, y, max;
-  uldat i, RowLen;
+bool RowWriteCharsetWindow(Twindow w, uldat len, const char *charset_bytes) {
 
-  if (!w || (Len && !charset_bytes) || !W_USE(w, USEROWS))
+  if (!w || (len && !charset_bytes) || !W_USE(w, USEROWS))
     return false;
 
-  x = w->CurX;
-  y = w->CurY;
-  max = w->HLogic;
-  row = w->USE.R.LastRow;
-  ModeInsert = w->Flags & WINDOWFL_ROWS_INSERT;
+  Trow row = w->USE.R.LastRow;
+  ldat x = w->CurX;
+  ldat y = w->CurY;
+  ldat max = w->HLogic;
+  bool isInsert = !!(w->Flags & WINDOWFL_ROWS_INSERT);
 
   if (w->State & WINDOW_ANYSEL)
     ClearHilight(w);
 
-  while (Len) {
+  while (len) {
     if (max <= y || (max == y + 1 && (*charset_bytes == '\n' || *charset_bytes == '\r'))) {
       if (InsertRowsWindow(w, Max2(y + 1 - max, 1))) {
         max = w->HLogic;
@@ -274,19 +268,19 @@ bool RowWriteCharset(Twindow w, uldat Len, const char *charset_bytes) {
       row = Act(FindRow, w)(w, y);
     }
 
-    RowLen = 0;
-    _Text = charset_bytes;
-    while (RowLen < Len && *_Text != '\n' && *_Text != '\r')
-      ++RowLen, ++_Text;
+    uldat row_len = 0;
+    const char *text = charset_bytes;
+    while (row_len < len && *text != '\n' && *text != '\r')
+      ++row_len, ++text;
 
     /*        WINDOWFL_INSERT non implementato */
     /*  Gap non implementato                                 */
 
-    if (RowLen) {
-      if (ModeInsert || (row && row->LenGap))
+    if (row_len) {
+      if (isInsert || (row && row->LenGap))
         return tfalse;
 
-      if (!EnsureLenRow(row, x + RowLen, (w->Flags & WINDOWFL_ROWS_DEFCOL)))
+      if (!EnsureLenRow(row, x + row_len, !!(w->Flags & WINDOWFL_ROWS_DEFCOL)))
         return tfalse;
 
       if (w->USE.R.NumRowOne == y)
@@ -295,35 +289,37 @@ bool RowWriteCharset(Twindow w, uldat Len, const char *charset_bytes) {
         w->USE.R.RowSplit = row;
       row->Flags = ROW_ACTIVE;
 
-      to_UTF_32 = w->Charset;
+      trune const *to_UTF_32 = w->Charset;
 
-      for (i = (uldat)Max2(0, -x); i < RowLen; i++)
+      for (uldat i = (uldat)Max2(0, -x); i < row_len; i++) {
         row->Text[x + i] = to_UTF_32[(byte)charset_bytes[i]];
+      }
       if (x >= 0 && (uldat)x > row->Len)
-        for (i = row->Len; i < (uldat)x; i++)
+        for (uldat i = row->Len; i < (uldat)x; i++) {
           row->Text[i] = (trune)' ';
+        }
 
       if (!(w->Flags & WINDOWFL_ROWS_DEFCOL)) {
-        memset(row->ColText + x, w->ColText, sizeof(tcolor) * RowLen);
+        memset(row->ColText + x, w->ColText, sizeof(tcolor) * row_len);
         if (x >= 0 && (uldat)x > row->Len)
           memset(row->ColText + row->Len, w->ColText, sizeof(tcolor) * (x - row->Len));
       }
 
-      if (row->Len < x + RowLen)
-        row->Len = x + RowLen;
+      if (row->Len < x + row_len)
+        row->Len = x + row_len;
 
-      DrawLogicWidget((Twidget)w, x, y, x + RowLen - (ldat)1, y);
+      DrawLogicWidget(w, x, y, x + row_len - (ldat)1, y);
 
-      charset_bytes += RowLen;
-      Len -= RowLen;
+      charset_bytes += row_len;
+      len -= row_len;
     }
 
-    if (Len && (*charset_bytes == '\n' || *charset_bytes == '\r')) {
+    if (len && (*charset_bytes == '\n' || *charset_bytes == '\r')) {
       w->CurX = x = (ldat)0;
       w->CurY = ++y;
-      charset_bytes++, Len--;
+      charset_bytes++, len--;
     } else
-      w->CurX = x += RowLen;
+      w->CurX = x += row_len;
   }
 
   if (w == FindCursorWindow())
@@ -332,7 +328,7 @@ bool RowWriteCharset(Twindow w, uldat Len, const char *charset_bytes) {
   return true;
 }
 
-bool RowWriteUtf8(Twindow w, uldat len, const char *utf8_bytes) {
+bool RowWriteUtf8Window(Twindow w, uldat len, const char *utf8_bytes) {
   Chars chars(utf8_bytes, len);
   Vector<trune> runes;
   Utf8 seq;
@@ -345,24 +341,19 @@ bool RowWriteUtf8(Twindow w, uldat len, const char *utf8_bytes) {
   if (!runes) {
     return false;
   }
-  return RowWriteTRune(w, runes.size(), runes.data());
+  return RowWriteTRuneWindow(w, runes.size(), runes.data());
 }
 
-bool RowWriteTRune(Twindow w, uldat len, const trune *runes) {
-  Trow row;
-  const trune *_Text;
-  byte ModeInsert;
-  ldat x, y, max;
-  uldat i, RowLen;
+bool RowWriteTRuneWindow(Twindow w, uldat len, const trune *runes) {
 
   if (!w || !len || !W_USE(w, USEROWS))
     return false;
 
-  x = w->CurX;
-  y = w->CurY;
-  max = w->HLogic;
-  row = w->USE.R.LastRow;
-  ModeInsert = w->Flags & WINDOWFL_ROWS_INSERT;
+  Trow row = w->USE.R.LastRow;
+  const trune *text;
+  ldat x = w->CurX, y = w->CurY, max = w->HLogic;
+  uldat i, row_len;
+  bool isInsert = !!(w->Flags & WINDOWFL_ROWS_INSERT);
 
   if (w->State & WINDOW_ANYSEL)
     ClearHilight(w);
@@ -378,19 +369,19 @@ bool RowWriteTRune(Twindow w, uldat len, const trune *runes) {
       row = Act(FindRow, w)(w, y);
     }
 
-    RowLen = (ldat)0;
-    _Text = runes;
-    while (RowLen < len && *_Text != '\n' && *_Text != '\r')
-      ++RowLen, ++_Text;
+    row_len = (ldat)0;
+    text = runes;
+    while (row_len < len && *text != '\n' && *text != '\r')
+      ++row_len, ++text;
 
     /*        WINDOWFL_INSERT non implementato */
     /*  Gap non implementato                                 */
 
-    if (RowLen) {
-      if (ModeInsert || (row && row->LenGap))
+    if (row_len) {
+      if (isInsert || (row && row->LenGap))
         return tfalse;
 
-      if (!EnsureLenRow(row, x + RowLen, (w->Flags & WINDOWFL_ROWS_DEFCOL)))
+      if (!EnsureLenRow(row, x + row_len, !!(w->Flags & WINDOWFL_ROWS_DEFCOL)))
         return tfalse;
 
       if (w->USE.R.NumRowOne == y)
@@ -400,9 +391,9 @@ bool RowWriteTRune(Twindow w, uldat len, const trune *runes) {
       row->Flags = ROW_ACTIVE;
 
       if (x >= 0) {
-        CopyMem(runes, row->Text + x, sizeof(trune) * RowLen);
-      } else if ((uldat)-x < RowLen) {
-        CopyMem(runes - x, row->Text, sizeof(trune) * (RowLen + x));
+        CopyMem(runes, row->Text + x, sizeof(trune) * row_len);
+      } else if ((uldat)-x < row_len) {
+        CopyMem(runes - x, row->Text, sizeof(trune) * (row_len + x));
       }
       if (x >= 0 && (uldat)x > row->Len) {
         for (i = row->Len; i < (uldat)x; i++)
@@ -411,22 +402,22 @@ bool RowWriteTRune(Twindow w, uldat len, const trune *runes) {
 
       if (!(w->Flags & WINDOWFL_ROWS_DEFCOL)) {
         if (x >= 0) {
-          memset(row->ColText + x, w->ColText, sizeof(tcolor) * RowLen);
-        } else if ((uldat)-x < RowLen) {
-          memset(row->ColText, w->ColText - x, sizeof(tcolor) * (RowLen + x));
+          memset(row->ColText + x, w->ColText, sizeof(tcolor) * row_len);
+        } else if ((uldat)-x < row_len) {
+          memset(row->ColText, w->ColText - x, sizeof(tcolor) * (row_len + x));
         }
         if (x >= 0 && (uldat)x > row->Len) {
           memset(row->ColText + row->Len, w->ColText, sizeof(tcolor) * (x - row->Len));
         }
       }
 
-      if (row->Len < x + RowLen)
-        row->Len = x + RowLen;
+      if (row->Len < x + row_len)
+        row->Len = x + row_len;
 
-      DrawLogicWidget((Twidget)w, x, y, x + RowLen - (ldat)1, y);
+      DrawLogicWidget((Twidget)w, x, y, x + row_len - (ldat)1, y);
 
-      runes += RowLen;
-      len -= RowLen;
+      runes += row_len;
+      len -= row_len;
     }
 
     if (len && (*runes == '\n' || *runes == '\r')) {
@@ -434,7 +425,7 @@ bool RowWriteTRune(Twindow w, uldat len, const trune *runes) {
       w->CurY = ++y;
       runes++, len--;
     } else
-      w->CurX = x += RowLen;
+      w->CurX = x += row_len;
   }
 
   if (w == FindCursorWindow())
@@ -444,7 +435,7 @@ bool RowWriteTRune(Twindow w, uldat len, const trune *runes) {
 }
 
 // unimplemented!
-bool RowWriteTCell(Twindow w, dat x, dat y, uldat len, const tcell *cells) {
+bool RowWriteTCellWindow(Twindow w, dat x, dat y, uldat len, const tcell *cells) {
   (void)w;
   (void)x;
   (void)y;
@@ -488,7 +479,7 @@ void ExposeWidget2(Twidget w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitc
 
 void ExposeWindow2(Twindow w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
                    const char *utf8_bytes, const trune *runes, const tcell *cells) {
-  ldat CurX, CurY;
+  ldat curX, curY;
 
   if (W_USE(w, USEEXPOSE)) {
     ExposeWidget2((Twidget)w, XWidth, YWidth, Left, Up, Pitch, utf8_bytes, runes, cells);
@@ -522,14 +513,14 @@ void ExposeWindow2(Twindow w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitc
 
   if (W_USE(w, USECONTENTS)) {
     /* clip to window size */
-    CurX = w->USE.C.TtyData->SizeX;
-    CurY = w->USE.C.TtyData->SizeY;
-    if (Left >= CurY || Up >= CurY)
+    curX = w->USE.C.TtyData->SizeX;
+    curY = w->USE.C.TtyData->SizeY;
+    if (Left >= curY || Up >= curY)
       return;
-    if ((ldat)XWidth + Left > CurX)
-      XWidth = CurX - Left;
-    if ((ldat)YWidth + Up > CurY)
-      YWidth = CurY - Up;
+    if ((ldat)XWidth + Left > curX)
+      XWidth = curX - Left;
+    if ((ldat)YWidth + Up > curY)
+      YWidth = curY - Up;
   }
   if (XWidth <= 0 || YWidth <= 0)
     return;
@@ -539,37 +530,37 @@ void ExposeWindow2(Twindow w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitc
     if (W_USE(w, USECONTENTS)) {
       writeUtf8 = w->fn()->TtyWriteUtf8;
     } else
-      writeUtf8 = w->fn()->RowWriteUtf8;
+      writeUtf8 = RowWriteUtf8Window;
 
-    CurX = w->CurX;
-    CurY = w->CurY;
+    curX = w->CurX;
+    curY = w->CurY;
     for (; YWidth; YWidth--, Up++, utf8_bytes += Pitch) {
       Act(GotoXY, w)(w, Left, Up);
       writeUtf8(w, (uldat)XWidth, utf8_bytes);
     }
-    Act(GotoXY, w)(w, CurX, CurY);
+    Act(GotoXY, w)(w, curX, curY);
 
   } else if (runes) {
     bool (*writeTRune)(Twindow, uldat, const trune *);
     if (W_USE(w, USECONTENTS))
       writeTRune = w->fn()->TtyWriteTRune;
     else
-      writeTRune = w->fn()->RowWriteTRune;
+      writeTRune = RowWriteTRuneWindow;
 
-    CurX = w->CurX;
-    CurY = w->CurY;
+    curX = w->CurX;
+    curY = w->CurY;
     for (; YWidth; YWidth--, Up++, runes += Pitch) {
-      Act(GotoXY, w)(w, Left, Up);
+      w->GotoXY(Left, Up);
       writeTRune(w, (uldat)XWidth, runes);
     }
-    Act(GotoXY, w)(w, CurX, CurY);
+    w->GotoXY(curX, curY);
 
   } else if (cells) {
     bool (*writeTCell)(Twindow, dat, dat, uldat, const tcell *);
     if (W_USE(w, USECONTENTS))
       writeTCell = w->fn()->TtyWriteTCell;
     else
-      writeTCell = w->fn()->RowWriteTCell;
+      writeTCell = RowWriteTCellWindow;
 
     for (; YWidth; YWidth--, Up++, cells += Pitch)
       writeTCell(w, Left, Up, (uldat)XWidth, cells);

@@ -911,13 +911,13 @@ static void ShowResize(Twindow w) {
     x -= 2, y -= 2;
 
   sprintf(buf, "%hdx%hd", x, y);
-  Act(SetText, All->BuiltinRow)(All->BuiltinRow, strlen(buf), buf, 0);
-  Act(DrawMenu, All->FirstScreen)(All->FirstScreen, All->DisplayWidth - 20, All->DisplayWidth - 10);
+  All->BuiltinRow->SetText(strlen(buf), buf, 0);
+  All->FirstScreen->DrawMenu(All->DisplayWidth - 20, All->DisplayWidth - 10);
 }
 
 static void HideResize(void) {
-  Act(SetText, All->BuiltinRow)(All->BuiltinRow, 0, NULL, 0);
-  Act(DrawMenu, All->FirstScreen)(All->FirstScreen, All->DisplayWidth - 20, All->DisplayWidth - 10);
+  All->BuiltinRow->SetText(0, NULL, 0);
+  All->FirstScreen->DrawMenu(All->DisplayWidth - 20, All->DisplayWidth - 10);
 }
 
 static byte ActivateDrag(wm_ctx *C) {

@@ -20,8 +20,8 @@
 struct SrowFn {
   /* Trow */
   TobjFn Fn_Obj;
-  byte (*SetText)(Trow self, uldat len, const char *text, byte defaultcol);
-  byte (*SetTRune)(Trow self, uldat len, const trune *runes, byte defaultcol);
+  bool (*SetText)(Trow self, uldat len, const char *text, bool default_color);
+  bool (*SetTRune)(Trow self, uldat len, const trune *runes, bool default_color);
   void (*Raise)(Trow self);
   void (*Lower)(Trow self);
 };
@@ -54,11 +54,11 @@ public:
 
   void Insert(Twindow w, Trow prev, Trow next);
 
-  byte SetText(uldat len, const char *text, byte defaultcol) {
-    return Fn->SetText(this, len, text, defaultcol);
+  bool SetText(uldat len, const char *text, bool default_color) {
+    return Fn->SetText(this, len, text, default_color);
   }
-  byte SetTRune(uldat len, const trune *runes, byte defaultcol) {
-    return Fn->SetTRune(this, len, runes, defaultcol);
+  bool SetTRune(uldat len, const trune *runes, bool default_color) {
+    return Fn->SetTRune(this, len, runes, default_color);
   }
   void Raise() {
     Fn->Raise(this);
