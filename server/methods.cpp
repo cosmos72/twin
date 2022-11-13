@@ -130,236 +130,9 @@ Twidget FakeKbdFocus(Twidget w) {
   return oldW;
 }
 
-static void MapWidget(Twidget w, Twidget parent) {
-  Tmsg msg;
-
-  if (w && parent && !w->Parent && !w->MapQueueMsg) {
-    if (IS_SCREEN(parent)) {
-      if (Ext(WM, MsgPort) && (msg = New(msg)(msg_map, 0))) {
-        msg->Event.EventMap.W = w;
-        msg->Event.EventMap.Code = 0;
-        msg->Event.EventMap.Screen = (Tscreen)parent;
-        w->MapQueueMsg = msg;
-        SendMsg(Ext(WM, MsgPort), msg);
-      } else
-        w->MapTopReal((Tscreen)parent);
-    } else if (IS_WIDGET(parent)) {
-      if (w->Up == TW_MAXDAT) {
-        w->Left = parent->XLogic;
-        w->Up = parent->YLogic;
-      }
-      InsertFirst(W, w, parent);
-      w->Parent = parent;
-
-      DrawAreaWidget(w);
-
-      if (w->Attr & (WIDGET_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS))
-        IncMouseMotionN();
-
-      if (w->MapUnMapHook)
-        w->MapUnMapHook(w);
-    }
-  }
-}
-
-static void MapTopRealWidget(Twidget w, Tscreen screen) {
-  Twidget OldW;
-
-  if (screen && !w->Parent && (!IS_WINDOW(w) || ((Twindow)w)->Menu)) {
-    if (w->MapQueueMsg)
-      /*
-       * let the upper layer do this:
-       * w->MapQueueMsg->Delete();
-       */
-      w->MapQueueMsg = (Tmsg)0;
-
-    if (w->Up == TW_MAXDAT) {
-      w->Left = screen->XLogic;
-      w->Up = Max2(screen->Up + 1, 0) + screen->YLogic;
-    } else {
-      w->Left += screen->XLogic;
-      w->Up += screen->YLogic;
-    }
-
-    InsertFirst(W, w, (Twidget)screen);
-    w->Parent = (Twidget)screen;
-
-    /* top-level widgets must be visible */
-    w->Flags &= ~WINDOWFL_NOTVISIBLE;
-
-    if (w->Attr & (WIDGET_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS))
-      IncMouseMotionN();
-
-    if (screen == All->FirstScreen) {
-      OldW = w->KbdFocus();
-      if (OldW && IS_WINDOW(OldW))
-        DrawBorderWindow((Twindow)OldW, BORDER_ANY);
-      UpdateCursor();
-    }
-    if (IS_WINDOW(w))
-      DrawAreaWindow2((Twindow)w);
-    else
-      DrawAreaWidget(w);
-    if (!(w->Flags & WINDOWFL_MENU))
-      screen->DrawMenu(0, TW_MAXDAT);
-
-    if (w->MapUnMapHook)
-      w->MapUnMapHook(w);
-
-    screen->HookMap();
-  }
-}
-
-static void UnMapWidget(Twidget w) {
-  Twidget Parent;
-  Twindow next;
-  Tscreen screen;
-  byte wasFocus;
-
-  if (w && (Parent = w->Parent)) {
-    if (IS_SCREEN(Parent)) {
-      if ((screen = (Tscreen)Parent) == All->FirstScreen && w == (Twidget)screen->MenuWindow) {
-        /*
-         * ! DANGER !
-         * Trying to UnMap() the Tmenu owner.
-         * shutdown the Tmenu first!
-         */
-        CloseMenu();
-      }
-
-      if (w->Attr & (WIDGET_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS))
-        DecMouseMotionN();
-
-      if (screen->ClickWindow == (Twindow)w)
-        screen->ClickWindow = NULL;
-
-      if ((wasFocus = w == screen->FocusW())) {
-        if (w->Flags & WINDOWFL_MENU)
-          next = screen->MenuWindow;
-        else {
-          if ((Twidget)w == screen->FirstW)
-            next = (Twindow)w->Next;
-          else
-            next = (Twindow)screen->FirstW;
-
-          while (next && !IS_WINDOW(next))
-            next = (Twindow)next->Next;
-        }
-      }
-
-      w->Remove();
-      if (IS_WINDOW(w))
-        DrawAreaWindow2((Twindow)w);
-      else
-        DrawAreaWidget(w);
-
-      if (IS_SCREEN(Parent)) {
-        w->Left = 0;
-        w->Up = TW_MAXDAT;
-      }
-      w->Parent = (Twidget)0;
-
-      if (wasFocus) {
-        if (screen == All->FirstScreen) {
-          /*
-           * in case the user was dragging this Twindow...
-           */
-          if ((All->State & state_any) < state_menu)
-            All->State &= ~state_any;
-
-          if (next) {
-            (void)next->KbdFocus();
-            DrawBorderWindow(next, BORDER_ANY);
-          } else
-            Do(KbdFocus, window)(NULL);
-          if (!(w->Flags & WINDOWFL_MENU))
-            screen->DrawMenu(0, TW_MAXDAT);
-          UpdateCursor();
-        } else
-          screen->FocusW(next);
-      }
-
-      if (w->MapUnMapHook)
-        w->MapUnMapHook(w);
-
-      screen->HookMap();
-
-    } else {
-      /* UnMap() a sub-window */
-      if (w == Parent->SelectW)
-        Parent->SelectW = (Twidget)0;
-
-      w->Remove();
-      DrawAreaWidget(w);
-      w->Parent = (Twidget)0;
-
-      if (w->Attr & (WIDGET_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS))
-        DecMouseMotionN();
-
-      if (w->MapUnMapHook)
-        w->MapUnMapHook(w);
-    }
-  } else if (w->MapQueueMsg) {
-    /* the window was still waiting to be mapped! */
-    w->MapQueueMsg->Delete();
-    w->MapQueueMsg = (Tmsg)0;
-  }
-}
-
-static void RaiseW(Twidget w) {
-  RaiseWidget(w, tfalse);
-}
-
-static void LowerW(Twidget w) {
-  LowerWidget(w, tfalse);
-}
-
-static void OwnWidget(Twidget Widget, Tmsgport Owner) {
-  if (!Widget->Owner) {
-    if ((Widget->O_Next = Owner->FirstW))
-      Owner->FirstW->O_Prev = Widget;
-    else
-      Owner->LastW = Widget;
-
-    Widget->O_Prev = (Twidget)0;
-    Owner->FirstW = Widget;
-    Widget->Owner = Owner;
-  }
-}
-
-static void DisOwnWidget(Twidget w) {
-  Tmsgport Owner;
-  if ((Owner = w->Owner)) {
-    if (w->O_Prev)
-      w->O_Prev->O_Next = w->O_Next;
-    else if (Owner->FirstW == w)
-      Owner->FirstW = w->O_Next;
-
-    if (w->O_Next)
-      w->O_Next->O_Prev = w->O_Prev;
-    else if (Owner->LastW == w)
-      Owner->LastW = w->O_Prev;
-
-    w->O_Prev = w->O_Next = (Twidget)0;
-    w->Owner = (Tmsgport)0;
-  }
-}
-
-static void RecursiveDeleteWidget(Twidget w, Tmsgport maybeOwner) {
-  while (w->FirstW)
-    w->FirstW->RecursiveDelete(maybeOwner);
-
-  if (w->Owner == maybeOwner)
-    w->Delete();
-  else
-    w->UnMap();
-}
-
 static struct SwidgetFn _FnWidget = {
-    &_FnObj, //
-    TtyKbdFocus, MapWidget,    UnMapWidget,           MapTopRealWidget, RaiseW, LowerW,
-    OwnWidget,   DisOwnWidget, RecursiveDeleteWidget, ExposeWidget2, /* exported by
-                                                                        resize.c */
+    &_FnObj,
+    TtyKbdFocus,
 };
 
 /* Tgadget */
@@ -470,18 +243,8 @@ static Tgadget CreateButton(Twidget Parent, dat XWidth, dat YWidth, const char *
 
 static struct SgadgetFn _FnGadget = {
     /* Twidget */
-    &_FnObj,                                            //
-    (Twidget (*)(Tgadget))TtyKbdFocus,                  //
-    (void (*)(Tgadget, Twidget))MapWidget,              //
-    (void (*)(Tgadget))UnMapWidget,                     //
-    (void (*)(Tgadget, Tscreen))MapTopRealWidget,       //
-    (void (*)(Tgadget))RaiseW,                          //
-    (void (*)(Tgadget))LowerW,                          //
-    (void (*)(Tgadget, Tmsgport))OwnWidget,             //
-    (void (*)(Tgadget))DisOwnWidget,                    //
-    (void (*)(Tgadget, Tmsgport))RecursiveDeleteWidget, //
-    (void (*)(Tgadget, dat, dat, dat, dat, const char *, const trune *,
-              const tcell *))ExposeWidget2, /* exported by resize.c */
+    &_FnObj,                           //
+    (Twidget (*)(Tgadget))TtyKbdFocus, //
     /* Tgadget */
     &_FnWidget, CreateEmptyButton, FillButton, CreateButton,
     WriteTextsGadget,  /* exported by resize.c */
@@ -641,28 +404,28 @@ Twindow Create4MenuWindow(Tmenu Menu) {
   return window;
 }
 
-byte FakeWriteCharset(Twindow window, uldat Len, const char *charset_bytes) {
+bool FakeWriteCharset(Twindow window, uldat Len, const char *charset_bytes) {
   if (DlLoad(TermSo) && window->fn()->TtyWriteCharset != FakeWriteCharset)
     return window->TtyWriteCharset(Len, charset_bytes);
-  return tfalse;
+  return false;
 }
 
-byte FakeWriteUtf8(Twindow window, uldat Len, const char *utf8_bytes) {
+bool FakeWriteUtf8(Twindow window, uldat Len, const char *utf8_bytes) {
   if (DlLoad(TermSo) && window->fn()->TtyWriteUtf8 != FakeWriteUtf8)
     return window->TtyWriteUtf8(Len, utf8_bytes);
-  return tfalse;
+  return false;
 }
 
-byte FakeWriteTRune(Twindow window, uldat Len, const trune *runes) {
+bool FakeWriteTRune(Twindow window, uldat Len, const trune *runes) {
   if (DlLoad(TermSo) && window->fn()->TtyWriteTRune != FakeWriteTRune)
     return window->TtyWriteTRune(Len, runes);
-  return tfalse;
+  return false;
 }
 
-byte FakeWriteTCell(Twindow window, dat x, dat y, uldat Len, const tcell *cells) {
+bool FakeWriteTCell(Twindow window, dat x, dat y, uldat Len, const tcell *cells) {
   if (DlLoad(TermSo) && window->fn()->TtyWriteTCell != FakeWriteTCell)
     return window->TtyWriteTCell(x, y, Len, cells);
-  return tfalse;
+  return false;
 }
 
 Twindow FakeOpenTerm(const char *arg0, const char *const *argv) {
@@ -737,26 +500,12 @@ static struct SwindowFn _FnWindow = {
     /* Twidget */
     &_FnObj,
     (Twidget(*)(Twindow))TtyKbdFocus,
-    (void (*)(Twindow, Twidget))MapWidget,
-    (void (*)(Twindow))UnMapWidget,
-    (void (*)(Twindow, Tscreen))MapTopRealWidget,
-    (void (*)(Twindow))RaiseW,
-    (void (*)(Twindow))LowerW,
-    (void (*)(Twindow, Tmsgport))OwnWidget,
-    (void (*)(Twindow))DisOwnWidget,
-    (void (*)(Twindow, Tmsgport))RecursiveDeleteWidget,
-    (void (*)(Twindow, dat, dat, dat, dat, const char *, const trune *,
-              const tcell *))ExposeWindow2, /* exported by resize.c */
     /* Twindow */
     &_FnWidget,
     FakeWriteCharset,
     FakeWriteUtf8,
     FakeWriteTRune,
     FakeWriteTCell,
-    RowWriteCharset, /* exported by resize.c */
-    RowWriteUtf8,
-    RowWriteTRune,
-    (byte(*)(Twindow, dat, dat, uldat, const tcell *))AlwaysFalse,
 
     GotoXYWindow,
     SetTitleWindow,
@@ -841,18 +590,7 @@ static void DeActivateMenuScreen(Tscreen screen) {
 static struct SscreenFn _FnScreen = {
     /* Twidget */
     &_FnObj,
-    (Twidget(*)(Tscreen))NoOp,        /* KbdFocus */
-    (void (*)(Tscreen, Twidget))NoOp, /* MapWidget */
-    (void (*)(Tscreen))NoOp,          /* UnMapWidget */
-    (void (*)(Tscreen, Tscreen))NoOp, /* MapTopRealWidget */
-    (void (*)(Tscreen))RaiseW,
-    (void (*)(Tscreen))LowerW,
-    (void (*)(Tscreen, Tmsgport))OwnWidget,
-    (void (*)(Tscreen))DisOwnWidget,
-    (void (*)(Tscreen, Tmsgport))RecursiveDeleteWidget,
-    (void (*)(Tscreen, dat, dat, dat, dat, const char *, const trune *,
-              const tcell *))ExposeWidget2, /* exported by resize.c */
-
+    (Twidget(*)(Tscreen))NoOp, /* KbdFocus */
     /* Tscreen */
     &_FnWidget,
     FindMenuScreen,
@@ -914,39 +652,42 @@ static struct SgroupFn _FnGroup = {
 
 /* Trow */
 
-static byte SetTextRow(Trow row, uldat Len, const char *Text, byte DefaultCol) {
-  if (EnsureLenRow(row, Len, DefaultCol)) {
-    if (Len) {
+static bool SetTextRow(Trow row, uldat len, const char *Text, bool default_color) {
+  if (EnsureLenRow(row, len, default_color)) {
+    if (len) {
 
       trune *RowText = row->Text;
-      ldat i = Len;
+      ldat i = len;
       while (i-- > 0) {
         *RowText++ = Tutf_CP437_to_UTF_32[(byte)*Text++];
       }
-      if (!(row->Flags & ROW_DEFCOL) && !DefaultCol)
+      if (!(row->Flags & ROW_DEFCOL) && !default_color)
         /* will not work correctly if sizeof(tcolor) != 1 */
-        memset(row->ColText, TCOL(twhite, tblack), Len * sizeof(tcolor));
+        memset(row->ColText, TCOL(twhite, tblack), len * sizeof(tcolor));
     }
-    row->Len = Len;
+    row->Len = len;
     row->Gap = row->LenGap = 0;
-    return ttrue;
+    return true;
   }
-  return tfalse;
+  return false;
 }
 
-static byte SetTRuneRow(Trow row, uldat Len, const trune *TRune, byte DefaultCol) {
-  if (EnsureLenRow(row, Len, DefaultCol)) {
-    if (Len) {
-      CopyMem(TRune, row->Text, Len * sizeof(trune));
-      if (!(row->Flags & ROW_DEFCOL) && !DefaultCol)
-        /* will not work correctly if sizeof(tcolor) != 1 */
-        memset(row->ColText, TCOL(twhite, tblack), Len * sizeof(tcolor));
+static bool SetTRuneRow(Trow row, uldat len, const trune *TRune, bool default_color) {
+  if (EnsureLenRow(row, len, default_color)) {
+    if (len) {
+      CopyMem(TRune, row->Text, len * sizeof(trune));
+      if (!(row->Flags & ROW_DEFCOL) && !default_color) {
+        /* memset() will not work correctly if sizeof(tcolor) != 1 */
+        typedef char sizeof_tcolor_is_1[sizeof(tcolor) == 1 ? 1 : -1];
+
+        memset(row->ColText, TCOL(twhite, tblack), len * sizeof(tcolor));
+      }
     }
-    row->Len = Len;
+    row->Len = len;
     row->Gap = row->LenGap = 0;
-    return ttrue;
+    return true;
   }
-  return tfalse;
+  return false;
 }
 
 /*

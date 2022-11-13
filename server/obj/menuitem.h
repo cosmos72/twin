@@ -18,13 +18,13 @@
 struct SmenuitemFn {
   /* Trow */
   TobjFn Fn_Obj;
-  byte (*SetText)(Trow, uldat Len, const char *Text, byte DefaultCol);
-  byte (*SetTRune)(Trow, uldat Len, const trune *TRune, byte DefaultCol);
+  bool (*SetText)(Trow self, uldat len, const char *text, bool default_color);
+  bool (*SetTRune)(Trow self, uldat len, const trune *runes, bool default_color);
   /* Tmenuitem */
   void (*Raise)(Tmenuitem);
   void (*Lower)(Tmenuitem);
   TrowFn Fn_Row;
-  Tmenuitem (*Create4Menu)(Tobj Parent, Twindow Window, udat Code, byte Flags, ldat Len,
+  Tmenuitem (*Create4Menu)(Tobj Parent, Twindow Window, udat Code, byte Flags, ldat len,
                            const char *Name);
   uldat (*Create4MenuCommon)(Tmenu);
   /* for compatibility this must return a non-zero value. */
@@ -37,11 +37,11 @@ struct Smenuitem : public Srow {
   ldat WCurY;
 
 private:
-  Tmenuitem Init(Tobj Parent, Twindow Window, udat Code, byte Flags, dat Left, ldat Len,
+  Tmenuitem Init(Tobj Parent, Twindow Window, udat Code, byte Flags, dat Left, ldat len,
                  dat ShortCut, const char *Name);
 
 public:
-  static Tmenuitem Create(Tobj Parent, Twindow Window, udat Code, byte Flags, dat Left, ldat Len,
+  static Tmenuitem Create(Tobj Parent, Twindow Window, udat Code, byte Flags, dat Left, ldat len,
                           dat ShortCut, const char *Name);
 
   /* Tobj */

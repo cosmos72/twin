@@ -19,16 +19,6 @@ struct SgadgetFn {
   /* Twidget */
   TobjFn Fn_Obj;
   Twidget (*KbdFocus)(Tgadget);
-  void (*Map)(Tgadget, Twidget Parent);
-  void (*UnMap)(Tgadget);
-  void (*MapTopReal)(Tgadget, Tscreen);
-  void (*Raise)(Tgadget);
-  void (*Lower)(Tgadget);
-  void (*Own)(Tgadget, Tmsgport);
-  void (*DisOwn)(Tgadget);
-  void (*RecursiveDelete)(Tgadget, Tmsgport);
-  void (*Expose)(Tgadget, dat xwidth, dat ywidth, dat Left, dat Up, const char *, const trune *,
-                 const tcell *);
   /* Tgadget */
   TwidgetFn Fn_Widget;
   Tgadget (*CreateEmptyButton)(Tmsgport owner, dat xwidth, dat ywidth, tcolor BgCol);

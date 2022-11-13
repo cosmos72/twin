@@ -80,17 +80,20 @@ public:
   }
   template <class T1, class T2, class T3, class T4>
   bool format(const T1 &arg1, const T2 &arg2, const T3 &arg3, const T4 &arg4) NOTHROW {
-    return format(arg1, arg2, arg3, arg4, Void(), Void(), Void(), Void(), Void());
+    return formatv(CountFmtArgs<T1, T2, T3, T4, Void, Void, Void, Void, Void>::value, //
+                   &lvalue(fmt(arg1)), &lvalue(fmt(arg2)), &lvalue(fmt(arg3)),        //
+                   &lvalue(fmt(arg4)));
   }
   template <class T1, class T2, class T3>
   bool format(const T1 &arg1, const T2 &arg2, const T3 &arg3) NOTHROW {
-    return format(arg1, arg2, arg3, Void(), Void(), Void(), Void(), Void(), Void());
+    return format(arg1, arg2, arg3, Void());
   }
   template <class T1, class T2> bool format(const T1 &arg1, const T2 &arg2) NOTHROW {
-    return format(arg1, arg2, Void(), Void(), Void(), Void(), Void(), Void(), Void());
+    return format(arg1, arg2, Void(), Void());
   }
   template <class T1> bool format(const T1 &arg1) NOTHROW {
-    return format(arg1, Void(), Void(), Void(), Void(), Void(), Void(), Void(), Void());
+    return formatv(CountFmtArgs<T1, Void, Void, Void, Void, Void, Void, Void, Void>::value, //
+                   &lvalue(fmt(arg1)));
   }
   bool format() NOTHROW {
     clear();

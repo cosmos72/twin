@@ -9,10 +9,12 @@
 #ifndef TWIN_RESIZE_H
 #define TWIN_RESIZE_H
 
-byte EnsureLenRow(Trow r, uldat len, byte default_color);
-byte RowWriteCharset(Twindow window, uldat Len, const char *charset_bytes);
-byte RowWriteUtf8(Twindow window, uldat len, const char *utf8_bytes);
-byte RowWriteTRune(Twindow window, uldat len, const trune *runes);
+bool EnsureLenRow(Trow r, uldat len, bool default_color);
+bool RowWriteCharsetWindow(Twindow window, uldat Len, const char *charset_bytes);
+bool RowWriteUtf8Window(Twindow window, uldat len, const char *utf8_bytes);
+bool RowWriteTRuneWindow(Twindow window, uldat len, const trune *runes);
+// unimplemented!
+bool RowWriteTCellWindow(Twindow window, dat x, dat y, uldat len, const tcell *cells);
 
 void ExposeWidget2(Twidget w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
                    const char *utf8_bytes, const trune *runes, const tcell *cells);
@@ -23,8 +25,8 @@ extern bool NeedUpdateCursor;
 #define UpdateCursor() (NeedUpdateCursor = true)
 void FlushCursor(void);
 
-byte CheckResizeWindowContents(Twindow window);
-byte ResizeWindowContents(Twindow window);
+bool CheckResizeWindowContents(Twindow window);
+bool ResizeWindowContents(Twindow window);
 
 /*
 void SetNewFont(void);
@@ -59,8 +61,8 @@ void RollUpWindow(Twindow window, byte on_off);
 
 void SetVisibleWidget(Twidget w, byte on_off);
 
-void RaiseWidget(Twidget w, byte alsoFocus);
-void LowerWidget(Twidget w, byte alsoDeFocus);
+void RaiseWidget(Twidget w, bool alsoFocus);
+void LowerWidget(Twidget w, bool alsoDeFocus);
 void RestackWidgets(Twidget P, uldat N, const Twidget *arrayW);
 
 void RestackRows(Tobj O, uldat N, const Trow *arrayR);
