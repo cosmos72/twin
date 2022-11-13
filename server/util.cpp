@@ -149,23 +149,23 @@ static dat CmpCallTime(Tmsgport m1, Tmsgport m2) {
   return CmpTime(&m1->CallTime, &m2->CallTime);
 }
 
-byte Minimum(byte MaxIndex, const ldat *Array) {
-  byte i, MinIndex;
-  ldat Temp;
+byte Minimum(byte max_index, const ldat *array) {
+  byte i, min_i;
+  ldat temp;
 
-  if (!MaxIndex)
+  if (!max_index)
     return 0xFF;
 
-  Temp = Array[0];
-  MinIndex = 0;
+  temp = array[0];
+  min_i = 0;
 
-  for (i = 1; i < MaxIndex; i++) {
-    if (Array[i] < Temp) {
-      Temp = Array[i];
-      MinIndex = i;
+  for (i = 1; i < max_index; i++) {
+    if (array[i] < temp) {
+      temp = array[i];
+      min_i = i;
     }
   }
-  return MinIndex;
+  return min_i;
 }
 
 /*

@@ -249,17 +249,17 @@ static node RCFindMouseBind(ldat code, ldat ctx) {
   return NULL;
 }
 
-trune *RCFindBorderPattern(Twindow w, byte Border) {
+trune *RCFindBorderPattern(Twindow w, byte border) {
   node l;
 
   if (!w)
     return NULL;
 
   for (l = BorderList; l; l = l->next) {
-    if ((l->x.f.flag == FL_INACTIVE) == Border && wildcard_match(l->name, w->Name))
+    if ((l->x.f.flag == FL_INACTIVE) == border && wildcard_match(l->name, w->Name))
       break;
   }
-  return w->BorderPattern[Border] = l ? l->runes : NULL;
+  return w->BorderPattern[border] = l ? l->runes : NULL;
 }
 
 inline void RCRemove(run **p) {

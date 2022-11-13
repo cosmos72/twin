@@ -20,6 +20,7 @@
 #include "methods.h" // IncMouseMotionN(), DecMouseMotionN()
 #include "resize.h"  // UpdateCursor(), RollUpWindow()
 #include "twin.h"    // NOFD, NOPID, NOSLOT
+#include "util.h"    // Minimum()
 
 #include <Tutf/Tutf.h>      // Tutf_CP437_to_UTF_32[]
 #include <Tw/Twstat_defs.h> // TWS_window_*
@@ -27,26 +28,42 @@
 #include <new>
 #include <cstring> // memset()
 
-static bool InitTtyDataWindow(Twindow w, dat scrollbacklines);
+static bool InitTtyDataWindow(Twindow window, dat scrollbacklines);
 
 Twindow Swindow::Create(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle,
                         Tmenu m, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
                         dat xwidth, dat ywidth, dat scrollbacklines) {
 
-  Twindow w = NULL;
+  Twindow window = (Twindow)0;
   if (owner) {
     void *addr = AllocMem0(sizeof(Swindow));
     if (addr) {
-      w = new (addr) Swindow();
-      w->Fn = (TwidgetFn)Fn_Twindow;
-      if (!w->Init(owner, titlelen, title, coltitle, m, coltext, cursortype, attr, flags, xwidth,
-                   ywidth, scrollbacklines)) {
-        w->Delete();
-        w = NULL;
+      window = new (addr) Swindow();
+      window->Fn = (TwidgetFn)Fn_Twindow;
+      if (!window->Init(owner, titlelen, title, coltitle, m, coltext, cursortype, attr, flags,
+                        xwidth, ywidth, scrollbacklines)) {
+        window->Delete();
+        window = NULL;
       }
     }
   }
-  return w;
+  return window;
+}
+
+Twindow Swindow::Create4Menu(Tmenu menu) {
+  Twindow window = (Twindow)0;
+  if (menu && (window = New(window)(menu->MsgPort, 0, NULL, (tcolor *)0, menu, TCOL(tblack, twhite),
+                                    NOCURSOR, WINDOW_AUTO_KEYS,
+                                    WINDOWFL_MENU | WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL |
+                                        WINDOWFL_ROWS_SELCURRENT,
+                                    MIN_XWIN, MIN_YWIN, 0))) {
+
+    window->SetColors(0x1FF, TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(0, 0),
+                      TCOL(thigh | twhite, twhite), TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                      TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack));
+    window->Configure(0x3F, 0, 1, MIN_XWIN, MIN_YWIN, TW_MAXDAT, TW_MAXDAT);
+  }
+  return window;
 }
 
 Twindow Swindow::Init(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle,
@@ -130,15 +147,15 @@ Twindow Swindow::Init(Tmsgport owner, dat titlelen, const char *title, const tco
 
 /* ttydata */
 
-static bool InitTtyDataWindow(Twindow w, dat scrollbacklines) {
-  ttydata *Data = w->USE.C.TtyData;
-  ldat count = w->WLogic * w->HLogic;
-  tcell *p = w->USE.C.Contents, h;
+static bool InitTtyDataWindow(Twindow window, dat scrollbacklines) {
+  ttydata *Data = window->USE.C.TtyData;
+  ldat count = window->WLogic * window->HLogic;
+  tcell *p = window->USE.C.Contents, h;
 
-  if (!Data && !(w->USE.C.TtyData = Data = (ttydata *)AllocMem(sizeof(ttydata))))
+  if (!Data && !(window->USE.C.TtyData = Data = (ttydata *)AllocMem(sizeof(ttydata))))
     return false;
 
-  if (!p && !(w->USE.C.Contents = p = (tcell *)AllocMem(count * sizeof(tcell))))
+  if (!p && !(window->USE.C.Contents = p = (tcell *)AllocMem(count * sizeof(tcell))))
     return false;
 
   h = TCELL(TCOL(twhite, tblack), ' ');
@@ -152,23 +169,23 @@ static bool InitTtyDataWindow(Twindow w, dat scrollbacklines) {
   Data->State = ESnormal;
   Data->Flags = TTY_AUTOWRAP;
   Data->Effects = 0;
-  w->YLogic = w->CurY = Data->ScrollBack = scrollbacklines;
-  w->USE.C.HSplit = 0;
-  Data->SizeX = w->WLogic;
-  Data->SizeY = w->HLogic - scrollbacklines;
+  window->YLogic = window->CurY = Data->ScrollBack = scrollbacklines;
+  window->USE.C.HSplit = 0;
+  Data->SizeX = window->WLogic;
+  Data->SizeY = window->HLogic - scrollbacklines;
   Data->Top = 0;
   Data->Bottom = Data->SizeY;
-  Data->saveX = Data->X = w->CurX = 0;
+  Data->saveX = Data->X = window->CurX = 0;
   Data->saveY = Data->Y = 0;
-  Data->Pos = Data->Start = w->USE.C.Contents + Data->ScrollBack * w->WLogic;
-  Data->Split = w->USE.C.Contents + w->WLogic * w->HLogic;
+  Data->Pos = Data->Start = window->USE.C.Contents + Data->ScrollBack * window->WLogic;
+  Data->Split = window->USE.C.Contents + window->WLogic * window->HLogic;
 
-  w->CursorType = LINECURSOR;
+  window->CursorType = LINECURSOR;
   /* respect the WINDOWFL_CURSOR_ON set by the client and don't force it on */
 #if 0
-  w->Flags |= WINDOWFL_CURSOR_ON;
+  window->Flags |= WINDOWFL_CURSOR_ON;
 #endif
-  w->ColText = Data->Color = Data->DefColor = Data->saveColor = TCOL(twhite, tblack);
+  window->ColText = Data->Color = Data->DefColor = Data->saveColor = TCOL(twhite, tblack);
   Data->Underline = TCOL(thigh | twhite, tblack);
   Data->HalfInten = TCOL(thigh | tblack, tblack);
   Data->TabStop[0] = 0x01010100;
@@ -340,4 +357,191 @@ void Swindow::SetXY(dat x, dat y) {
 void Swindow::Expose(dat xwidth, dat ywidth, dat left, dat up, dat pitch, const char *ascii,
                      const trune *runes, const tcell *cells) {
   ExposeWindow2(this, xwidth, ywidth, left, up, pitch, ascii, runes, cells);
+}
+
+void Swindow::GotoXY(ldat x, ldat y) {
+  if (W_USE(this, USECONTENTS)) {
+    ttydata *tt = USE.C.TtyData;
+
+    x = Max2(x, 0);
+    y = Max2(y, 0);
+    if (x >= tt->SizeX)
+      x = tt->SizeX - 1;
+    if (y >= tt->SizeY)
+      y = tt->SizeY - 1;
+    tt->X = x;
+    tt->Y = y;
+    tt->Pos = tt->Start + x + (ldat)y * tt->SizeX;
+    if (tt->Pos >= tt->Split)
+      tt->Pos -= tt->Split - USE.C.Contents;
+    y += HLogic - tt->SizeY;
+  }
+  CurX = x;
+  CurY = y;
+  if (ContainsCursor(this)) {
+    UpdateCursor();
+  }
+}
+
+void Swindow::SetTitle(dat titlelen, char *title) {
+  Twidget parent;
+
+  if (Name)
+    FreeMem(Name);
+
+  NameLen = titlelen;
+  Name = title;
+
+#if 1
+  /*
+   * do not allow changing Twindow borders just because
+   * some untrusted application set a new title
+   */
+  DrawBorderWindow(this, BORDER_UP);
+#else
+  /* user may have title-dependent borders in ~/.config/twin/twinrc, honour them: */
+  Win->BorderPattern[0] = Win->BorderPattern[1] = NULL;
+  DrawBorderWindow(this, BORDER_ANY);
+#endif
+
+  if ((parent = Parent) && IS_SCREEN(parent)) {
+    /* need to update Twindow list with new name ? */
+    ((Tscreen)parent)->HookMap();
+  }
+}
+
+void Swindow::SetColText(tcolor color) {
+  ColText = color;
+}
+
+void Swindow::SetColors(udat bitmap, tcolor colgadgets, tcolor colarrows, tcolor colbars,
+                        tcolor coltabs, tcolor colborder, tcolor coltext, tcolor colselect,
+                        tcolor coldisabled, tcolor colselectdisabled) {
+  if (bitmap & 1)
+    ColGadgets = colgadgets;
+  if (bitmap & 2)
+    ColArrows = colarrows;
+  if (bitmap & 4)
+    ColBars = colbars;
+  if (bitmap & 8)
+    ColTabs = coltabs;
+  if (bitmap & 0x10)
+    ColBorder = colborder;
+  if (bitmap & 0x20) {
+    ColText = coltext;
+    if (W_USE(this, USECONTENTS))
+      USE.C.TtyData->Color = coltext;
+  }
+  if (bitmap & 0x40)
+    ColSelect = colselect;
+  if (bitmap & 0x80)
+    ColDisabled = coldisabled;
+  if (bitmap & 0x100)
+    ColSelectDisabled = colselectdisabled;
+  if (Parent)
+    DrawBorderWindow(this, BORDER_ANY);
+}
+
+void Swindow::Configure(byte bitmap, dat left, dat up, //
+                        dat minxwidth, dat minywidth,  //
+                        dat maxxwidth, dat maxywidth) {
+  Twidget prev = NULL, next = NULL;
+  dat hasBorder = 2 * !(Flags & WINDOWFL_BORDERLESS);
+
+  if (Parent) {
+    prev = Prev;
+    next = Next;
+    Remove();
+    DrawAreaWindow2(this);
+  }
+
+  if (bitmap & 1) {
+    Left = left;
+    if (Parent && IS_SCREEN(Parent))
+      Left += Parent->XLogic;
+  }
+  if (bitmap & 2) {
+    Up = up;
+    if (Parent && IS_SCREEN(Parent))
+      Up += Parent->YLogic;
+  }
+
+  if (bitmap & 4) {
+    if (minxwidth <= TW_MAXDAT - hasBorder)
+      minxwidth = Max2(minxwidth, minxwidth + hasBorder);
+    MinXWidth = minxwidth;
+    XWidth = Max2(minxwidth, XWidth);
+  }
+  if (bitmap & 8) {
+    if (minywidth <= TW_MAXDAT - hasBorder)
+      minywidth = Max2(minywidth, minywidth + hasBorder);
+    MinYWidth = minywidth;
+    YWidth = Max2(minywidth, YWidth);
+  }
+  if (bitmap & 0x10) {
+    if (maxxwidth <= TW_MAXDAT - hasBorder)
+      maxxwidth = Max2(maxxwidth, maxxwidth + hasBorder);
+    MaxXWidth = Max2(MinXWidth, maxxwidth);
+    XWidth = Min2(maxxwidth, XWidth);
+  }
+  if (bitmap & 0x20) {
+    if (maxywidth <= TW_MAXDAT - hasBorder)
+      maxywidth = Max2(maxywidth, maxywidth + hasBorder);
+    MaxYWidth = Max2(MinYWidth, maxywidth);
+    YWidth = Min2(maxywidth, YWidth);
+  }
+  if (Parent) {
+    InsertMiddle(window, this, Parent, prev, next);
+    DrawAreaWindow2(this);
+  }
+}
+
+Trow Swindow::FindRow(ldat row_i) const {
+  Trow row, el_possible[4];
+  byte i;
+  ldat k, el_row_n[4], el_distance[4];
+
+  el_possible[0] = USE.R.RowOne;
+  el_possible[1] = USE.R.RowSplit;
+  el_possible[2] = USE.R.FirstRow;
+  el_possible[3] = USE.R.LastRow;
+  el_row_n[0] = USE.R.NumRowOne;
+  el_row_n[1] = USE.R.NumRowSplit;
+  el_row_n[2] = (ldat)0;
+  el_row_n[3] = HLogic - (ldat)1;
+  el_distance[0] = (el_possible[0] && el_row_n[0] ? Abs(el_row_n[0] - row_i) : TW_MAXLDAT);
+  el_distance[1] = (el_possible[1] && el_row_n[1] ? Abs(el_row_n[1] - row_i) : TW_MAXLDAT);
+  el_distance[2] = row_i;
+  el_distance[3] = Abs(el_row_n[3] - row_i);
+
+  i = Minimum((byte)4, el_distance);
+  row = el_possible[i];
+  k = el_row_n[i];
+
+  if (row) {
+    if (k < row_i)
+      while (k < row_i && (row = row->Next))
+        k++;
+    else if (k > row_i)
+      while (k > row_i && (row = row->Prev))
+        k--;
+  }
+  if (row && IS_MENUITEM(row))
+    ((Tmenuitem)row)->WCurY = row_i;
+  return row;
+}
+
+Trow Swindow::FindRowByCode(udat Code, ldat *row_i) const {
+  Trow row;
+  ldat i = 0;
+
+  if ((row = USE.R.FirstRow))
+    while (row && row->Code != Code) {
+      row = row->Next;
+      i++;
+    }
+  if (row && row_i)
+    *row_i = i;
+
+  return row;
 }

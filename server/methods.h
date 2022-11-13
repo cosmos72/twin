@@ -19,7 +19,7 @@ bool FakeWriteCharset(Twindow window, uldat len, const char *charset_bytes);
 bool FakeWriteUtf8(Twindow window, uldat len, const char *utf8_bytes);
 bool FakeWriteTRune(Twindow window, uldat len, const trune *runes);
 bool FakeWriteTCell(Twindow window, dat x, dat y, uldat len, const tcell *cells);
-tpos FakeFindBorderWindow(Twindow window, dat u, dat v, byte border, tcell *ptr_cell);
+tpos FakeFindBorderWindow(Twindow w, dat u, dat v, byte border, tcell *ptr_cell);
 
 void IncMouseMotionN(void);
 void DecMouseMotionN(void);
@@ -58,7 +58,7 @@ void RemoveGeneric(TobjEntry obj, TobjList parent, ldat *objcount);
 
 #define Info4Menu(menu, flags, len, text, coltext) (menu)->SetInfo(flags, len, text, coltext)
 
-#define Win4Menu(Menu) Do(Create4Menu, window)(Menu)
+#define Win4Menu(menu) Swindow::Create4Menu(menu)
 
 #define Row4Menu(w, code, flags, len, name)                                                        \
   (Trow) Do(Create4Menu, menuitem)((Tobj)(w), (Twindow)0, (code), (flags), (len), (name))

@@ -22,7 +22,7 @@
 #include <sys/types.h> /* pid_t */
 #endif
 
-/* values returned by Fn_Twindow->FindBorder (modeled after STATE_*) */
+/* values returned by Twindow::FindBorder (modeled after STATE_*) */
 enum tpos /*: byte*/ {
   POS_TITLE = 10,
   POS_SIDE_LEFT = 11,
@@ -58,23 +58,12 @@ struct SwindowFn {
   Twidget (*KbdFocus)(Twindow);
   /* Twindow */
   TwidgetFn Fn_Widget;
+  Twindow (*Create4Menu)(Tmenu menu);
   bool (*TtyWriteCharset)(Twindow, uldat len, const char *charset_bytes);
   bool (*TtyWriteUtf8)(Twindow, uldat len, const char *utf8_bytes);
   bool (*TtyWriteTRune)(Twindow, uldat len, const trune *runes);
   bool (*TtyWriteTCell)(Twindow, dat x, dat y, uldat len, const tcell *cells);
-
-  void (*GotoXY)(Twindow, ldat X, ldat Y);
-  void (*SetTitle)(Twindow, dat titlelen, char *title);
-  void (*SetColText)(Twindow, tcolor ColText);
-  void (*SetColors)(Twindow, udat Bitmap, tcolor ColGadgets, tcolor ColArrows, tcolor ColBars,
-                    tcolor ColTabs, tcolor ColBorder, tcolor ColText, tcolor ColSelect,
-                    tcolor ColDisabled, tcolor ColSelectDisabled);
-  void (*Configure)(Twindow, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
-                    dat MaxXWidth, dat MaxYWidth);
-  Twindow (*Create4Menu)(Tmenu);
-  tpos (*FindBorder)(Twindow, dat u, dat v, byte Border, tcell *PtrAttr);
-  Trow (*FindRow)(Twindow, ldat RowN);
-  Trow (*FindRowByCode)(Twindow, udat Code, ldat *NumRow);
+  tpos (*FindBorder)(Twindow w, dat u, dat v, byte border, tcell *ptrattr);
 };
 
 struct Swindow : public Swidget {
@@ -153,34 +142,19 @@ public:
     return RowWriteTCellWindow(this, x, y, len, attr);
   }
 
-  void GotoXY(ldat x, ldat y) {
-    fn()->GotoXY(this, x, y);
-  }
-  void SetTitle(dat titlelen, char *title) {
-    fn()->SetTitle(this, titlelen, title);
-  }
-  void SetColText(tcolor coltext) {
-    fn()->SetColText(this, coltext);
-  }
+  void GotoXY(ldat x, ldat y);
+  void SetTitle(dat titlelen, char *title); // title must be allocated mem, it will be retained
+  void SetColText(tcolor coltext);
   void SetColors(udat bitmap, tcolor colgadgets, tcolor colarrows, tcolor colbars, tcolor coltabs,
                  tcolor colborder, tcolor coltext, tcolor colselect, tcolor coldisabled,
-                 tcolor colselectdisabled) {
-    fn()->SetColors(this, bitmap, colgadgets, colarrows, colbars, coltabs, colborder, coltext,
-                    colselect, coldisabled, colselectdisabled);
-  }
+                 tcolor colselectdisabled);
   void Configure(byte bitmap, dat left, dat up, dat minxwidth, dat minywidth, dat maxxwidth,
-                 dat maxywidth) {
-    fn()->Configure(this, bitmap, left, up, minxwidth, minywidth, maxxwidth, maxywidth);
-  }
+                 dat maxywidth);
   tpos FindBorder(dat u, dat v, byte border, tcell *ptrattr) {
     return fn()->FindBorder(this, u, v, border, ptrattr);
   }
-  Trow FindRow(ldat rown) {
-    return fn()->FindRow(this, rown);
-  }
-  Trow FindRowByCode(udat code, ldat *numrow) {
-    return fn()->FindRowByCode(this, code, numrow);
-  }
+  Trow FindRow(ldat row_i) const;
+  Trow FindRowByCode(udat code, ldat *row_i) const;
 };
 
 /* Window->Attr */

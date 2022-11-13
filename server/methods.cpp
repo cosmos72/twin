@@ -253,157 +253,6 @@ static struct SgadgetFn _FnGadget = {
 
 /* Twindow */
 
-static void SetTitleWindow(Twindow w, dat titlelen, char *title) {
-  Twidget parent;
-
-  if (w->Name)
-    FreeMem(w->Name);
-
-  w->NameLen = titlelen;
-  w->Name = title;
-
-#if 1
-  /*
-   * do not allow changing Twindow borders just because
-   * some untrusted application set a new title
-   */
-  DrawBorderWindow(w, BORDER_UP);
-#else
-  /* user may have title-dependent borders in ~/.config/twin/twinrc, honour them: */
-  Win->BorderPattern[0] = Win->BorderPattern[1] = NULL;
-  DrawBorderWindow(w, BORDER_ANY);
-#endif
-
-  if ((parent = w->Parent) && IS_SCREEN(parent)) {
-    /* need to update Twindow list with new name ? */
-    ((Tscreen)parent)->HookMap();
-  }
-}
-
-static void SetColTextWindow(Twindow w, tcolor ColText) {
-  w->ColText = ColText;
-}
-
-static void SetColorsWindow(Twindow w, udat Bitmap, tcolor ColGadgets, tcolor ColArrows,
-                            tcolor ColBars, tcolor ColTabs, tcolor ColBorder, tcolor ColText,
-                            tcolor ColSelect, tcolor ColDisabled, tcolor ColSelectDisabled) {
-  if (Bitmap & 1)
-    w->ColGadgets = ColGadgets;
-  if (Bitmap & 2)
-    w->ColArrows = ColArrows;
-  if (Bitmap & 4)
-    w->ColBars = ColBars;
-  if (Bitmap & 8)
-    w->ColTabs = ColTabs;
-  if (Bitmap & 0x10)
-    w->ColBorder = ColBorder;
-  if (Bitmap & 0x20) {
-    w->ColText = ColText;
-    if (W_USE(w, USECONTENTS))
-      w->USE.C.TtyData->Color = ColText;
-  }
-  if (Bitmap & 0x40)
-    w->ColSelect = ColSelect;
-  if (Bitmap & 0x80)
-    w->ColDisabled = ColDisabled;
-  if (Bitmap & 0x100)
-    w->ColSelectDisabled = ColSelectDisabled;
-  if (w->Parent)
-    DrawBorderWindow(w, BORDER_ANY);
-}
-
-static void ConfigureWindow(Twindow w, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
-                            dat MaxXWidth, dat MaxYWidth) {
-  Twidget prev, next;
-  dat HasBorder = 2 * !(w->Flags & WINDOWFL_BORDERLESS);
-
-  if (w->Parent) {
-    prev = w->Prev;
-    next = w->Next;
-    w->Remove();
-    DrawAreaWindow2(w);
-  }
-
-  if (Bitmap & 1) {
-    w->Left = Left;
-    if (w->Parent && IS_SCREEN(w->Parent))
-      w->Left += w->Parent->XLogic;
-  }
-  if (Bitmap & 2) {
-    w->Up = Up;
-    if (w->Parent && IS_SCREEN(w->Parent))
-      w->Up += w->Parent->YLogic;
-  }
-
-  if (Bitmap & 4) {
-    if (MinXWidth <= TW_MAXDAT - HasBorder)
-      MinXWidth = Max2(MinXWidth, MinXWidth + HasBorder);
-    w->MinXWidth = MinXWidth;
-    w->XWidth = Max2(MinXWidth, w->XWidth);
-  }
-  if (Bitmap & 8) {
-    if (MinYWidth <= TW_MAXDAT - HasBorder)
-      MinYWidth = Max2(MinYWidth, MinYWidth + HasBorder);
-    w->MinYWidth = MinYWidth;
-    w->YWidth = Max2(MinYWidth, w->YWidth);
-  }
-  if (Bitmap & 0x10) {
-    if (MaxXWidth <= TW_MAXDAT - HasBorder)
-      MaxXWidth = Max2(MaxXWidth, MaxXWidth + HasBorder);
-    w->MaxXWidth = Max2(w->MinXWidth, MaxXWidth);
-    w->XWidth = Min2(MaxXWidth, w->XWidth);
-  }
-  if (Bitmap & 0x20) {
-    if (MaxYWidth <= TW_MAXDAT - HasBorder)
-      MaxYWidth = Max2(MaxYWidth, MaxYWidth + HasBorder);
-    w->MaxYWidth = Max2(w->MinYWidth, MaxYWidth);
-    w->YWidth = Min2(MaxYWidth, w->YWidth);
-  }
-  if (w->Parent) {
-    InsertMiddle(w, w, w->Parent, prev, next);
-    DrawAreaWindow2(w);
-  }
-}
-
-static void GotoXYWindow(Twindow window, ldat x, ldat y) {
-  if (W_USE(window, USECONTENTS)) {
-    ttydata *TT = window->USE.C.TtyData;
-
-    x = Max2(x, 0);
-    y = Max2(y, 0);
-    if (x >= TT->SizeX)
-      x = TT->SizeX - 1;
-    if (y >= TT->SizeY)
-      y = TT->SizeY - 1;
-    TT->X = x;
-    TT->Y = y;
-    TT->Pos = TT->Start + x + (ldat)y * TT->SizeX;
-    if (TT->Pos >= TT->Split)
-      TT->Pos -= TT->Split - window->USE.C.Contents;
-    y += window->HLogic - TT->SizeY;
-  }
-  window->CurX = x;
-  window->CurY = y;
-  if (ContainsCursor((Twidget)window))
-    UpdateCursor();
-}
-
-Twindow Create4MenuWindow(Tmenu Menu) {
-  Twindow window = (Twindow)0;
-  if (Menu && (window = New(window)(Menu->MsgPort, 0, NULL, (tcolor *)0, Menu, TCOL(tblack, twhite),
-                                    NOCURSOR, WINDOW_AUTO_KEYS,
-                                    WINDOWFL_MENU | WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL |
-                                        WINDOWFL_ROWS_SELCURRENT,
-                                    MIN_XWIN, MIN_YWIN, 0))) {
-
-    window->SetColors(0x1FF, TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(0, 0),
-                      TCOL(thigh | twhite, twhite), TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                      TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack));
-    window->Configure(0x3F, 0, 1, MIN_XWIN, MIN_YWIN, TW_MAXDAT, TW_MAXDAT);
-  }
-  return window;
-}
-
 bool FakeWriteCharset(Twindow window, uldat Len, const char *charset_bytes) {
   if (DlLoad(TermSo) && window->fn()->TtyWriteCharset != FakeWriteCharset)
     return window->TtyWriteCharset(Len, charset_bytes);
@@ -446,76 +295,18 @@ tpos FakeFindBorderWindow(Twindow w, dat u, dat v, byte Border, tcell *PtrAttr) 
   return v ? POS_ROOT : POS_TITLE;
 }
 
-static Trow FindRow(Twindow window, ldat row_i) {
-  Trow CurrRow, ElPossib[4];
-  byte Index;
-  ldat k, ElNumRows[4], ElDist[4];
-
-  ElPossib[0] = window->USE.R.RowOne;
-  ElPossib[1] = window->USE.R.RowSplit;
-  ElPossib[2] = window->USE.R.FirstRow;
-  ElPossib[3] = window->USE.R.LastRow;
-  ElNumRows[0] = window->USE.R.NumRowOne;
-  ElNumRows[1] = window->USE.R.NumRowSplit;
-  ElNumRows[2] = (ldat)0;
-  ElNumRows[3] = window->HLogic - (ldat)1;
-  ElDist[0] = (ElPossib[0] && ElNumRows[0] ? Abs(ElNumRows[0] - row_i) : TW_MAXLDAT);
-  ElDist[1] = (ElPossib[1] && ElNumRows[1] ? Abs(ElNumRows[1] - row_i) : TW_MAXLDAT);
-  ElDist[2] = row_i;
-  ElDist[3] = Abs(ElNumRows[3] - row_i);
-
-  Index = Minimum((byte)4, ElDist);
-  CurrRow = ElPossib[Index];
-  k = ElNumRows[Index];
-
-  if (CurrRow) {
-    if (k < row_i)
-      while (k < row_i && (CurrRow = CurrRow->Next))
-        k++;
-    else if (k > row_i)
-      while (k > row_i && (CurrRow = CurrRow->Prev))
-        k--;
-  }
-  if (CurrRow && IS_MENUITEM(CurrRow))
-    ((Tmenuitem)CurrRow)->WCurY = row_i;
-  return CurrRow;
-}
-
-static Trow FindRowByCode(Twindow window, udat Code, ldat *row_i) {
-  Trow row;
-  ldat i = 0;
-
-  if ((row = window->USE.R.FirstRow))
-    while (row && row->Code != Code) {
-      row = row->Next;
-      i++;
-    }
-  if (row && row_i)
-    *row_i = i;
-
-  return row;
-}
-
 static struct SwindowFn _FnWindow = {
     /* Twidget */
     &_FnObj,
     (Twidget(*)(Twindow))TtyKbdFocus,
     /* Twindow */
     &_FnWidget,
+    &Swindow::Create4Menu,
     FakeWriteCharset,
     FakeWriteUtf8,
     FakeWriteTRune,
     FakeWriteTCell,
-
-    GotoXYWindow,
-    SetTitleWindow,
-    SetColTextWindow,
-    SetColorsWindow,
-    ConfigureWindow,
-    Create4MenuWindow,
     FakeFindBorderWindow,
-    FindRow,
-    FindRowByCode,
 };
 
 /* Tscreen */
