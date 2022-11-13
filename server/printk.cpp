@@ -17,10 +17,6 @@
 #include "builtin.h"
 #include "draw.h"
 
-#ifdef TW_HAVE_STDARG_H
-#include <stdarg.h>
-#endif
-
 char printk_buf[TW_BIGBUFF];
 static int printk_fd = NOFD;
 
@@ -59,30 +55,6 @@ void printk_str(const char *s, size_t len) {
       len -= chunk;
     }
   } while (len && chunk > 0);
-}
-
-int printk(const char *format, ...) {
-  int len = 0;
-#if defined(TW_HAVE_VSNPRINTF) || defined(TW_HAVE_VSPRINTF)
-  va_list ap;
-
-  va_start(ap, format);
-#ifdef TW_HAVE_VSNPRINTF
-  len = vsnprintf(printk_buf, sizeof(printk_buf), format, ap);
-  va_end(ap);
-#else
-  len = vsprintf(printk_buf, format, ap); /* hopefully len < sizeof(printk_buf) */
-  va_end(ap);
-
-  if (len > sizeof(printk_buf)) {
-    fputs("twin: internal error: printk() overflow! \033[1mQUIT NOW !\033[0m\n", stderr);
-    return sizeof(printk_buf);
-  }
-#endif /* TW_HAVE_VSNPRINTF */
-  printk_str(printk_buf, len);
-
-#endif /* defined(TW_HAVE_VSNPRINTF) || defined(TW_HAVE_VPRINTF) */
-  return len;
 }
 
 int flushk(void) {

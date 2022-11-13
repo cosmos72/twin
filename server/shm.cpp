@@ -367,7 +367,7 @@ void *shm_malloc(size_t len) {
   if (retE <= E) {
     S = retE;
 #ifdef DEBUG_SHM
-    printk("%.8X  ", (size_t)ret);
+    log(DEBUG) << hex((size_t)ret);
 #endif
 #ifndef CONF_WM_RC_SHMMAP
     /* important: memory returned by shm_malloc() must be full of zeros! */

@@ -15,7 +15,6 @@
 #define SS "%." STR(TW_SMALLBUFF) "s"
 #endif
 
-int printk(const char *format, ...);
 void printk_str(const char *s, size_t len);
 int printk_receive_fd(int fd);
 int flushk(void);
