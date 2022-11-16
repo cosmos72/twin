@@ -169,11 +169,11 @@ byte FillButton(Tgadget g, Twidget Parent, udat Code, dat Left, dat Up, udat Fla
 
 static struct SgadgetFn _FnGadget = {
     /* Twidget */
-    (Twidget(*)(Tgadget))TtyKbdFocus, //
+    (Twidget(*)(Tgadget))TtyKbdFocus,
     /* Tgadget */
-    &_FnWidget, FillButton, //
-    WriteTextsGadget,       /* exported by resize.c */
-    WriteTRunesGadget,      /* exported by resize.c */
+    FillButton,        /**/
+    WriteTextsGadget,  /* exported by resize.c */
+    WriteTRunesGadget, /* exported by resize.c */
 };
 
 /* Twindow */

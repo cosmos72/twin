@@ -9,13 +9,13 @@
  *
  */
 
-trune T_CAT3(Tutf_, T_MAP(ASCII), _to_UTF_32)[0x100] = {
+TW_CONST trune T_CAT3(Tutf_, T_MAP(ASCII), _to_UTF_32)[0x100] = {
 #define EL(x) T_UTF(UTF_32, x),
     T_LIST(ASCII, EL)
 #undef EL
 };
 
-trune T_CAT(Tutf_CP437_to_, T_MAP(ASCII))[0x100] = {
+TW_CONST trune T_CAT(Tutf_CP437_to_, T_MAP(ASCII))[0x100] = {
     ' ', 'O', 'O', 'v',  '@', 'g', '!', '.',  '.', 'o', 'o', 't', 'g', 'f', 'f', '*', '>', '<', '|',
     '!', 'q', 'S', '_',  '|', '^', 'v', '>',  '<', 'L', '-', '^', 'v',
 

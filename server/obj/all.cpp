@@ -57,9 +57,9 @@ Tall Sall::Init() {
   Selection = &_Selection;
   Clipboard = &_Clipboard;
   SetUp = &_SetUp;
-  Gtranslations[VT100GR_MAP] = Tutf_VT100GR_to_UTF_32;
+  Gtranslations[VT100GR_MAP] = const_cast<trune *>(Tutf_VT100GR_to_UTF_32);
   Gtranslations[LATIN1_MAP] = NULL; /* it's the identity */
-  Gtranslations[IBMPC_MAP] = Tutf_CP437_to_UTF_32;
+  Gtranslations[IBMPC_MAP] = const_cast<trune *>(Tutf_CP437_to_UTF_32);
   Gtranslations[USER_MAP] = GtransUser;
   return this;
 };

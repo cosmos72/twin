@@ -9,7 +9,7 @@
  *
  */
 
-trune Tutf_ISO8859_1_to_UTF_32[0x100] = {
+TW_CONST trune Tutf_ISO8859_1_to_UTF_32[0x100] = {
 #define EL(x) T_UTF(UTF_32, x),
     T_LIST(ISO8859_1, EL)
 #undef EL

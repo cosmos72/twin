@@ -19,7 +19,6 @@ struct SgadgetFn {
   /* Twidget */
   Twidget (*KbdFocus)(Tgadget);
   /* Tgadget */
-  TwidgetFn Fn_Widget;
   byte (*FillButton)(Tgadget g, Twidget Parent, udat Code, dat Left, dat Up, udat Flags,
                      const char *Text, tcolor Color, tcolor ColorDisabled);
   void (*WriteTexts)(Tgadget g, byte bitmap, dat xwidth, dat ywidth, const char *Text, dat Left,

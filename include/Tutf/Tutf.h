@@ -594,7 +594,7 @@ extern "C" {
 #define T_NAME_VT100GR "vt100-graphics"
 #define T_ALIASES_VT100GR "vt100-gr", "vt100"
 
-typedef trune *Tutf_array;
+typedef TW_CONST trune *Tutf_array;
 typedef trune (*Tutf_function)(trune);
 
 /* get the charset `id' (opaque) from a charset alias */
@@ -741,99 +741,99 @@ trune Tutf_UTF_32_to_VT100GR(trune c);
 #define Tutf_ISO8859_15_to_UTF_32 Tutf_ISO_8859_15_to_UTF_32
 #define Tutf_ISO8859_16_to_UTF_32 Tutf_ISO_8859_16_to_UTF_32
 
-extern trune Tutf_ANSI_X3_4_to_UTF_32[0x100];
-extern trune Tutf_ISO_8859_1_to_UTF_32[0x100];
-extern trune Tutf_ISO_8859_2_to_UTF_32[0x100];
-extern trune Tutf_ISO_8859_3_to_UTF_32[0x100];
-extern trune Tutf_ISO_8859_4_to_UTF_32[0x100];
-extern trune Tutf_ISO_8859_5_to_UTF_32[0x100];
-extern trune Tutf_ISO_8859_6_to_UTF_32[0x100];
-extern trune Tutf_ISO_8859_7_to_UTF_32[0x100];
-extern trune Tutf_ISO_8859_8_to_UTF_32[0x100];
-extern trune Tutf_ISO_8859_9_to_UTF_32[0x100];
-extern trune Tutf_ISO_8859_10_to_UTF_32[0x100];
-extern trune Tutf_ISO_8859_13_to_UTF_32[0x100];
-extern trune Tutf_ISO_8859_14_to_UTF_32[0x100];
-extern trune Tutf_ISO_8859_15_to_UTF_32[0x100];
-extern trune Tutf_ISO_8859_16_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_ANSI_X3_4_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_ISO_8859_1_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_ISO_8859_2_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_ISO_8859_3_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_ISO_8859_4_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_ISO_8859_5_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_ISO_8859_6_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_ISO_8859_7_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_ISO_8859_8_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_ISO_8859_9_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_ISO_8859_10_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_ISO_8859_13_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_ISO_8859_14_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_ISO_8859_15_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_ISO_8859_16_to_UTF_32[0x100];
 
-extern trune Tutf_CP424_to_UTF_32[0x100];
-extern trune Tutf_CP437_to_UTF_32[0x100];
-extern trune Tutf_CP737_to_UTF_32[0x100];
-extern trune Tutf_CP775_to_UTF_32[0x100];
-extern trune Tutf_CP850_to_UTF_32[0x100];
-extern trune Tutf_CP852_to_UTF_32[0x100];
-extern trune Tutf_CP855_to_UTF_32[0x100];
-extern trune Tutf_CP856_to_UTF_32[0x100];
-extern trune Tutf_CP857_to_UTF_32[0x100];
-extern trune Tutf_CP860_to_UTF_32[0x100];
-extern trune Tutf_CP861_to_UTF_32[0x100];
-extern trune Tutf_CP862_to_UTF_32[0x100];
-extern trune Tutf_CP863_to_UTF_32[0x100];
-extern trune Tutf_CP864_to_UTF_32[0x100];
-extern trune Tutf_CP865_to_UTF_32[0x100];
-extern trune Tutf_CP866_to_UTF_32[0x100];
-extern trune Tutf_CP869_to_UTF_32[0x100];
-extern trune Tutf_CP874_to_UTF_32[0x100];
-extern trune Tutf_CP932_to_UTF_32[0x100];
-extern trune Tutf_CP936_to_UTF_32[0x100];
-extern trune Tutf_CP949_to_UTF_32[0x100];
-extern trune Tutf_CP950_to_UTF_32[0x100];
-extern trune Tutf_CP1006_to_UTF_32[0x100];
-extern trune Tutf_CP1250_to_UTF_32[0x100];
-extern trune Tutf_CP1251_to_UTF_32[0x100];
-extern trune Tutf_CP1252_to_UTF_32[0x100];
-extern trune Tutf_CP1253_to_UTF_32[0x100];
-extern trune Tutf_CP1254_to_UTF_32[0x100];
-extern trune Tutf_CP1255_to_UTF_32[0x100];
-extern trune Tutf_CP1256_to_UTF_32[0x100];
-extern trune Tutf_CP1257_to_UTF_32[0x100];
-extern trune Tutf_CP1258_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP424_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP437_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP737_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP775_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP850_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP852_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP855_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP856_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP857_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP860_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP861_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP862_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP863_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP864_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP865_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP866_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP869_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP874_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP932_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP936_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP949_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP950_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP1006_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP1250_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP1251_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP1252_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP1253_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP1254_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP1255_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP1256_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP1257_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_CP1258_to_UTF_32[0x100];
 
-extern trune Tutf_ADOBE_STDENC_to_UTF_32[0x100];
-extern trune Tutf_ADOBE_SYMBOL_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_ADOBE_STDENC_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_ADOBE_SYMBOL_to_UTF_32[0x100];
 
-extern trune Tutf_MAC_ARABIC_to_UTF_32[0x100];
-extern trune Tutf_MAC_CELTIC_to_UTF_32[0x100];
-extern trune Tutf_MAC_CENTRALEUROPE_to_UTF_32[0x100];
-extern trune Tutf_MAC_CROATIAN_to_UTF_32[0x100];
-extern trune Tutf_MAC_CYRILLIC_to_UTF_32[0x100];
-extern trune Tutf_MAC_DEVANAGARI_to_UTF_32[0x100];
-extern trune Tutf_MAC_DINGBATS_to_UTF_32[0x100];
-extern trune Tutf_MAC_FARSI_to_UTF_32[0x100];
-extern trune Tutf_MAC_GAELIC_to_UTF_32[0x100];
-extern trune Tutf_MAC_GREEK_to_UTF_32[0x100];
-extern trune Tutf_MAC_GUJARATI_to_UTF_32[0x100];
-extern trune Tutf_MAC_GURMUKHI_to_UTF_32[0x100];
-extern trune Tutf_MAC_HEBREW_to_UTF_32[0x100];
-extern trune Tutf_MAC_ICELANDIC_to_UTF_32[0x100];
-extern trune Tutf_MAC_INUIT_to_UTF_32[0x100];
-extern trune Tutf_MAC_ROMAN_to_UTF_32[0x100];
-extern trune Tutf_MAC_ROMANIAN_to_UTF_32[0x100];
-extern trune Tutf_MAC_SYMBOL_to_UTF_32[0x100];
-extern trune Tutf_MAC_THAI_to_UTF_32[0x100];
-extern trune Tutf_MAC_TURKISH_to_UTF_32[0x100];
-extern trune Tutf_MAC_UKRAINE_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_ARABIC_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_CELTIC_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_CENTRALEUROPE_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_CROATIAN_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_CYRILLIC_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_DEVANAGARI_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_DINGBATS_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_FARSI_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_GAELIC_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_GREEK_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_GUJARATI_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_GURMUKHI_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_HEBREW_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_ICELANDIC_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_INUIT_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_ROMAN_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_ROMANIAN_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_SYMBOL_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_THAI_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_TURKISH_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MAC_UKRAINE_to_UTF_32[0x100];
 
-extern trune Tutf_MS_MAC_CYRILLIC_to_UTF_32[0x100];
-extern trune Tutf_MS_MAC_GREEK_to_UTF_32[0x100];
-extern trune Tutf_MS_MAC_ICELANDIC_to_UTF_32[0x100];
-extern trune Tutf_MS_MAC_LATIN2_to_UTF_32[0x100];
-extern trune Tutf_MS_MAC_ROMAN_to_UTF_32[0x100];
-extern trune Tutf_MS_MAC_TURKISH_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MS_MAC_CYRILLIC_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MS_MAC_GREEK_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MS_MAC_ICELANDIC_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MS_MAC_LATIN2_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MS_MAC_ROMAN_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_MS_MAC_TURKISH_to_UTF_32[0x100];
 
-extern trune Tutf_APL_ISO_IR_68_to_UTF_32[0x100];
-extern trune Tutf_ATARIST_to_UTF_32[0x100];
-extern trune Tutf_HP_ROMAN8_to_UTF_32[0x100];
-extern trune Tutf_JISX0201_to_UTF_32[0x100];
-extern trune Tutf_KZ1048_to_UTF_32[0x100];
-extern trune Tutf_KOI8_R_to_UTF_32[0x100];
-extern trune Tutf_KOI8_U_to_UTF_32[0x100];
-extern trune Tutf_NEXTSTEP_to_UTF_32[0x100];
-extern trune Tutf_VT100GR_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_APL_ISO_IR_68_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_ATARIST_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_HP_ROMAN8_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_JISX0201_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_KZ1048_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_KOI8_R_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_KOI8_U_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_NEXTSTEP_to_UTF_32[0x100];
+extern TW_CONST trune Tutf_VT100GR_to_UTF_32[0x100];
 
 #define Tutf_CP437_to_ASCII Tutf_CP437_to_ANSI_X3_4
-extern trune Tutf_CP437_to_ANSI_X3_4[0x100];
+extern TW_CONST trune Tutf_CP437_to_ANSI_X3_4[0x100];
 
 #ifdef __cplusplus
 }
