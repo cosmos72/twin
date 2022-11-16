@@ -238,66 +238,12 @@ static struct SwindowFn _FnWindow = {
 
 /* Tscreen */
 
-static void BgImageScreen(Tscreen screen, dat BgWidth, dat BgHeight, const tcell *Bg) {
-  size_t size;
-
-  if (screen && S_USE(screen, USEBG) && Bg && (size = (size_t)BgWidth * BgHeight * sizeof(tcell)) &&
-      (screen->USE.B.Bg = (tcell *)ReAllocMem(screen->USE.B.Bg, size))) {
-
-    screen->USE.B.BgWidth = BgWidth;
-    screen->USE.B.BgHeight = BgHeight;
-    CopyMem(Bg, screen->USE.B.Bg, size);
-    DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, 0, screen->Up + 1, TW_MAXDAT, TW_MAXDAT, tfalse);
-  }
-}
-
-static Tmenu FindMenuScreen(Tscreen screen) {
-  if (screen) {
-    if (screen->MenuWindow && IS_WINDOW(screen->MenuWindow))
-      /* menu activated from screen->MenuWindow, return its Tmenu */
-      return screen->MenuWindow->Menu;
-
-    /* no Twindow activated the Tmenu... either the Tmenu is inactive
-     * or it is activated from the builtin Tmenu */
-
-    if (screen->FocusW() && IS_WINDOW(screen->FocusW()) &&
-        ((Twindow)screen->FocusW())->Menu != All->CommonMenu)
-      /* Tmenu inactive... return the focus Twindow's one */
-      return ((Twindow)screen->FocusW())->Menu;
-
-    /* last case: Tmenu activated from builtin Tmenu */
-    return All->BuiltinMenu;
-  }
-  return (Tmenu)0;
-}
-
-static void ActivateMenuScreen(Tscreen screen, Tmenuitem item, bool by_mouse) {
-
-  if ((All->State & state_any) != state_default)
-    return;
-
-  if (screen && screen != All->FirstScreen)
-    screen->Focus();
-
-  SetMenuState(item, by_mouse);
-}
-
-static void DeActivateMenuScreen(Tscreen screen) {
-  if (screen == All->FirstScreen && (All->State & state_any) == state_menu)
-    CloseMenu();
-}
-
 static struct SscreenFn _FnScreen = {
     /* Twidget */
     &_FnObj,
     (Twidget(*)(Tscreen))NoOp, /* KbdFocus */
     /* Tscreen */
     &_FnWidget,
-    FindMenuScreen,
-    BgImageScreen,
-    DrawMenuScreen,
-    ActivateMenuScreen,
-    DeActivateMenuScreen,
 };
 
 /* Tgroup */

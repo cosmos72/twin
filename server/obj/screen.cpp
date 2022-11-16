@@ -136,3 +136,53 @@ Tscreen Sscreen::Find(dat j) {
   }
   return (Tscreen)0;
 }
+
+void Sscreen::BgImage(dat bgwidth, dat bgheight, const tcell *bg) {
+  Tscreen screen = this;
+  size_t size;
+
+  if (screen && S_USE(screen, USEBG) && bg && (size = (size_t)bgwidth * bgheight * sizeof(tcell)) &&
+      (screen->USE.B.Bg = (tcell *)ReAllocMem(screen->USE.B.Bg, size))) {
+
+    screen->USE.B.BgWidth = bgwidth;
+    screen->USE.B.BgHeight = bgheight;
+    CopyMem(bg, screen->USE.B.Bg, size);
+    DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, 0, screen->Up + 1, TW_MAXDAT, TW_MAXDAT, tfalse);
+  }
+}
+
+Tmenu Sscreen::FindMenu() const {
+
+  if (MenuWindow && IS_WINDOW(MenuWindow))
+    /* menu activated from MenuWindow, return its Tmenu */
+    return MenuWindow->Menu;
+
+  /* no Twindow activated the Tmenu... either the Tmenu is inactive
+   * or it is activated from the builtin Tmenu */
+
+  if (FocusW() && IS_WINDOW(FocusW()) && ((Twindow)FocusW())->Menu != ::All->CommonMenu)
+    /* Tmenu inactive... return the focus Twindow's one */
+    return ((Twindow)FocusW())->Menu;
+
+  /* last case: Tmenu activated from builtin Tmenu */
+  return ::All->BuiltinMenu;
+}
+
+void Sscreen::DrawMenu(dat xstart, dat xend) {
+  DrawMenuScreen(this, xstart, xend);
+}
+
+void Sscreen::ActivateMenu(Tmenuitem item, bool by_mouse) {
+  if ((::All->State & state_any) != state_default) {
+    return;
+  } else if (this != ::All->FirstScreen) {
+    Focus();
+  }
+  SetMenuState(item, by_mouse);
+}
+
+void Sscreen::DeActivateMenu() {
+  if (this == ::All->FirstScreen && (::All->State & state_any) == state_menu) {
+    CloseMenu();
+  }
+}

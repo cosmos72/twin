@@ -20,8 +20,9 @@
 #include "resize.h"    // PressGadget(), UnPressGadget()
 #include "draw.h"      // DrawAreaWidget()
 
-#include <Tw/Twstat_defs.h> // TWS_gadget_*
+#include <Tw/datasizes.h>   // TW_SIZEOF_TCOLOR
 #include <Tw/Tw_defs.h>     // tmaxcol
+#include <Tw/Twstat_defs.h> // TWS_gadget_*
 #include <Tutf/utf_32.h>    // T_UTF_32_*_BLOCK
 
 #include <new>
@@ -64,9 +65,9 @@ Tgadget Sgadget::CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolo
   ldat size;
   byte i;
   dat j, k;
-#define _FULL T_UTF_32_FULL_BLOCK
-#define _LOWER T_UTF_32_LOWER_HALF_BLOCK
-#define _UPPER T_UTF_32_UPPER_HALF_BLOCK
+#define FULL_ T_UTF_32_FULL_BLOCK
+#define LOWER_ T_UTF_32_LOWER_HALF_BLOCK
+#define UPPER_ T_UTF_32_UPPER_HALF_BLOCK
   void *addr = AllocMem0(sizeof(Sgadget));
   if (addr) {
     g = new (addr) Sgadget();
@@ -95,17 +96,17 @@ Tgadget Sgadget::CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolo
     bgcol &= TCOL(0, tmaxcol);
 
     for (i = 0; i < 4; i++) {
-      for (j = k = (dat)0; j < ywidth; j++, k += xwidth + 1) {
-        g->USE.T.Text[i][k + (i & 1 ? 0 : xwidth)] = i & 1 ? ' ' : k ? _FULL : _LOWER;
+      for (j = k = 0; j < ywidth; j++, k += xwidth + 1) {
+        g->USE.T.Text[i][k + (i & 1 ? 0 : xwidth)] = i & 1 ? ' ' : k ? FULL_ : LOWER_;
         g->USE.T.Color[i][k + (i & 1 ? 0 : xwidth)] = bgcol;
       }
       g->USE.T.Text[i][k] = ' ';
-      for (j = (dat)0; j < xwidth; j++)
-        g->USE.T.Text[i][k + 1 + j] = i & 1 ? ' ' : _UPPER;
+      for (j = 0; j < xwidth; j++)
+        g->USE.T.Text[i][k + 1 + j] = i & 1 ? ' ' : UPPER_;
 #if TW_SIZEOF_TCOLOR == 1
       memset((void *)(g->USE.T.Color[i] + k), bgcol, xwidth + 1);
 #else
-      for (j = (dat)0; j <= xwidth; j++)
+      for (j = 0; j <= xwidth; j++)
         g->USE.T.Color[i][k + j] = bgcol;
 #endif
     }
@@ -114,9 +115,9 @@ Tgadget Sgadget::CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolo
     g->Group = (Tgroup)0;
   }
   return g;
-#undef _FULL
-#undef _UPPER
-#undef _LOWER
+#undef FULL_
+#undef UPPER_
+#undef LOWER_
 }
 
 Tgadget Sgadget::Init(Tmsgport owner, Twidget parent, dat xwidth, dat ywidth,

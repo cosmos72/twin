@@ -21,11 +21,6 @@ struct SscreenFn {
   Twidget (*KbdFocus)(Tscreen);
   /* Tscreen */
   TwidgetFn Fn_Widget;
-  Tmenu (*FindMenu)(Tscreen);
-  void (*BgImage)(Tscreen, dat BgWidth, dat BgHeight, const tcell *Bg);
-  void (*DrawMenu)(Tscreen, dat Xstart, dat Xend);
-  void (*ActivateMenu)(Tscreen, Tmenuitem, bool by_mouse);
-  void (*DeActivateMenu)(Tscreen);
 };
 
 struct Sscreen : public Swidget {
@@ -83,23 +78,12 @@ public:
     Swidget::Next = next;
   }
 
-  Tmenu FindMenu() {
-    return fn()->FindMenu(this);
-  }
   static Tscreen Find(dat j);
-
-  void BgImage(dat bgwidth, dat bgheight, const tcell *bg) {
-    fn()->BgImage(this, bgwidth, bgheight, bg);
-  }
-  void DrawMenu(dat xstart, dat xend) {
-    fn()->DrawMenu(this, xstart, xend);
-  }
-  void ActivateMenu(Tmenuitem item, byte bymouse) {
-    fn()->ActivateMenu(this, item, bymouse);
-  }
-  void DeActivateMenu() {
-    fn()->DeActivateMenu(this);
-  }
+  Tmenu FindMenu() const;
+  void BgImage(dat bgwidth, dat bgheight, const tcell *bg);
+  void DrawMenu(dat xstart, dat xend);
+  void ActivateMenu(Tmenuitem item, bool by_mouse);
+  void DeActivateMenu();
 
 protected:
   virtual void InsertWidget(Tobj parent, Twidget prev, Twidget next) OVERRIDE;
