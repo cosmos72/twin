@@ -221,22 +221,22 @@ static Trow InsertRowsWindow(Twindow w, ldat NumRows) {
   return row;
 }
 
-bool EnsureLenRow(Trow Row, uldat len, bool default_color) {
+bool EnsureLenRow(Trow row, uldat len, bool default_color) {
   trune *temp_text;
   tcolor *temp_color;
   uldat new_len;
 
-  if (len > Row->MaxLen) {
+  if (len > row->MaxLen) {
     new_len = (len + (len >> 1)) | All->SetUp->MinAllocSize;
-    if ((temp_text = (trune *)ReAllocMem(Row->Text, new_len * sizeof(trune)))) {
-      if (!(Row->Flags & ROW_DEFCOL) && !default_color) {
-        if ((temp_color = (tcolor *)ReAllocMem(Row->ColText, new_len * sizeof(tcolor))))
-          Row->ColText = temp_color;
+    if ((temp_text = (trune *)ReAllocMem(row->Text, new_len * sizeof(trune)))) {
+      if (!(row->Flags & ROW_DEFCOL) && !default_color) {
+        if ((temp_color = (tcolor *)ReAllocMem(row->ColText, new_len * sizeof(tcolor))))
+          row->ColText = temp_color;
         else
           return false;
       }
-      Row->Text = temp_text;
-      Row->MaxLen = new_len;
+      row->Text = temp_text;
+      row->MaxLen = new_len;
     } else
       return false;
   }

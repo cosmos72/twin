@@ -21,12 +21,8 @@ struct SgadgetFn {
   Twidget (*KbdFocus)(Tgadget);
   /* Tgadget */
   TwidgetFn Fn_Widget;
-  Tgadget (*CreateEmptyButton)(Tmsgport owner, dat xwidth, dat ywidth, tcolor BgCol);
   byte (*FillButton)(Tgadget g, Twidget Parent, udat Code, dat Left, dat Up, udat Flags,
                      const char *Text, tcolor Color, tcolor ColorDisabled);
-  Tgadget (*CreateButton)(Twidget Parent, dat xwidth, dat ywidth, const char *Text, uldat Flags,
-                          udat Code, tcolor BgCol, tcolor Col, tcolor ColDisabled, dat Left,
-                          dat Up);
   void (*WriteTexts)(Tgadget g, byte bitmap, dat xwidth, dat ywidth, const char *Text, dat Left,
                      dat Up);
   void (*WriteTRunes)(Tgadget g, byte bitmap, dat xwidth, dat ywidth, const trune *TRune, dat Left,
@@ -41,9 +37,14 @@ struct Sgadget : public Swidget {
   Tgroup Group;
 
   static Tgadget Create(Tmsgport owner, Twidget Parent, dat xwidth, dat ywidth,
-                        const char *TextNormal, uldat Attr, uldat Flags, udat Code, tcolor ColText,
-                        tcolor ColTextSelect, tcolor ColTextDisabled, tcolor ColTextSelectDisabled,
-                        dat Left, dat Up);
+                        const char *textnormal, uldat attr, uldat flags, udat code, tcolor coltext,
+                        tcolor coltextselect, tcolor coltextdisabled, tcolor coltextselectdisabled,
+                        dat left, dat up);
+  static Tgadget CreateButton(Twidget parent, dat xwidth, dat ywidth, const char *text, uldat flags,
+                              udat code, tcolor bgcol, tcolor col, tcolor coldisabled, dat left,
+                              dat up);
+  static Tgadget CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolor bgcol);
+
   Tgadget Init(Tmsgport owner, Twidget Parent, dat xwidth, dat ywidth, const char *TextNormal,
                uldat Attr, uldat Flags, udat Code, tcolor ColText, tcolor ColTextSelect,
                tcolor ColTextDisabled, tcolor ColTextSelectDisabled, dat Left, dat Up);
@@ -66,14 +67,6 @@ struct Sgadget : public Swidget {
   byte FillButton(Twidget parent, udat code, dat left, dat up, udat flags, const char *text,
                   tcolor color, tcolor colordisabled) {
     return fn()->FillButton(this, parent, code, left, up, flags, text, color, colordisabled);
-  }
-  Tgadget CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolor bgcol) {
-    return fn()->CreateEmptyButton(owner, xwidth, ywidth, bgcol);
-  }
-  Tgadget CreateButton(Twidget parent, dat xwidth, dat ywidth, const char *text, uldat flags,
-                       udat code, tcolor bgcol, tcolor col, tcolor coldisabled, dat left, dat up) {
-    return fn()->CreateButton(parent, xwidth, ywidth, text, flags, code, bgcol, col, coldisabled,
-                              left, up);
   }
   void WriteTexts(byte bitmap, dat xwidth, dat ywidth, const char *text, dat left, dat up) {
     fn()->WriteTexts(this, bitmap, xwidth, ywidth, text, left, up);

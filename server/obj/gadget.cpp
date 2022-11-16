@@ -21,6 +21,8 @@
 #include "draw.h"      // DrawAreaWidget()
 
 #include <Tw/Twstat_defs.h> // TWS_gadget_*
+#include <Tw/Tw_defs.h>     // tmaxcol
+#include <Tutf/utf_32.h>    // T_UTF_32_*_BLOCK
 
 #include <new>
 
@@ -29,7 +31,6 @@ Tgadget Sgadget::Create(Tmsgport owner, Twidget parent, dat xwidth, dat ywidth,
                         tcolor coltextselect, tcolor coltextdisabled, tcolor coltextselectdisabled,
                         dat left, dat up) {
   Tgadget g = NULL;
-
   if (owner) {
     void *addr = AllocMem0(sizeof(Sgadget));
     if (addr) {
@@ -43,6 +44,79 @@ Tgadget Sgadget::Create(Tmsgport owner, Twidget parent, dat xwidth, dat ywidth,
     }
   }
   return g;
+}
+
+Tgadget Sgadget::CreateButton(Twidget parent, dat xwidth, dat ywidth, const char *text, uldat flags,
+                              udat code, tcolor bgcol, tcolor col, tcolor coldisabled, dat left,
+                              dat up) {
+  Tgadget g = NULL;
+  if (parent && (g = CreateEmptyButton(parent->Owner, xwidth, ywidth, bgcol))) {
+    if (g->FillButton(parent, code, left, up, flags, text, col, coldisabled))
+      return g;
+    g->Delete();
+    g = NULL;
+  }
+  return g;
+}
+
+Tgadget Sgadget::CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolor bgcol) {
+  Tgadget g = NULL;
+  ldat size;
+  byte i;
+  dat j, k;
+#define _FULL T_UTF_32_FULL_BLOCK
+#define _LOWER T_UTF_32_LOWER_HALF_BLOCK
+#define _UPPER T_UTF_32_UPPER_HALF_BLOCK
+  void *addr = AllocMem0(sizeof(Sgadget));
+  if (addr) {
+    g = new (addr) Sgadget();
+    g->Fn = (TwidgetFn)Fn_Tgadget;
+    if (!((Twidget)g)
+             ->Init(owner, ++xwidth, ++ywidth, 0, GADGETFL_USETEXT | GADGETFL_BUTTON, 0, 0,
+                    (tcell)0, Tgadget_class_id)) {
+      g->Delete();
+      return NULL;
+    }
+
+    size = (ldat)xwidth * ywidth;
+
+    for (i = 0; i < 4; i++)
+      g->USE.T.Text[i] = NULL, g->USE.T.Color[i] = NULL;
+
+    for (i = 0; i < 4; i++)
+      if (!(g->USE.T.Text[i] = (trune *)AllocMem(size * sizeof(trune))) ||
+          !(g->USE.T.Color[i] = (tcolor *)AllocMem(size * sizeof(tcolor)))) {
+
+        g->Delete();
+        return NULL;
+      }
+
+    size = (ldat)--xwidth * --ywidth;
+    bgcol &= TCOL(0, tmaxcol);
+
+    for (i = 0; i < 4; i++) {
+      for (j = k = (dat)0; j < ywidth; j++, k += xwidth + 1) {
+        g->USE.T.Text[i][k + (i & 1 ? 0 : xwidth)] = i & 1 ? ' ' : k ? _FULL : _LOWER;
+        g->USE.T.Color[i][k + (i & 1 ? 0 : xwidth)] = bgcol;
+      }
+      g->USE.T.Text[i][k] = ' ';
+      for (j = (dat)0; j < xwidth; j++)
+        g->USE.T.Text[i][k + 1 + j] = i & 1 ? ' ' : _UPPER;
+#if TW_SIZEOF_TCOLOR == 1
+      memset((void *)(g->USE.T.Color[i] + k), bgcol, xwidth + 1);
+#else
+      for (j = (dat)0; j <= xwidth; j++)
+        g->USE.T.Color[i][k + j] = bgcol;
+#endif
+    }
+
+    g->G_Prev = g->G_Next = (Tgadget)0;
+    g->Group = (Tgroup)0;
+  }
+  return g;
+#undef _FULL
+#undef _UPPER
+#undef _LOWER
 }
 
 Tgadget Sgadget::Init(Tmsgport owner, Twidget parent, dat xwidth, dat ywidth,

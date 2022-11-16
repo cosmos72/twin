@@ -11,15 +11,17 @@
  */
 
 #include "alloc.h"        // AllocMem0()
-#include "fn.h"           // Fn_Trow
+#include "draw.h"         // DrawAreaWidget()
+#include "fn.h"           // Fn_Tobj
 #include "methods.h"      // RemoveGeneric()
 #include "obj/menuitem.h" // COD_RESERVED
 #include "obj/row.h"
 #include "obj/window.h"
-#include "resize.h" // ResizeRelWindow()
-#include "twin.h"   // IS_WINDOW
+#include "resize.h" // EnsureLenRow(), ResizeRelWindow()
+#include "twin.h"   // IS_WINDOW()
 
 #include <new>
+#include <Tutf/Tutf.h> // Tutf_CP437_to_UTF_32[]
 
 Trow Srow::Create(udat code, byte flags) {
   Trow r = NULL;
@@ -27,7 +29,7 @@ Trow Srow::Create(udat code, byte flags) {
     void *addr = AllocMem0(sizeof(Srow));
     if (addr) {
       r = new (addr) Srow();
-      r->Fn = Fn_Trow;
+      r->Fn = Fn_Tobj;
       if (!r->Init(code, flags, Trow_class_id)) {
         r->Delete();
         r = NULL;
@@ -85,4 +87,86 @@ void Srow::Delete() {
 
   if (w && w->Parent && (w->Flags & WINDOWFL_MENU))
     ResizeRelWindow(w, 0, -1);
+}
+
+bool Srow::SetText(uldat len, const char *text, bool default_color) {
+  Trow row = this;
+  if (not EnsureLenRow(row, len, default_color)) {
+    return false;
+  } else if (len) {
+    trune *row_text = row->Text;
+    ldat i = len;
+    while (i-- > 0) {
+      *row_text++ = Tutf_CP437_to_UTF_32[(byte)*text++];
+    }
+    if (!(row->Flags & ROW_DEFCOL) && !default_color)
+      /* will not work correctly if sizeof(tcolor) != 1 */
+      memset(row->ColText, TCOL(twhite, tblack), len * sizeof(tcolor));
+  }
+  row->Len = len;
+  row->Gap = row->LenGap = 0;
+  return true;
+}
+
+bool Srow::SetTRune(uldat len, const trune *runes, bool default_color) {
+  Trow row = this;
+  if (not EnsureLenRow(row, len, default_color)) {
+    return false;
+  } else if (len) {
+    CopyMem(runes, row->Text, len * sizeof(trune));
+    if (!(row->Flags & ROW_DEFCOL) && !default_color) {
+      /* memset() will not work correctly if sizeof(tcolor) != 1 */
+      typedef char sizeof_tcolor_is_1[sizeof(tcolor) == 1 ? 1 : -1];
+
+      memset(row->ColText, TCOL(twhite, tblack), len * sizeof(tcolor));
+    }
+  }
+  row->Len = len;
+  row->Gap = row->LenGap = 0;
+  return true;
+}
+
+void Srow::Raise() {
+  Trow row = this;
+  Tobj parent;
+  if (!row || !(parent = row->Parent)) {
+    return;
+
+  } else if (IS_MENU(parent) && IS_MENUITEM(row)) {
+    Tmenu menu = (Tmenu)parent;
+    if (row != menu->FirstI) {
+      row->Remove();
+      ((Tmenuitem)row)->Insert(menu, (Tmenuitem)0, menu->FirstI);
+      SyncMenu(menu);
+    }
+  } else if (IS_WINDOW(parent) && W_USE((Twindow)parent, USEROWS)) {
+    Twindow window = (Twindow)parent;
+    if (row != window->USE.R.FirstRow) {
+      row->Remove();
+      row->Insert(window, (Trow)0, window->USE.R.FirstRow);
+      DrawAreaWidget(window);
+    }
+  }
+}
+
+void Srow::Lower() {
+  Trow row = this;
+  Tobj parent;
+  if (!row || !(parent = row->Parent)) {
+    return;
+  } else if (IS_MENU(parent) && IS_MENUITEM(row)) {
+    Tmenu menu = (Tmenu)parent;
+    if (row != menu->LastI) {
+      row->Remove();
+      ((Tmenuitem)row)->Insert(menu, menu->LastI, (Tmenuitem)0);
+      SyncMenu(menu);
+    }
+  } else if (IS_WINDOW(parent) && W_USE((Twindow)parent, USEROWS)) {
+    Twindow window = (Twindow)parent;
+    if (row != window->USE.R.LastRow) {
+      row->Remove();
+      row->Insert(window, window->USE.R.LastRow, (Trow)0);
+      DrawAreaWidget(window);
+    }
+  }
 }

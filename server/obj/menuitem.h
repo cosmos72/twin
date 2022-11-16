@@ -18,15 +18,7 @@
 struct SmenuitemFn {
   /* Trow */
   TobjFn Fn_Obj;
-  bool (*SetText)(Trow self, uldat len, const char *text, bool default_color);
-  bool (*SetTRune)(Trow self, uldat len, const trune *runes, bool default_color);
   /* Tmenuitem */
-  void (*Raise)(Tmenuitem);
-  void (*Lower)(Tmenuitem);
-  TrowFn Fn_Row;
-  Tmenuitem (*Create4Menu)(Tobj Parent, Twindow Window, udat Code, byte Flags, ldat len,
-                           const char *Name);
-  uldat (*Create4MenuCommon)(Tmenu);
   /* for compatibility this must return a non-zero value. */
 };
 
@@ -37,12 +29,15 @@ struct Smenuitem : public Srow {
   ldat WCurY;
 
 private:
-  Tmenuitem Init(Tobj Parent, Twindow Window, udat Code, byte Flags, dat Left, ldat len,
-                 dat ShortCut, const char *Name);
+  Tmenuitem Init(Tobj parent, Twindow window, udat code, byte flags, dat left, ldat len,
+                 dat shortcut, const char *name);
 
 public:
-  static Tmenuitem Create(Tobj Parent, Twindow Window, udat Code, byte Flags, dat Left, ldat len,
-                          dat ShortCut, const char *Name);
+  static Tmenuitem Create(Tobj Parent, Twindow window, udat code, byte flags, dat left, ldat len,
+                          dat shortcut, const char *name);
+  static Tmenuitem Create4Menu(Tobj parent, Twindow window, udat code, byte flags, ldat len,
+                               const char *name);
+  static uldat Create4MenuCommon(Tmenu menu);
 
   /* Tobj */
   virtual void Delete() OVERRIDE;

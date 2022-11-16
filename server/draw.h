@@ -9,6 +9,8 @@
 #ifndef TWIN_DRAW_H
 #define TWIN_DRAW_H
 
+#include "obj/fwd.h"
+
 void TranslateCoordsWidget(Twidget w1, Twidget w2, dat *x, dat *y, byte *inside);
 
 void DrawDesktop(Tscreen s, dat xstart, dat ystart, dat xend, dat yend, bool shaded);

@@ -27,12 +27,12 @@ void DecMouseMotionN(void);
 void InsertGeneric(TobjEntry obj, TobjList parent, TobjEntry prev, TobjEntry next, ldat *objcount);
 void RemoveGeneric(TobjEntry obj, TobjList parent, ldat *objcount);
 
-#define Do(Command, objtype) (Fn_T##objtype->Command)
+#define Do(command, objtype) (S##objtype::command)
 
 #define New(objtype) S##objtype::Create
 
 #define SKIP_FIRST_ARG(arg, ...) (__VA_ARGS__)
-#define Act(Command, Obj) (Obj)->Command SKIP_FIRST_ARG
+#define Act(command, obj) (obj)->command SKIP_FIRST_ARG
 
 #define DeleteList(First)                                                                          \
   do {                                                                                             \
@@ -41,18 +41,18 @@ void RemoveGeneric(TobjEntry obj, TobjList parent, ldat *objcount);
     }                                                                                              \
   } while (0)
 
-#define InsertOnly(ObjName, Obj, Parent) (Obj)->Insert((Parent), NULL, NULL)
+#define InsertOnly(obj_name, obj, parent) (obj)->Insert((parent), NULL, NULL)
 
-#define InsertFirst(ObjName, Obj, Parent) (Obj)->Insert((Parent), NULL, (Parent)->First##ObjName)
+#define InsertFirst(obj_name, obj, parent) (obj)->Insert((parent), NULL, (parent)->First##obj_name)
 
-#define InsertMiddle(ObjName, Obj, Parent, ObjPrev, ObjNext)                                       \
-  (Obj)->Insert((Parent), (ObjPrev), (ObjNext))
+#define InsertMiddle(obj_name, obj, parent, prev_obj, next_obj)                                    \
+  (obj)->Insert((parent), (prev_obj), (next_obj))
 
-#define InsertLast(ObjName, Obj, Parent) (Obj)->Insert((Parent), (Parent)->Last##ObjName, NULL)
+#define InsertLast(obj_name, obj, parent) (obj)->Insert((parent), (parent)->Last##obj_name, NULL)
 
-#define MoveFirst(ObjName, Parent, Obj) ((Obj)->Remove(), InsertFirst(ObjName, Obj, Parent))
+#define MoveFirst(obj_name, parent, obj) ((obj)->Remove(), InsertFirst(obj_name, obj, parent))
 
-#define MoveLast(ObjName, Parent, Obj) ((Obj)->Remove(), InsertLast(ObjName, Obj, Parent))
+#define MoveLast(obj_name, parent, obj) ((obj)->Remove(), InsertLast(obj_name, obj, parent))
 
 #define SendMsg(msgport, whichmsg) (InsertLast(Msg, (whichmsg), (msgport)))
 
@@ -61,16 +61,16 @@ void RemoveGeneric(TobjEntry obj, TobjList parent, ldat *objcount);
 #define Win4Menu(menu) Swindow::Create4Menu(menu)
 
 #define Row4Menu(w, code, flags, len, name)                                                        \
-  (Trow) Do(Create4Menu, menuitem)((Tobj)(w), (Twindow)0, (code), (flags), (len), (name))
+  ((Trow)Smenuitem::Create4Menu((Tobj)(w), (Twindow)0, (code), (flags), (len), (name)))
 
 #define Item4Menu(menu, w, flags, len, name)                                                       \
-  Do(Create4Menu, menuitem)((Tobj)(menu), (w), (udat)0, (flags), (len), (name))
+  Smenuitem::Create4Menu((Tobj)(menu), (w), (udat)0, (flags), (len), (name))
 
-#define Item4MenuCommon(Menu) Do(Create4MenuCommon, menuitem)(Menu)
+#define Item4MenuCommon(Menu) Smenuitem::Create4MenuCommon(Menu)
 
 void *OverrideMth(void **where, void *OldMethod, void *NewMethod);
 
-#define OverrideMethod(objtype, Command, ExpectedMethod, NewMethod)                                \
-  OverrideMth((void **)&(Fn_T##objtype->Command), (void *)ExpectedMethod, (void *)NewMethod)
+#define OverrideMethod(objtype, command, ExpectedMethod, NewMethod)                                \
+  OverrideMth((void **)&(Fn_T##objtype->command), (void *)ExpectedMethod, (void *)NewMethod)
 
 #endif /* TWIN_METHODS_H */

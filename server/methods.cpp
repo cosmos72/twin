@@ -137,66 +137,6 @@ static struct SwidgetFn _FnWidget = {
 
 /* Tgadget */
 
-static Tgadget CreateEmptyButton(Tmsgport Owner, dat XWidth, dat YWidth, tcolor BgCol) {
-  Tgadget g = NULL;
-  ldat Size;
-  byte i;
-  dat j, k;
-#define _FULL T_UTF_32_FULL_BLOCK
-#define _LOWER T_UTF_32_LOWER_HALF_BLOCK
-#define _UPPER T_UTF_32_UPPER_HALF_BLOCK
-  void *addr = AllocMem0(sizeof(Sgadget));
-  if (addr) {
-    g = new (addr) Sgadget();
-    g->Fn = (TwidgetFn)Fn_Tgadget;
-    if (!((Twidget)g)
-             ->Init(Owner, ++XWidth, ++YWidth, 0, GADGETFL_USETEXT | GADGETFL_BUTTON, 0, 0,
-                    (tcell)0, Tgadget_class_id)) {
-      g->Delete();
-      return NULL;
-    }
-
-    Size = (ldat)XWidth * YWidth;
-
-    for (i = 0; i < 4; i++)
-      g->USE.T.Text[i] = NULL, g->USE.T.Color[i] = NULL;
-
-    for (i = 0; i < 4; i++)
-      if (!(g->USE.T.Text[i] = (trune *)AllocMem(Size * sizeof(trune))) ||
-          !(g->USE.T.Color[i] = (tcolor *)AllocMem(Size * sizeof(tcolor)))) {
-
-        g->Delete();
-        return NULL;
-      }
-
-    Size = (ldat)--XWidth * --YWidth;
-    BgCol &= TCOL(0, tmaxcol);
-
-    for (i = 0; i < 4; i++) {
-      for (j = k = (dat)0; j < YWidth; j++, k += XWidth + 1) {
-        g->USE.T.Text[i][k + (i & 1 ? 0 : XWidth)] = i & 1 ? ' ' : k ? _FULL : _LOWER;
-        g->USE.T.Color[i][k + (i & 1 ? 0 : XWidth)] = BgCol;
-      }
-      g->USE.T.Text[i][k] = ' ';
-      for (j = (dat)0; j < XWidth; j++)
-        g->USE.T.Text[i][k + 1 + j] = i & 1 ? ' ' : _UPPER;
-#if TW_SIZEOF_TCOLOR == 1
-      memset((void *)(g->USE.T.Color[i] + k), BgCol, XWidth + 1);
-#else
-      for (j = (dat)0; j <= XWidth; j++)
-        g->USE.T.Color[i][k + j] = BgCol;
-#endif
-    }
-
-    g->G_Prev = g->G_Next = (Tgadget)0;
-    g->Group = (Tgroup)0;
-  }
-  return g;
-#undef _FULL
-#undef _UPPER
-#undef _LOWER
-}
-
 byte FillButton(Tgadget g, Twidget Parent, udat Code, dat Left, dat Up, udat Flags,
                 const char *Text, tcolor Color, tcolor ColorDisabled) {
   dat i, j, XWidth, YWidth;
@@ -228,27 +168,14 @@ byte FillButton(Tgadget g, Twidget Parent, udat Code, dat Left, dat Up, udat Fla
   return ttrue;
 }
 
-static Tgadget CreateButton(Twidget Parent, dat XWidth, dat YWidth, const char *Text, uldat Flags,
-                            udat Code, tcolor BgCol, tcolor Col, tcolor ColDisabled, dat Left,
-                            dat Up) {
-  Tgadget g;
-  if (Parent && (g = CreateEmptyButton(Parent->Owner, XWidth, YWidth, BgCol))) {
-    if (g->FillButton(Parent, Code, Left, Up, Flags, Text, Col, ColDisabled))
-      return g;
-    g->Delete();
-    g = NULL;
-  }
-  return g;
-}
-
 static struct SgadgetFn _FnGadget = {
     /* Twidget */
     &_FnObj,                           //
     (Twidget (*)(Tgadget))TtyKbdFocus, //
     /* Tgadget */
-    &_FnWidget, CreateEmptyButton, FillButton, CreateButton,
-    WriteTextsGadget,  /* exported by resize.c */
-    WriteTRunesGadget, /* exported by resize.c */
+    &_FnWidget, FillButton, //
+    WriteTextsGadget,       /* exported by resize.c */
+    WriteTRunesGadget,      /* exported by resize.c */
 };
 
 /* Twindow */
@@ -311,10 +238,6 @@ static struct SwindowFn _FnWindow = {
 
 /* Tscreen */
 
-static Tscreen CreateSimpleScreen(dat NameLen, const char *Name, tcell Bg) {
-  return New(screen)(NameLen, Name, 1, 1, &Bg);
-}
-
 static void BgImageScreen(Tscreen screen, dat BgWidth, dat BgHeight, const tcell *Bg) {
   size_t size;
 
@@ -348,20 +271,6 @@ static Tmenu FindMenuScreen(Tscreen screen) {
   return (Tmenu)0;
 }
 
-static Tscreen FindScreen(dat j) {
-  Tscreen screen;
-  byte VirtScrFound = tfalse;
-
-  screen = All->FirstScreen;
-  while (screen && !(VirtScrFound = (j >= (dat)screen->Up)))
-    screen = screen->Next();
-
-  if (VirtScrFound)
-    return screen;
-
-  return (Tscreen)0;
-}
-
 static void ActivateMenuScreen(Tscreen screen, Tmenuitem item, bool by_mouse) {
 
   if ((All->State & state_any) != state_default)
@@ -385,8 +294,6 @@ static struct SscreenFn _FnScreen = {
     /* Tscreen */
     &_FnWidget,
     FindMenuScreen,
-    FindScreen,
-    CreateSimpleScreen,
     BgImageScreen,
     DrawMenuScreen,
     ActivateMenuScreen,
@@ -443,101 +350,6 @@ static struct SgroupFn _FnGroup = {
 
 /* Trow */
 
-static bool SetTextRow(Trow row, uldat len, const char *Text, bool default_color) {
-  if (EnsureLenRow(row, len, default_color)) {
-    if (len) {
-
-      trune *RowText = row->Text;
-      ldat i = len;
-      while (i-- > 0) {
-        *RowText++ = Tutf_CP437_to_UTF_32[(byte)*Text++];
-      }
-      if (!(row->Flags & ROW_DEFCOL) && !default_color)
-        /* will not work correctly if sizeof(tcolor) != 1 */
-        memset(row->ColText, TCOL(twhite, tblack), len * sizeof(tcolor));
-    }
-    row->Len = len;
-    row->Gap = row->LenGap = 0;
-    return true;
-  }
-  return false;
-}
-
-static bool SetTRuneRow(Trow row, uldat len, const trune *TRune, bool default_color) {
-  if (EnsureLenRow(row, len, default_color)) {
-    if (len) {
-      CopyMem(TRune, row->Text, len * sizeof(trune));
-      if (!(row->Flags & ROW_DEFCOL) && !default_color) {
-        /* memset() will not work correctly if sizeof(tcolor) != 1 */
-        typedef char sizeof_tcolor_is_1[sizeof(tcolor) == 1 ? 1 : -1];
-
-        memset(row->ColText, TCOL(twhite, tblack), len * sizeof(tcolor));
-      }
-    }
-    row->Len = len;
-    row->Gap = row->LenGap = 0;
-    return true;
-  }
-  return false;
-}
-
-/*
- * this is used also for plain rows.
- * be careful to only access fields that even rows have
- */
-static void RaiseMenuItem(Tmenuitem M) {
-  Tobj Parent;
-  Tmenuitem next;
-
-  if (M && (Parent = (Tobj)M->Parent)) {
-    if (IS_MENU(Parent))
-      next = ((Tmenu)Parent)->FirstI;
-    else if (IS_WINDOW(Parent) && W_USE((Twindow)Parent, USEROWS))
-      next = (Tmenuitem)((Twindow)Parent)->USE.R.FirstRow;
-    else
-      return;
-
-    M->Remove();
-    M->Insert(Parent, (Tmenuitem)0, next);
-
-    if (IS_MENU(Parent))
-      SyncMenu((Tmenu)Parent);
-    else
-      DrawAreaWidget((Twidget)Parent);
-  }
-}
-
-/*
- * this is used also for plain rows.
- * be careful to only access fields that even rows have
- */
-static void LowerMenuItem(Tmenuitem M) {
-  Tobj Parent;
-  Tmenuitem prev;
-
-  if (M && (Parent = (Tobj)M->Parent)) {
-    if (IS_MENU(Parent))
-      prev = ((Tmenu)Parent)->LastI;
-    else if (IS_WINDOW(Parent) && W_USE((Twindow)Parent, USEROWS))
-      prev = (Tmenuitem)((Twindow)Parent)->USE.R.LastRow;
-    else
-      return;
-
-    M->Remove();
-    M->Insert(Parent, prev, NULL);
-
-    if (IS_MENU(Parent))
-      SyncMenu((Tmenu)Parent);
-    else if (((TobjEntry)Parent)->Parent)
-      DrawAreaWidget((Twidget)Parent);
-  }
-}
-
-static struct SrowFn _FnRow = {
-    /* Trow */
-    &_FnObj, SetTextRow, SetTRuneRow, (void (*)(Trow))RaiseMenuItem, (void (*)(Trow))LowerMenuItem,
-};
-
 byte FindInfo(Tmenu Menu, dat i) {
   Trow Info;
 
@@ -545,45 +357,6 @@ byte FindInfo(Tmenu Menu, dat i) {
     return ttrue;
   return tfalse;
 }
-
-/* Tmenuitem */
-
-Tmenuitem Create4MenuMenuItem(Tobj Parent, Twindow window, udat Code, byte Flags, ldat Len,
-                              const char *Name) {
-  dat Left, ShortCut;
-
-  if (!Parent)
-    return (Tmenuitem)0;
-
-  if (IS_MENU(Parent) && ((Tmenu)Parent)->LastI)
-    Left = ((Tmenu)Parent)->LastI->Left + ((Tmenu)Parent)->LastI->Len;
-  else
-    Left = (dat)1;
-
-  ShortCut = (dat)0;
-  while (ShortCut < Len && Name[ShortCut] == ' ')
-    ShortCut++;
-
-  if (window)
-    window->Left = Left;
-
-  return New(menuitem)(Parent, window, Code, Flags, Left, Len, ShortCut, Name);
-}
-
-/* this returns non-zero for compatibility */
-static uldat Create4MenuCommonMenuItem(Tmenu Menu) {
-  if (Menu) {
-    Menu->CommonItems = ttrue;
-    SyncMenu(Menu);
-    return (uldat)1;
-  }
-  return (uldat)0;
-}
-
-static struct SmenuitemFn _FnMenuItem = {
-    &_FnObj,       SetTextRow, SetTRuneRow,         RaiseMenuItem,
-    LowerMenuItem, &_FnRow,    Create4MenuMenuItem, Create4MenuCommonMenuItem,
-};
 
 /* Tmenu */
 
@@ -763,7 +536,7 @@ static struct SdisplayFn _FnDisplay = {
     QuitDisplay,
 };
 
-TstructFn FnStruct = {
-    &_FnObj,      &_FnWidget, &_FnGadget,  &_FnWindow, &_FnScreen, &_FnGroup,  &_FnRow,
-    &_FnMenuItem, &_FnMenu,   &_FnMsgPort, &_FnMutex,  &_FnMsg,    &_FnModule, &_FnDisplay,
+SstructFn FnStruct = {
+    &_FnObj,  &_FnWidget,  &_FnGadget, &_FnWindow, &_FnScreen, &_FnGroup,
+    &_FnMenu, &_FnMsgPort, &_FnMutex,  &_FnMsg,    &_FnModule, &_FnDisplay,
 };

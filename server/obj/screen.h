@@ -22,8 +22,6 @@ struct SscreenFn {
   /* Tscreen */
   TwidgetFn Fn_Widget;
   Tmenu (*FindMenu)(Tscreen);
-  Tscreen (*Find)(dat j);
-  Tscreen (*CreateSimple)(dat NameLen, const char *Name, tcell Bg);
   void (*BgImage)(Tscreen, dat BgWidth, dat BgHeight, const tcell *Bg);
   void (*DrawMenu)(Tscreen, dat Xstart, dat Xend);
   void (*ActivateMenu)(Tscreen, Tmenuitem, bool by_mouse);
@@ -38,10 +36,11 @@ struct Sscreen : public Swidget {
   HookData HookMap; /* allow hooks on children Map()/UnMap() inside this Tscreen */
 
 private:
-  Tscreen Init(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
+  Tscreen Init(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg);
 
 public:
-  static Tscreen Create(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
+  static Tscreen Create(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg);
+  static Tscreen CreateSimple(dat namelen, const char *name, tcell bg);
 
   /* Tobj */
   virtual void Delete() OVERRIDE;
@@ -87,12 +86,8 @@ public:
   Tmenu FindMenu() {
     return fn()->FindMenu(this);
   }
-  Tscreen Find(dat j) {
-    return fn()->Find(j);
-  }
-  Tscreen CreateSimple(dat namelen, const char *name, tcell bg) {
-    return fn()->CreateSimple(namelen, name, bg);
-  }
+  static Tscreen Find(dat j);
+
   void BgImage(dat bgwidth, dat bgheight, const tcell *bg) {
     fn()->BgImage(this, bgwidth, bgheight, bg);
   }

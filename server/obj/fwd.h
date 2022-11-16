@@ -39,8 +39,6 @@ typedef struct SgadgetFn *TgadgetFn;
 typedef struct SwindowFn *TwindowFn;
 typedef struct SscreenFn *TscreenFn;
 typedef struct SgroupFn *TgroupFn;
-typedef struct SrowFn *TrowFn;
-typedef struct SmenuitemFn *TmenuitemFn;
 typedef struct SmenuFn *TmenuFn;
 typedef struct SmsgFn *TmsgFn;
 typedef struct SmsgportFn *TmsgportFn;
@@ -48,7 +46,6 @@ typedef struct SmutexFn *TmutexFn;
 typedef struct SmoduleFn *TmoduleFn;
 typedef struct SdisplayFn *TdisplayFn;
 
-typedef struct SstructFn TstructFn;
 typedef struct Ssetup *Tsetup;
 typedef struct Sselection *Tselection;
 typedef struct Sall *Tall;

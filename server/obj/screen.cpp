@@ -41,6 +41,10 @@ Tscreen Sscreen::Create(dat namelen, const char *name, dat bgwidth, dat bgheight
   return screen;
 }
 
+Tscreen Sscreen::CreateSimple(dat namelen, const char *name, tcell bg) {
+  return New(screen)(namelen, name, 1, 1, &bg);
+}
+
 Tscreen Sscreen::Init(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg) {
   size_t size = (size_t)bgwidth * bgheight * sizeof(tcell);
 
@@ -122,4 +126,13 @@ Twidget Sscreen::Focus() {
     UpdateCursor();
   }
   return (Twidget)old;
+}
+
+Tscreen Sscreen::Find(dat j) {
+  for (Tscreen screen = ::All->FirstScreen; screen; screen = screen->Next()) {
+    if (j >= (dat)screen->Up) {
+      return screen;
+    }
+  }
+  return (Tscreen)0;
 }

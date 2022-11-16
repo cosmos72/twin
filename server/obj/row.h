@@ -17,17 +17,8 @@
 
 /* Trow */
 
-struct SrowFn {
-  /* Trow */
-  TobjFn Fn_Obj;
-  bool (*SetText)(Trow self, uldat len, const char *text, bool default_color);
-  bool (*SetTRune)(Trow self, uldat len, const trune *runes, bool default_color);
-  void (*Raise)(Trow self);
-  void (*Lower)(Trow self);
-};
-
 struct Srow : public Sobj {
-  TrowFn Fn;
+  TobjFn Fn;
   Trow Prev, Next;
   Tobj Parent;
 
@@ -54,18 +45,10 @@ public:
 
   void Insert(Twindow w, Trow prev, Trow next);
 
-  bool SetText(uldat len, const char *text, bool default_color) {
-    return Fn->SetText(this, len, text, default_color);
-  }
-  bool SetTRune(uldat len, const trune *runes, bool default_color) {
-    return Fn->SetTRune(this, len, runes, default_color);
-  }
-  void Raise() {
-    Fn->Raise(this);
-  }
-  void Lower() {
-    Fn->Lower(this);
-  }
+  bool SetText(uldat len, const char *text, bool default_color);
+  bool SetTRune(uldat len, const trune *runes, bool default_color);
+  void Raise();
+  void Lower();
 };
 
 /*Flags : */

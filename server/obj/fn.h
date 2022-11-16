@@ -22,8 +22,6 @@ struct SstructFn {
   TwindowFn Window;
   TscreenFn Screen;
   TgroupFn Group;
-  TrowFn Row;
-  TmenuitemFn Menuitem;
   TmenuFn Menu;
   TmsgportFn Msgport;
   TmutexFn Mutex;
@@ -33,15 +31,13 @@ struct SstructFn {
   TobjFn All;
 };
 
-extern TstructFn FnStruct;
+extern SstructFn FnStruct;
 #define Fn_Tobj (FnStruct.Obj)
 #define Fn_Twidget (FnStruct.Widget)
 #define Fn_Tgadget (FnStruct.Gadget)
 #define Fn_Twindow (FnStruct.Window)
 #define Fn_Tscreen (FnStruct.Screen)
 #define Fn_Tgroup (FnStruct.Group)
-#define Fn_Trow (FnStruct.Row)
-#define Fn_Tmenuitem (FnStruct.Menuitem)
 #define Fn_Tmenu (FnStruct.Menu)
 #define Fn_Tmsgport (FnStruct.Msgport)
 #define Fn_Tmutex (FnStruct.Mutex)

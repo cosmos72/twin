@@ -30,7 +30,7 @@ Tmenuitem Smenuitem::Create(Tobj parent, Twindow w, udat code, byte flags, dat l
     void *addr = AllocMem0(sizeof(Smenuitem));
     if (addr) {
       item = new (addr) Smenuitem();
-      item->Fn = (TrowFn)Fn_Tmenuitem;
+      item->Fn = Fn_Tobj;
       if (!item->Init(parent, w, code, flags, left, len, shortcut, name)) {
         item->Delete();
         item = NULL;
@@ -120,4 +120,35 @@ void Smenuitem::Remove() {
       Srow::Remove();
     }
   }
+}
+
+Tmenuitem Smenuitem::Create4Menu(Tobj parent, Twindow window, udat code, byte flags, ldat len,
+                                 const char *name) {
+
+  if (!parent) {
+    return (Tmenuitem)0;
+  }
+  dat left;
+  if (IS_MENU(parent) && ((Tmenu)parent)->LastI)
+    left = ((Tmenu)parent)->LastI->Left + ((Tmenu)parent)->LastI->Len;
+  else
+    left = (dat)1;
+
+  dat shortcut = 0;
+  while (shortcut < len && name[shortcut] == ' ')
+    shortcut++;
+
+  if (window) {
+    window->Left = left;
+  }
+  return New(menuitem)(parent, window, code, flags, left, len, shortcut, name);
+}
+
+uldat Smenuitem::Create4MenuCommon(Tmenu menu) {
+  if (!menu) {
+    return 0;
+  }
+  menu->CommonItems = ttrue;
+  SyncMenu(menu);
+  return 1;
 }
