@@ -18,12 +18,6 @@
 #include "obj/obj.h"
 #include "stl_types.h"
 
-struct SdisplayFn {
-  /* Tdisplay */
-  byte (*DoInit)(Tdisplay);
-  void (*DoQuit)(Tdisplay);
-};
-
 struct mouse_state {
   dat x, y;
   dat delta_x, delta_y;
@@ -31,7 +25,7 @@ struct mouse_state {
 };
 
 struct Sdisplay : public Sobj {
-  TdisplayFn Fn;
+  TobjFn Fn;
   Tdisplay Prev, Next; /* in the same All */
   Tall All;
 
@@ -163,12 +157,8 @@ struct Sdisplay : public Sobj {
   virtual void Remove() OVERRIDE;
 
   /* Tdisplay */
-  byte DoInit() {
-    return Fn->DoInit(this);
-  }
-  void DoQuit() {
-    Fn->DoQuit(this);
-  }
+  bool DoInit(); // defined in hw_multi.cpp
+  void DoQuit(); // defined in hw_multi.cpp
 };
 
 /* DisplayHW->FlagsHW */

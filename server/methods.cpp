@@ -240,55 +240,6 @@ static struct SscreenFn _FnScreen = {
 
 /* Tgroup */
 
-static void InsertGadgetGroup(Tgroup group, Tgadget g) {
-  if (g && !g->Group && !g->G_Prev && !g->G_Next) {
-    if ((g->G_Next = group->FirstG))
-      group->FirstG->G_Prev = g;
-    else
-      group->LastG = g;
-
-    group->FirstG = g;
-    g->Group = group;
-  }
-}
-
-static void RemoveGadgetGroup(Tgroup group, Tgadget g) {
-  if (g && g->Group == group) {
-    if (g->G_Prev)
-      g->G_Prev->G_Next = g->G_Next;
-    else if (group->FirstG == g)
-      group->FirstG = g->G_Next;
-
-    if (g->G_Next)
-      g->G_Next->G_Prev = g->G_Prev;
-    else if (group->LastG == g)
-      group->LastG = g->G_Prev;
-
-    g->G_Prev = g->G_Next = (Tgadget)0;
-    g->Group = (Tgroup)0;
-  }
-}
-
-static Tgadget GetSelectedGadget(Tgroup group) {
-  return group->SelectG;
-}
-
-static void SetSelectedGadget(Tgroup group, Tgadget g) {
-  if (!g || (g && g->Group == group)) {
-    if (group->SelectG)
-      UnPressGadget(group->SelectG, ttrue);
-    if (g)
-      PressGadget(g);
-  }
-}
-
-static struct SgroupFn _FnGroup = {
-    InsertGadgetGroup,
-    RemoveGadgetGroup,
-    GetSelectedGadget,
-    SetSelectedGadget,
-};
-
 /* Trow */
 
 byte FindInfo(Tmenu Menu, dat i) {
@@ -300,152 +251,9 @@ byte FindInfo(Tmenu Menu, dat i) {
 }
 
 /* Tmenu */
-
-static Trow SetInfoMenu(Tmenu Menu, byte Flags, ldat Len, const char *Text, const tcolor *ColText) {
-  Trow row;
-  if ((row = New(row)(0, Flags))) {
-    if ((!Text || (row->Text = CloneStr2TRune(Text, Len))) &&
-        (!ColText || (row->ColText = (tcolor *)CloneMem(ColText, Len * sizeof(tcolor))))) {
-      row->Len = row->MaxLen = Len;
-      if (Menu->Info)
-        Menu->Info->Delete();
-      return Menu->Info = row;
-    }
-    row->Delete();
-    row = (Trow)0;
-  }
-  return row;
-}
-
-static Tmenuitem FindItem(Tmenu Menu, dat i) {
-  Tmenuitem item = (Tmenuitem)0;
-
-  if (Menu) {
-    for (item = Menu->FirstI; item; item = item->Next()) {
-      if (i >= item->Left && (uldat)(i - item->Left) < item->Len)
-        break;
-    }
-
-    if (!item && Menu->CommonItems && All->CommonMenu) {
-
-      item = Menu->LastI;
-
-      if (!item || (i >= item->Left && (uldat)(i - item->Left) >= item->Len)) {
-        /* search in All->CommonMenu */
-        if (item)
-          i -= item->Left + (dat)item->Len;
-        for (item = All->CommonMenu->FirstI; item; item = item->Next()) {
-          if (i >= item->Left && (uldat)(i - item->Left) < item->Len)
-            break;
-        }
-      } else
-        item = (Tmenuitem)0;
-    }
-  }
-  return item;
-}
-
-static Tmenuitem GetSelectedItem(Tmenu Menu) {
-  if (Menu) {
-    if (Menu->SelectI)
-      return Menu->SelectI;
-    if (Menu->CommonItems && All->CommonMenu)
-      return All->CommonMenu->SelectI;
-  }
-  return (Tmenuitem)0;
-}
-
-static Tmenuitem RecursiveGetSelectedItem(Tmenu Menu, dat *depth) {
-  Tmenuitem I = NULL, _I = Menu->GetSelectedItem();
-  Twindow w = (Twindow)0, FW = (Twindow)All->FirstScreen->FocusW();
-  dat d = -1;
-
-  while (_I && IS_MENUITEM(_I)) {
-    I = _I;
-    d++;
-    if (w == FW)
-      break;
-    if ((w = I->Window) && w->Parent)
-      _I = (Tmenuitem)w->FindRow(w->CurY);
-    else
-      break;
-  }
-  if (depth)
-    *depth = d > 0 ? d : 0;
-  return I;
-}
-
-static void SetSelectedItem(Tmenu Menu, Tmenuitem item) {
-  if (Menu) {
-    if (item) {
-      if (item->Parent == (Tobj)Menu) {
-        Menu->SelectI = item;
-        if (Menu->CommonItems && All->CommonMenu)
-          All->CommonMenu->SelectI = (Tmenuitem)0;
-      } else if (Menu->CommonItems && item->Parent == (Tobj)All->CommonMenu) {
-        Menu->SelectI = (Tmenuitem)0;
-        All->CommonMenu->SelectI = item;
-      }
-      /* else item is not a meaningful one! */
-    } else {
-      Menu->SelectI = item;
-      if (Menu->CommonItems && All->CommonMenu)
-        All->CommonMenu->SelectI = item;
-    }
-
-    All->FirstScreen->DrawMenu(0, TW_MAXDAT);
-  }
-}
-
-static struct SmenuFn _FnMenu = {
-    SetInfoMenu, FindItem, GetSelectedItem, RecursiveGetSelectedItem, SetSelectedItem,
-};
-
 /* Tmsg */
-
 /* Tmsgport */
-
 /* Tmutex */
-
-static void OwnMutex(Tmutex Mutex, Tmsgport Parent) {
-  if (!Mutex->Owner && Parent) {
-
-    if ((Mutex->O_Prev = Parent->LastMutex))
-      Parent->LastMutex->O_Next = Mutex;
-    else
-      Parent->FirstMutex = Mutex;
-
-    Mutex->O_Next = (Tmutex)0;
-    Parent->LastMutex = Mutex;
-
-    Mutex->Owner = Parent;
-  }
-}
-
-static void DisOwnMutex(Tmutex Mutex) {
-  Tmsgport Parent;
-  if ((Parent = Mutex->Owner)) {
-    if (Mutex->O_Prev)
-      Mutex->O_Prev->O_Next = Mutex->O_Next;
-    else if (Parent->FirstMutex == Mutex)
-      Parent->FirstMutex = Mutex->O_Next;
-
-    if (Mutex->O_Next)
-      Mutex->O_Next->O_Prev = Mutex->O_Prev;
-    else if (Parent->LastMutex == Mutex)
-      Parent->LastMutex = Mutex->O_Prev;
-
-    Mutex->O_Prev = Mutex->O_Next = (Tmutex)0;
-
-    Mutex->Owner = (Tmsgport)0;
-  }
-}
-
-static struct SmutexFn _FnMutex = {
-    /* Tmutex */
-    OwnMutex,
-    DisOwnMutex,
-};
 
 /* Tmodule */
 
@@ -457,13 +265,6 @@ static struct SmoduleFn _FnModule = {
 
 /* Tdisplay */
 
-static struct SdisplayFn _FnDisplay = {
-    /* Tdisplay */
-    InitDisplay,
-    QuitDisplay,
-};
-
 SstructFn FnStruct = {
-    &_FnObj,   &_FnWidget, &_FnGadget, &_FnWindow, &_FnScreen,
-    &_FnGroup, &_FnMenu,   &_FnMutex,  &_FnModule, &_FnDisplay,
+    &_FnObj, &_FnWidget, &_FnGadget, &_FnWindow, &_FnScreen, &_FnModule,
 };

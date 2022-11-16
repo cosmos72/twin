@@ -21,11 +21,7 @@ struct SstructFn {
   TgadgetFn Gadget;
   TwindowFn Window;
   TscreenFn Screen;
-  TgroupFn Group;
-  TmenuFn Menu;
-  TmutexFn Mutex;
   TmoduleFn Module;
-  TdisplayFn Display;
 };
 
 extern SstructFn FnStruct;
@@ -34,10 +30,6 @@ extern SstructFn FnStruct;
 #define Fn_Tgadget (FnStruct.Gadget)
 #define Fn_Twindow (FnStruct.Window)
 #define Fn_Tscreen (FnStruct.Screen)
-#define Fn_Tgroup (FnStruct.Group)
-#define Fn_Tmenu (FnStruct.Menu)
-#define Fn_Tmutex (FnStruct.Mutex)
 #define Fn_Tmodule (FnStruct.Module)
-#define Fn_Tdisplay (FnStruct.Display)
 
 #endif /* TWIN_FN_H */

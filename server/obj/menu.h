@@ -15,17 +15,8 @@
 
 #include "obj/obj.h"
 
-struct SmenuFn {
-  /* Tmenu */
-  Trow (*SetInfo)(Tmenu, byte Flags, ldat Len, const char *Text, const tcolor *ColText);
-  Tmenuitem (*FindItem)(Tmenu, dat i);
-  Tmenuitem (*GetSelectedItem)(Tmenu);
-  Tmenuitem (*RecursiveGetSelectedItem)(Tmenu, dat *depth);
-  void (*SetSelectedItem)(Tmenu, Tmenuitem);
-};
-
 struct Smenu : public Sobj {
-  TmenuFn Fn;
+  TobjFn Fn;
   Tmenu Prev, Next; /* in the same Tmsgport */
   Tmsgport MsgPort;
   /* Tmenu */
@@ -47,21 +38,11 @@ struct Smenu : public Sobj {
   virtual void Remove() OVERRIDE;
 
   /* Tmenu */
-  Trow SetInfo(byte flags, ldat len, const char *text, const tcolor *coltext) {
-    return Fn->SetInfo(this, flags, len, text, coltext);
-  }
-  Tmenuitem FindItem(dat i) {
-    return Fn->FindItem(this, i);
-  }
-  Tmenuitem GetSelectedItem() {
-    return Fn->GetSelectedItem(this);
-  }
-  Tmenuitem RecursiveGetSelectedItem(dat *depth) {
-    return Fn->RecursiveGetSelectedItem(this, depth);
-  }
-  void SetSelectedItem(Tmenuitem item) {
-    Fn->SetSelectedItem(this, item);
-  }
+  Trow SetInfo(byte flags, ldat len, const char *text, const tcolor *coltext);
+  Tmenuitem FindItem(dat i) const;
+  Tmenuitem GetSelectedItem() const;
+  Tmenuitem RecursiveGetSelectedItem(dat *depth) const;
+  void SetSelectedItem(Tmenuitem item);
 };
 
 #endif /* TWIN_MENU_H */

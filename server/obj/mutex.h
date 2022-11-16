@@ -15,14 +15,8 @@
 
 #include "obj/obj.h"
 
-struct SmutexFn {
-  /* Tmutex */
-  void (*Own)(Tmutex, Tmsgport);
-  void (*DisOwn)(Tmutex);
-};
-
 struct Smutex : public Sobj {
-  TmutexFn Fn;
+  TobjFn Fn;
   Tmutex Prev, Next; /* in the same All */
   Tall All;
   /* Tmutex */
@@ -44,12 +38,8 @@ public:
   /* Tmutex */
   void Insert(Tall a, Tmutex prev, Tmutex next);
 
-  void Own(Tmsgport owner) {
-    Fn->Own(this, owner);
-  }
-  void DisOwn() {
-    Fn->DisOwn(this);
-  }
+  void Own(Tmsgport owner);
+  void DisOwn();
 };
 
 #define PERM_NONE ((byte)0)

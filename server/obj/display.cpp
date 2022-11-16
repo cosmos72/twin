@@ -25,7 +25,7 @@ Tdisplay Sdisplay::Create(Chars name) {
   void *addr = AllocMem0(sizeof(Sdisplay));
   if (addr) {
     d = new (addr) Sdisplay();
-    d->Fn = Fn_Tdisplay;
+    d->Fn = Fn_Tobj;
     if (!d->Init(name)) {
       d->Delete();
       d = NULL;

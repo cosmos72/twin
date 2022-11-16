@@ -18,16 +18,8 @@
 
 /* Tgroup -- group of Tgadget:s */
 
-struct SgroupFn {
-  /* Tgroup */
-  void (*InsertGadget)(Tgroup, Tgadget);
-  void (*RemoveGadget)(Tgroup, Tgadget);
-  Tgadget (*GetSelectedGadget)(Tgroup);
-  void (*SetSelectedGadget)(Tgroup, Tgadget);
-};
-
 struct Sgroup : public Sobj {
-  TgroupFn Fn;
+  TobjFn Fn;
   Tgroup Prev, Next; /* list in the same Tmsgport */
   Tmsgport MsgPort;
   /* Tgroup */
@@ -46,18 +38,10 @@ public:
   virtual void Remove() OVERRIDE;
 
   /* group */
-  void InsertGadget(Tgadget g) {
-    Fn->InsertGadget(this, g);
-  }
-  void RemoveGadget(Tgadget g) {
-    Fn->RemoveGadget(this, g);
-  }
-  Tgadget GetSelectedGadget() {
-    return Fn->GetSelectedGadget(this);
-  }
-  void SetSelectedGadget(Tgadget g) {
-    Fn->SetSelectedGadget(this, g);
-  }
+  void InsertGadget(Tgadget g);
+  void RemoveGadget(Tgadget g);
+  Tgadget GetSelectedGadget() const;
+  void SetSelectedGadget(Tgadget g);
 };
 
 #endif /* TWIN_GROUP_H */

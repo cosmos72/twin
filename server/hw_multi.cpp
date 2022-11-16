@@ -175,10 +175,10 @@ static bool module_InitHW(Chars arg) {
   return false;
 }
 
-static byte set_hw_name(Tdisplay D_HW, const Chars name) {
+static byte set_hw_name(Tdisplay display, const Chars name) {
   String alloc_name;
-  if (D_HW && alloc_name.format(name)) {
-    D_HW->Name.swap(alloc_name);
+  if (display && alloc_name.format(name)) {
+    display->Name.swap(alloc_name);
   }
   return ttrue;
 }
@@ -192,19 +192,20 @@ static void warn_NoHW(const char *arg, uldat len) {
 }
 
 /*
- * InitDisplay runs HW specific InitXXX() functions, starting from best setup
+ * Sdisplay::DoInit runs HW specific InitXXX() functions, starting from best setup
  * and falling back in case some of them fails.
  */
-byte InitDisplay(Tdisplay D_HW) {
-  Chars arg = D_HW->Name;
+bool Sdisplay::DoInit() {
+  Tdisplay display = this;
+  Chars arg = display->Name;
   byte success;
 
   SaveHW;
-  SetHW(D_HW);
+  SetHW(display);
 
-  D_HW->DisplayIsCTTY = D_HW->NeedHW = D_HW->FlagsHW = tfalse;
+  display->DisplayIsCTTY = display->NeedHW = display->FlagsHW = tfalse;
 
-#define AUTOTRY4(hw_name) (module_InitHW(Chars(hw_name)) && set_hw_name(D_HW, Chars(hw_name)))
+#define AUTOTRY4(hw_name) (module_InitHW(Chars(hw_name)) && set_hw_name(display, Chars(hw_name)))
 
   if (!arg) {
     success =
@@ -218,16 +219,16 @@ byte InitDisplay(Tdisplay D_HW) {
   if (success) {
     udat tried;
 
-    D_HW->Quitted = tfalse;
+    display->Quitted = tfalse;
 
     /* configure correctly the new HW */
     for (tried = 0; tried < HW_CONFIGURE_MAX; tried++) {
       if (!(ConfigureHWDefault[tried]))
-        D_HW->Configure(tried, tfalse, ConfigureHWValue[tried]);
+        display->Configure(tried, tfalse, ConfigureHWValue[tried]);
     }
 
-    if (!DisplayHWCTTY && D_HW->DisplayIsCTTY)
-      DisplayHWCTTY = D_HW;
+    if (!DisplayHWCTTY && display->DisplayIsCTTY)
+      DisplayHWCTTY = display;
     All->HookDisplay();
     UpdateFlagsHW(); /* this garbles HW... not a problem here */
   } else {
@@ -239,28 +240,29 @@ byte InitDisplay(Tdisplay D_HW) {
   return success;
 }
 
-void QuitDisplay(Tdisplay D_HW) {
-  Tmsgport MsgPort;
+void Sdisplay::DoQuit() {
+  Tdisplay display = this;
+  Tmsgport msgport;
   uldat slot;
   SaveHW;
 
-  if (D_HW) {
-    if (D_HW->QuitHW)
-      HW = D_HW, D_HW->QuitHW();
+  if (display) {
+    if (display->QuitHW)
+      HW = display, display->QuitHW();
 
-    D_HW->Quitted = ttrue;
+    display->Quitted = ttrue;
 
-    if ((slot = D_HW->AttachSlot) != NOSLOT) {
+    if ((slot = display->AttachSlot) != NOSLOT) {
       /* avoid KillSlot <-> DeleteDisplayHW infinite recursion */
-      if ((MsgPort = RemoteGetMsgPort(slot)))
-        MsgPort->AttachHW = (Tdisplay)0;
+      if ((msgport = RemoteGetMsgPort(slot)))
+        msgport->AttachHW = (Tdisplay)0;
       Ext(Remote, KillSlot)(slot);
     }
 
-    if (D_HW->Module) {
-      D_HW->Module->Used--;
-      D_HW->Module->Delete();
-      D_HW->Module = (Tmodule)0;
+    if (display->Module) {
+      display->Module->Used--;
+      display->Module->Delete();
+      display->Module = (Tmodule)0;
     }
     UpdateFlagsHW(); /* this garbles HW... not a problem here */
   }
@@ -290,33 +292,33 @@ static byte IsValidHW(Chars carg) {
 }
 
 Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
-  Tdisplay D_HW = NULL;
+  Tdisplay display = NULL;
 
   if (arg && !arg.starts_with(Chars("-hw="))) {
     log(ERROR) << "twin: specified `" << arg
                << "' is not a known option.\n"
                   "      try `twin --help' for usage summary.\n";
-    return D_HW;
+    return display;
   }
 
   if (All->ExclusiveDisplay) {
     log(ERROR) << "twin: exclusive display in use, permission to display denied!\n";
-    return D_HW;
+    return display;
   }
 
-  if (IsValidHW(arg) && (D_HW = New(display)(arg))) {
-    D_HW->AttachSlot = slot;
-    if (D_HW->DoInit()) {
+  if (IsValidHW(arg) && (display = New(display)(arg))) {
+    display->AttachSlot = slot;
+    if (display->DoInit()) {
 
       if (flags & TW_ATTACH_HW_EXCLUSIVE) {
         /* started exclusive display, kill all others */
         Tdisplay s_HW, n_HW;
 
-        All->ExclusiveDisplay = D_HW;
+        All->ExclusiveDisplay = display;
 
         for (s_HW = All->FirstDisplay; s_HW; s_HW = n_HW) {
           n_HW = s_HW->Next;
-          if (s_HW != D_HW) {
+          if (s_HW != display) {
             s_HW->Delete();
           }
         }
@@ -325,16 +327,16 @@ Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
       if (ResizeDisplay()) {
         QueuedDrawArea2FullScreen = true;
       }
-      return D_HW;
+      return display;
     }
     /* failed, clean up without calling RunNoHW() or KillSlot() */
-    D_HW->Quitted = ttrue;
-    D_HW->AttachSlot = NOSLOT;
-    D_HW->QuitHW = NoOp;
-    D_HW->Delete();
-    D_HW = NULL;
+    display->Quitted = ttrue;
+    display->AttachSlot = NOSLOT;
+    display->QuitHW = NoOp;
+    display->Delete();
+    display = NULL;
   }
-  return D_HW;
+  return display;
 }
 
 bool DetachDisplayHW(Chars arg, byte flags) {
@@ -484,10 +486,10 @@ void PanicHW(void) {
   }
 }
 
-void ResizeDisplayPrefer(Tdisplay D_HW) {
+void ResizeDisplayPrefer(Tdisplay display) {
   SaveHW;
-  SetHW(D_HW);
-  D_HW->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
+  SetHW(display);
+  display->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
   NeedHW |= NEEDResizeDisplay;
   RestoreHW;
 }

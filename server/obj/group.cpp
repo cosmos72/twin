@@ -11,7 +11,7 @@
  */
 
 #include "alloc.h"   // AllocMem0()
-#include "fn.h"      // Fn_Tgroup
+#include "fn.h"      // Fn_Tobj
 #include "methods.h" // InsertLast()
 #include "obj/group.h"
 #include "obj/msgport.h"
@@ -25,7 +25,7 @@ Tgroup Sgroup::Create(Tmsgport owner) {
     void *addr = AllocMem0(sizeof(Sgroup));
     if (addr) {
       g = new (addr) Sgroup();
-      g->Fn = Fn_Tgroup;
+      g->Fn = Fn_Tobj;
       if (!g->Init(owner)) {
         g->Delete();
         g = NULL;
@@ -64,4 +64,49 @@ void Sgroup::Delete() {
     RemoveGadget(FirstG);
   }
   Sobj::Delete();
+}
+
+void Sgroup::InsertGadget(Tgadget g) {
+  Tgroup group = this;
+  if (g && !g->Group && !g->G_Prev && !g->G_Next) {
+    if ((g->G_Next = group->FirstG))
+      group->FirstG->G_Prev = g;
+    else
+      group->LastG = g;
+
+    group->FirstG = g;
+    g->Group = group;
+  }
+}
+
+void Sgroup::RemoveGadget(Tgadget g) {
+  Tgroup group = this;
+  if (g && g->Group == group) {
+    if (g->G_Prev)
+      g->G_Prev->G_Next = g->G_Next;
+    else if (group->FirstG == g)
+      group->FirstG = g->G_Next;
+
+    if (g->G_Next)
+      g->G_Next->G_Prev = g->G_Prev;
+    else if (group->LastG == g)
+      group->LastG = g->G_Prev;
+
+    g->G_Prev = g->G_Next = (Tgadget)0;
+    g->Group = (Tgroup)0;
+  }
+}
+
+Tgadget Sgroup::GetSelectedGadget() const {
+  return SelectG;
+}
+
+void Sgroup::SetSelectedGadget(Tgadget g) {
+  Tgroup group = this;
+  if (!g || (g && g->Group == group)) {
+    if (group->SelectG)
+      UnPressGadget(group->SelectG, ttrue);
+    if (g)
+      PressGadget(g);
+  }
 }

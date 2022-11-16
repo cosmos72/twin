@@ -11,7 +11,7 @@
  */
 
 #include "alloc.h"   // AllocMem0()
-#include "fn.h"      // Fn_Tmenu
+#include "fn.h"      // Fn_Tobj
 #include "hw.h"      // QueuedDrawArea2FullScreen
 #include "methods.h" // InsertLast()
 #include "twin.h"    // IS_SCREEN(), IS_WINDOW()
@@ -28,7 +28,7 @@ Tmenu Smenu::Create(Tmsgport owner, tcolor colitem, tcolor colselect, tcolor col
     void *addr = AllocMem0(sizeof(Smenu));
     if (addr) {
       m = new (addr) Smenu();
-      m->Fn = Fn_Tmenu;
+      m->Fn = Fn_Tobj;
       if (!m->Init(owner, colitem, colselect, coldisabled, colselectdisabled, colshtcut,
                    colselshtcut, flagdefcolinfo)) {
         m->Delete();
@@ -118,5 +118,107 @@ void Smenu::Remove() {
   if (MsgPort) {
     RemoveGeneric((TobjEntry)this, (TobjList)&MsgPort->FirstMenu, NULL);
     MsgPort = (Tmsgport)0;
+  }
+}
+
+Trow Smenu::SetInfo(byte flags, ldat len, const char *text, const tcolor *coltext) {
+  Tmenu menu = this;
+  Trow row = New(row)(0, flags);
+  if (row) {
+    if ((!text || (row->Text = CloneStr2TRune(text, len))) &&
+        (!coltext || (row->ColText = (tcolor *)CloneMem(coltext, len * sizeof(tcolor))))) {
+      row->Len = row->MaxLen = len;
+      if (menu->Info)
+        menu->Info->Delete();
+      return menu->Info = row;
+    }
+    row->Delete();
+    row = (Trow)0;
+  }
+  return row;
+}
+
+Tmenuitem Smenu::FindItem(dat i) const {
+  const Smenu *menu = this;
+  Tmenuitem item = (Tmenuitem)0;
+
+  if (menu) {
+    for (item = menu->FirstI; item; item = item->Next()) {
+      if (i >= item->Left && (uldat)(i - item->Left) < item->Len)
+        break;
+    }
+
+    if (!item && menu->CommonItems && All->CommonMenu) {
+
+      item = menu->LastI;
+
+      if (!item || (i >= item->Left && (uldat)(i - item->Left) >= item->Len)) {
+        /* search in All->CommonMenu */
+        if (item)
+          i -= item->Left + (dat)item->Len;
+        for (item = All->CommonMenu->FirstI; item; item = item->Next()) {
+          if (i >= item->Left && (uldat)(i - item->Left) < item->Len)
+            break;
+        }
+      } else
+        item = (Tmenuitem)0;
+    }
+  }
+  return item;
+}
+
+Tmenuitem Smenu::GetSelectedItem() const {
+  const Smenu *menu = this;
+  if (menu) {
+    if (menu->SelectI)
+      return menu->SelectI;
+    if (menu->CommonItems && All->CommonMenu)
+      return All->CommonMenu->SelectI;
+  }
+  return (Tmenuitem)0;
+}
+
+Tmenuitem Smenu::RecursiveGetSelectedItem(dat *depth) const {
+  const Smenu *menu = this;
+  Tmenuitem item = NULL, prev = menu->GetSelectedItem();
+  Twindow w = (Twindow)0;
+  Twidget focus_w = All->FirstScreen->FocusW();
+  dat d = -1;
+
+  while (prev && IS_MENUITEM(prev)) {
+    item = prev;
+    d++;
+    if (w == focus_w)
+      break;
+    if ((w = item->Window) && w->Parent)
+      prev = (Tmenuitem)w->FindRow(w->CurY);
+    else
+      break;
+  }
+  if (depth)
+    *depth = d > 0 ? d : 0;
+  return item;
+}
+
+void Smenu::SetSelectedItem(Tmenuitem item) {
+  Tmenu menu = this;
+  if (menu) {
+    if (item) {
+      if (item->Parent == (Tobj)menu) {
+        menu->SelectI = item;
+        if (menu->CommonItems && All->CommonMenu)
+          All->CommonMenu->SelectI = (Tmenuitem)0;
+      } else if (menu->CommonItems && item->Parent == (Tobj)All->CommonMenu) {
+        menu->SelectI = (Tmenuitem)0;
+        All->CommonMenu->SelectI = item;
+      }
+      /* else item is not a meaningful one! */
+    } else {
+      menu->SelectI = item;
+      if (menu->CommonItems && All->CommonMenu)
+        All->CommonMenu->SelectI = item;
+    }
+
+    All->FirstScreen->DrawMenu(0, TW_MAXDAT);
   }
 }

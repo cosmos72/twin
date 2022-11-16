@@ -46,7 +46,7 @@ Tmutex Smutex::Create(Tmsgport owner, byte namelen, const char *name, byte perm)
       void *addr = AllocMem0(sizeof(Smutex));
       if (addr) {
         x = new (addr) Smutex();
-        x->Fn = Fn_Tmutex;
+        x->Fn = Fn_Tobj;
         if (!x->Init(owner, namelen, name, perm)) {
           x->Delete();
           x = NULL;
@@ -86,5 +86,38 @@ void Smutex::Remove() {
   if (All) {
     RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstMutex, NULL);
     All = (Tall)0;
+  }
+}
+
+void Smutex::Own(Tmsgport parent) {
+  if (parent && !Owner) {
+    if ((O_Prev = parent->LastMutex))
+      parent->LastMutex->O_Next = this;
+    else
+      parent->FirstMutex = this;
+
+    O_Next = (Tmutex)0;
+    parent->LastMutex = this;
+
+    Owner = parent;
+  }
+}
+
+void Smutex::DisOwn() {
+  Tmsgport parent = Owner;
+  if (parent) {
+    if (O_Prev)
+      O_Prev->O_Next = O_Next;
+    else if (parent->FirstMutex == this)
+      parent->FirstMutex = O_Next;
+
+    if (O_Next)
+      O_Next->O_Prev = O_Prev;
+    else if (parent->LastMutex == this)
+      parent->LastMutex = O_Prev;
+
+    O_Prev = O_Next = (Tmutex)0;
+
+    Owner = (Tmsgport)0;
   }
 }

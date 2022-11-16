@@ -325,13 +325,8 @@ static bool module_InitHW(Chars arg) {
 /// Sdisplay methods
 
 static Tdisplay CreateDisplayHW(Chars name);
-static byte InitDisplay(Tdisplay);
-static void QuitDisplay(Tdisplay);
 
-static struct SdisplayFn _FnDisplay = {
-    InitDisplay,
-    QuitDisplay,
-};
+static struct SobjFn _FnDisplay = {};
 
 Tdisplay Sdisplay::Init(Chars name) {
   Fn = &_FnDisplay;
@@ -376,15 +371,18 @@ static void UpdateFlagsHW(void) NOTHROW {
  * InitDisplay runs HW specific InitXXX() functions, starting from best setup
  * and falling back in case some of them fails.
  */
-static byte InitDisplay(Tdisplay D_HW) {
-  Chars arg = D_HW->Name;
+static bool InitDisplay(Tdisplay display) {
+  if (!display) {
+    return false;
+  }
+  Chars arg = display->Name;
   uldat tried = 0;
-  byte success;
+  bool success;
 
   SaveHW;
-  SetHW(D_HW);
+  SetHW(display);
 
-  D_HW->DisplayIsCTTY = D_HW->NeedHW = D_HW->FlagsHW = tfalse;
+  display->DisplayIsCTTY = display->NeedHW = display->FlagsHW = tfalse;
 
   if (arg.starts_with(Chars("-hw="))) {
     arg = arg.view(4, arg.size());
@@ -393,33 +391,41 @@ static byte InitDisplay(Tdisplay D_HW) {
   }
 #define TRY4(hw_name) (tried++, module_InitHW(Chars(hw_name)))
 
-  if (!arg) {
+  if (arg) {
+    success = module_InitHW(display->Name);
+  } else {
     success = TRY4("-hw=xft") || TRY4("-hw=X11") || TRY4("-hw=twin") ||
 #if 0 /* cannot use `--hw=display' inside twdisplay! */
         TRY4("-hw=display") ||
 #endif
               TRY4("-hw=tty");
-  } else {
-    success = module_InitHW(D_HW->Name);
   }
   if (success) {
-    D_HW->Quitted = tfalse;
-    if (!DisplayHWCTTY && D_HW->DisplayIsCTTY)
-      DisplayHWCTTY = D_HW;
+    display->Quitted = tfalse;
+    if (!DisplayHWCTTY && display->DisplayIsCTTY)
+      DisplayHWCTTY = display;
     UpdateFlagsHW();
   } else
-    warn_NoHW(D_HW->Name.size(), HW->Name.data(), tried);
+    warn_NoHW(display->Name.size(), HW->Name.data(), tried);
 
   RestoreHW;
 
   return success;
 }
 
-static void QuitDisplay(Tdisplay D_HW) {
-  if (D_HW && D_HW->QuitHW) {
-    HW = D_HW;
-    D_HW->QuitHW();
+static void QuitDisplay(Tdisplay display) {
+  if (display && display->QuitHW) {
+    HW = display;
+    display->QuitHW();
   }
+}
+
+bool Sdisplay::DoInit() {
+  return InitDisplay(this);
+}
+
+void Sdisplay::DoQuit() {
+  QuitDisplay(this);
 }
 
 static Tdisplay CreateDisplayHW(Chars name) {
@@ -455,7 +461,7 @@ static Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
   }
   if (IsValidHW(arg) && CreateDisplayHW(arg)) {
     HW->AttachSlot = slot;
-    if (InitDisplay(HW))
+    if (HW->DoInit())
       return HW;
   }
   return NULL;
@@ -561,10 +567,10 @@ void FlushHW(void) {
   ValidOldVideo = ttrue;
 }
 
-void ResizeDisplayPrefer(Tdisplay D_HW) {
+void ResizeDisplayPrefer(Tdisplay display) {
   SaveHW;
-  SetHW(D_HW);
-  D_HW->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
+  SetHW(display);
+  display->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
   NeedHW |= NEEDResizeDisplay;
   RestoreHW;
 }
