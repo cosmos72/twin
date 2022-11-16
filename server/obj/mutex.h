@@ -17,7 +17,6 @@
 
 struct SmutexFn {
   /* Tmutex */
-  TobjFn Fn_Obj;
   void (*Own)(Tmutex, Tmsgport);
   void (*DisOwn)(Tmutex);
 };

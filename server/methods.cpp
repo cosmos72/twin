@@ -131,7 +131,6 @@ Twidget FakeKbdFocus(Twidget w) {
 }
 
 static struct SwidgetFn _FnWidget = {
-    &_FnObj,
     TtyKbdFocus,
 };
 
@@ -170,8 +169,7 @@ byte FillButton(Tgadget g, Twidget Parent, udat Code, dat Left, dat Up, udat Fla
 
 static struct SgadgetFn _FnGadget = {
     /* Twidget */
-    &_FnObj,                           //
-    (Twidget (*)(Tgadget))TtyKbdFocus, //
+    (Twidget(*)(Tgadget))TtyKbdFocus, //
     /* Tgadget */
     &_FnWidget, FillButton, //
     WriteTextsGadget,       /* exported by resize.c */
@@ -224,10 +222,8 @@ tpos FakeFindBorderWindow(Twindow w, dat u, dat v, byte Border, tcell *PtrAttr) 
 
 static struct SwindowFn _FnWindow = {
     /* Twidget */
-    &_FnObj,
     (Twidget(*)(Twindow))TtyKbdFocus,
     /* Twindow */
-    &_FnWidget,
     &Swindow::Create4Menu,
     FakeWriteCharset,
     FakeWriteUtf8,
@@ -239,11 +235,7 @@ static struct SwindowFn _FnWindow = {
 /* Tscreen */
 
 static struct SscreenFn _FnScreen = {
-    /* Twidget */
-    &_FnObj,
     (Twidget(*)(Tscreen))NoOp, /* KbdFocus */
-    /* Tscreen */
-    &_FnWidget,
 };
 
 /* Tgroup */
@@ -291,7 +283,10 @@ static void SetSelectedGadget(Tgroup group, Tgadget g) {
 }
 
 static struct SgroupFn _FnGroup = {
-    &_FnObj, InsertGadgetGroup, RemoveGadgetGroup, GetSelectedGadget, SetSelectedGadget,
+    InsertGadgetGroup,
+    RemoveGadgetGroup,
+    GetSelectedGadget,
+    SetSelectedGadget,
 };
 
 /* Trow */
@@ -403,23 +398,12 @@ static void SetSelectedItem(Tmenu Menu, Tmenuitem item) {
 }
 
 static struct SmenuFn _FnMenu = {
-    /* Tmenu */
-    &_FnObj, SetInfoMenu, FindItem, GetSelectedItem, RecursiveGetSelectedItem, SetSelectedItem,
+    SetInfoMenu, FindItem, GetSelectedItem, RecursiveGetSelectedItem, SetSelectedItem,
 };
 
 /* Tmsg */
 
-static struct SmsgFn _FnMsg = {
-    /* Tmsg */
-    &_FnObj,
-};
-
 /* Tmsgport */
-
-static struct SmsgportFn _FnMsgPort = {
-    /* Tmsgport */
-    &_FnObj,
-};
 
 /* Tmutex */
 
@@ -459,7 +443,6 @@ static void DisOwnMutex(Tmutex Mutex) {
 
 static struct SmutexFn _FnMutex = {
     /* Tmutex */
-    &_FnObj,
     OwnMutex,
     DisOwnMutex,
 };
@@ -468,7 +451,6 @@ static struct SmutexFn _FnMutex = {
 
 static struct SmoduleFn _FnModule = {
     /* Tmodule */
-    &_FnObj,
     DlOpen,
     DlClose,
 };
@@ -477,12 +459,11 @@ static struct SmoduleFn _FnModule = {
 
 static struct SdisplayFn _FnDisplay = {
     /* Tdisplay */
-    &_FnObj,
     InitDisplay,
     QuitDisplay,
 };
 
 SstructFn FnStruct = {
-    &_FnObj,  &_FnWidget,  &_FnGadget, &_FnWindow, &_FnScreen, &_FnGroup,
-    &_FnMenu, &_FnMsgPort, &_FnMutex,  &_FnMsg,    &_FnModule, &_FnDisplay,
+    &_FnObj,   &_FnWidget, &_FnGadget, &_FnWindow, &_FnScreen,
+    &_FnGroup, &_FnMenu,   &_FnMutex,  &_FnModule, &_FnDisplay,
 };

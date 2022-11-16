@@ -19,13 +19,8 @@
 
 #include <Tw/datatypes.h>
 
-struct SmsgFn {
-  /* Tmsg */
-  TobjFn Fn_Obj;
-};
-
 struct Smsg : public Sobj {
-  TmsgFn Fn;
+  TobjFn Fn;
   Tmsg Prev, Next;
   Tmsgport MsgPort;
   /* Tmsg */

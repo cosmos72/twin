@@ -28,7 +28,7 @@ Tmsgport Smsgport::Create(byte namelen, const char *name, tany pausesec, tany pa
     void *addr = AllocMem0(sizeof(Smsgport));
     if (addr) {
       p = new (addr) Smsgport();
-      p->Fn = Fn_Tmsgport;
+      p->Fn = Fn_Tobj;
       if (!p->Init(namelen, name, pausesec, pausefraction, wakeup, handler)) {
         p->Delete();
         p = NULL;

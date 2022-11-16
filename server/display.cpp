@@ -230,7 +230,6 @@ void Sobj::Delete() {
 /// Smodule methods
 
 static struct SmoduleFn _FnModule = {
-    NULL,                    /* Fn_Obj       */
     (bool (*)(Tmodule))NoOp, /* DlOpen       */
     (void (*)(Tmodule))NoOp, /* DlClose      */
 };
@@ -330,7 +329,6 @@ static byte InitDisplay(Tdisplay);
 static void QuitDisplay(Tdisplay);
 
 static struct SdisplayFn _FnDisplay = {
-    NULL, /* Fn_Obj */
     InitDisplay,
     QuitDisplay,
 };

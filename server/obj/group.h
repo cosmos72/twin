@@ -20,7 +20,6 @@
 
 struct SgroupFn {
   /* Tgroup */
-  TobjFn Fn_Obj; /* backup of overloaded functions */
   void (*InsertGadget)(Tgroup, Tgadget);
   void (*RemoveGadget)(Tgroup, Tgadget);
   Tgadget (*GetSelectedGadget)(Tgroup);

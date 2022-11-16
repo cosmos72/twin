@@ -23,12 +23,9 @@ struct SstructFn {
   TscreenFn Screen;
   TgroupFn Group;
   TmenuFn Menu;
-  TmsgportFn Msgport;
   TmutexFn Mutex;
-  TmsgFn Msg;
   TmoduleFn Module;
   TdisplayFn Display;
-  TobjFn All;
 };
 
 extern SstructFn FnStruct;
@@ -39,9 +36,7 @@ extern SstructFn FnStruct;
 #define Fn_Tscreen (FnStruct.Screen)
 #define Fn_Tgroup (FnStruct.Group)
 #define Fn_Tmenu (FnStruct.Menu)
-#define Fn_Tmsgport (FnStruct.Msgport)
 #define Fn_Tmutex (FnStruct.Mutex)
-#define Fn_Tmsg (FnStruct.Msg)
 #define Fn_Tmodule (FnStruct.Module)
 #define Fn_Tdisplay (FnStruct.Display)
 

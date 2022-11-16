@@ -54,10 +54,8 @@ struct Sremotedata {
 
 struct SwindowFn {
   /* Twidget */
-  TobjFn Fn_Obj;
   Twidget (*KbdFocus)(Twindow);
   /* Twindow */
-  TwidgetFn Fn_Widget;
   Twindow (*Create4Menu)(Tmenu menu);
   bool (*TtyWriteCharset)(Twindow, uldat len, const char *charset_bytes);
   bool (*TtyWriteUtf8)(Twindow, uldat len, const char *utf8_bytes);
@@ -111,9 +109,6 @@ public:
   /* Twindow */
   const TwindowFn fn() const {
     return (TwindowFn)Fn;
-  }
-  const TwidgetFn widget_fn() const {
-    return fn()->Fn_Widget;
   }
 
   bool TtyWriteCharset(uldat len, const char *charset_bytes) {

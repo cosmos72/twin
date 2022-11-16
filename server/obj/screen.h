@@ -17,10 +17,7 @@
 
 struct SscreenFn {
   /* Twidget */
-  TobjFn Fn_Obj;
   Twidget (*KbdFocus)(Tscreen);
-  /* Tscreen */
-  TwidgetFn Fn_Widget;
 };
 
 struct Sscreen : public Swidget {
@@ -52,9 +49,6 @@ public:
 
   const TscreenFn fn() const {
     return (TscreenFn)Fn;
-  }
-  const TwidgetFn widget_fn() const {
-    return ((TscreenFn)Fn)->Fn_Widget;
   }
 
   Twidget FocusW() const {

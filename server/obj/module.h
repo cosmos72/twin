@@ -23,7 +23,6 @@
 
 struct SmoduleFn {
   /* Tmodule */
-  TobjFn Fn_Obj;
   bool (*DlOpen)(Tmodule);
   void (*DlClose)(Tmodule);
 };

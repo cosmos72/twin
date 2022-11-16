@@ -15,15 +15,11 @@
 
 #include "obj/fwd.h"
 #include "obj/window.h" // struct Sremotedata
+
 #include <Tw/datatypes.h>
 
-struct SmsgportFn {
-  /* Tmsgport */
-  TobjFn Fn_Obj;
-};
-
 struct Smsgport : public Sobj {
-  TmsgportFn Fn;
+  TobjFn Fn;
   Tmsgport Prev, Next; /* list in the same All */
   Tall All;
   /* Tmsgport */

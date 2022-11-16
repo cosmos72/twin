@@ -15,13 +15,6 @@
 
 #include "obj/row.h"
 
-struct SmenuitemFn {
-  /* Trow */
-  TobjFn Fn_Obj;
-  /* Tmenuitem */
-  /* for compatibility this must return a non-zero value. */
-};
-
 struct Smenuitem : public Srow {
   /* Tmenuitem */
   Twindow Window;

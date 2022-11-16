@@ -102,7 +102,6 @@ struct Sdraw {
 
 struct SwidgetFn {
   /* Twidget */
-  TobjFn Fn_Obj; /* backup of overloaded functions */
   Twidget (*KbdFocus)(Twidget);
 };
 

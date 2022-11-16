@@ -17,7 +17,6 @@
 
 struct SgadgetFn {
   /* Twidget */
-  TobjFn Fn_Obj;
   Twidget (*KbdFocus)(Tgadget);
   /* Tgadget */
   TwidgetFn Fn_Widget;
@@ -59,9 +58,6 @@ struct Sgadget : public Swidget {
   /* Tgadget */
   const TgadgetFn fn() const {
     return (TgadgetFn)Fn;
-  }
-  const TwidgetFn widget_fn() const {
-    return fn()->Fn_Widget;
   }
 
   byte FillButton(Twidget parent, udat code, dat left, dat up, udat flags, const char *text,

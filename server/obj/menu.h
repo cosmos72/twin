@@ -17,7 +17,6 @@
 
 struct SmenuFn {
   /* Tmenu */
-  TobjFn Fn_Obj;
   Trow (*SetInfo)(Tmenu, byte Flags, ldat Len, const char *Text, const tcolor *ColText);
   Tmenuitem (*FindItem)(Tmenu, dat i);
   Tmenuitem (*GetSelectedItem)(Tmenu);

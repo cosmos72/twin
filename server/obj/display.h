@@ -20,7 +20,6 @@
 
 struct SdisplayFn {
   /* Tdisplay */
-  TobjFn Fn_Obj;
   byte (*DoInit)(Tdisplay);
   void (*DoQuit)(Tdisplay);
 };
