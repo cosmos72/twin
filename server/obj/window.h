@@ -56,7 +56,6 @@ struct SwindowFn {
   /* Twidget */
   Twidget (*KbdFocus)(Twindow);
   /* Twindow */
-  Twindow (*Create4Menu)(Tmenu menu);
   bool (*TtyWriteCharset)(Twindow, uldat len, const char *charset_bytes);
   bool (*TtyWriteUtf8)(Twindow, uldat len, const char *utf8_bytes);
   bool (*TtyWriteTRune)(Twindow, uldat len, const trune *runes);
@@ -93,7 +92,7 @@ public:
   static Twindow Create(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle,
                         Tmenu menu, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
                         dat xwidth, dat ywidth, dat scrollbacklines);
-  static Twindow Create4Menu(Tmenu);
+  static Twindow Create4Menu(Tmenu menu);
 
   /* Tobj */
   virtual void Delete() OVERRIDE;

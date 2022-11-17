@@ -15,11 +15,6 @@
 
 #include "obj/widget.h"
 
-struct SscreenFn {
-  /* Twidget */
-  Twidget (*KbdFocus)(Tscreen);
-};
-
 struct Sscreen : public Swidget {
   dat NameLen;
   char *Name;
@@ -46,10 +41,6 @@ public:
 
   /* Tscreen */
   void Insert(Tall parent, Tscreen prev, Tscreen next);
-
-  const TscreenFn fn() const {
-    return (TscreenFn)Fn;
-  }
 
   Twidget FocusW() const {
     return SelectW;

@@ -18,9 +18,9 @@
 struct SstructFn {
   TobjFn Obj;
   TwidgetFn Widget;
-  TgadgetFn Gadget;
+  TwidgetFn Gadget;
   TwindowFn Window;
-  TscreenFn Screen;
+  TwidgetFn Screen;
   TmoduleFn Module;
 };
 

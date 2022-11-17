@@ -70,10 +70,6 @@ void RestackRows(Tobj O, uldat N, const Trow *arrayR);
 void PressGadget(Tgadget G);
 void UnPressGadget(Tgadget G, byte maySendMsgIfNotToggle);
 void SendMsgGadget(Tgadget G);
-void WriteTextsGadget(Tgadget G, byte bitmap, dat XWidth, dat YWidth, const char *Text, dat Left,
-                      dat Up);
-void WriteTRunesGadget(Tgadget G, byte bitmap, dat XWidth, dat YWidth, const trune *Text, dat Left,
-                       dat Up);
 
 void SyncMenu(Tmenu Menu);
 

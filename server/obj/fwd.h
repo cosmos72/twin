@@ -35,9 +35,7 @@ typedef struct Sdisplay *Tdisplay;
 
 typedef struct SobjFn *TobjFn;
 typedef struct SwidgetFn *TwidgetFn;
-typedef struct SgadgetFn *TgadgetFn;
 typedef struct SwindowFn *TwindowFn;
-typedef struct SscreenFn *TscreenFn;
 typedef struct SmsgFn *TmsgFn;
 typedef struct SmsgportFn *TmsgportFn;
 typedef struct SmutexFn *TmutexFn;

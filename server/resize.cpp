@@ -1916,143 +1916,139 @@ void UnPressGadget(Tgadget G, byte maySendMsgIfNotToggle) {
 
 /* Left < 0 means right-align leaving (-Left-1) margin */
 /* Up   < 0 means down-align  leaving (-Up-1)   margin */
-void WriteTextsGadget(Tgadget G, byte bitmap, dat TW, dat TH, const char *charset_bytes, dat L,
-                      dat U) {
-  dat GW = G->XWidth, GH = G->YWidth;
-  dat TL = 0, TU = 0, w, H;
-  dat _W;
-  trune *GT;
-  const char *TT;
-  byte i;
+void Sgadget::WriteTexts(byte bitmap, dat t_width, dat t_height, const char *charset_bytes,
+                         dat left, dat up) {
+  Tgadget g = this;
+  dat g_width = g->XWidth, g_height = g->YWidth;
+  dat t_left = 0, t_up = 0, w, h;
 
-  if (G->Flags & GADGETFL_BUTTON) {
-    GW--;
-    GH--;
+  if (g->Flags & GADGETFL_BUTTON) {
+    g_width--;
+    g_height--;
   }
 
-  if (!G_USE(G, USETEXT) || L >= GW || U >= GH)
+  if (!G_USE(g, USETEXT) || left >= g_width || up >= g_height)
     return;
 
-  if (L < 0) {
-    L += GW - TW + 1;
-    if (L < 0) {
-      TL = -L;
-      L = 0;
+  if (left < 0) {
+    left += g_width - t_width + 1;
+    if (left < 0) {
+      t_left = -left;
+      left = 0;
     }
   }
-  if (U < 0) {
-    U += GH - TH + 1;
-    if (U < 0) {
-      TU = -U;
-      U = 0;
+  if (up < 0) {
+    up += g_height - t_height + 1;
+    if (up < 0) {
+      t_up = -up;
+      up = 0;
     }
   }
-  w = Min2(TW - TL, GW - L);
-  H = Min2(TH - TU, GH - U);
+  w = Min2(t_width - t_left, g_width - left);
+  h = Min2(t_height - t_up, g_height - up);
 
-  if (G->Flags & GADGETFL_BUTTON) {
-    GW++;
-    GH++;
+  if (w <= 0) {
+    return;
+  } else if (g->Flags & GADGETFL_BUTTON) {
+    g_width++;
+    g_height++;
   }
-
-  if (w > 0) {
-    for (i = 0; i < 4; i++, bitmap >>= 1) {
-      if ((bitmap & 1) && G->USE.T.Text[i]) {
-        GT = G->USE.T.Text[i] + L + U * GW;
-        if (charset_bytes) {
-          TT = charset_bytes + TL + TU * TW;
-          /* update the specified part, do not touch the rest */
-          while (H-- > 0) {
-            _W = w;
-            while (_W-- > 0) {
-              *GT++ = Tutf_CP437_to_UTF_32[(byte)(*TT++)];
-            }
-            GT += GW - w;
-            TT += TW - w;
+  for (byte i = 0; i < 4; i++, bitmap >>= 1) {
+    if ((bitmap & 1) && g->USE.T.Text[i]) {
+      trune *g_runes = g->USE.T.Text[i] + left + up * g_width;
+      if (charset_bytes) {
+        const char *text = charset_bytes + t_left + t_up * t_width;
+        /* update the specified part, do not touch the rest */
+        while (h-- > 0) {
+          dat temp_w = w;
+          while (temp_w-- > 0) {
+            *g_runes++ = Tutf_CP437_to_UTF_32[(byte)(*text++)];
           }
-        } else {
-          /* clear the specified part of Tgadget contents */
-          while (H-- > 0) {
-            _W = w;
-            while (_W-- > 0)
-              *GT++ = ' ';
-            GT += GW - w;
-          }
+          g_runes += g_width - w;
+          text += t_width - w;
+        }
+      } else {
+        /* clear the specified part of Tgadget contents */
+        while (h-- > 0) {
+          dat temp_w = w;
+          while (temp_w-- > 0)
+            *g_runes++ = ' ';
+          g_runes += g_width - w;
         }
       }
     }
-    DrawAreaWidget((Twidget)G);
   }
+  DrawAreaWidget(g);
 }
 
 /* Left < 0 means right-align leaving (-Left-1) margin */
 /* Up   < 0 means down-align  leaving (-Up-1)   margin */
-void WriteTRunesGadget(Tgadget G, byte bitmap, dat TW, dat TH, const trune *TRune, dat L, dat U) {
-  dat GW = G->XWidth, GH = G->YWidth;
-  dat TL = 0, TU = 0, w, H;
-  dat _W;
-  trune *GT;
-  const trune *TT;
+void Sgadget::WriteTRunes(byte bitmap, dat t_width, dat t_height, //
+                          const trune *runes, dat left, dat up) {
+  Tgadget g = this;
+  dat g_width = g->XWidth, g_height = g->YWidth;
+  dat t_left = 0, t_up = 0, w, h;
+
   byte i;
 
-  if (G->Flags & GADGETFL_BUTTON) {
-    GW--;
-    GH--;
+  if (g->Flags & GADGETFL_BUTTON) {
+    g_width--;
+    g_height--;
   }
 
-  if (!G_USE(G, USETEXT) || L >= GW || U >= GH)
+  if (!G_USE(g, USETEXT) || left >= g_width || up >= g_height)
     return;
 
-  if (L < 0) {
-    L += GW - TW + 1;
-    if (L < 0) {
-      TL = -L;
-      L = 0;
+  if (left < 0) {
+    left += g_width - t_width + 1;
+    if (left < 0) {
+      t_left = -left;
+      left = 0;
     }
   }
-  if (U < 0) {
-    U += GH - TH + 1;
-    if (U < 0) {
-      TU = -U;
-      U = 0;
+  if (up < 0) {
+    up += g_height - t_height + 1;
+    if (up < 0) {
+      t_up = -up;
+      up = 0;
     }
   }
-  w = Min2(TW - TL, GW - L);
-  H = Min2(TH - TU, GH - U);
+  w = Min2(t_width - t_left, g_width - left);
+  h = Min2(t_height - t_up, g_height - up);
 
-  if (G->Flags & GADGETFL_BUTTON) {
-    GW++;
-    GH++;
+  if (w <= 0) {
+    return;
+  } else if (g->Flags & GADGETFL_BUTTON) {
+    g_width++;
+    g_height++;
   }
 
-  if (w > 0) {
-    for (i = 0; i < 4; i++, bitmap >>= 1) {
-      if ((bitmap & 1) && G->USE.T.Text[i]) {
-        GT = G->USE.T.Text[i] + L + U * GW;
-        if (TRune) {
-          TT = TRune + TL + TU * TW;
-          /* update the specified part, do not touch the rest */
-          while (H-- > 0) {
-            _W = w;
-            while (_W-- > 0) {
-              *GT++ = Tutf_CP437_to_UTF_32[*TT++];
-            }
-            GT += GW - w;
-            TT += TW - w;
+  for (i = 0; i < 4; i++, bitmap >>= 1) {
+    if ((bitmap & 1) && g->USE.T.Text[i]) {
+      trune *g_runes = g->USE.T.Text[i] + left + up * g_width;
+      if (runes) {
+        const trune *runes_ptr = runes + t_left + t_up * t_width;
+        /* update the specified part, do not touch the rest */
+        while (h-- > 0) {
+          dat temp_w = w;
+          while (temp_w-- > 0) {
+            *g_runes++ = *runes_ptr++;
           }
-        } else {
-          /* clear the specified part of Tgadget contents */
-          while (H-- > 0) {
-            _W = w;
-            while (_W-- > 0)
-              *GT++ = ' ';
-            GT += GW - w;
-          }
+          g_runes += g_width - w;
+          runes_ptr += t_width - w;
+        }
+      } else {
+        /* clear the specified part of Tgadget contents */
+        while (h-- > 0) {
+          dat temp_w = w;
+          while (temp_w-- > 0)
+            *g_runes++ = ' ';
+          g_runes += g_width - w;
         }
       }
     }
-    DrawAreaWidget((Twidget)G);
   }
+  DrawAreaWidget(g);
 }
 
 void SyncMenu(Tmenu Menu) {

@@ -136,44 +136,8 @@ static struct SwidgetFn _FnWidget = {
 
 /* Tgadget */
 
-byte FillButton(Tgadget g, Twidget Parent, udat Code, dat Left, dat Up, udat Flags,
-                const char *Text, tcolor Color, tcolor ColorDisabled) {
-  dat i, j, XWidth, YWidth;
-  const char *T;
-
-  if (Code >= COD_RESERVED)
-    return tfalse;
-
-  g->Code = Code;
-  g->Left = Left;
-  g->Up = Up;
-  g->Flags = (Flags & ~GADGETFL_USEANY) | GADGETFL_USETEXT | GADGETFL_BUTTON;
-  XWidth = g->XWidth;
-  YWidth = g->YWidth;
-
-  T = Text;
-  for (j = (dat)0; j < (YWidth - (dat)1) * XWidth; j += XWidth) {
-    for (i = (dat)0; i < XWidth - (dat)1; i++) {
-      g->USE.T.Text[0][i + j] = g->USE.T.Text[1][i + j + 1] = g->USE.T.Text[2][i + j] =
-          g->USE.T.Text[3][i + j + 1] = Tutf_CP437_to_UTF_32[(byte) * (T++)];
-
-      g->USE.T.Color[0][i + j] = g->USE.T.Color[1][i + j + 1] = Color;
-      g->USE.T.Color[2][i + j] = g->USE.T.Color[3][i + j + 1] = ColorDisabled;
-    }
-  }
-  if (Parent)
-    g->Map(Parent);
-
-  return ttrue;
-}
-
-static struct SgadgetFn _FnGadget = {
-    /* Twidget */
-    (Twidget(*)(Tgadget))TtyKbdFocus,
-    /* Tgadget */
-    FillButton,        /**/
-    WriteTextsGadget,  /* exported by resize.c */
-    WriteTRunesGadget, /* exported by resize.c */
+static struct SwidgetFn _FnGadget = {
+    TtyKbdFocus,
 };
 
 /* Twindow */
@@ -224,7 +188,6 @@ static struct SwindowFn _FnWindow = {
     /* Twidget */
     (Twidget(*)(Twindow))TtyKbdFocus,
     /* Twindow */
-    &Swindow::Create4Menu,
     FakeWriteCharset,
     FakeWriteUtf8,
     FakeWriteTRune,
@@ -234,8 +197,8 @@ static struct SwindowFn _FnWindow = {
 
 /* Tscreen */
 
-static struct SscreenFn _FnScreen = {
-    (Twidget(*)(Tscreen))NoOp, /* KbdFocus */
+static struct SwidgetFn _FnScreen = {
+    (Twidget(*)(Twidget))NoOp, /* KbdFocus */
 };
 
 /* Tgroup */

@@ -15,18 +15,6 @@
 
 #include "obj/widget.h"
 
-struct SgadgetFn {
-  /* Twidget */
-  Twidget (*KbdFocus)(Tgadget);
-  /* Tgadget */
-  byte (*FillButton)(Tgadget g, Twidget Parent, udat Code, dat Left, dat Up, udat Flags,
-                     const char *Text, tcolor Color, tcolor ColorDisabled);
-  void (*WriteTexts)(Tgadget g, byte bitmap, dat xwidth, dat ywidth, const char *Text, dat Left,
-                     dat Up);
-  void (*WriteTRunes)(Tgadget g, byte bitmap, dat xwidth, dat ywidth, const trune *TRune, dat Left,
-                      dat Up);
-};
-
 struct Sgadget : public Swidget {
   /* Tgadget */
   tcolor ColText, ColSelect, ColDisabled, ColSelectDisabled;
@@ -55,20 +43,12 @@ struct Sgadget : public Swidget {
   virtual void DrawSelf(Sdraw *d) OVERRIDE; // defined in draw.cpp
 
   /* Tgadget */
-  const TgadgetFn fn() const {
-    return (TgadgetFn)Fn;
-  }
-
-  byte FillButton(Twidget parent, udat code, dat left, dat up, udat flags, const char *text,
-                  tcolor color, tcolor colordisabled) {
-    return fn()->FillButton(this, parent, code, left, up, flags, text, color, colordisabled);
-  }
-  void WriteTexts(byte bitmap, dat xwidth, dat ywidth, const char *text, dat left, dat up) {
-    fn()->WriteTexts(this, bitmap, xwidth, ywidth, text, left, up);
-  }
-  void WriteTRunes(byte bitmap, dat xwidth, dat ywidth, const trune *runes, dat left, dat up) {
-    fn()->WriteTRunes(this, bitmap, xwidth, ywidth, runes, left, up);
-  }
+  bool FillButton(Twidget parent, udat code, dat left, dat up, udat flags, const char *text,
+                  tcolor color, tcolor colordisabled);
+  // defined in resize.cpp
+  void WriteTexts(byte bitmap, dat xwidth, dat ywidth, const char *text, dat left, dat up);
+  // defined in resize.cpp
+  void WriteTRunes(byte bitmap, dat xwidth, dat ywidth, const trune *runes, dat left, dat up);
 };
 
 /* Gadget->Attr */

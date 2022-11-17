@@ -24,6 +24,7 @@
 #include <Tw/Tw_defs.h>     // tmaxcol
 #include <Tw/Twstat_defs.h> // TWS_gadget_*
 #include <Tutf/utf_32.h>    // T_UTF_32_*_BLOCK
+#include <Tutf/Tutf.h>      // Tutf_CP437_to_UTF_32
 
 #include <new>
 
@@ -209,4 +210,31 @@ void Sgadget::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
     Swidget::ChangeField(field, clear_mask, xor_mask);
     break;
   }
+}
+
+bool Sgadget::FillButton(Twidget parent, udat code, dat left, dat up, udat flags, const char *text,
+                         tcolor color, tcolor colordisabled) {
+
+  if (code >= COD_RESERVED) {
+    return false;
+  }
+  Code = code;
+  Left = left;
+  Up = up;
+  Flags = (flags & ~GADGETFL_USEANY) | GADGETFL_USETEXT | GADGETFL_BUTTON;
+
+  dat xwidth = XWidth, ywidth = YWidth;
+  for (dat j = 0; j < (ywidth - 1) * xwidth; j += xwidth) {
+    for (dat i = 0; i < xwidth - 1; i++) {
+      USE.T.Text[0][i + j] = USE.T.Text[1][i + j + 1] = USE.T.Text[2][i + j] =
+          USE.T.Text[3][i + j + 1] = Tutf_CP437_to_UTF_32[(byte) * (text++)];
+
+      USE.T.Color[0][i + j] = USE.T.Color[1][i + j + 1] = color;
+      USE.T.Color[2][i + j] = USE.T.Color[3][i + j + 1] = colordisabled;
+    }
+  }
+  if (parent) {
+    Map(parent);
+  }
+  return true;
 }
