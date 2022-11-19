@@ -19,7 +19,7 @@
 #include <Tw/datasizes.h> /* TW_IS_LITTLE_ENDIAN */
 
 #ifdef TW_HAVE_STRING_H
-#include <cstring> /* memcpy() */
+#include <string.h> /* memcpy() */
 #endif
 
 #if TW_IS_LITTLE_ENDIAN
@@ -252,7 +252,7 @@ void MD5Transform(md5_uint32 buf[4], md5_uint32 TW_CONST in[16]) {
 #ifdef TW_DEBUG_MD5_MAIN
 
 #include <stdio.h>
-#include <cstring>
+#include <string.h>
 
 int main(int argc, TW_CONST char *argv[]) {
   unsigned char digest[16];
