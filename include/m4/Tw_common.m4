@@ -84,7 +84,7 @@ DECL(byte,FindFunctionV, va_list vargs)
 
 
 
-EASY(dropPrivileges, `#define Tw_DropPrivileges() (setegid(getgid()), seteuid(getuid()))')
+EASY(DropPrivileges, `#define Tw_DropPrivileges() (setegid(getgid()), seteuid(getuid()))')
 EASY(GetPrivileges, `#define Tw_GetPrivileges() seteuid(0)')
 
 

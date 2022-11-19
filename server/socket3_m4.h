@@ -46,8 +46,6 @@
 
 
 
-
-
   case order_FindFunction:
     switch (n) {
       case 2: L = a[1]_any; break;
