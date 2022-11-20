@@ -186,7 +186,7 @@ tpos FakeFindBorderWindow(Twindow w, dat u, dat v, byte Border, tcell *PtrAttr) 
 
 static struct SwindowFn _FnWindow = {
     /* Twidget */
-    (Twidget(*)(Twindow))TtyKbdFocus,
+    TtyKbdFocus,
     /* Twindow */
     FakeWriteCharset,
     FakeWriteUtf8,

@@ -54,7 +54,7 @@ struct Sremotedata {
 
 struct SwindowFn {
   /* Twidget */
-  Twidget (*KbdFocus)(Twindow);
+  Twidget (*KbdFocus)(Twidget);
   /* Twindow */
   bool (*TtyWriteCharset)(Twindow, uldat len, const char *charset_bytes);
   bool (*TtyWriteUtf8)(Twindow, uldat len, const char *utf8_bytes);

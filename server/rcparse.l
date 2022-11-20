@@ -94,7 +94,7 @@ Read         return READ;
 Restart      return RESTART;
 Resize       return RESIZE;
 ResizeScreen return RESIZESCREEN;
-screen       return SCREEN;
+Screen       return SCREEN;
 Scroll       return SCROLL;
 SendToScreen return SENDTOSCREEN;
 Stderr       return STDERR;
