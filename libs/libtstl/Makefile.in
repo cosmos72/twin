@@ -135,7 +135,8 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libtstl_la_LIBADD =
+am__DEPENDENCIES_1 =
+libtstl_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_libtstl_la_OBJECTS = alloc.lo chars.lo err.lo fmt.lo string.lo \
 	to_chars.lo utf8.lo
 libtstl_la_OBJECTS = $(am_libtstl_la_OBJECTS)
@@ -383,6 +384,7 @@ top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libtstl.la
 libtstl_la_SOURCES = alloc.cpp chars.cpp err.cpp fmt.cpp string.cpp to_chars.cpp utf8.cpp
 libtstl_la_LDFLAGS = -version-info 2:0:1 -no-undefined
+libtstl_la_LIBADD = $(LIBDL)
 AM_CPPFLAGS = -I$(top_srcdir)/include
 all: all-am
 
