@@ -18,7 +18,7 @@
 
 void *AllocMem(size_t len) NOTHROW {
   void *ret = NULL;
-  if (len && !(ret = malloc(len)))
+  if (len && !(ret = malloc(len))) /* malloc(0) is not portable */
     Error(NOMEMORY);
   return ret;
 }
@@ -26,7 +26,7 @@ void *AllocMem(size_t len) NOTHROW {
 void *ReAllocMem(void *addr, size_t len) NOTHROW {
   void *ret;
   if (addr) {
-    if (len) {
+    if (len) { /* realloc(addr, 0) is not portable */
       ret = realloc(addr, len);
       /* cannot use AllocMem() + CopyMem() here: we don't know mem current size */
     } else {

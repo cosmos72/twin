@@ -956,15 +956,15 @@ static void reset_tty(byte do_clear) {
 }
 
 static byte grow_newtitle(void) {
-  ldat _Max;
-  char *_Name;
+  ldat maxlen;
+  char *name;
   if (newMax < TW_MAXDAT) {
-    _Max = ((ldat)newMax + (newMax >> 1) + 3) | All->SetUp->MinAllocSize;
-    if (_Max > TW_MAXDAT)
-      _Max = TW_MAXDAT;
-    if ((_Name = (char *)ReAllocMem(newName, _Max))) {
-      newName = _Name;
-      newMax = _Max;
+    maxlen = ((ldat)newMax + (newMax >> 1) + 3) | All->SetUp->MinAllocSize;
+    if (maxlen > TW_MAXDAT)
+      maxlen = TW_MAXDAT;
+    if ((name = (char *)ReAllocMem(newName, maxlen))) {
+      newName = name;
+      newMax = maxlen;
       return ttrue;
     }
   }
@@ -980,17 +980,20 @@ static byte insert_newtitle(byte c) {
 }
 
 static void set_newtitle(void) {
-  dat _Len;
-  char *_Name;
+  char *name;
+  dat len;
 
+  if (!newName) {
+    return;
+  }
   /* try to shrink... */
-  if (!(_Name = (char *)ReAllocMem(newName, _Len = newLen)))
-    _Name = newName;
-
+  if (!(name = (char *)ReAllocMem(newName, len = newLen))) {
+    name = newName;
+  }
   newLen = newMax = 0;
   newName = NULL;
 
-  Win->SetTitle(_Len, _Name);
+  Win->SetTitle(len, name);
 }
 
 static void clear_newtitle(void) {
@@ -1013,8 +1016,10 @@ static inline void write_ctrl(byte c) {
       BeepHW();
       return;
     }
-    if (DState == ESxterm_title)
+    if (DState == ESxterm_title) {
+      /* \x07 is an (un)official termination for ESC]0; which starts window title change */
       set_newtitle();
+    }
     DState = ESnormal;
     return;
   case 8:
@@ -1120,6 +1125,9 @@ static inline void write_ctrl(byte c) {
       break;
     case '=': /* Appl. keypad */
       *Flags |= TTY_KBDAPPLIC | TTY_NEEDREFOCUS;
+      break;
+    case '\\': /* ESC\ is the official termination for ESC]0; which starts window title change */
+      set_newtitle();
       break;
     }
     break;
@@ -1424,7 +1432,7 @@ static inline void write_ctrl(byte c) {
     break;
   }
 
-  if (newName)
+  if (newName && c != 27)
     clear_newtitle();
 
   DState = ESnormal;
