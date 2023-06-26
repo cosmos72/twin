@@ -19,6 +19,8 @@ Currently, twin is tested on Linux (i386, x86_64, ARM, ARM64, PowerPC, Alpha, Sp
 on Mac OS X (x86_64) and on FreeBSD (i386, x86_64).
 I had yet no chance to seriously test it on other systems.
 
+The following screenshot shows an example of twin with various clients:
+![screenshot_x11.png](docs/screenshot_x11.png)
 --------------------------------------------------------------
 
 Documentation
