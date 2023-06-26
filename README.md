@@ -21,9 +21,12 @@ I had yet no chance to seriously test it on other systems.
 
 The following screenshot shows an example of twin with various clients:
 ![screenshot_x11.png](docs/screenshot_x11.png)
---------------------------------------------------------------
+
 
 Documentation
+--------------------------------------------------------------
+
+
 
 [Tutorial](docs/Tutorial)
 	A quite complete tour of twin features: the user interface,
