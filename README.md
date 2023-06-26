@@ -1,8 +1,8 @@
 --------------------------------------------------------------
-Twin - a Textmode WINdow environment, by Massimiliano Ghilardi
+Twin - a Textmode WINdow environment
 --------------------------------------------------------------
 
-Version 0.8.1
+Version 0.9.0
 
 Twin is text-based windowing environment with mouse support, window manager,
 terminal emulator, networked clients and the ability to attach/detach
