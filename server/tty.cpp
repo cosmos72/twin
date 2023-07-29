@@ -595,7 +595,7 @@ inline void csi_m(void) {
   udat effects = Effects;
   tcolor fg = TCOLFG(ColText), bg = TCOLBG(ColText);
 
-  for (i = 0; i <= nPar; i++)
+  for (i = 0; i <= nPar;) {
     switch (Par[i]) {
     case 0:
       /* all attributes off */
@@ -656,11 +656,23 @@ inline void csi_m(void) {
     case 27:
       effects &= ~EFF_REVERSE;
       break;
-    case 38: /* ANSI X3.64-1979 (SCO-ish?)
-              * Enables underscore, white foreground
-              * with white underscore
-              * (Linux - use default foreground).
-              */
+    case 38:
+      if (i < nPar) {
+        if (Par[i + 1] == 5) {
+          /* ESC[38;5;<COL8BIT>m is not implemented */
+          i += 3;
+          continue;
+        } else if (Par[i + 1] == 2) {
+          /* ESC[38;2;<R>;<G>;<B>m is not implemented */
+          i += 5;
+          continue;
+        }
+      }
+      /* ANSI X3.64-1979 (SCO-ish?)
+       * Enables underscore, white foreground
+       * with white underscore
+       * (Linux - use default foreground).
+       */
       fg = TCOLFG(DefColor);
       effects |= EFF_UNDERLINE;
       break;
@@ -672,16 +684,32 @@ inline void csi_m(void) {
       fg = TCOLFG(DefColor);
       effects &= ~EFF_UNDERLINE;
       break;
+    case 48:
+      if (i < nPar) {
+        if (Par[i + 1] == 5) {
+          /* ESC[48;5;<COL8BIT>m is not implemented */
+          i += 3;
+          continue;
+        } else if (Par[i + 1] == 2) {
+          /* ESC[48;2;<R>;<G>;<B>m is not implemented */
+          i += 5;
+          continue;
+        }
+      }
+      break;
     case 49: /* restore default bg */
       bg = TCOLBG(DefColor);
       break;
     default:
-      if (Par[i] >= 30 && Par[i] <= 37)
+      if (Par[i] >= 30 && Par[i] <= 37) {
         Par[i] -= 30, fg = TANSI2VGA(Par[i]);
-      else if (Par[i] >= 40 && Par[i] <= 47)
+      } else if (Par[i] >= 40 && Par[i] <= 47) {
         Par[i] -= 40, bg = TANSI2VGA(Par[i]);
+      }
       break;
     }
+    i++;
+  }
   Effects = effects;
   ColText = TCOL(fg, bg);
 
