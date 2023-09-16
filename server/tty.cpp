@@ -426,9 +426,9 @@ inline void lf(void) {
   /* don't scroll if above bottom of scrolling region, or
    * if below scrolling region
    */
-  if (Y + 1 == Bottom)
+  if (Y + 1 == Bottom) {
     scrollup(Top, Bottom, 1);
-  else if (Y < SizeY - 1) {
+  } else if (Y < SizeY - 1) {
     Y++;
     Pos += SizeX;
     if (Pos >= Split)
@@ -438,12 +438,12 @@ inline void lf(void) {
 }
 
 static void ri(void) {
-  /* don't scroll if below top of scrolling region, or
-   * if above scrolling region
+  /* don't scroll if below top of scrolling region,
+   * or if above scrolling region
    */
-  if (Y == Top)
+  if (Y == Top) {
     scrolldown(Top, Bottom, 1);
-  else if (Y > 0) {
+  } else if (Y > 0) {
     Y--;
     Pos -= SizeX;
     if (Pos < Base)
@@ -546,24 +546,27 @@ static void update_eff(void) {
   udat effects = Effects;
   tcolor fg = TCOLFG(ColText), bg = TCOLBG(ColText);
 
-  if (effects & EFF_UNDERLINE)
+  if (effects & EFF_UNDERLINE) {
     fg = TCOLFG(Underline);
-  else if (effects & EFF_HALFINTENS)
+  } else if (effects & EFF_HALFINTENS) {
     fg = TCOLFG(HalfInten);
+  }
   if (!!(effects & EFF_REVERSE) != !!(*Flags & TTY_INVERTSCR)) {
     tcolor tmp = TCOL(bg & ~thigh, fg & ~thigh) | TCOL(fg & thigh, bg & thigh);
     fg = TCOLFG(tmp);
     bg = TCOLBG(tmp);
   }
-  if (effects & EFF_INTENSITY)
+  if (effects & EFF_INTENSITY) {
     fg ^= thigh;
-  if (effects & EFF_BLINK)
+  }
+  if (effects & EFF_BLINK) {
     bg ^= thigh;
+  }
   Color = TCOL(fg, bg);
 }
 
 #define setCharset(g)                                                                              \
-  do                                                                                               \
+  do {                                                                                             \
     switch ((currG = (g))) {                                                                       \
     case VT100GR_MAP:                                                                              \
       Charset = Tutf_VT100GR_to_UTF_32;                                                            \
@@ -582,7 +585,7 @@ static void update_eff(void) {
       InvCharset = Tutf_UTF_32_to_ISO8859_1; /* very rough :( */                                   \
       break;                                                                                       \
     }                                                                                              \
-  while (0)
+  } while (0)
 
 inline trune applyG(trune c) {
   if (c < 0x100)
@@ -590,13 +593,14 @@ inline trune applyG(trune c) {
   return c;
 }
 
-inline void csi_m(void) {
+static void csi_m(void) {
   uldat i;
   udat effects = Effects;
   tcolor fg = TCOLFG(ColText), bg = TCOLBG(ColText);
 
   for (i = 0; i <= nPar;) {
-    switch (Par[i]) {
+    uldat par = Par[i];
+    switch (par) {
     case 0:
       /* all attributes off */
       fg = TCOLFG(DefColor);
@@ -669,18 +673,16 @@ inline void csi_m(void) {
         }
       }
       /* ANSI X3.64-1979 (SCO-ish?)
-       * Enables underscore, white foreground
-       * with white underscore
+       * Enables underscore, white foreground with white underscore
        * (Linux - use default foreground).
        */
       fg = TCOLFG(DefColor);
       effects |= EFF_UNDERLINE;
       break;
-    case 39: /* ANSI X3.64-1979 (SCO-ish?)
-              * Disable underline option.
-              * Reset colour to default? It did this
-              * before...
-              */
+    case 39:
+      /* ANSI X3.64-1979 (SCO-ish?) Disable underline.
+       * Reset colour to default? It did this before...
+       */
       fg = TCOLFG(DefColor);
       effects &= ~EFF_UNDERLINE;
       break;
@@ -701,12 +703,15 @@ inline void csi_m(void) {
       bg = TCOLBG(DefColor);
       break;
     default:
-      if (Par[i] >= 30 && Par[i] <= 37) {
-        Par[i] -= 30, fg = TANSI2VGA(Par[i]);
-      } else if (Par[i] >= 40 && Par[i] <= 47) {
-        Par[i] -= 40, bg = TANSI2VGA(Par[i]);
+      if (par >= 30 && par <= 37) {
+        par -= 30, fg = TANSI2VGA(par);
+      } else if (par >= 40 && par <= 47) {
+        par -= 40, bg = TANSI2VGA(par);
+      } else if (par >= 90 && par <= 97) {
+        par -= 90, fg = thigh | TANSI2VGA(par);
+      } else if (par >= 100 && par <= 107) {
+        par -= 100, bg = thigh | TANSI2VGA(par);
       }
-      break;
     }
     i++;
   }
@@ -766,12 +771,13 @@ inline void respond_ID(void) {
 static void set_mode(byte on_off) {
   uldat i;
 
-  for (i = 0; i <= nPar; i++)
+  for (i = 0; i <= nPar; i++) {
+    uldat par = Par[i];
 
     /* DEC private modes set/reset */
 
-    if (DState & ESques)
-      switch (Par[i]) {
+    if (DState & ESques) {
+      switch (par) {
 
       case 1: /* Cursor keys send ^[Ox/^[[x */
         CHANGE_BIT(TTY_ALTCURSKEYS, on_off);
@@ -825,8 +831,8 @@ static void set_mode(byte on_off) {
 
         /* ANSI modes set/reset */
       }
-    else
-      switch (Par[i]) {
+    } else {
+      switch (par) {
 
       case 3: /* Monitor (display ctrls) */
         CHANGE_BIT(TTY_DISPCTRL, on_off);
@@ -838,6 +844,8 @@ static void set_mode(byte on_off) {
         CHANGE_BIT(TTY_CRLF, on_off);
         break;
       }
+    }
+  }
 }
 
 static void setterm_command(void) {
@@ -1239,16 +1247,17 @@ static inline void write_ctrl(byte c) {
       break;
     case 'n':
       if (!(DState & ESques)) {
-        if (Par[0] == 5)
+        if (Par[0] == 5) {
           status_report();
-        else if (Par[0] == 6)
+        } else if (Par[0] == 6) {
           cursor_report();
+        }
       }
       break;
     }
-    if (DState & ESques)
+    if (DState & ESques) {
       break;
-
+    }
     switch (c) {
     case 'm':
       csi_m();

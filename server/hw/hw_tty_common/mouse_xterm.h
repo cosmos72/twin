@@ -52,7 +52,7 @@ static byte xterm_InitMouse(byte force) {
       mouse_motion_seq = mouse_start_seq;
     }
   } else if (!strncmp(term, "xterm", 5) || !strncmp(term, "rxvt", 4) ||
-             !strncmp(term, "Eterm", 5)) {
+             !strncmp(term, "alacritty", 9) || !strncmp(term, "Eterm", 5)) {
     /* try to enable more common protocols first,
      * then try to enable progressively more complete protocols */
     mouse_start_seq = "\033[?1001s\033[?1000h\033[?1002h\033[?1006h";
