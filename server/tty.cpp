@@ -663,7 +663,13 @@ static void csi_m(void) {
     case 38:
       if (i < nPar) {
         if (Par[i + 1] == 5) {
-          /* ESC[38;5;<COL8BIT>m is not implemented */
+          /* ESC[38;5;<COL8BIT>m is only partially implemented */
+	  uldat par2 = Par[i + 2];
+	  if (par2 <= 7) {
+	    fg = TANSI2VGA(par);
+	  } else if (par2 <= 15) {
+	    par2 -= 8, fg = thigh | TANSI2VGA(par2);
+	  }
           i += 3;
           continue;
         } else if (Par[i + 1] == 2) {
@@ -689,7 +695,13 @@ static void csi_m(void) {
     case 48:
       if (i < nPar) {
         if (Par[i + 1] == 5) {
-          /* ESC[48;5;<COL8BIT>m is not implemented */
+          /* ESC[48;5;<COL8BIT>m is only partially implemented */
+	  uldat par2 = Par[i + 2];
+	  if (par2 <= 7) {
+	    bg = TANSI2VGA(par);
+	  } else if (par2 <= 15) {
+	    par2 -= 8, bg = thigh | TANSI2VGA(par2);
+	  }
           i += 3;
           continue;
         } else if (Par[i + 1] == 2) {
