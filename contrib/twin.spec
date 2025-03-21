@@ -5,18 +5,37 @@
 # (at your option) any later version.
 #
 #
+# Original Author: Massimiliano Ghilardi <https://github.com/cosmos72>
+
 Name:		twin
-Version:	0.5.0
-Release:	2
-Vendor:		Massimiliano Ghilardi <https://github.com/cosmos72>
-Copyright:	GPL
+Version:	0.9.1
+%(cd %{_topdir}/SOURCES/ ; \
+  git clone https://github.com/cosmos72/twin  %name-%version ; \
+  tar --create --file %name-%version.tar.gz --remove-files %name-%version ; \
+  cd $OLDPWD)
+Release:	%{?dist}%{!?_dist:%{_vendor}}
+License:	GPL-2.0-or-later AND LGPL-2.0-or-later
 Group:		User Interface/Twin
-Packager:	Oron Peled <oron@actcom.co.il>
 Summary:	Textmode WINdow environment
+URL:		https://github.com/cosmos72/twin/
 Source:		%name-%version.tar.gz
-URL:		http://sourceforge.net/projects/twin
+
 BuildRoot:	%{_tmppath}/%{name}-%{version}-root
-Provides:	%{name}
+BuildRequires:  gcc-c++
+BuildRequires:  gpm
+BuildRequires:  gpm-devel
+BuildRequires:  libltdl7
+%define dependency_fallback libltdl7-devel
+%if 0%{?pkgconfig(libltdl):1}
+%define dependency pkgconfig(libltdl)
+%else
+%define dependency %{dependency_fallback}
+%endif
+BuildRequires:  %{dependency}
+BuildRequires:  pkgconfig(ncurses)
+BuildRequires:  pkgconfig(xft)
+BuildRequires:  pkgconfig(xpm)
+BuildRequires:  pkgconfig(zlib)
 
 %description
 Twin is a windowing environment with mouse support, window manager,
@@ -30,8 +49,11 @@ It supports a variety of displays:
 * twdisplay, a general network-transparent display client, used
   to attach/detach more displays on-the-fly.
 
-Currently, twin is tested on Linux (i386, PowerPC, Alpha, Sparc),
+Currently, twin is tested on Linux (i386, x86_64, PowerPC, Alpha, Sparc),
 FreeBSD and SunOS.
+
+This package was created based on the work of:
+Massimiliano Ghilardi (https://github.com/cosmos72)
 
 %package devel
 Summary:	Textmode WINdow environment - developer's files
@@ -44,10 +66,16 @@ It contains header files and static libraries for %{name}
 developers
 
 %prep
+
 %setup
+%{?optflags_lto:%global optflags_lto %optflags_lto -ffat-lto-objects}
+
+%configure
+./configure --prefix=%{_prefix} --libdir=%{_libdir} --enable-ltdl-install 
+sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool
+sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 
 %build
-./configure --prefix=%{_prefix}
 make
 
 %install
@@ -64,16 +92,17 @@ ldconfig
 %files
 %defattr(-, root, root)
 %doc %{_mandir}/man1/twin.1*
-%doc docs/Configure docs/Tutorial docs/libtw.txt docs/ltrace.conf
+%doc docs/Tutorial docs/libtw.txt docs/ltrace.conf
 %doc docs/Compatibility docs/Philosophy
-%doc COPYING COPYING.LIB Changelog.txt README BUGS INSTALL README.porting
-%doc twin-current.lsm
+%doc Changelog.txt README BUGS INSTALL README.porting
+%doc COPYING COPYING.LIB twin-current.lsm
 %{_libdir}/libtutf.so.*
 %{_libdir}/libtw.so.*
-%{_libdir}/twin
-%{_datadir}/twin
-%config %{_sysconfdir}/twin/twinrc
-%config %{_sysconfdir}/twin/twenvrc.sh
+%{_libdir}/libtstl.so.*
+%{_libdir}/%{name}
+%{_datadir}/%{name}
+%config(noreplace) %{_sysconfdir}/%{name}/twinrc
+%config(noreplace) %{_sysconfdir}/%{name}/twenvrc.sh
 %{_bindir}/tw*
 %{_sbindir}/tw*
 
@@ -85,6 +114,5 @@ ldconfig
 %{_libdir}/libtutf.so
 %{_libdir}/libtw.a
 %{_libdir}/libtw.so
-
-%clean
-[ "$RPM_BUILD_ROOT" != "/" ] && [ -d $RPM_BUILD_ROOT ] && rm -rf $RPM_BUILD_ROOT
+%{_libdir}/libtstl.a
+%{_libdir}/libtstl.so
