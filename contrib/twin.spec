@@ -7,20 +7,16 @@
 #
 # Original Author: Massimiliano Ghilardi <https://github.com/cosmos72>
 
-Name:		twin
-Version:	0.9.1
-%(cd %{_topdir}/SOURCES/ ; \
-  git clone https://github.com/cosmos72/twin  %name-%version ; \
-  tar --create --file %name-%version.tar.gz --remove-files %name-%version ; \
-  cd $OLDPWD)
-Release:	%{?dist}%{!?_dist:%{_vendor}}
-License:	GPL-2.0-or-later AND LGPL-2.0-or-later
-Group:		User Interface/Twin
-Summary:	Textmode WINdow environment
-URL:		https://github.com/cosmos72/twin/
-Source:		%name-%version.tar.gz
+Name:     twin
+Version:  0.9.0+git
+Release:  %{?dist}%{!?_dist:%{_vendor}1}
+License:  GPL-2.0-or-later AND LGPL-2.0-or-later
+Group:    User Interface/Twin
+Summary:  Textmode WINdow environment
+URL:      https://github.com/cosmos72/twin/
+Source0:	 %name-%version.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}-root
 
-BuildRoot:	%{_tmppath}/%{name}-%{version}-root
 BuildRequires:  gcc-c++
 BuildRequires:  gpm
 BuildRequires:  gpm-devel
@@ -55,6 +51,7 @@ FreeBSD and SunOS.
 This package was created based on the work of:
 Massimiliano Ghilardi (https://github.com/cosmos72)
 
+
 %package devel
 Summary:	Textmode WINdow environment - developer's files
 Group:		Development/Libraries
@@ -66,6 +63,13 @@ It contains header files and static libraries for %{name}
 developers
 
 %prep
+%(
+cd %{_topdir}/SOURCES/
+git clone https://github.com/cosmos72/twin  %name-%version
+tar -czf %name-%version.tar.gz %name-%version
+rm -rf %name-%version
+cd $OLDPWD
+)
 
 %setup
 %{?optflags_lto:%global optflags_lto %optflags_lto -ffat-lto-objects}
