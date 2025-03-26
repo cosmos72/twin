@@ -1,33 +1,41 @@
+# Twin is a windowing environment inside a text display.
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
+# Copyright (C) 1999-2020 by Massimiliano Ghilardi
 #
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
 #
-# Original Author: Massimiliano Ghilardi <https://github.com/cosmos72>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see
+# <https://www.gnu.org/licenses/>.
+#
 
-Name:     twin
-Version:  0.9.0+git
-Release:  %{?dist}%{!?_dist:%{_vendor}1}
-License:  GPL-2.0-or-later AND LGPL-2.0-or-later
-Group:    User Interface/Twin
-Summary:  Textmode WINdow environment
-URL:      https://github.com/cosmos72/twin/
-Source0:	 %name-%version.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-root
+Name:       twin
+Version:    0.9.1+git
+Release:    %{?dist}%{!?dist:%{_vendor}1}
+License:    GPL-2.0-or-later AND LGPL-2.0-or-later
+Group:      User Interface/Twin
+Summary:    Textmode WINdow environment
+URL:        https://github.com/cosmos72/twin/
+Source0:    %name-%version.tar.gz
+BuildRoot:  %{_tmppath}/%{name}-%{version}-root
+
+%define libgpm_dev_pkg %(rpm -q --whatprovides %{_libdir}/libgpm.so | sed 's/-[0-9]\\+\\.[^ ]*//')
+%define libltdl_pkg %(rpm -q --whatprovides %{_libdir}/libltdl.so.7 | sed 's/-[0-9]\\+\\.[^ ]*//')
+%define libltdl_dev_pkg %(rpm -q --whatprovides %{_libdir}/libltdl.so | sed 's/-[0-9]\\+\\.[^ ]*//')
 
 BuildRequires:  gcc-c++
 BuildRequires:  gpm
-BuildRequires:  gpm-devel
-BuildRequires:  libltdl7
-%define dependency_fallback libltdl7-devel
-%if 0%{?pkgconfig(libltdl):1}
-%define dependency pkgconfig(libltdl)
-%else
-%define dependency %{dependency_fallback}
-%endif
-BuildRequires:  %{dependency}
+BuildRequires:  %libgpm_dev_pkg
+BuildRequires:  %libltdl_pkg
+BuildRequires:  %libltdl_dev_pkg
 BuildRequires:  pkgconfig(ncurses)
 BuildRequires:  pkgconfig(xft)
 BuildRequires:  pkgconfig(xpm)
@@ -53,9 +61,9 @@ Massimiliano Ghilardi (https://github.com/cosmos72)
 
 
 %package devel
-Summary:	Textmode WINdow environment - developer's files
-Group:		Development/Libraries
-Requires:	%{name}
+Summary:    Textmode WINdow environment - developer's files
+Group:      Development/Libraries
+Requires:   %{name}
 
 %description devel
 This package supplements '%{name}'.
@@ -72,14 +80,15 @@ cd $OLDPWD
 )
 
 %setup
+%global optflags -O2 -g -ffat-lto-objects -fPIE
 %{?optflags_lto:%global optflags_lto %optflags_lto -ffat-lto-objects}
 
 %configure
-./configure --prefix=%{_prefix} --libdir=%{_libdir} --enable-ltdl-install 
-sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool
-sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
+./configure --prefix=%{_prefix} --libdir=%{_libdir} --enable-ltdl-install
 
 %build
+sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool
+sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 make
 
 %install
@@ -96,17 +105,18 @@ ldconfig
 %files
 %defattr(-, root, root)
 %doc %{_mandir}/man1/twin.1*
-%doc docs/Tutorial docs/libtw.txt docs/ltrace.conf
-%doc docs/Compatibility docs/Philosophy
-%doc Changelog.txt README BUGS INSTALL README.porting
-%doc COPYING COPYING.LIB twin-current.lsm
+%doc COPYING COPYING.LIB
+%doc BUGS Changelog.txt
+%doc INSTALL README README.porting twin-current.lsm
+%doc docs/Compatibility docs/libtw.txt docs/ltrace.conf
+%doc docs/Philosophy docs/Tutorial
+%{_libdir}/libtstl.so.*
 %{_libdir}/libtutf.so.*
 %{_libdir}/libtw.so.*
-%{_libdir}/libtstl.so.*
 %{_libdir}/%{name}
 %{_datadir}/%{name}
-%config(noreplace) %{_sysconfdir}/%{name}/twinrc
-%config(noreplace) %{_sysconfdir}/%{name}/twenvrc.sh
+%{_sysconfdir}/%{name}/twinrc
+%{_sysconfdir}/%{name}/twenvrc.sh
 %{_bindir}/tw*
 %{_sbindir}/tw*
 
@@ -114,9 +124,26 @@ ldconfig
 %defattr(-, root, root)
 %{_includedir}/Tutf
 %{_includedir}/Tw
+%{_libdir}/libtstl.a
+%{_libdir}/libtstl.so
 %{_libdir}/libtutf.a
 %{_libdir}/libtutf.so
 %{_libdir}/libtw.a
 %{_libdir}/libtw.so
-%{_libdir}/libtstl.a
-%{_libdir}/libtstl.so
+
+%changelog
+* Wed Mar 26 2025 Vladimir Mišev <vladimir.mishev@gmail.com> 0.9.1+git-%{?dist}%{!?dist:%{_vendor}1}
+- Updated as per Fedora guidelines; removed obsolete tags
+- Updated header comment so it has proper Copyright and GPL-2
+- Added macros to find pkg names for needed libs and then satisfy BuildRequires
+- Added in description  x86_64, and credit to the Author
+- Added in prep download (git clone) and then tar into RPM/SOURCES
+- Added in setup optflags and dealing with lto
+- Added configure and moved there ./configure and added ltdl install
+- Added in build sed to deal with rpaths in libtool before make
+- Removed from doc nonexistent docs/Configure and
+  changed macro for twinrc and twenvrc.sh
+- Added changelog
+
+* Mon Oct 2 2022 Oron Peled <oron@actcom.co.il> 0.5.0-2
+- Original twin.spec
