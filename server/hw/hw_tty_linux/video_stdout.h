@@ -291,7 +291,7 @@ static void linux_UpdateMouseAndCursor(void) {
 }
 
 static void linux_FlushVideo(void) {
-  dat i, j, start, end, XY[2];
+  dat i, j, start, end, XY[2] = {0, 0};
   byte FlippedVideo = tfalse, FlippedOldVideo = tfalse;
   tcell savedOldVideo;
 
@@ -342,16 +342,18 @@ static void linux_FlushVideo(void) {
     start = ChangedVideo[i >> 1][i & 1][0];
     end = ChangedVideo[i >> 1][i & 1][1];
 
-    if (start != -1)
+    if (start != -1) {
       /* also keep track of cursor position */
-      linux_DrawSome(start, XY[1] = i >> 1, (XY[0] = end) - start + 1);
+      linux_DrawSome(start, (XY[1] = i >> 1), (XY[0] = end) - start + 1);
+    }
   }
 
   /* store current cursor state for correct updating */
   HW->XY[1] = XY[1];
-  if ((HW->XY[0] = XY[0] + 1) == HW->X)
+  if ((HW->XY[0] = XY[0] + 1) == HW->X) {
     /* linux terminals have VT100 wrapglitch */
     HW->XY[0]--;
+  }
 
   setFlush();
 

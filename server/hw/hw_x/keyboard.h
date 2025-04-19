@@ -192,7 +192,7 @@ static Twkey XSYM(LookupKey)(XEvent *ev, udat *ShiftFlags, udat *len, char *seq)
   KeySym sym = XK_VoidSymbol;
   XKeyEvent *kev = &ev->xkey;
 
-  uldat i, low, up, maxlen = *len;
+  uldat maxlen = *len;
 
   *ShiftFlags = ((kev->state & ShiftMask) ? KBD_SHIFT_FL : 0) |
                 ((kev->state & LockMask) ? KBD_CAPS_LOCK : 0) |

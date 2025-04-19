@@ -424,7 +424,7 @@ static byte RCSteps(run *r) {
   node n, f;
   ldat flag;
   const cstr *argv;
-  byte state, ret;
+  byte state = Snext, ret;
   int nfd;
 
   w = RCCheck4WidgetId(r);

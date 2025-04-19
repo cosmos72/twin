@@ -213,7 +213,7 @@ static Trow InsertRowsWindow(Twindow w, ldat NumRows) {
 
   while (NumRows--) {
     if ((row = New(row)(0, ROW_ACTIVE))) {
-      Act(Insert, row)(row, w, w->USE.R.LastRow, NULL);
+      row->Insert(w, w->USE.R.LastRow, NULL);
     } else
       break;
   }
@@ -265,7 +265,7 @@ bool RowWriteCharsetWindow(Twindow w, uldat len, const char *charset_bytes) {
       } else
         return false;
     } else {
-      row = Act(FindRow, w)(w, y);
+      row = w->FindRow(y);
     }
 
     uldat row_len = 0;
@@ -366,7 +366,7 @@ bool RowWriteTRuneWindow(Twindow w, uldat len, const trune *runes) {
       } else
         return tfalse;
     } else {
-      row = Act(FindRow, w)(w, y);
+      row = w->FindRow(y);
     }
 
     row_len = (ldat)0;
@@ -535,10 +535,10 @@ void ExposeWindow2(Twindow w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitc
     curX = w->CurX;
     curY = w->CurY;
     for (; YWidth; YWidth--, Up++, utf8_bytes += Pitch) {
-      Act(GotoXY, w)(w, Left, Up);
+      w->GotoXY(Left, Up);
       writeUtf8(w, (uldat)XWidth, utf8_bytes);
     }
-    Act(GotoXY, w)(w, curX, curY);
+    w->GotoXY(curX, curY);
 
   } else if (runes) {
     bool (*writeTRune)(Twindow, uldat, const trune *);
@@ -1108,13 +1108,13 @@ void ResizeRelFirstWindow(dat i, dat j) {
 }
 
 void ResizeRelWindow(Twindow w, dat i, dat j) {
-  ldat Left, Up, Rgt, Dwn;
-  Twidget Parent;
+  ldat Left = 0, Up = 0, Rgt = 0, Dwn = 0;
+  Twidget Parent = (Twidget)0;
   Ssetup *SetUp;
   dat DeltaX, DeltaY;
-  dat ylimit, XWidth, YWidth;
+  dat ylimit = 0, XWidth, YWidth;
   dat MinXWidth, MinYWidth, MaxXWidth, MaxYWidth;
-  byte Shade, DeltaXShade, DeltaYShade, visible;
+  byte Shade = 0, DeltaXShade, DeltaYShade, visible;
 
   if (!w || (!i && !j)) /* || !(w->Attr & WINDOW_RESIZE) */
     return;
@@ -1497,7 +1497,7 @@ void HideMenu(byte on_off) {
       if (screen->YLogic < TW_MAXDAT) {
         screen->YLogic++;
         screen->Up++;
-        Act(DrawMenu, screen)(screen, 0, TW_MAXDAT);
+        screen->DrawMenu(0, TW_MAXDAT);
         UpdateCursor();
       } else
         ResizeFirstScreen(1);
@@ -1515,7 +1515,7 @@ static void OpenSubMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
   if (y != TW_MAXLDAT)
     DrawLogicWidget((Twidget)P, 0, y, TW_MAXLDAT, y);
   if ((y = P->CurY) == TW_MAXLDAT)
-    (void)Act(FindRowByCode, P)(P, item->Code, &P->CurY);
+    (void)P->FindRowByCode(item->Code, &P->CurY);
   if ((y = P->CurY) != TW_MAXLDAT)
     DrawLogicWidget((Twidget)P, 0, y, TW_MAXLDAT, y);
 
@@ -1528,10 +1528,11 @@ static void OpenSubMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
       w->CurY = TW_MAXLDAT;
     else if (w->CurY == TW_MAXLDAT)
       w->CurY = 0;
-    Act(MapTopReal, w)(w, S);
+    w->MapTopReal(S);
   }
-  if ((Twidget)P != S->FocusW())
-    Act(Focus, P)(P);
+  if ((Twidget)P != S->FocusW()) {
+    P->Focus();
+  }
 }
 
 static void OpenTopMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
@@ -1542,45 +1543,49 @@ static void OpenTopMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
     w->Up = 1;
     w->Left = item->Left;
 
-    if (M != _M && M->LastI)
+    if (M != _M && M->LastI) {
       /* adjust common Tmenu w->Left to the item position in this Tmenu */
       w->Left += M->LastI->Left + M->LastI->Len;
+    }
   }
 
-  Act(SetSelectedItem, M)(M, item);
+  M->SetSelectedItem(item);
 
-  if (by_mouse)
+  if (by_mouse) {
     w->CurY = TW_MAXLDAT;
-  else if (w->CurY == TW_MAXLDAT)
+  } else if (w->CurY == TW_MAXLDAT) {
     w->CurY = (ldat)0;
-
-  if (item->Flags & ROW_ACTIVE)
+  }
+  if (item->Flags & ROW_ACTIVE) {
     w->Flags &= ~WINDOWFL_DISABLED;
-  else
+  } else {
     w->Flags |= WINDOWFL_DISABLED;
+  }
+  w->MapTopReal(All->FirstScreen);
 
-  Act(MapTopReal, w)(w, All->FirstScreen);
-
-  if (w->CurY != TW_MAXLDAT && (item = (Tmenuitem)Act(FindRow, w)(w, w->CurY)))
+  if (w->CurY != TW_MAXLDAT && (item = (Tmenuitem)w->FindRow(w->CurY))) {
     OpenSubMenuItem(M, item, by_mouse);
+  }
 }
 
 static void OpenMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
   if (item) {
     Tobj O = item->Parent;
-    if (O && IS_WINDOW(O))
+    if (O && IS_WINDOW(O)) {
       OpenSubMenuItem(M, item, by_mouse);
-    else
+    } else {
       OpenTopMenuItem(M, item, by_mouse);
-  } else
-    Act(SetSelectedItem, M)(M, (Tmenuitem)0);
+    }
+  } else {
+    M->SetSelectedItem((Tmenuitem)0);
+  }
 }
 
 /* this activates the Tmenu bar */
 static void OpenMenu(Tmenuitem item, bool by_mouse) {
   Tscreen S = All->FirstScreen;
   Twidget w = S->FocusW();
-  Tmenu M = Act(FindMenu, S)(S);
+  Tmenu M = S->FindMenu();
 
   if ((All->State & state_any) == state_default) {
 
@@ -1605,7 +1610,7 @@ static Tmenuitem CloseMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
   Twindow P = (Twindow)item->Parent, w = item->Window;
 
   if (w)
-    Act(UnMap, w)(w);
+    w->UnMap();
 
   if (P && IS_WINDOW(P)) {
     if (by_mouse) {
@@ -1626,7 +1631,7 @@ static Tmenuitem CloseMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
     return item;
   } else {
     item = (Tmenuitem)0;
-    Act(SetSelectedItem, M)(M, item);
+    M->SetSelectedItem(item);
     return item;
   }
 }
@@ -1665,7 +1670,7 @@ static void TraverseMenu(Tmenu M, Tmenuitem OldItem, dat Odepth, Tmenuitem NewIt
 /* close the Tmenu bar */
 void CloseMenu(void) {
   Tscreen S = All->FirstScreen;
-  Tmenu M = Act(FindMenu, S)(S);
+  Tmenu M = S->FindMenu();
   Tmenuitem item;
   Twindow w;
 
@@ -1677,17 +1682,18 @@ void CloseMenu(void) {
       Swindow::KbdFocus(NULL);
 
     /* close whole currently open Tmenu tree */
-    item = Act(GetSelectedItem, M)(M);
+    item = M->GetSelectedItem();
     while (item && IS_MENUITEM(item) && (w = (Twindow)item->Window) && IS_WINDOW(w)) {
-      item = (Tmenuitem)Act(FindRow, w)(w, w->CurY);
-      Act(UnMap, w)(w);
+      item = (Tmenuitem)w->FindRow(w->CurY);
+      w->UnMap();
     }
   }
   All->State = state_default;
-  if (All->SetUp->Flags & setup_menu_hide)
+  if (All->SetUp->Flags & setup_menu_hide) {
     HideMenu(ttrue);
-  else
-    Act(DrawMenu, S)(S, 0, TW_MAXDAT);
+  } else {
+    S->DrawMenu(0, TW_MAXDAT);
+  }
 }
 
 /*
@@ -1696,17 +1702,19 @@ void CloseMenu(void) {
  */
 void SetMenuState(Tmenuitem item, bool by_mouse) {
   Tscreen S = All->FirstScreen;
-  Tmenu M = Act(FindMenu, S)(S);
+  Tmenu M = S->FindMenu();
   Tmenuitem OldItem = (Tmenuitem)0;
   dat Odepth = 0;
 
   if (M && (item || by_mouse)) {
-    if ((All->State & state_any) != state_default)
-      OldItem = Act(RecursiveGetSelectedItem, M)(M, &Odepth);
-    if (!OldItem)
+    if ((All->State & state_any) != state_default) {
+      OldItem = M->RecursiveGetSelectedItem(&Odepth);
+    }
+    if (!OldItem) {
       OpenMenu(item, by_mouse);
-    else if (OldItem != item)
+    } else if (OldItem != item) {
       TraverseMenu(M, OldItem, Odepth, item, DepthOfMenuItem(item), by_mouse);
+    }
     UpdateCursor();
   }
 }
@@ -1765,8 +1773,9 @@ void RaiseWidget(Twidget w, bool alsoFocus) {
       DrawAreaWidget(w);
   }
   if (screen == All->FirstScreen) {
-    if (alsoFocus)
-      Act(Focus, w)(w);
+    if (alsoFocus) {
+      w->Focus();
+    }
     UpdateCursor();
   }
 
@@ -1815,7 +1824,7 @@ void RestackWidgets(Twidget w, uldat N, const Twidget *arrayW) {
         if (FW && CW != FW->Next) {
           /* restack after arrayW[0] */
           CW->Remove();
-          Act(Insert, CW)(CW, w, FW, FW->Next);
+          CW->Insert(w, FW, FW->Next);
           need_redraw = ttrue;
         }
         FW = CW;
@@ -1842,7 +1851,7 @@ void RestackRows(Tobj O, uldat N, const Trow *arrayR) {
         if (FR && CR != FR->Next) {
           /* restack after arrayR[0] */
           CR->Remove();
-          Act(Insert, CR)(CR, (Twindow)O, FR, FR->Next);
+          CR->Insert((Twindow)O, FR, FR->Next);
           need_redraw = ttrue;
         }
         FR = CR;
@@ -2064,8 +2073,8 @@ void SyncMenu(Tmenu Menu) {
       PrevI = I;
     }
     for (screen = All->FirstScreen; screen; screen = screen->Next()) {
-      if (Act(FindMenu, screen)(screen) == Menu)
-        Act(DrawMenu, screen)(screen, 0, TW_MAXDAT);
+      if (screen->FindMenu() == Menu)
+        screen->DrawMenu(0, TW_MAXDAT);
     }
   }
 }

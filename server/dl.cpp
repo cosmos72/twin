@@ -24,7 +24,6 @@
 bool DlOpen(Tmodule Module) {
   String name;
   dlhandle Handle = NULL;
-  uldat len;
   byte (*init_func)(Tmodule);
 
   if (!dlinit_once()) {

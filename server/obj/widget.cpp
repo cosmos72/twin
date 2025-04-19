@@ -336,16 +336,18 @@ void Swidget::UnMap() {
           /*
            * in case the user was dragging this Twindow...
            */
-          if ((All->State & state_any) < state_menu)
+          if ((All->State & state_any) < state_menu) {
             All->State &= ~state_any;
-
+          }
           if (next) {
             (void)next->KbdFocus();
             DrawBorderWindow(next, BORDER_ANY);
-          } else
-            Do(KbdFocus, window)(NULL);
-          if (!(w->Flags & WINDOWFL_MENU))
+          } else {
+            Swindow::KbdFocus(NULL);
+          }
+          if (!(w->Flags & WINDOWFL_MENU)) {
             screen->DrawMenu(0, TW_MAXDAT);
+          }
           UpdateCursor();
         } else
           screen->FocusW(next);

@@ -1206,7 +1206,7 @@ static Trow sockFindRowByCodeWindow(Twindow w, dat Code) {
 
 static Tmenuitem sockCreate4MenuAny(Tobj Parent, Twindow w, udat Code, byte Flags, ldat len,
                                     const char *Name) {
-  return Do(Create4Menu, menuitem)(Parent, w, Code, Flags, len, Name);
+  return Smenuitem::Create4Menu(Parent, w, Code, Flags, len, Name);
 }
 
 static Tmenu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
@@ -1479,8 +1479,8 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
   Fd = save_Fd;
 }
 
-#define tmsgEventDelta ((udat)(size_t) & (((tmsg)0)->Event))
-#define tmsgEventOffset(x) ((udat)(size_t) & (((tmsg)0)->Event.x))
+#define tmsgEventDelta ((udat)(size_t)&(((tmsg)0)->Event))
+#define tmsgEventOffset(x) ((udat)(size_t)&(((tmsg)0)->Event.x))
 
 /* extract the (tmsg) from Data, turn it into a (Tmsg) and send it to MsgPort */
 static byte sockSendToMsgPort(Tmsgport MsgPort, udat len, const byte *Data) {
@@ -2129,24 +2129,25 @@ static byte Check4MagicTranslation(uldat slot, const byte *magic, byte len) {
 
     /* store client magic numbers */
     CopyMem(magic, AlienMagic(slot), Min2(len1, TWS_highest));
-    if (len1 < TWS_highest)
+    if (len1 < TWS_highest) {
       /* version mismatch compatibility: zero out unnegotiated sizes */
       memset(AlienMagic(slot) + len1, '\0', TWS_highest - len1);
-
+    }
     if (warn_count < 6) {
       zero = NULL;
-      if (AlienMagic(slot)[TWS_tcell] < sizeof(tcell))
+      if (AlienMagic(slot)[TWS_tcell] < sizeof(tcell)) {
         zero = "tcell";
-      else if (AlienMagic(slot)[TWS_trune] < sizeof(trune))
+      } else if (AlienMagic(slot)[TWS_trune] < sizeof(trune)) {
         zero = "trune";
-
+      }
       if (zero) {
-        if (warn_count == 5)
+        if (warn_count == 5) {
           log(WARNING) << "twin: warning: many clients with different sizes, suppressing further "
                           "messages.\n";
-        else
-          log(WARNING) << "twin: warning: client has different `" << Chars::from_c(zero),
-              "' size, it may not be Unicode aware.\n";
+        } else {
+          log(WARNING) << "twin: warning: client has different `" << Chars::from_c(zero)
+                       << "' size, it may not be Unicode aware.\n";
+        }
         warn_count++;
       }
     }
@@ -2334,7 +2335,7 @@ static void SocketIO(int fd, uldat slot) {
     if (len < (uldat)tot)
       RemoteReadShrinkQueue(Slot, (uldat)tot - len);
 
-      /* ok, now process the data */
+    /* ok, now process the data */
 
 #ifdef CONF_SOCKET_GZ
     if ((gzSlot = LS.pairSlot) != NOSLOT) {

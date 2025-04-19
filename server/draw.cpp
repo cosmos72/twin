@@ -536,7 +536,7 @@ void Sgadget::DrawSelf(Sdraw *d) {
   bool select, disabled, absent;
   trune font, *text, **gadgetText;
   tcolor *colText, **gadgetColor;
-  tcolor color;
+  tcolor color = 0;
 
   select = !!(g->Flags & GADGETFL_PRESSED);
   disabled = !!(g->Flags & GADGETFL_DISABLED);
@@ -1748,7 +1748,7 @@ void DrawMenuScreen(Tscreen screen, dat Xstart, dat Xend) {
   Tmenu Menu;
   Tmenuitem item;
   dat dwidth, dheight, i, j, x;
-  tcell attr;
+  tcell attr = 0;
   trune font;
   tcolor color;
   byte select, State, MenuInfo;

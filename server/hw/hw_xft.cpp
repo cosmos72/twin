@@ -234,24 +234,27 @@ static int XSYM(AllocColor)(Display *display, Visual *xvisual, Colormap colormap
 
 static void XSYM(FlavorQuitHW)(void) {
   int xscreen;
-  Colormap colormap;
-  Visual *xvisual;
+  Colormap colormap = (Colormap)0;
+  Visual *xvisual = (Visual *)0;
 
   if (xdisplay) {
-    if (xsfont)
+    if (xsfont) {
       XftFontClose(xdisplay, xsfont);
+    }
     xscreen = DefaultScreen(xdisplay);
     colormap = DefaultColormap(xdisplay, xscreen);
     xvisual = DefaultVisual(xdisplay, xscreen);
   }
-  if (xftdraw)
+  if (xftdraw) {
     XftDrawDestroy(xftdraw);
+  }
   for (int i = 0; i < tmaxcol; i++) {
     if (xftcolors[i] == NULL) {
       break;
     }
-    if (xdisplay)
+    if (xdisplay) {
       XftColorFree(xdisplay, xvisual, colormap, xftcolors[i]);
+    }
     FreeMem(xftcolors[i]);
     xftcolors[i] = NULL;
   }

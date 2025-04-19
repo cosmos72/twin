@@ -487,7 +487,7 @@ static void BuiltinH(Tmsgport MsgPort) {
   Tmsg msg;
   event_any *Event;
   Tscreen screen;
-  Twindow NewWindow, tempWin;
+  Twindow NewWindow = (Twindow)0, tempWin;
   Trow row;
   udat Code;
 
@@ -798,7 +798,7 @@ static bool InitScreens(void) {
   Tscreen oneScreen;
 
   if ((oneScreen =
-           Do(CreateSimple, screen)(1, "1", TCELL(TCOL(thigh | tblack, tblue), _MEDIUM_SHADE)))) {
+           Sscreen::CreateSimple(1, "1", TCELL(TCOL(thigh | tblack, tblue), _MEDIUM_SHADE)))) {
 
     InsertLast(Screen, oneScreen, All);
     return true;
@@ -907,11 +907,10 @@ bool InitBuiltin(void) {
 #endif
       AboutWin->RowWriteCharset(grlen, greeting) &&
 
-      (ButtonOK_About =
-           Do(CreateEmptyButton, gadget)(Builtin_MsgPort, 8, 1, TCOL(tblack, twhite))) &&
+      (ButtonOK_About = Sgadget::CreateEmptyButton(Builtin_MsgPort, 8, 1, TCOL(tblack, twhite))) &&
 
-      (ButtonRemove = Do(CreateEmptyButton, gadget)(Builtin_MsgPort, 8, 1, TCOL(tblack, twhite))) &&
-      (ButtonThis = Do(CreateEmptyButton, gadget)(Builtin_MsgPort, 8, 1, TCOL(tblack, twhite))) &&
+      (ButtonRemove = Sgadget::CreateEmptyButton(Builtin_MsgPort, 8, 1, TCOL(tblack, twhite))) &&
+      (ButtonThis = Sgadget::CreateEmptyButton(Builtin_MsgPort, 8, 1, TCOL(tblack, twhite))) &&
 
       New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 27, 1, "[ ] Enable screen Scrolling", 0,
                   GADGETFL_TEXT_DEFCOL, COD_O_SCREEN_SCROLL, TCOL(tblack, twhite),
@@ -963,45 +962,44 @@ bool InitBuiltin(void) {
                   TCOL(thigh | tblack, tblue), 10, 1)
 
   ) {
-    Act(SetColors, AboutWin)(AboutWin, 0x1FF, (tcolor)0x7A, (tcolor)0, (tcolor)0, (tcolor)0,
-                             (tcolor)0x7F, (tcolor)0x70, (tcolor)0x20, (tcolor)0x78, (tcolor)0x08);
+    AboutWin->SetColors(0x1FF, (tcolor)0x7A, (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0x7F,
+                        (tcolor)0x70, (tcolor)0x20, (tcolor)0x78, (tcolor)0x08);
 
-    Act(SetColors, ClockWin)(ClockWin, 0x1FF, (tcolor)0x3E, (tcolor)0, (tcolor)0, (tcolor)0,
-                             (tcolor)0x9F, (tcolor)0x1E, (tcolor)0x3E, (tcolor)0x18, (tcolor)0x08);
+    ClockWin->SetColors(0x1FF, (tcolor)0x3E, (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0x9F,
+                        (tcolor)0x1E, (tcolor)0x3E, (tcolor)0x18, (tcolor)0x08);
 
-    Act(SetColors, OptionWin)(OptionWin, 0x1FF, (tcolor)0x7A, (tcolor)0, (tcolor)0, (tcolor)0,
-                              (tcolor)0x7F, (tcolor)0x78, (tcolor)0x20, (tcolor)0x78, (tcolor)0x08);
+    OptionWin->SetColors(0x1FF, (tcolor)0x7A, (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0x7F,
+                         (tcolor)0x78, (tcolor)0x20, (tcolor)0x78, (tcolor)0x08);
 
-    Act(SetColors, ButtonWin)(ButtonWin, 0x1FF, (tcolor)0x7A, (tcolor)0, (tcolor)0, (tcolor)0,
-                              (tcolor)0x7F, (tcolor)0x7F, (tcolor)0x20, (tcolor)0x78, (tcolor)0x08);
+    ButtonWin->SetColors(0x1FF, (tcolor)0x7A, (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0x7F,
+                         (tcolor)0x7F, (tcolor)0x20, (tcolor)0x78, (tcolor)0x08);
 
-    Act(SetColors, WinList)(
-        WinList, 0x1FF, TCOL(thigh | tyellow, tcyan), TCOL(thigh | tgreen, thigh | tblue),
-        TCOL(twhite, thigh | tblue), TCOL(thigh | twhite, thigh | tblue),
-        TCOL(thigh | twhite, thigh | tblue), TCOL(twhite, tblue), TCOL(thigh | tblue, twhite),
-        TCOL(thigh | tblack, tblue), TCOL(thigh | tblack, tblack));
-    Act(Configure, WinList)(WinList, 1 << 2 | 1 << 3, 0, 0, 15, 2, 0, 0);
+    WinList->SetColors(0x1FF, TCOL(thigh | tyellow, tcyan), TCOL(thigh | tgreen, thigh | tblue),
+                       TCOL(twhite, thigh | tblue), TCOL(thigh | twhite, thigh | tblue),
+                       TCOL(thigh | twhite, thigh | tblue), TCOL(twhite, tblue),
+                       TCOL(thigh | tblue, twhite), TCOL(thigh | tblack, tblue),
+                       TCOL(thigh | tblack, tblack));
+    WinList->Configure(1 << 2 | 1 << 3, 0, 0, 15, 2, 0, 0);
 
-    Act(SetColors, DisplayWin)(DisplayWin, 0x1FF, (tcolor)0x7A, (tcolor)0x7F, (tcolor)0x79,
-                               (tcolor)0xF9, (tcolor)0x7F, (tcolor)0x70, (tcolor)0x20, (tcolor)0x78,
-                               (tcolor)0x08);
+    DisplayWin->SetColors(0x1FF, (tcolor)0x7A, (tcolor)0x7F, (tcolor)0x79, (tcolor)0xF9,
+                          (tcolor)0x7F, (tcolor)0x70, (tcolor)0x20, (tcolor)0x78, (tcolor)0x08);
 
-    Act(SetColors, DisplaySubWin)(DisplaySubWin, 0x30, 0, 0, 0, 0, TCOL(thigh | tblack, twhite),
-                                  TCOL(thigh | tblack, twhite), 0, 0, 0);
+    DisplaySubWin->SetColors(0x30, 0, 0, 0, 0, TCOL(thigh | tblack, twhite),
+                             TCOL(thigh | tblack, twhite), 0, 0, 0);
 
-    Act(Configure, DisplaySubWin)(DisplaySubWin, 1 << 0 | 1 << 1, -1, -1, 0, 0, 0, 0);
-    Act(Map, DisplaySubWin)(DisplaySubWin, (Twidget)DisplayWin);
+    DisplaySubWin->Configure(1 << 0 | 1 << 1, -1, -1, 0, 0, 0, 0);
+    DisplaySubWin->Map((Twidget)DisplayWin);
 
     DisplayWin->InstallHook(UpdateDisplayWin, &All->HookDisplay);
     WinList->MapUnMapHook = InstallRemoveWinListHook;
 
-    Act(FillButton, ButtonOK_About)(ButtonOK_About, (Twidget)AboutWin, COD_OK, 15, 11, 0,
-                                    "   OK   ", (byte)0x2F, (byte)0x28);
+    ButtonOK_About->FillButton((Twidget)AboutWin, COD_OK, 15, 11, 0, "   OK   ", (byte)0x2F,
+                               (byte)0x28);
 
-    Act(FillButton, ButtonRemove)(ButtonRemove, (Twidget)DisplaySubWin, COD_D_REMOVE, 1, 2, 0,
-                                  " Remove ", (byte)0x2F, (byte)0x28);
-    Act(FillButton, ButtonThis)(ButtonThis, (Twidget)DisplaySubWin, COD_D_THIS, 1, 5, 0, "  This  ",
-                                (byte)0x2F, (byte)0x28);
+    ButtonRemove->FillButton((Twidget)DisplaySubWin, COD_D_REMOVE, 1, 2, 0, " Remove ", (byte)0x2F,
+                             (byte)0x28);
+    ButtonThis->FillButton((Twidget)DisplaySubWin, COD_D_THIS, 1, 5, 0, "  This  ", (byte)0x2F,
+                           (byte)0x28);
 
     OptionWin->CurX = 25;
     OptionWin->CurY = 1;

@@ -196,12 +196,10 @@ static void setupPtyError(const char *f, const char *arg) {
  */
 static byte setupTty(ttydata *Data) {
   struct winsize wsiz;
-  /* from hw.c, ttysave is the console original state */
-  extern struct termios ttysave;
 
-  if (All->SetUp->Flags & setup_terminals_utf8)
+  if (All->SetUp->Flags & setup_terminals_utf8) {
     Data->utf8 = 1;
-
+  }
   wsiz.ws_col = Data->SizeX;
   wsiz.ws_row = Data->SizeY;
   wsiz.ws_xpixel = 0;
@@ -210,12 +208,14 @@ static byte setupTty(ttydata *Data) {
   if (ioctl(ptyfd, TIOCSWINSZ, &wsiz) >= 0) {
     termios ttyb = {};
     InitTtyStruct(ttyfd, ttyb);
-    if (tty_setioctl(ttyfd, &ttyb) >= 0)
+    if (tty_setioctl(ttyfd, &ttyb) >= 0) {
       return ttrue;
-    else
+    } else {
       setupPtyError("tty_setioctl", "");
-  } else
+    }
+  } else {
     setupPtyError("ioctl", "TIOCSWINSZ");
+  }
   return tfalse;
 }
 

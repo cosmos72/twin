@@ -40,14 +40,22 @@ Chars confdir = CONFDIR;
 #define M 0xAA
 #define H 0xFF
 
+#ifdef TWIN_PALETTE_SOLARIZED
+#define DARK 0x04, 0x08, 0x10
+#define LIGHT 0xBB, 0xBB, 0xBB
+#else
+#define DARK 0, 0, 0
+#define LIGHT M, M, M
+#endif
+
 rgb Palette[tmaxcol + 1] = {
     /* the default colour table, for VGA+ colour systems */
-    {0, 0, 0}, {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {M, M, M},
+    {DARK},    {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {LIGHT},
     {L, L, L}, {L, L, H}, {L, H, L}, {L, H, H}, {H, L, L}, {H, L, H}, {H, H, L}, {H, H, H}};
 
 rgb defaultPalette[tmaxcol + 1] = {
     /* the default colour table, for VGA+ colour systems */
-    {0, 0, 0}, {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {M, M, M},
+    {DARK},    {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {LIGHT},
     {L, L, L}, {L, L, H}, {L, H, L}, {L, H, H}, {H, L, L}, {H, L, H}, {H, H, L}, {H, H, H}};
 
 #undef H

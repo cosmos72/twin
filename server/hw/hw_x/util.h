@@ -98,7 +98,7 @@ static void XSYM(ShowCursor)(uldat type, dat x, dat y) {
 static void XSYM(FlushVideo)(void) {
   uldat i;
   dat start, end;
-  byte iff;
+  byte iff = tfalse;
 
   if (ValidOldVideo) {
     iff = ChangedVideoFlag && Video[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth] !=
@@ -459,7 +459,6 @@ static int XSYM(Die)(Display *d) {
 
 #if HW_X_DRIVER != HW_XFT
 static Tutf_function XSYM(UTF_32_to_charset_function)(const char *charset) {
-  XFontProp *fp;
   unsigned long prop;
   const char *s, *fontname = NULL;
   uldat i;
