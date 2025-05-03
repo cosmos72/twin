@@ -106,7 +106,7 @@ public:
                       const trune *runes, const tcell *cells) OVERRIDE;
 
   /* Twindow */
-  const TwindowFn fn() const {
+  TwindowFn fn() const {
     return (TwindowFn)Fn;
   }
 
