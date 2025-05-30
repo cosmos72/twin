@@ -63,7 +63,9 @@ static void search_unix_socket(void) {
 #else
 #define my_sort alphasort
 #endif
-  int my_sort(); // its two arguments may be either (void *) or (TW_CONST struct dirent **)
+  /* versionsort() declaration is tricky to pull from system headers */
+  int my_sort(TW_CONST struct dirent **, TW_CONST struct dirent **);
+
   struct dirent **namelist;
   char *s;
   int n = scandir(tmpdir(), &namelist, match_twsocket, my_sort);
