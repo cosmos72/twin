@@ -45,18 +45,12 @@ typedef uldat trune;
 typedef uldat tcell;
 #endif
 
-/* hw* datatypes, for backward compatibility */
-typedef tcolor hwcol;
-typedef trune hwfont;
-typedef tcell hwattr;
-
 typedef enum { tfalse, ttrue } tbool;
-typedef enum { tzero, tone, ttwo } tternary;
 
 /* miscellaneous types and constants */
 
 #define TW_NOID ((uldat)0)
-#define TW_BADID ((uldat)-1)
+#define TW_BADID ((uldat) - 1)
 #define TW_NOFD (-1)
 #define TW_NOSLOT TW_MAXULDAT
 
@@ -69,10 +63,10 @@ typedef enum { tzero, tone, ttwo } tternary;
 
 /* tcell <-> tcolor+trune conversion */
 #define TCELL(col, font) ((tcell)(font) | ((tcell)(byte)(col) << 24))
-#define TCELL_COLMASK(attr) ((attr)&0xFF000000)
-#define TCELL_FONTMASK(attr) ((attr)&0x00FFFFFF)
+#define TCELL_COLMASK(attr) ((attr) & 0xFF000000)
+#define TCELL_FONTMASK(attr) ((attr) & 0x00FFFFFF)
 #define TCOLOR(attr) ((tcolor)((attr) >> 24))
-#define TRUNEEXTRA(attr) ((attr)&0x00FFFFFF)
+#define TRUNEEXTRA(attr) ((attr) & 0x00FFFFFF)
 
 #define TRUNE(attr) Tw_trune(attr)
 
