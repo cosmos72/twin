@@ -30,6 +30,6 @@ byte TwFindLFunction(void *Function, ...);
 
 #include <Tw/common1_gen.h>
 #include <Tw/proto1_m4.h>
-#include <Tw/alias1_m4.h>
+#include <Tw/alias1.h>
 
 #endif /* TW1_H */

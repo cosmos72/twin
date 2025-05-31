@@ -347,7 +347,7 @@ byte Tw_FindLFunction(tdisplay TwD, ...);
 
 #include <Tw/common_gen.h>
 #include <Tw/proto_m4.h>
-#include <Tw/alias_m4.h>
+#include <Tw/alias.h>
 
 #include <Tw/Tw1.h>
 
