@@ -2205,7 +2205,7 @@ static tany _Tw_EncodeCall(byte flags, uldat o, tw_d TwD, ...) {
   return a->TWS_field_scalar;
 }
 
-#include "libtw2_m4.h"
+#include "libtw2_gen.h"
 
 static byte Sync(tw_d TwD) {
   uldat left;

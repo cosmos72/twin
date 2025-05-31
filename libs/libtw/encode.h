@@ -17,7 +17,7 @@
 /*
  * read (va_list va) and fill (tsfield a)
  *
- * let (tobj) fields decade into (uldat),
+ * let (tobj) fields decay into (uldat),
  * since from client side they are the same.
  */
 TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
@@ -46,7 +46,7 @@ TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
       case 'Y':
         a->type = TWS_vec | TWS_vecW | t;
         arglen = va_arg(va, tany);
-        if (!(a->TWS_field_vecV = (void *)(topaque)va_arg(va, tany)))
+        if (!(a->TWS_field_vecV = va_arg(va, void *)))
           arglen = 0;
         a->TWS_field_vecL = arglen;
         space += sizeof(topaque) + arglen;
@@ -55,7 +55,7 @@ TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
       case 'X':
         a->type = TWS_vec | t;
         space += a->TWS_field_vecL = va_arg(va, tany);
-        a->TWS_field_vecV = (void *)(topaque)va_arg(va, tany);
+        a->TWS_field_vecV = va_arg(va, void *);
         break;
       default:
         return (udat)-1;

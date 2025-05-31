@@ -4,7 +4,7 @@
 ;;    twin/include/Tw/common1_gen.h
 ;; Tell the user about this.
 
-(define (c_comment str)
+(define (c_verbatim str)
   (display str)
   (newline))
 
@@ -17,7 +17,7 @@
     ((_ ret name . args) (F_DECL 'ret 'name 'args))))
 
 
-(c_comment "
+(c_verbatim "
 /* This file was automatically generated with scheme from `twin/include/scheme/Tw/common_inc.scm', do not edit! */
 
 /**
@@ -32,35 +32,35 @@
  */
 ")
 
-(c_comment "/** check some magic data to ensure client and library have compatible types */")
+(c_verbatim "/** check some magic data to ensure client and library have compatible types */")
 (EASY CheckMagic "byte Tw_CheckMagic(const byte id[]);")
 
-(c_comment "/** strip double hyphens from argv long options (i.e. --option -> -option) */")
+(c_verbatim "/** strip double hyphens from argv long options (i.e. --option -> -option) */")
 (EASY MergeHyphensArgv "void Tw_MergeHyphensArgv(int argc, char **argv);")
 
-(c_comment "/** change Tw_AllocMem(), Tw_ReAllocMem(), Tw_FreeMem() function pointers */")
+(c_verbatim "/** change Tw_AllocMem(), Tw_ReAllocMem(), Tw_FreeMem() function pointers */")
 (EASY ConfigMalloc "void Tw_ConfigMalloc(
              void *(*my_malloc)(size_t),
 		     void *(*my_realloc)(void *, size_t),
 		     void  (*my_free)(void *));")
 
-(c_comment "/** pointer to custom malloc() function; use Tw_ConfigMalloc() to change it */")
+(c_verbatim "/** pointer to custom malloc() function; use Tw_ConfigMalloc() to change it */")
 (EASY AllocMem    "extern void *(*Tw_AllocMem)(size_t);")
-(c_comment "/** pointer to custom realloc() function; use Tw_ConfigMalloc() to change it */")
+(c_verbatim "/** pointer to custom realloc() function; use Tw_ConfigMalloc() to change it */")
 (EASY ReAllocMem  "extern void *(*Tw_ReAllocMem)(void *, size_t);")
-(c_comment "/** pointer to custom free() function; use Tw_ConfigMalloc() to change it */")
+(c_verbatim "/** pointer to custom free() function; use Tw_ConfigMalloc() to change it */")
 (EASY FreeMem     "extern void  (*Tw_FreeMem)(void *);")
 
-(c_comment "/** equivalent to calloc() */")
+(c_verbatim "/** equivalent to calloc() */")
 (EASY AllocMem0   "void *Tw_AllocMem0(size_t Size);")
-(c_comment "/** equivalent to realloc()+memset() */")
+(c_verbatim "/** equivalent to realloc()+memset() */")
 (EASY ReAllocMem0 "void *Tw_ReAllocMem0(void * Mem, size_t OldSize, size_t NewSize);")
 
-(c_comment "/** custom malloc()+memcpy() function */")
+(c_verbatim "/** custom malloc()+memcpy() function */")
 (EASY CloneMem "extern void *Tw_CloneMem(const void *, size_t);")
-(c_comment "/** custom strdup() function */")
+(c_verbatim "/** custom strdup() function */")
 (EASY CloneStr "extern char *Tw_CloneStr(const char *);")
-(c_comment "/** custom byte-to-unicode conversion + strdup() function */")
+(c_verbatim "/** custom byte-to-unicode conversion + strdup() function */")
 (EASY CloneStr2TRune "extern trune *Tw_CloneStr2TRune(const char *, size_t);")
 
 
@@ -87,14 +87,14 @@
 #endif")
 
 
-(c_comment "/** try to enable compression (using zlib); return 1 if success or 0 if failed */")
+(c_verbatim "/** try to enable compression (using zlib); return 1 if success or 0 if failed */")
 (DECL byte EnableGzip)
-(c_comment "/** try to disable compression (using zlib); return 1 if success or 0 if failed */")
+(c_verbatim "/** try to disable compression (using zlib); return 1 if success or 0 if failed */")
 (DECL byte DisableGzip)
 
-(c_comment "/** return server diagnostic after Tw_AttachHW() */")
+(c_verbatim "/** return server diagnostic after Tw_AttachHW() */")
 (DECL (const char *) AttachGetReply ((uldat *) len))
-(c_comment "/** confirm to server it is ok to use newly opened display (used for synchronization) */")
+(c_verbatim "/** confirm to server it is ok to use newly opened display (used for synchronization) */")
 (DECL void AttachConfirm)
 
 (DECL tmsgport OwnerWidget   (twidget W))
@@ -140,12 +140,12 @@
 
 (DECL byte InPanic)
 
-(c_comment "/** this returns tfalse only after libtw has panicked */")
+(c_verbatim "/** this returns tfalse only after libtw has panicked */")
 (DECL byte Flush)
-(c_comment "/** this returns tfalse only after libtw has panicked */")
+(c_verbatim "/** this returns tfalse only after libtw has panicked */")
 (DECL byte Sync)
 
-(c_comment "
+(c_verbatim "
 /**
  * try to write to the underlying socket.
  * if not all data could be written, write as much as possible,
@@ -156,7 +156,7 @@
  */")
 (DECL byte TimidFlush)
 
-(c_comment "
+(c_verbatim "
 /**
  * This is the function you must call to check if there are pending Msgs,
  * i.e. already received from the socket.
@@ -169,7 +169,7 @@
  */")
 (DECL tmsg PendingMsg)
 
-(c_comment "
+(c_verbatim "
 /**
  * This is the function you must call to check if there are Msgs available,
  * i.e. either already received or that can be received non-blocking.
@@ -178,7 +178,7 @@
  */")
 (DECL tmsg PeekMsg)
 
-(c_comment "
+(c_verbatim "
 /**
  * This is the function you must call to get a Msg from the server.
  * If Wait is ttrue  and no Msg is available, it waits until a Msg arrives.
@@ -190,7 +190,7 @@
  */")
 (DECL tmsg ReadMsg  (byte Wait))
 
-(c_comment "
+(c_verbatim "
 /**
  * this is just like Tw_ReadMsg(), but returns a Tw_AllocMem()ed copy
  * of the message, to avoid concurrency problems with other threads.
@@ -214,7 +214,7 @@
 (DECL tlistener AddSelectionNotifyListener        (tfn_listener Listener) ((void *) Arg))
 (DECL tlistener AddSelectionRequestListener       (tfn_listener Listener) ((void *) Arg))
 
-(c_comment "/** these five functions are used by Tw/Tw++.h */")
+(c_verbatim "/** these five functions are used by Tw/Tw++.h */")
 (DECL void      InsertListener  (tlistener L))
 (DECL void      RemoveListener  (tlistener L))
 (DECL tlistener CreateListener                (udat Type) (tevent_any E) (tfn_listener Listener) ((void *) Arg))
