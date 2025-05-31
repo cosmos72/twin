@@ -1,10 +1,12 @@
+#!/bin/sh
+
 BISON=bison
 FIND=find
 FLEX=flex
 SED=sed
 M4=m4
 LN=ln
-SCHEME=chezscheme
+SCHEME='chezscheme --script'
 
 $FIND -name \*.m4h | \
 while read i
@@ -14,9 +16,10 @@ do
   $M4 -I include < "$i" > "$o"
 done
 
-$SCHEME --script include/scheme/Tw/common.scm  > include/Tw/common_gen.h
-$SCHEME --script include/scheme/Tw/common1.scm > include/Tw/common1_gen.h
-$SCHEME --script include/scheme/Tw/proto.scm   > include/Tw/proto_gen.h
+$SCHEME include/scheme/Tw/common.scm  > include/Tw/common_gen.h
+$SCHEME include/scheme/Tw/common1.scm > include/Tw/common1_gen.h
+$SCHEME include/scheme/Tw/proto.scm   > include/Tw/proto_gen.h
+$SCHEME include/scheme/Tw/proto1.scm  > include/Tw/proto1_gen.h
 
 for i in md5.c missing.c
 do
