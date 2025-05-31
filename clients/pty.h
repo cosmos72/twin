@@ -9,7 +9,6 @@
 #ifndef TW_PTY_H
 #define TW_PTY_H
 
-int Spawn(twindow Window, pid_t *pid, dat X, dat Y, TW_CONST char *arg0,
-          TW_CONST char *TW_CONST *argv);
+int Spawn(twindow Window, pid_t *pid, dat X, dat Y, const char *arg0, const char *const *argv);
 
 #endif /* TW_PTY_H */

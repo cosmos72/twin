@@ -43,10 +43,10 @@ define(`iY', `$1')
 define(`Tv', `void ')
 define(`T_', `$1 ')
 define(`Tx', `t$1 ')
-define(`TV', `TW_CONST $1 *')
-define(`TW', `TW_CONST $1 *')
-define(`TX', `TW_CONST t$1 *')
-define(`TY', `TW_CONST t$1 *')
+define(`TV', `const $1 *')
+define(`TW', `const $1 *')
+define(`TX', `const t$1 *')
+define(`TY', `const t$1 *')
 define(`TO', `$1 ')
 
 define(`TYPE', `T$2($1)')
@@ -100,7 +100,7 @@ define(`PROTOFindFunction', `PROTOSyncSocket($@)')
 divert
 
 #define n(a) (tany)a
-#define N(a) (tany)(topaque)(TW_CONST void *)a
+#define N(a) (tany)(topaque)(const void *)a
 
 include(`m4/Tw_sockproto.m4')
 

@@ -373,14 +373,14 @@ tgadget Tw_CreateGadget(tdisplay TwD, twidget Parent, dat Left, dat Up,
 void	Tw_DeleteGadget(tdisplay TwD, tgadget Gadget);
 tgadget Tw_SearchGadget(tdisplay TwD, twindow Window, dat i, dat j);
 tgadget Tw_CreateButtonGadget(tdisplay TwD, twindow Window,
-twindow Tw_CreateButtonGadget(tdisplay TwD, twidget Parent, dat XWidth, dat YWidth, TW_CONST byte *Title,
+twindow Tw_CreateButtonGadget(tdisplay TwD, twidget Parent, dat XWidth, dat YWidth, const byte *Title,
 			      uldat Flags, udat Code, tcolor BgCol, tcolor Col, tcolor ColDisabled,
 			      dat Left, dat Up);
 
 void	Tw_Create4MenuRow(tdisplay TwD, twindow Window, udat Code, byte FlagActive, uldat TextLen, byte *Text);
 #define Tw_Row4Menu Tw_Create4MenuRow
 
-twindow Tw_CreateWindow(tdisplay TwD, dat NameLen, TW_CONST byte *Name, TW_CONST tcolor *ColName, tmenu Menu,
+twindow Tw_CreateWindow(tdisplay TwD, dat NameLen, const byte *Name, const tcolor *ColName, tmenu Menu,
 		       tcolor ColText, uldat cursorType, uldat Attr, uldat Flags,
 		       dat XWidth, dat YWidth, dat ScrollBackLines);
 void	Tw_DeleteWindow(tdisplay TwD, twindow Window);
@@ -388,9 +388,9 @@ twindow Tw_Create4MenuWindow(tdisplay TwD, tmenu Menu);
 #define Tw_Win4Menu Tw_Create4MenuWindow
 void	Tw_MapWindow(tdisplay TwD, twindow Window, tscreen Screen);
 void	Tw_UnMapWindow(tdisplay TwD, twindow Window);
-void	Tw_WriteCharsetWindow(tdisplay TwD, twindow Window, uldat AsciiLen, TW_CONST char *charset_bytes);
-void	Tw_WriteUtf8Window(tdisplay TwD, twindow Window, ldat AsciiLen, TW_CONST char *utf8_bytes);
-void  Tw_WriteTCellWindow(tdisplay TwD, twindow Window, udat x, udat y, uldat Len, TW_CONST tcell *cells);
+void	Tw_WriteCharsetWindow(tdisplay TwD, twindow Window, uldat AsciiLen, const char *charset_bytes);
+void	Tw_WriteUtf8Window(tdisplay TwD, twindow Window, ldat AsciiLen, const char *utf8_bytes);
+void  Tw_WriteTCellWindow(tdisplay TwD, twindow Window, udat x, udat y, uldat Len, const tcell *cells);
 void	Tw_WriteRowWindow(tdisplay TwD, twindow Window, uldat Len, byte *Text);
 void	Tw_SetColTextWindow(tdisplay TwD, twindow Window, tcolor ColText);
 void	Tw_SetColorsWindow(tdisplay TwD, twindow Window, udat Bitmap, tcolor ColGadgets, tcolor ColArrows, tcolor ColBars, tcolor ColTabs,

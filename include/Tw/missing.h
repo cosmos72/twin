@@ -43,12 +43,12 @@ TW(CONST) char *Tw_missing_strstr(TW(CONST) char *haystack, TW(CONST) char *need
 #elif defined(TW_HAVE_WAIT4)
 #define Tw_wait3(status, options, rusage) wait4(-1, status, options, rusage)
 #else
-#define Tw_wait3(status, options, rusage) ((pid_t)-1)
+#define Tw_wait3(status, options, rusage) ((pid_t) - 1)
 #endif
 
-int Tw_option_strcmp(TW_CONST char *s1, TW_CONST char *s2);
+int Tw_option_strcmp(const char *s1, const char *s2);
 
-int Tw_option_strncmp(TW_CONST char *s1, TW_CONST char *s2, size_t n);
+int Tw_option_strncmp(const char *s1, const char *s2, size_t n);
 
 #include <Tw/unprefix.h>
 

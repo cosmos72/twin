@@ -66,12 +66,12 @@ static char *ptydev, *ttydev;
 static int ptyfd, ttyfd;
 
 #ifdef CONF_TERM_DEVPTS
-static void ptyError(TW_CONST char *d, TW_CONST char *f, TW_CONST char *arg) {
+static void ptyError(const char *d, const char *f, const char *arg) {
   fprintf(stderr, "twterm: %s: %s(\"%s\") failed: %s\n", d ? d : "<NULL>", f ? f : "<NULL>",
           arg ? arg : "<NULL>", strerror(errno));
 }
 
-static void getPtyError(TW_CONST char *f, TW_CONST char *arg) {
+static void getPtyError(const char *f, const char *arg) {
   ptyError("opening pseudo-tty", f, arg);
 }
 #endif
@@ -285,8 +285,7 @@ static byte switchToTty(void) {
 }
 
 /* 5. fork() a program in a pseudo-teletype */
-int Spawn(twindow Window, pid_t *ppid, dat X, dat Y, TW_CONST char *arg0,
-          TW_CONST char *TW_CONST *argv) {
+int Spawn(twindow Window, pid_t *ppid, dat X, dat Y, const char *arg0, const char *const *argv) {
 
   TwGetPrivileges();
 
@@ -310,7 +309,7 @@ int Spawn(twindow Window, pid_t *ppid, dat X, dat Y, TW_CONST char *arg0,
     signal(SIGHUP, SIG_DFL); // restore default SIGHUP behavior
     closeAllFds(ttyfd);
     if (switchToTty()) {
-      execvp(arg0, (char *TW_CONST *)argv);
+      execvp(arg0, (char *const *)argv);
     }
     exit(1);
     break;

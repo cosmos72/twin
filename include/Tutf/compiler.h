@@ -15,7 +15,7 @@
 
 #define T_STR(s) TW__STR(s)
 
-#define TUTF_CONST TW_CONST
+#define TUTF_CONST const
 #define TUTF_INLINE TW_INLINE
 #define TUTF_VOLATILE TW_VOLATILE
 #define TUTF_ATTR_FN_CONST TW_ATTR_FN_CONST

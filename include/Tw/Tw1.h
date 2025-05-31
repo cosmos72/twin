@@ -28,7 +28,7 @@ extern tdisplay Tw_DefaultD;
 byte TwFindLFunction(void *Function, ...);
 #endif
 
-#include <Tw/common1_m4.h>
+#include <Tw/common1_gen.h>
 #include <Tw/proto1_m4.h>
 #include <Tw/alias1_m4.h>
 

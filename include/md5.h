@@ -19,7 +19,7 @@
 #define MD5_H
 
 #include <Tw/autoconf.h> /* TW_HAVE_*, uint32_t */
-#include <Tw/compiler.h> /* TW_INLINE, TW_CONST */
+#include <Tw/compiler.h> /* TW_INLINE, const */
 
 #ifdef TW_HAVE_STDINT_H
 #include <stdint.h> /* uint32_t */
@@ -40,9 +40,9 @@ struct MD5Context {
 };
 
 void MD5Init(struct MD5Context *context);
-void MD5Update(struct MD5Context *context, void TW_CONST *mem, size_t len);
+void MD5Update(struct MD5Context *context, void const *mem, size_t len);
 void MD5Final(unsigned char digest[16], struct MD5Context *context);
-void MD5Transform(md5_uint32 buf[4], md5_uint32 TW_CONST in[16]);
+void MD5Transform(md5_uint32 buf[4], md5_uint32 const in[16]);
 
 /*
  * This is needed to make RSAREF happy on some MS-DOS compilers.

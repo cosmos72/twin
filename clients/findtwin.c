@@ -30,7 +30,7 @@
 
 TW_DECL_MAGIC(findtwin_magic);
 
-static void try_TwOpen(TW_CONST char *dpy) {
+static void try_TwOpen(const char *dpy) {
   if (dpy || (dpy = getenv("TWDISPLAY"))) {
     if (TwOpen(dpy)) {
       printf("%s\n", dpy);
@@ -41,16 +41,16 @@ static void try_TwOpen(TW_CONST char *dpy) {
 
 #define ishex(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'a' && (c) <= 'f'))
 
-static int match_twsocket(TW_CONST struct dirent *d) {
-  TW_CONST char *s = d->d_name;
+static int match_twsocket(const struct dirent *d) {
+  const char *s = d->d_name;
 
   return !strncmp(s, ".Twin:", 6) && ishex(s[6]) &&
          (!s[7] || (ishex(s[7]) && (!s[8] || (ishex(s[8]) && !s[9]))));
 }
 
 #if defined(TW_HAVE_SCANDIR) && (defined(TW_HAVE_VERSIONSORT) || defined(TW_HAVE_ALPHASORT))
-static TW_CONST char *tmpdir(void) {
-  TW_CONST char *tmp = getenv("TMPDIR");
+static const char *tmpdir(void) {
+  const char *tmp = getenv("TMPDIR");
   if (tmp == NULL)
     tmp = "/tmp";
   return tmp;
@@ -64,7 +64,7 @@ static void search_unix_socket(void) {
 #define my_sort alphasort
 #endif
   /* versionsort() declaration is tricky to pull from system headers */
-  int my_sort(TW_CONST struct dirent **, TW_CONST struct dirent **);
+  int my_sort(const struct dirent **, const struct dirent **);
 
   struct dirent **namelist;
   char *s;

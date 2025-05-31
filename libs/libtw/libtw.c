@@ -197,7 +197,7 @@ typedef struct s_tw_d {
 
   v_id_vec id_vec;
 
-} * tw_d;
+} *tw_d;
 
 #define rErrno (TwD->rErrno_)
 #define mutex (TwD->mutex)
@@ -277,7 +277,7 @@ void *Tw_ReAllocMem0(void *mem, size_t old_len, size_t new_len) {
 /**
  * creates a copy of a chunk of memory
  */
-void *Tw_CloneMem(TW_CONST void *src, size_t len) {
+void *Tw_CloneMem(const void *src, size_t len) {
   void *dst;
   if (src && (dst = Tw_AllocMem(len)))
     return Tw_CopyMem(src, dst, len);
@@ -286,7 +286,7 @@ void *Tw_CloneMem(TW_CONST void *src, size_t len) {
 /**
  * creates a copy of a null-terminated string string
  */
-char *Tw_CloneStr(TW_CONST char *S) {
+char *Tw_CloneStr(const char *S) {
   if (S) {
     size_t len = 1 + strlen(S);
     char *T;
@@ -746,13 +746,13 @@ byte Tw_TimidFlush(tw_d TwD) {
   return b;
 }
 
-static TW_CONST timevalue TimeoutZero = {0, 0}, Timeout5Seconds = {5, 0};
+static const timevalue TimeoutZero = {0, 0}, Timeout5Seconds = {5, 0};
 #define TIMEOUT_INFINITE ((timevalue *)0)
 #define TIMEOUT_ZERO (&TimeoutZero)
 #define TIMEOUT_5_SECONDS (&Timeout5Seconds)
 
 /* return bytes read, or (uldat)-1 for errors / timeout */
-static uldat TryRead(tw_d TwD, TW_CONST timevalue *Timeout) {
+static uldat TryRead(tw_d TwD, const timevalue *Timeout) {
   uldat got = 0, len = 0;
   int sel, fd;
   byte *t, mayread;
@@ -957,7 +957,7 @@ uldat Tw_ServerVersion(tw_d TwD) {
 
 static byte ProtocolNumbers(tw_d TwD) {
   byte *servdata;
-  TW_CONST char *hostdata = " Twin-" TW_STR(TW_PROTOCOL_VERSION_MAJOR) ".";
+  const char *hostdata = " Twin-" TW_STR(TW_PROTOCOL_VERSION_MAJOR) ".";
   uldat len = 0, chunk, _len = strlen(hostdata);
 
   while (Fd != TW_NOFD && (!len || ((servdata = GetQueue(TwD, QREAD, NULL)), len < *servdata))) {
@@ -988,7 +988,7 @@ TW_DECL_MAGIC(Tw_MagicData);
  * are compatible with library ones; used to avoid mixing
  * unicode clients with non-unicode library and vice-versa
  */
-byte Tw_CheckMagic(TW_CONST byte id[]) {
+byte Tw_CheckMagic(const byte id[]) {
   if (memcmp(id + 1, Tw_MagicData + 1,
              (id[0] < Tw_MagicData[0] ? id[0] : Tw_MagicData[0]) - 2 - sizeof(uldat))) {
     CommonErrno = TW_EBAD_SIZES;
@@ -1143,14 +1143,14 @@ static byte MagicChallenge(tw_d TwD) {
   return tfalse;
 }
 
-static TW_CONST char *tmpdir(void) {
-  TW_CONST char *tmp = getenv("TMPDIR");
+static const char *tmpdir(void) {
+  const char *tmp = getenv("TMPDIR");
   if (tmp == NULL)
     tmp = "/tmp";
   return tmp;
 }
 
-static udat copyToSockaddrUn(TW_CONST char *src, struct sockaddr_un *addr, udat pos) {
+static udat copyToSockaddrUn(const char *src, struct sockaddr_un *addr, udat pos) {
   size_t len = strlen(src), max = sizeof(addr->sun_path) - 1; /* for final '\0' */
   if (pos < max) {
     if (len >= max - pos)
@@ -1165,7 +1165,7 @@ static udat copyToSockaddrUn(TW_CONST char *src, struct sockaddr_un *addr, udat 
  * opens a connection to server; TwDisplay is the server to contact;
  * if NULL the environment variable $TWDISPLAY is used
  */
-tw_d Tw_Open(TW_CONST char *TwDisplay) {
+tw_d Tw_Open(const char *TwDisplay) {
   tw_d TwD;
   char *options;
   int result = -1, fd = TW_NOFD;
@@ -1384,7 +1384,7 @@ void Tw_Close(tw_d TwD) {
 /**
  * returns one of the messages produced by server after Tw_Attach()
  */
-TW_CONST char *Tw_AttachGetReply(tw_d TwD, uldat *len) {
+const char *Tw_AttachGetReply(tw_d TwD, uldat *len) {
   uldat chunk;
   char *answ = (char *)-1, *nul;
 #ifdef CONF_SOCKET_GZ
@@ -1465,7 +1465,7 @@ tw_errno *Tw_ErrnoLocation(tw_d TwD) {
 /**
  * returns a string description of given error
  */
-TW_ATTR_FN_CONST TW_CONST char *Tw_StrError(TW_CONST tw_d TwD, uldat e) {
+TW_ATTR_FN_CONST const char *Tw_StrError(const tw_d TwD, uldat e) {
   switch (e) {
   case 0:
     return "success";
@@ -1527,7 +1527,7 @@ TW_ATTR_FN_CONST TW_CONST char *Tw_StrError(TW_CONST tw_d TwD, uldat e) {
 /**
  * returns a string description of given error detail
  */
-TW_ATTR_FN_CONST TW_CONST char *Tw_StrErrorDetail(TW_CONST tw_d TwD, uldat E, uldat S) {
+TW_ATTR_FN_CONST const char *Tw_StrErrorDetail(const tw_d TwD, uldat E, uldat S) {
   switch (E) {
   case TW_ESERVER_LOST_CONNECT:
     switch (S) {
@@ -2231,8 +2231,7 @@ byte Tw_Sync(tw_d TwD) {
  * returns the server-dependant order number of a function (specified as string),
  * or NOID if server is missing that function
  */
-uldat Tw_FindFunction(tw_d TwD, byte Len, TW_CONST char *Name, byte FormatLen,
-                      TW_CONST char *Format) {
+uldat Tw_FindFunction(tw_d TwD, byte Len, const char *Name, byte FormatLen, const char *Format) {
   uldat myId = 0;
   if (TwD) {
     LOCK;
@@ -2269,7 +2268,7 @@ TW_INLINE tcell MaybeConvertTCell(tw_d TwD, tcell cell) {
 #define PushVMaybeConvertTCell(TwD, dst, len, vec)                                                 \
   ((dst) = VecMaybeConvertTCell(TwD, dst, len, vec))
 
-static byte *VecMaybeConvertTCell(tw_d TwD, byte *dst, uldat len, TW_CONST tcell *cell) {
+static byte *VecMaybeConvertTCell(tw_d TwD, byte *dst, uldat len, const tcell *cell) {
   if (ServFlags & ServFlagTCell47x) {
     uldat i;
     tcell h;
@@ -2325,8 +2324,8 @@ void Tw_SetFillWidget(tw_d TwD, twidget a1, tcell a2) {
 /**
  * draws given portion of a widget; usually called after a TW_WIDGET_EXPOSE message
  */
-void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pitch,
-                    TW_CONST char *a6, TW_CONST trune *a7, TW_CONST tcell *a8) {
+void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pitch, const char *a6,
+                    const trune *a7, const tcell *a8) {
   uldat len6, len7, len8, myId;
   if (!TwD) {
     return;
@@ -2382,7 +2381,7 @@ void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pi
  * draws given portion of a widget; usually called after a TW_WIDGET_EXPOSE message
  */
 void Tw_DrawTextWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
-                       TW_CONST char *Text) {
+                       const char *Text) {
   Tw_Draw2Widget(TwD, W, XWidth, YWidth, Left, Up, Pitch, Text, NULL, NULL);
 }
 
@@ -2390,7 +2389,7 @@ void Tw_DrawTextWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, da
  * draws given portion of a widget; usually called after a TW_WIDGET_EXPOSE message
  */
 void Tw_DrawTRuneWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
-                        TW_CONST trune *Font) {
+                        const trune *Font) {
   Tw_Draw2Widget(TwD, W, XWidth, YWidth, Left, Up, Pitch, NULL, Font, NULL);
 }
 
@@ -2398,7 +2397,7 @@ void Tw_DrawTRuneWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, d
  * draws given portion of a widget; usually called after a TW_WIDGET_EXPOSE message
  */
 void Tw_DrawTCellWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
-                        TW_CONST tcell *Attr) {
+                        const tcell *Attr) {
   Tw_Draw2Widget(TwD, W, XWidth, YWidth, Left, Up, Pitch, NULL, NULL, Attr);
 }
 
@@ -2454,7 +2453,7 @@ tgadget Tw_G_NextGadget(tw_d TwD, tgadget a1) {
 /**
  * sets given portion of gadget's contents
  */
-void Tw_WriteTextGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST char *Text, dat Left,
+void Tw_WriteTextGadget(tw_d TwD, tgadget G, dat Width, dat Height, const char *Text, dat Left,
                         dat Up) {
   Tw_WriteTextsGadget(TwD, G, 1, Width, Height, Text, Left, Up);
 }
@@ -2462,7 +2461,7 @@ void Tw_WriteTextGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST cha
 /**
  * clears whole gadget contents, then sets given portion of gadget's contents
  */
-void Tw_SetTextGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST char *Text, dat Left,
+void Tw_SetTextGadget(tw_d TwD, tgadget G, dat Width, dat Height, const char *Text, dat Left,
                       dat Up) {
   /* clear the whole gadget */
   Tw_WriteTextsGadget(TwD, G, 1, TW_MAXDAT, TW_MAXDAT, NULL, 0, 0);
@@ -2473,7 +2472,7 @@ void Tw_SetTextGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST char 
 /**
  * clears whole gadget contents, then sets given portion of gadget's contents
  */
-void Tw_SetTextsGadget(tw_d TwD, tgadget G, byte bitmap, dat Width, dat Height, TW_CONST char *Text,
+void Tw_SetTextsGadget(tw_d TwD, tgadget G, byte bitmap, dat Width, dat Height, const char *Text,
                        dat Left, dat Up) {
   /* clear the whole gadget */
   Tw_WriteTextsGadget(TwD, G, bitmap, TW_MAXDAT, TW_MAXDAT, NULL, 0, 0);
@@ -2484,15 +2483,15 @@ void Tw_SetTextsGadget(tw_d TwD, tgadget G, byte bitmap, dat Width, dat Height, 
 /**
  * sets given portion of gadget's contents
  */
-void Tw_WriteTRuneGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST trune *TRune,
-                         dat Left, dat Up) {
+void Tw_WriteTRuneGadget(tw_d TwD, tgadget G, dat Width, dat Height, const trune *TRune, dat Left,
+                         dat Up) {
   Tw_WriteTRunesGadget(TwD, G, 1, Width, Height, TRune, Left, Up);
 }
 
 /**
  * clears whole gadget contents, then sets given portion of gadget's contents
  */
-void Tw_SetTRuneGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST trune *TRune, dat Left,
+void Tw_SetTRuneGadget(tw_d TwD, tgadget G, dat Width, dat Height, const trune *TRune, dat Left,
                        dat Up) {
   /* clear the whole gadget */
   Tw_WriteTRunesGadget(TwD, G, 1, TW_MAXDAT, TW_MAXDAT, NULL, 0, 0);
@@ -2503,8 +2502,8 @@ void Tw_SetTRuneGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST trun
 /**
  * clears whole gadget contents, then sets given portion of gadget's contents
  */
-void Tw_SetTRunesGadget(tw_d TwD, tgadget G, byte bitmap, dat Width, dat Height,
-                        TW_CONST trune *TRune, dat Left, dat Up) {
+void Tw_SetTRunesGadget(tw_d TwD, tgadget G, byte bitmap, dat Width, dat Height, const trune *TRune,
+                        dat Left, dat Up) {
   /* clear the whole gadget */
   Tw_WriteTRunesGadget(TwD, G, bitmap, TW_MAXDAT, TW_MAXDAT, NULL, 0, 0);
   /* write the specified text */
@@ -2515,7 +2514,7 @@ void Tw_SetTRunesGadget(tw_d TwD, tgadget G, byte bitmap, dat Width, dat Height,
  * creates a row for a menu
  */
 trow Tw_Create4MenuRow(tw_d TwD, twindow Window, udat Code, byte Flags, ldat Len,
-                       TW_CONST char *Text) {
+                       const char *Text) {
   return Tw_Create4MenuAny(TwD, (tobj)Window, (twindow)0, Code, Flags, Len, Text);
 }
 
@@ -2523,7 +2522,7 @@ trow Tw_Create4MenuRow(tw_d TwD, twindow Window, udat Code, byte Flags, ldat Len
  * creates a menuitem for a menu
  */
 tmenuitem Tw_Create4MenuMenuItem(tdisplay TwD, tobj Parent, twindow Window, byte Flags, dat Len,
-                                 TW_CONST char *Name) {
+                                 const char *Name) {
   return Tw_Create4MenuAny(TwD, Parent, Window, (udat)0, Flags, Len, Name);
 }
 
@@ -2534,7 +2533,7 @@ tmenuitem Tw_Create4MenuMenuItem(tdisplay TwD, tobj Parent, twindow Window, byte
 #define TWS_SORTED 2
 #define TWS_SCALAR 4
 
-static tslist StatA(tw_d TwD, tobj Id, udat flags, uldat hN, TW_CONST udat *h, tslist f);
+static tslist StatA(tw_d TwD, tobj Id, udat flags, uldat hN, const udat *h, tslist f);
 
 /**
  * returns information about given object
@@ -2561,7 +2560,7 @@ tslist Tw_StatL(tw_d TwD, tobj Id, uldat hN, ...) {
 /**
  * returns information about given object
  */
-tslist Tw_StatA(tw_d TwD, tobj Id, uldat hN, TW_CONST udat *h) {
+tslist Tw_StatA(tw_d TwD, tobj Id, uldat hN, const udat *h) {
   return StatA(TwD, Id, 0, hN, h, NULL);
 }
 /**
@@ -2595,7 +2594,7 @@ tslist Tw_CloneStatL(tw_d TwD, tobj Id, uldat hN, ...) {
 /**
  * returns information about given object
  */
-tslist Tw_CloneStatA(tw_d TwD, tobj Id, uldat hN, TW_CONST udat *h) {
+tslist Tw_CloneStatA(tw_d TwD, tobj Id, uldat hN, const udat *h) {
   return StatA(TwD, Id, TWS_CLONE_MEM, hN, h, NULL);
 }
 /**
@@ -2660,7 +2659,7 @@ void Tw_DeleteStat(tw_d TwD, tslist TSL) {
   }
 }
 
-static int CompareTSF(TW_CONST tsfield f1, TW_CONST tsfield f2) {
+static int CompareTSF(const tsfield f1, const tsfield f2) {
   return (int)f1->label - f2->label;
 }
 
@@ -2673,7 +2672,7 @@ tsfield Tw_FindStat(tw_d TwD, tslist TSL, udat label) {
   f.label = label;
 
   return (tsfield)bsearch(&f, TSL->TSF, TSL->N, sizeof(struct s_tsfield),
-                          (int (*)(TW_CONST void *, TW_CONST void *))CompareTSF);
+                          (int (*)(const void *, const void *))CompareTSF);
 }
 
 static void SortTSL(tslist TSL) {
@@ -2690,7 +2689,7 @@ static void SortTSL(tslist TSL) {
     }
     if (f < end)
       qsort(TSL->TSF, TSL->N, sizeof(struct s_tsfield),
-            (int (*)(TW_CONST void *, TW_CONST void *))CompareTSF);
+            (int (*)(const void *, const void *))CompareTSF);
   }
 }
 
@@ -2803,7 +2802,7 @@ static tslist StatTSL(tw_d TwD, udat flags, byte *data, byte *end) {
   return (tslist)0;
 }
 
-static tslist StatA(tw_d TwD, tobj Id, udat flags, uldat hN, TW_CONST udat *h, tslist f) {
+static tslist StatA(tw_d TwD, tobj Id, udat flags, uldat hN, const udat *h, tslist f) {
   tslist a0 = (tslist)TW_NOID;
   DECL_MyReply uldat myId;
   if (!TwD) {
@@ -2903,7 +2902,7 @@ static void ParseReplies(tw_d TwD) {
  */
 tmsg Tw_CreateMsg(tw_d TwD, uldat Type, uldat len) {
   tmsg msg;
-  const uldat delta = (uldat)(size_t) & (((tmsg)NULL)->Event);
+  const uldat delta = (uldat)(size_t)&(((tmsg)NULL)->Event);
 
   if ((msg = (tmsg)Tw_AllocMem(len += delta))) {
     msg->Len = len;
@@ -2955,8 +2954,8 @@ byte Tw_FindVFunction(tw_d TwD, va_list V) {
 
   while ((F = va_arg(V, void *))) {
 
-    for (i = 0; (tryF = Functions[i].Fn) && tryF != F; i++)
-      ;
+    for (i = 0; (tryF = Functions[i].Fn) && tryF != F; i++) {
+    }
     if (tryF == F) {
       id = &id_Tw[i];
       if (*id != TW_NOID && (*id != TW_BADID || (*id = FindFunctionId(TwD, i)) != TW_NOID))

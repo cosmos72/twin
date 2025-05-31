@@ -11,7 +11,7 @@
 
 #define T_TEMPLATE T_MAP(TEMPLATE)
 
-TW_CONST trune T_CAT3(Tutf_, T_TEMPLATE, _to_UTF_32)[0x100] = {
+const trune T_CAT3(Tutf_, T_TEMPLATE, _to_UTF_32)[0x100] = {
 #define EL(x) T_UTF(UTF_32, x),
     T_LIST(T_TEMPLATE, EL)
 #undef EL

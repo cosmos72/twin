@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 
     if (f->label == TWS_all_ChildrenMsgPort_List && f->type == (TWS_vec | TWS_obj)) {
       uldat n = f->TWS_field_vecL / sizeof(tobj);
-      TW_CONST tobj *data = (TW_CONST tobj *)f->TWS_field_vecV;
+      const tobj *data = (const tobj *)f->TWS_field_vecV;
       int fl;
       /* data is guaranteed to be correctly aligned */
 
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
         if (reply2 && reply2->N >= 1) {
           f = reply2->TSF;
           if (f && f->type == (TWS_vec | TWS_byte) && f->label == TWS_msgport_Name) {
-            TW_CONST byte *Name = (TW_CONST byte *)f->TWS_field_vecV;
+            const byte *Name = (const byte *)f->TWS_field_vecV;
             uldat NameLen = f->TWS_field_vecL;
             fl = ttrue;
             printf("%.*s\n", (int)NameLen, Name);

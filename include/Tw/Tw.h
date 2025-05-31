@@ -314,7 +314,7 @@ typedef void (*tfn_default_listener)(tmsg, void *);
 /** type containing information about a listener (it's an opaque pointer) */
 typedef struct s_tlistener *tlistener;
 
-tdisplay Tw_Open(TW_CONST char *Tw_Display);
+tdisplay Tw_Open(const char *Tw_Display);
 void Tw_Close(tdisplay TwD);
 
 /** Tw_AttachHW() flags: */
@@ -345,7 +345,7 @@ void Tw_Close(tdisplay TwD);
 /** return 1 if server supports all given libtw functions */
 byte Tw_FindLFunction(tdisplay TwD, ...);
 
-#include <Tw/common_m4.h>
+#include <Tw/common_gen.h>
 #include <Tw/proto_m4.h>
 #include <Tw/alias_m4.h>
 

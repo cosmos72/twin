@@ -25,10 +25,6 @@
 #define TW_CAT4(a, b, c, d) TW__CAT4(a, b, c, d)
 #endif
 
-#ifndef TW_CONST
-#define TW_CONST const
-#endif
-
 #ifndef TW_VOLATILE
 #if defined(TW_HAVE_VOLATILE) || defined(volatile)
 #define TW_VOLATILE volatile

@@ -64,9 +64,9 @@ void MD5Init(struct MD5Context *ctx) {
  * Update context to reflect the concatenation of another buffer full
  * of bytes.
  */
-void MD5Update(struct MD5Context *ctx, void TW_CONST *mem, size_t len) {
+void MD5Update(struct MD5Context *ctx, void const *mem, size_t len) {
   md5_uint32 t;
-  unsigned TW_CONST char *buf = (unsigned TW_CONST char *)mem;
+  unsigned const char *buf = (unsigned const char *)mem;
 
   /* Update bitcount */
 
@@ -170,7 +170,7 @@ void MD5Final(unsigned char digest[16], struct MD5Context *ctx) {
  * reflect the addition of 16 longwords of new data.  MD5Update blocks
  * the data and converts bytes into longwords for this routine.
  */
-void MD5Transform(md5_uint32 buf[4], md5_uint32 TW_CONST in[16]) {
+void MD5Transform(md5_uint32 buf[4], md5_uint32 const in[16]) {
   md5_uint32 a = buf[0], b = buf[1], c = buf[2], d = buf[3];
 
   MD5STEP(F1, a, b, c, d, in[0] + 0xd76aa478, 7);
@@ -254,14 +254,14 @@ void MD5Transform(md5_uint32 buf[4], md5_uint32 TW_CONST in[16]) {
 #include <stdio.h>
 #include <string.h>
 
-int main(int argc, TW_CONST char *argv[]) {
+int main(int argc, const char *argv[]) {
   unsigned char digest[16];
   struct MD5Context ctx;
-  TW_CONST char *str = argc > 1 ? argv[1] : "abc\n";
+  const char *str = argc > 1 ? argv[1] : "abc\n";
   unsigned i;
 
   MD5Init(&ctx);
-  MD5Update(&ctx, (unsigned TW_CONST char *)str, strlen(str));
+  MD5Update(&ctx, (unsigned const char *)str, strlen(str));
   MD5Final(digest, &ctx);
 
   for (i = 0; i < sizeof(digest); i++) {

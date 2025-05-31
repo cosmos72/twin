@@ -229,7 +229,7 @@ static void FreeStringVec(char **cmd) {
 static char **default_args;
 static char *default_title = "Twin Term";
 
-static twindow newTermWindow(TW_CONST char *title) {
+static twindow newTermWindow(const char *title) {
   twindow Window =
       TwCreateWindow(strlen(title), title, NULL, Term_Menu, TCOL(twhite, tblack), TW_LINECURSOR,
                      TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_CHANGES | TW_WINDOW_DRAG |
@@ -248,12 +248,12 @@ static twindow newTermWindow(TW_CONST char *title) {
   return Window;
 }
 
-static byte OpenTerm(TW_CONST char *arg0, TW_CONST char *TW_CONST *argv) {
+static byte OpenTerm(const char *arg0, const char *const *argv) {
   twindow Window;
   int Fd;
   pid_t Pid;
   uldat Slot;
-  TW_CONST char *title;
+  const char *title;
 
   /* if {arg0, argv} is {NULL, ...} or {"", ... } then start user's shell */
   if (arg0 && *arg0 && argv && argv[0]) {
@@ -263,7 +263,7 @@ static byte OpenTerm(TW_CONST char *arg0, TW_CONST char *TW_CONST *argv) {
       title = argv[0];
   } else {
     arg0 = default_args[0];
-    argv = (TW_CONST char *TW_CONST *)default_args + 1;
+    argv = (const char *const *)default_args + 1;
 
     title = default_title;
   }
@@ -361,7 +361,7 @@ static byte InitTerm(void) {
                                 TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
                                 TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
       (TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ",
-                   (TW_CONST tcolor *)"ptpppppptpppptpppp"),
+                   (const tcolor *)"ptpppppptpppptpppp"),
        ttrue) &&
       (Window = TwWin4Menu(Term_Menu)) && Add_Spawn_Row4Menu(Window) &&
       TwRow4Menu(Window, COD_QUIT, tfalse, 6, " Exit ") &&
@@ -444,7 +444,7 @@ static void TwinTermH(void) {
       if (Event->EventControl.Code == TW_MSG_CONTROL_OPEN) {
         char **cmd = TokenizeStringVec(Event->EventControl.Len, (char *)Event->EventControl.Data);
         if (cmd) {
-          OpenTerm(cmd[0], (TW_CONST char *TW_CONST *)cmd);
+          OpenTerm(cmd[0], (const char *const *)cmd);
           FreeStringVec(cmd);
         }
       }

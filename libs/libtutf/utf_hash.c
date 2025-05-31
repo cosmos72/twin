@@ -15,27 +15,23 @@ typedef struct {
 } utf32_hash_table;
 
 #define NEXT_POWER_OF_2(n)                                                                         \
-  ((n) < 0 ? -1                                                                                    \
-           : (n) <= 1                                                                              \
-                 ? 1                                                                               \
-                 : (n) <= 2 ? 2                                                                    \
-                            : (n) <= 4 ? 4                                                         \
-                                       : (n) <= 8 ? 8                                              \
-                                                  : (n) <= 16                                      \
-                                                        ? 16                                       \
-                                                        : (n) <= 32                                \
-                                                              ? 32                                 \
-                                                              : (n) <= 64                          \
-                                                                    ? 64                           \
-                                                                    : (n) <= 128                   \
-                                                                          ? 128                    \
-                                                                          : (n) <= 256 ? 256 : -1)
+  ((n) < 0      ? -1                                                                               \
+   : (n) <= 1   ? 1                                                                                \
+   : (n) <= 2   ? 2                                                                                \
+   : (n) <= 4   ? 4                                                                                \
+   : (n) <= 8   ? 8                                                                                \
+   : (n) <= 16  ? 16                                                                               \
+   : (n) <= 32  ? 32                                                                               \
+   : (n) <= 64  ? 64                                                                               \
+   : (n) <= 128 ? 128                                                                              \
+   : (n) <= 256 ? 256                                                                              \
+                : -1)
 
 TUTF_INLINE byte utf32_hash(trune h, udat mod_power_of_2) {
   return (h ^ (h >> 6) ^ (h >> 12) ^ (h >> 18)) & (mod_power_of_2 - 1);
 }
 
-TUTF_INLINE trune utf32_get(TW_CONST utf32_hash_entry *e) {
+TUTF_INLINE trune utf32_get(const utf32_hash_entry *e) {
   return (trune)e->utf32[0] | ((trune)e->utf32[1] << 8) | ((trune)e->utf32[2] << 16);
 }
 

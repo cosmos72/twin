@@ -42,14 +42,14 @@ timevalue *InstantNow(timevalue *Now) {
   return Now;
 }
 
-timevalue *IncrTime(timevalue *Time, TW_CONST timevalue *Incr) {
+timevalue *IncrTime(timevalue *Time, const timevalue *Incr) {
   Time->Seconds += Incr->Seconds;
   Time->Fraction += Incr->Fraction;
   NormalizeTime(Time);
   return Time;
 }
 
-timevalue *DecrTime(timevalue *Time, TW_CONST timevalue *Decr) {
+timevalue *DecrTime(timevalue *Time, const timevalue *Decr) {
   Time->Seconds -= Decr->Seconds;
   if (Time->Fraction >= Decr->Fraction)
     Time->Fraction -= Decr->Fraction;
@@ -60,12 +60,12 @@ timevalue *DecrTime(timevalue *Time, TW_CONST timevalue *Decr) {
   return Time;
 }
 
-timevalue *SubTime(timevalue *Result, timevalue *Time, TW_CONST timevalue *Decr) {
+timevalue *SubTime(timevalue *Result, timevalue *Time, const timevalue *Decr) {
   *Result = *Time; /* struct copy */
   return DecrTime(Result, Decr);
 }
 
-dat CmpTime(TW_CONST timevalue *T1, TW_CONST timevalue *T2) {
+dat CmpTime(const timevalue *T1, const timevalue *T2) {
   if (T1->Seconds > T2->Seconds)
     return (dat)1;
   else if (T1->Seconds == T2->Seconds) {

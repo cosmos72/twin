@@ -93,11 +93,11 @@ extern "C" {
 
 tany Tw_Stat(tdisplay TwD, tobj Id, udat h);
 tslist Tw_StatL(tdisplay TwD, tobj Id, uldat hN, ...);
-tslist Tw_StatA(tdisplay TwD, tobj Id, uldat hN, TW_CONST udat *h);
+tslist Tw_StatA(tdisplay TwD, tobj Id, uldat hN, const udat *h);
 tslist Tw_StatV(tdisplay TwD, tobj Id, uldat hN, va_list h);
 tslist Tw_CloneStat(tdisplay TwD, tobj Id, uldat hN, ...);
 tslist Tw_CloneStatL(tdisplay TwD, tobj Id, uldat hN, ...);
-tslist Tw_CloneStatA(tdisplay TwD, tobj Id, uldat hN, TW_CONST udat *h);
+tslist Tw_CloneStatA(tdisplay TwD, tobj Id, uldat hN, const udat *h);
 tslist Tw_CloneStatV(tdisplay TwD, tobj Id, uldat hN, va_list h);
 void Tw_DeleteStat(tdisplay TwD, tslist TSL);
 tsfield Tw_FindStat(tdisplay TwD, tslist TSL, udat label);

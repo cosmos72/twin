@@ -274,7 +274,7 @@ static byte InitDialog(void) {
                                      TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
                                      TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
          (TwInfo4Menu(Dialog_Menu, TW_ROW_ACTIVE, 10, " Twin Dialog ",
-                      (TW_CONST tcolor *)"ptpppptpppppp"),
+                      (const tcolor *)"ptpppptpppppp"),
           ttrue) &&
          (Window = TwWin4Menu(Dialog_Menu)) &&
          TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 6, " Quit ") &&

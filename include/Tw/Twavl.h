@@ -16,7 +16,7 @@
 #include <Tw/Twtypes.h>
 
 typedef struct s_tavl *tavl;
-typedef struct s_tavl TW_CONST *tavl_c;
+typedef struct s_tavl const *tavl_c;
 
 typedef int (*tavl_compare)(tavl_c, tavl_c);
 

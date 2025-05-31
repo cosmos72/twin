@@ -30,7 +30,7 @@ static byte InitEvent(void) {
                                     TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
          TwItem4MenuCommon(Event_Menu) &&
          (TwInfo4Menu(Event_Menu, TW_ROW_ACTIVE, 14, " Event Tester ",
-                      (TW_CONST tcolor *)"ptppppptpppppp"),
+                      (const tcolor *)"ptppppptpppppp"),
           ttrue) &&
          (Event_Win = TwCreateWindow(
               12, "Event Tester", NULL, Event_Menu, TCOL(twhite, tblack), TW_NOCURSOR,
@@ -57,7 +57,7 @@ static byte InitEvent(void) {
          TwFlush();
 }
 
-void human_print(uldat len, TW_CONST char *s) {
+void human_print(uldat len, const char *s) {
   byte c;
 
   putchar('`');
@@ -78,7 +78,7 @@ void human_print(uldat len, TW_CONST char *s) {
   case TW_##name:                                                                                  \
     return #name
 
-TW_CONST char *twkeyname(udat Code) {
+const char *twkeyname(udat Code) {
   static char buf[2];
 
   switch (Code) {
@@ -207,7 +207,7 @@ TW_CONST char *twkeyname(udat Code) {
   return "unknown";
 }
 
-TW_CONST char *twcontrolname(udat Code) {
+const char *twcontrolname(udat Code) {
   switch (Code) {
   case TW_MSG_CONTROL_QUIT:
     return "quit";
@@ -364,7 +364,7 @@ int main(int argc, char *argv[]) {
       } else if (msg->Type == TW_MSG_USER_CLIENTMSG) {
         tevent_clientmsg EventC = &msg->Event.EventClientMsg;
         printf("User Client Message: Code %d, ASCII ", EventC->Code);
-        human_print(EventC->Len, (TW_CONST char *)EventC->Data.b);
+        human_print(EventC->Len, (const char *)EventC->Data.b);
         putchar('\n');
       }
     }

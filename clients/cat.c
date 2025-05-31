@@ -35,8 +35,7 @@ static byte InitCat(void) {
          (Cat_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
                                   TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
                                   TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
-         (TwInfo4Menu(Cat_Menu, TW_ROW_ACTIVE, 10, " Twin Cat ",
-                      (TW_CONST tcolor *)"ptpppptpppppp"),
+         (TwInfo4Menu(Cat_Menu, TW_ROW_ACTIVE, 10, " Twin Cat ", (const tcolor *)"ptpppptpppppp"),
           (Cat_Win = TwCreateWindow(8, "Twin Cat", NULL, Cat_Menu, TCOL(tblack, thigh | tblack),
                                     TW_LINECURSOR,
                                     TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_X_BAR |

@@ -69,20 +69,20 @@ static tmsgport DM_MsgPort;
 static tmenu DM_Menu;
 static tscreen DM_Screen;
 static twindow DM_Window, DM_user, DM_pass;
-static TW_CONST char *DM_Display;
+static const char *DM_Display;
 static byte DM_Kill, quiet, oneshot, logged_in;
 
 static TW_VOLATILE pid_t ServerPid = (pid_t)-1, AttachPid = (pid_t)-1;
 
-static char *TW_CONST *Args;
-static TW_CONST char *hw_name = "--hw=tty", *title, *TwEnvRC = NULL;
+static char *const *Args;
+static const char *hw_name = "--hw=tty", *title, *TwEnvRC = NULL;
 static byte use_twdisplay = DM_AUTO, Privileges = TW_PRIV_NONE;
 
 typedef struct s_data {
   char txt[30];
   byte len;
   byte x;
-} * data;
+} *data;
 
 static struct s_data user, pass;
 
@@ -109,7 +109,7 @@ static void ShowVersion(void) {
 }
 
 static void ParseArgs(void) {
-  TW_CONST char *s;
+  const char *s;
   while ((s = *Args)) {
     if (!strcmp(s, "-h") || !Tw_option_strcmp(s, "-help")) {
       Usage();

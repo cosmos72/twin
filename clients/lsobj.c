@@ -62,7 +62,7 @@ void ShowVersion(void) {
   fputs("twlsobj " TWIN_VERSION_STR "\n", stdout);
 }
 
-static void human_print(TW_CONST char *data, uldat len, byte may_trim) {
+static void human_print(const char *data, uldat len, byte may_trim) {
   putchar(' ');
   putchar('"');
   if (may_trim && len > 100)
@@ -93,7 +93,7 @@ static void human_print(TW_CONST char *data, uldat len, byte may_trim) {
   printf("\"%s\n", may_trim ? "..." : "");
 }
 
-static void human_print_tobjs(TW_CONST char *data, uldat len, byte may_trim) {
+static void human_print_tobjs(const char *data, uldat len, byte may_trim) {
   putchar(' ');
   putchar('{');
   if (may_trim && len > 100)
@@ -102,7 +102,7 @@ static void human_print_tobjs(TW_CONST char *data, uldat len, byte may_trim) {
     may_trim = tfalse;
   while (len >= sizeof(tobj)) {
     len -= sizeof(tobj);
-    printf("0x%lx%s", (long)*(TW_CONST tobj *)data, len >= sizeof(tobj) ? ", " : "");
+    printf("0x%lx%s", (long)*(const tobj *)data, len >= sizeof(tobj) ? ", " : "");
     data += sizeof(tobj);
   }
   printf("}%s\n", may_trim ? "..." : "");

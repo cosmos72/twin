@@ -88,7 +88,7 @@ static uldat BuiltinTime(char builtin_egg[10]) {
 
 static twindow wid = TW_NOID;
 static tslist wlist = NULL;
-static TW_CONST char *wtitle;
+static const char *wtitle;
 static uldat wtitle_len;
 
 static volatile int ReceivedFatalSignal = tfalse;
@@ -145,7 +145,7 @@ static void Cleanup(void) {
 int main(int argc, char *argv[]) {
   char builtin_egg[10];
   char **cmd_args = NULL, *name = argv[0], *buff = NULL;
-  TW_CONST char *egg;
+  const char *egg;
   uldat egg_len, buff_len = 0, buff_capacity = 0, delay = 1, err;
   tall aid = TW_NOID;
   tsfield wfield;

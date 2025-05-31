@@ -106,7 +106,7 @@ static char *fix_tty(char *arg, byte is_our_tty[1], byte err[1]) {
   char *target = NULL;
   char *opts = arg + 7;
   char *comma = strchr(opts, ',');
-  TW_CONST char *tty = ttyname(0);
+  const char *tty = ttyname(0);
   byte is_srv_tty = 0;
   if (!tty) {
     fprintf(stderr, "%s: ttyname() failed, cannot find controlling tty!\n", MYname);
@@ -137,7 +137,7 @@ static char *fix_tty(char *arg, byte is_our_tty[1], byte err[1]) {
     comma = "";
 
   if (*is_our_tty) {
-    TW_CONST char *term = getenv("TERM");
+    const char *term = getenv("TERM");
     if (!term) {
       term = "";
     }
@@ -161,7 +161,7 @@ static char *fix_tty(char *arg, byte is_our_tty[1], byte err[1]) {
 }
 
 static char *fix_x11(char *arg) {
-  TW_CONST char *our_xdisplay = NULL;
+  const char *our_xdisplay = NULL;
   char *target = NULL;
   char *opts = NULL;
 
@@ -302,7 +302,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "reported messages...\n");
 
       for (;;) {
-        TW_CONST char *reply = TwAttachGetReply(&chunk);
+        const char *reply = TwAttachGetReply(&chunk);
         if (reply <= (char *)2) {
           ret = (byte)(size_t)reply;
           break;

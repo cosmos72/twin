@@ -10,7 +10,7 @@ typedef union s_tsval {
   struct {
     union {
       void *V;
-      TW_CONST void *CV;
+      const void *CV;
     };
     topaque L;
   } vec;
@@ -20,12 +20,12 @@ typedef struct s_tsfield {
   udat label;
   udat type;
   tsval val;
-} * tsfield;
+} *tsfield;
 
 typedef struct s_tslist {
   udat N;
   udat flags;
   struct s_tsfield TSF[1];
-} * tslist;
+} *tslist;
 
 #endif /* TW_STATTYPES_H */

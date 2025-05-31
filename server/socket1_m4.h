@@ -7,6 +7,7 @@
  *
  */
 
+
 /* This file was automatically generated from m4/socket1.m4, do not edit! */
 
 /* clang-format off */
@@ -52,38 +53,36 @@
 
 
 
-
-
 case order_FindFunction:
     if (a.size() >= 4)
-        a[0]_any = (tany)sockFindFunction((byte)a[1]_any, (const char *)a[2]_vec, (byte)a[3]_any, (const char *)a[4]_vec);
+        a[0]_any = (uldat)sockFindFunction((byte)a[1]_any, (const char *)a[2]_vec, (byte)a[3]_any, (const char *)a[4]_vec);
     break;
 
 
 
 case order_SyncSocket:
     if (a.size() >= 0)
-        a[0]_any = (tany)sockSyncSocket();
+        a[0]_any = (byte)sockSyncSocket();
     break;
 
 
 
 case order_ServerSizeof:
     if (a.size() >= 1)
-        a[0]_any = (tany)sockServerSizeof((byte)a[1]_any);
+        a[0]_any = (byte)sockServerSizeof((byte)a[1]_any);
     break;
 
 
 
 case order_CanCompress:
     if (a.size() >= 0)
-        a[0]_any = (tany)sockCanCompress();
+        a[0]_any = (byte)sockCanCompress();
     break;
 
 
 case order_DoCompress:
     if (a.size() >= 1)
-        a[0]_any = (tany)sockDoCompress((byte)a[1]_any);
+        a[0]_any = (byte)sockDoCompress((byte)a[1]_any);
     break;
 
 
@@ -103,7 +102,7 @@ case order_AttachHW:
 
 case order_DetachHW:
     if (a.size() >= 2)
-        a[0]_any = (tany)sockDetachHW((uldat)a[1]_any, (const char *)a[2]_vec);
+        a[0]_any = (byte)sockDetachHW((uldat)a[1]_any, (const char *)a[2]_vec);
     break;
 
 
@@ -129,7 +128,7 @@ case order_DeleteObj:
 
 case order_ChangeFieldObj:
     if (a.size() >= 4)
-        Act(ChangeField,(Tobj)a[1]_obj)((Tobj)a[1]_obj, (udat)a[2]_any, (uldat)a[3]_any, (uldat)a[4]_any);
+        ((Tobj)a[1]_obj)->ChangeField((udat)a[2]_any,(uldat)a[3]_any,(uldat)a[4]_any);
     break;
 
 
@@ -147,12 +146,12 @@ case order_RecursiveDeleteWidget:
 
 case order_MapWidget:
     if (a.size() >= 2)
-        Act(Map,(Twidget)a[1]_obj)((Twidget)a[1]_obj, (Twidget)a[2]_obj);
+        ((Twidget)a[1]_obj)->Map((Twidget)a[2]_obj);
     break;
 
 case order_UnMapWidget:
     if (a.size() >= 1)
-        Act(UnMap,(Twidget)a[1]_obj)((Twidget)a[1]_obj);
+        ((Twidget)a[1]_obj)->UnMap();
     break;
 
 case order_SetXYWidget:
@@ -189,18 +188,18 @@ case order_FocusSubWidget:
 
 case order_FindWidgetAtWidget:
     if (a.size() >= 3)
-        a[0]_obj = (Tobj)Act(FindWidgetAt,(Twidget)a[1]_obj)((Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any);
+        a[0]_obj = (Tobj)((Twidget)a[1]_obj)->FindWidgetAt((dat)a[2]_any,(dat)a[3]_any);
     break;
 
 
 case order_RaiseWidget:
     if (a.size() >= 1)
-        Act(Raise,(Twidget)a[1]_obj)((Twidget)a[1]_obj);
+        ((Twidget)a[1]_obj)->Raise();
     break;
 
 case order_LowerWidget:
     if (a.size() >= 1)
-        Act(Lower,(Twidget)a[1]_obj)((Twidget)a[1]_obj);
+        ((Twidget)a[1]_obj)->Lower();
     break;
 
 case order_RestackChildrenWidget:
@@ -223,18 +222,18 @@ case order_CreateGadget:
 
 case order_CreateButtonGadget:
     if (a.size() >= 11)
-        a[0]_obj = (Tobj)Do(CreateButton,gadget)((Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (udat)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
+        a[0]_obj = (Tobj)Sgadget::CreateButton((Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (udat)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
     break;
 
 
 case order_WriteTextsGadget:
     if (a.size() >= 7)
-        Act(WriteTexts,(Tgadget)a[1]_obj)((Tgadget)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (const char *)a[5]_vec, (dat)a[6]_any, (dat)a[7]_any);
+        ((Tgadget)a[1]_obj)->WriteTexts((byte)a[2]_any,(dat)a[3]_any,(dat)a[4]_any,(const char *)a[5]_vec,(dat)a[6]_any,(dat)a[7]_any);
     break;
 
 case order_WriteTRunesGadget:
     if (a.size() >= 7)
-        Act(WriteTRunes,(Tgadget)a[1]_obj)((Tgadget)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (const trune *)a[5]_vec, (dat)a[6]_any, (dat)a[7]_any);
+        ((Tgadget)a[1]_obj)->WriteTRunes((byte)a[2]_any,(dat)a[3]_any,(dat)a[4]_any,(const trune *)a[5]_vec,(dat)a[6]_any,(dat)a[7]_any);
     break;
 
 
@@ -245,7 +244,7 @@ case order_CreateWindow:
 
 case order_Create4MenuWindow:
     if (a.size() >= 1)
-        a[0]_obj = (Tobj)Do(Create4Menu,window)((Tmenu)a[1]_obj);
+        a[0]_obj = (Tobj)Swindow::Create4Menu((Tmenu)a[1]_obj);
     break;
 
 
@@ -272,7 +271,7 @@ case order_WriteTCellWindow:
 
 case order_GotoXYWindow:
     if (a.size() >= 3)
-        Act(GotoXY,(Twindow)a[1]_obj)((Twindow)a[1]_obj, (ldat)a[2]_any, (ldat)a[3]_any);
+        ((Twindow)a[1]_obj)->GotoXY((ldat)a[2]_any,(ldat)a[3]_any);
     break;
 
 case order_SetTitleWindow:
@@ -282,17 +281,17 @@ case order_SetTitleWindow:
 
 case order_SetColTextWindow:
     if (a.size() >= 2)
-        Act(SetColText,(Twindow)a[1]_obj)((Twindow)a[1]_obj, (tcolor)a[2]_any);
+        ((Twindow)a[1]_obj)->SetColText((tcolor)a[2]_any);
     break;
 
 case order_SetColorsWindow:
     if (a.size() >= 11)
-        Act(SetColors,(Twindow)a[1]_obj)((Twindow)a[1]_obj, (udat)a[2]_any, (tcolor)a[3]_any, (tcolor)a[4]_any, (tcolor)a[5]_any, (tcolor)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (tcolor)a[10]_any, (tcolor)a[11]_any);
+        ((Twindow)a[1]_obj)->SetColors((udat)a[2]_any,(tcolor)a[3]_any,(tcolor)a[4]_any,(tcolor)a[5]_any,(tcolor)a[6]_any,(tcolor)a[7]_any,(tcolor)a[8]_any,(tcolor)a[9]_any,(tcolor)a[10]_any,(tcolor)a[11]_any);
     break;
 
 case order_ConfigureWindow:
     if (a.size() >= 8)
-        Act(Configure,(Twindow)a[1]_obj)((Twindow)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (dat)a[5]_any, (dat)a[6]_any, (dat)a[7]_any, (dat)a[8]_any);
+        ((Twindow)a[1]_obj)->Configure((byte)a[2]_any,(dat)a[3]_any,(dat)a[4]_any,(dat)a[5]_any,(dat)a[6]_any,(dat)a[7]_any,(dat)a[8]_any);
     break;
 
 case order_FindRowByCodeWindow:
@@ -308,34 +307,34 @@ case order_CreateGroup:
 
 case order_InsertGadgetGroup:
     if (a.size() >= 2)
-        Act(InsertGadget,(Tgroup)a[1]_obj)((Tgroup)a[1]_obj, (Tgadget)a[2]_obj);
+        ((Tgroup)a[1]_obj)->InsertGadget((Tgadget)a[2]_obj);
     break;
 
 case order_RemoveGadgetGroup:
     if (a.size() >= 2)
-        Act(RemoveGadget,(Tgroup)a[1]_obj)((Tgroup)a[1]_obj, (Tgadget)a[2]_obj);
+        ((Tgroup)a[1]_obj)->RemoveGadget((Tgadget)a[2]_obj);
     break;
 
 
 case order_GetSelectedGadgetGroup:
     if (a.size() >= 1)
-        a[0]_obj = (Tobj)Act(GetSelectedGadget,(Tgroup)a[1]_obj)((Tgroup)a[1]_obj);
+        a[0]_obj = (Tobj)((Tgroup)a[1]_obj)->GetSelectedGadget();
     break;
 
 case order_SetSelectedGadgetGroup:
     if (a.size() >= 2)
-        Act(SetSelectedGadget,(Tgroup)a[1]_obj)((Tgroup)a[1]_obj, (Tgadget)a[2]_obj);
+        ((Tgroup)a[1]_obj)->SetSelectedGadget((Tgadget)a[2]_obj);
     break;
 
 
 case order_RaiseRow:
     if (a.size() >= 1)
-        Act(Raise,(Trow)a[1]_obj)((Trow)a[1]_obj);
+        ((Trow)a[1]_obj)->Raise();
     break;
 
 case order_LowerRow:
     if (a.size() >= 1)
-        Act(Lower,(Trow)a[1]_obj)((Trow)a[1]_obj);
+        ((Trow)a[1]_obj)->Lower();
     break;
 
 case order_RestackChildrenRow:
@@ -357,7 +356,7 @@ case order_Create4MenuAny:
 
 case order_Create4MenuCommonMenuItem:
     if (a.size() >= 1)
-        a[0]_any = (tany)Do(Create4MenuCommon,menuitem)((Tmenu)a[1]_obj);
+        a[0]_any = (uldat)Smenuitem::Create4MenuCommon((Tmenu)a[1]_obj);
     break;
 
 
@@ -368,7 +367,7 @@ case order_CreateMenu:
 
 case order_SetInfoMenu:
     if (a.size() >= 5)
-        Act(SetInfo,(Tmenu)a[1]_obj)((Tmenu)a[1]_obj, (byte)a[2]_any, (ldat)a[3]_any, (const char *)a[4]_vec, (const tcolor *)a[5]_vec);
+        ((Tmenu)a[1]_obj)->SetInfo((byte)a[2]_any,(ldat)a[3]_any,(const char *)a[4]_vec,(const tcolor *)a[5]_vec);
     break;
 
 
@@ -385,7 +384,7 @@ case order_FindMsgPort:
 
 case order_BgImageScreen:
     if (a.size() >= 4)
-        Act(BgImage,(Tscreen)a[1]_obj)((Tscreen)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const tcell *)a[4]_vec);
+        ((Tscreen)a[1]_obj)->BgImage((dat)a[2]_any,(dat)a[3]_any,(const tcell *)a[4]_vec);
     break;
 
 
@@ -453,12 +452,12 @@ case order_FirstGadget:
 
 case order_GetDisplayWidth:
     if (a.size() >= 0)
-        a[0]_any = (tany)sockGetDisplayWidth();
+        a[0]_any = (dat)sockGetDisplayWidth();
     break;
 
 case order_GetDisplayHeight:
     if (a.size() >= 0)
-        a[0]_any = (tany)sockGetDisplayHeight();
+        a[0]_any = (dat)sockGetDisplayHeight();
     break;
 
 case order_GetAll:
@@ -469,7 +468,7 @@ case order_GetAll:
 
 case order_SendToMsgPort:
     if (a.size() >= 3)
-        a[0]_any = (tany)sockSendToMsgPort((Tmsgport)a[1]_obj, (udat)a[2]_any, (const byte *)a[3]_vec);
+        a[0]_any = (byte)sockSendToMsgPort((Tmsgport)a[1]_obj, (udat)a[2]_any, (const byte *)a[3]_vec);
     break;
 
 case order_BlindSendToMsgPort:
@@ -501,5 +500,7 @@ case order_NotifySelection:
 
 case order_SetServerUid:
     if (a.size() >= 2)
-        a[0]_any = (tany)sockSetServerUid((uldat)a[1]_any, (byte)a[2]_any);
+        a[0]_any = (byte)sockSetServerUid((uldat)a[1]_any, (byte)a[2]_any);
     break;
+
+

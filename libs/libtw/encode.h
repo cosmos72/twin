@@ -21,7 +21,7 @@
  * since from client side they are the same.
  */
 TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
-  TW_CONST char *Format = Functions[o].format + 1;
+  const char *Format = Functions[o].format + 1;
   uldat arglen, space;
   udat N;
   byte c, t, variable_return_type = tfalse;
@@ -81,7 +81,7 @@ TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
     /* fill return type from first arg - which must be 'udat' */
 
     if (N > 1 && a[-1].type == (TWS_vec | TWS_byte) && a[-1].TWS_field_vecL == 2) {
-      Format = (TW_CONST char *)a[-1].TWS_field_vecV;
+      Format = (const char *)a[-1].TWS_field_vecV;
       switch ((byte)*Format++) {
       case '_':
       case 'x':

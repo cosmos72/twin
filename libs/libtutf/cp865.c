@@ -9,7 +9,7 @@
  *
  */
 
-TW_CONST trune Tutf_CP865_to_UTF_32[0x100] = {
+const trune Tutf_CP865_to_UTF_32[0x100] = {
 #define EL(x) T_UTF(UTF_32, x),
     T_LIST(CP865, EL)
 #undef EL

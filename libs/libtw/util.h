@@ -13,9 +13,9 @@
 void NormalizeTime(timevalue *Time);
 timevalue *InstantNow(timevalue *Now);
 
-timevalue *IncrTime(timevalue *Time, TW_CONST timevalue *Incr);
-timevalue *DecrTime(timevalue *Time, TW_CONST timevalue *Decr);
+timevalue *IncrTime(timevalue *Time, const timevalue *Incr);
+timevalue *DecrTime(timevalue *Time, const timevalue *Decr);
 
-dat CmpTime(TW_CONST timevalue *T1, TW_CONST timevalue *T2);
+dat CmpTime(const timevalue *T1, const timevalue *T2);
 
 #endif /* TW_UTIL_H */

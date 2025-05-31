@@ -37,7 +37,7 @@ byte InitThrd(void) {
                                    TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
                                    TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
          (TwInfo4Menu(Thrd_Menu, TW_ROW_ACTIVE, 13, " Thread Test ",
-                      (TW_CONST tcolor *)"ppppppppppppp"),
+                      (const tcolor *)"ppppppppppppp"),
           TwItem4MenuCommon(Thrd_Menu));
 }
 
