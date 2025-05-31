@@ -4,6 +4,7 @@ FLEX=flex
 SED=sed
 M4=m4
 LN=ln
+SCHEME=chezscheme
 
 $FIND -name \*.m4h | \
 while read i
@@ -12,6 +13,9 @@ do
   echo "$M4 -I include < \"$i\" > \"$o\""
   $M4 -I include < "$i" > "$o"
 done
+
+$SCHEME --script include/scheme/Tw/common.scm  > include/Tw/common_gen.h
+$SCHEME --script include/scheme/Tw/common1.scm > include/Tw/common1_gen.h
 
 for i in md5.c missing.c
 do

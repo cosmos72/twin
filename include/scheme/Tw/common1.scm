@@ -1,6 +1,6 @@
 
 ;; this file should be executed as
-;;   scheme --script include/scheme/Tw/common1.scm > include/Tw/common1_gen.h
+;;   chezscheme --script include/scheme/Tw/common1.scm > include/Tw/common1_gen.h
 
 (define (F_EASY name str)
   (display "#define Tw")
