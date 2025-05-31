@@ -72,8 +72,19 @@
 (DECL byte FindFunctionV (va_list vargs))
 
 
-(EASY DropPrivileges "#define Tw_DropPrivileges() (setegid(getgid()), seteuid(getuid()))")
-(EASY GetPrivileges  "#define Tw_GetPrivileges() seteuid(0)")
+(EASY DropPrivileges "
+#ifdef __ANDROID__
+# define Tw_DropPrivileges() 0
+#else
+# define Tw_DropPrivileges() (setegid(getgid()), seteuid(getuid()))
+#endif")
+
+(EASY GetPrivileges  "
+#ifdef __ANDROID__
+# define Tw_GetPrivileges() 0
+#else
+# define Tw_GetPrivileges() seteuid(0)
+#endif")
 
 
 (c_comment "/** try to enable compression (using zlib); return 1 if success or 0 if failed */")

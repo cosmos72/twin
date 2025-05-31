@@ -96,8 +96,14 @@ enum {
 
 enum e_privilege /*: unsigned char*/ { none, sgidtty, suidroot };
 
+#ifdef __ANDROID__
+#define dropPrivileges() 0
+#define GainRootPrivileges() 0
+#define GainGroupPrivileges(g) 0
+#else
 #define dropPrivileges() (setegid(getgid()), seteuid(getuid()))
 #define GainRootPrivileges() seteuid(0)
 #define GainGroupPrivileges(g) setegid(g)
+#endif
 
 #endif /* TWIN_H */

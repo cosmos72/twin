@@ -41,8 +41,18 @@ extern trune *Tw_CloneStr2TRune(const char *, size_t);
 #define Tw_CopyMem(From, To, Size)    memcpy(To, From, Size)
 #define Tw_MoveMem(From, To, Size)    memmove(To, From, Size)
 byte Tw_FindFunctionV(tdisplay TwD, va_list vargs);
-#define Tw_DropPrivileges() (setegid(getgid()), seteuid(getuid()))
-#define Tw_GetPrivileges() seteuid(0)
+
+#ifdef __ANDROID__
+# define Tw_DropPrivileges() 0
+#else
+# define Tw_DropPrivileges() (setegid(getgid()), seteuid(getuid()))
+#endif
+
+#ifdef __ANDROID__
+# define Tw_GetPrivileges() 0
+#else
+# define Tw_GetPrivileges() seteuid(0)
+#endif
 /** try to enable compression (using zlib); return 1 if success or 0 if failed */
 byte Tw_EnableGzip(tdisplay TwD);
 /** try to disable compression (using zlib); return 1 if success or 0 if failed */
