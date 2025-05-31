@@ -345,8 +345,10 @@ void Tw_Close(tdisplay TwD);
 /** return 1 if server supports all given libtw functions */
 byte Tw_FindLFunction(tdisplay TwD, ...);
 
+#define Tw_ChangeFieldObj Tw_ChangeField
+
 #include <Tw/common_gen.h>
-#include <Tw/proto_m4.h>
+#include <Tw/proto_gen.h>
 #include <Tw/alias.h>
 
 #include <Tw/Tw1.h>

@@ -16,6 +16,7 @@ done
 
 $SCHEME --script include/scheme/Tw/common.scm  > include/Tw/common_gen.h
 $SCHEME --script include/scheme/Tw/common1.scm > include/Tw/common1_gen.h
+$SCHEME --script include/scheme/Tw/proto.scm   > include/Tw/proto_gen.h
 
 for i in md5.c missing.c
 do

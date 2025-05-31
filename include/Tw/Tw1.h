@@ -28,6 +28,9 @@ extern tdisplay Tw_DefaultD;
 byte TwFindLFunction(void *Function, ...);
 #endif
 
+#define TwChangeFieldObj TwChangeField
+#define TwSyncSocket TwSync
+
 #include <Tw/common1_gen.h>
 #include <Tw/proto1_m4.h>
 #include <Tw/alias1.h>
