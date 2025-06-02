@@ -3,6 +3,9 @@
 ;; this file should be executed as
 ;;   chezscheme --script include/scheme/Tw/proto.scm > include/Tw/proto_gen.h
 
+(define (c_verbatim str)
+  (display str)
+  (newline))
 
 (define (TYPE_DECL type kind)
   (when (pair? kind)

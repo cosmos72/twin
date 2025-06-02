@@ -5,10 +5,6 @@
 ;; Tell the user about this.
 
 
-(define (c_verbatim str)
-  (display str)
-  (newline))
-
 (define-syntax PROTO
   (syntax-rules ()
     ((_ ret func . args) (F_PROTO 'ret 'func 'args))))

@@ -4,6 +4,11 @@
 ;;   chezscheme --script include/scheme/Tw/libtw2.scm > libs/libtw/libtw2_gen.h
 
 
+(define (c_verbatim str)
+  (display str)
+  (newline))
+
+
 (define (TYPE_DECL type kind)
   (when (pair? kind)
     (display "const "))

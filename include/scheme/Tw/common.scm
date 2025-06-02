@@ -3,6 +3,10 @@
 ;; this file should be executed as
 ;;   chezscheme --script include/scheme/Tw/common.scm > include/Tw/common_gen.h
 
+(define (c_verbatim str)
+  (display str)
+  (newline))
+
 (define (F_EASY name str)
   (display str)
   (newline))

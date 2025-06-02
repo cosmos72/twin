@@ -3,6 +3,9 @@
 ;; this file should be executed as
 ;;   chezscheme --script include/scheme/Tw/proto1.scm > include/Tw/proto1_gen.h
 
+(define (c_verbatim str)
+  (display str)
+  (newline))
 
 (define (ARG_DECL arg)
   (display (caddr arg)))

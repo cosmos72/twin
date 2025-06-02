@@ -4,9 +4,6 @@
 ;;    twin/include/Tw/common1_gen.h
 ;; Tell the user about this.
 
-(define (c_verbatim str)
-  (display str)
-  (newline))
 
 (define-syntax EASY
   (syntax-rules ()
