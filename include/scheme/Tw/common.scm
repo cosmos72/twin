@@ -3,7 +3,7 @@
 ;; this file should be executed as
 ;;   chezscheme --script include/scheme/Tw/common.scm > include/Tw/common_gen.h
 
-(define (c_verbatim str)
+(define (c_doxygen str)
   (display str)
   (newline))
 

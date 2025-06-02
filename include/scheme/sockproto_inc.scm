@@ -4,6 +4,9 @@
 ;;   ...
 ;; Tell the user about this.
 
+(define (c_comment str)
+  (display str)
+  (newline))
 
 (define-syntax PROTO
   (syntax-rules ()
@@ -18,7 +21,7 @@
     ((_ ret func . args) (F_PROTOSyncSocket 'ret 'func 'args))))
 
 
-(c_verbatim "
+(c_comment "
 /* This file was automatically generated with scheme from `twin/include/scheme/sockproto_inc.scm', do not edit! */
 
 /**
@@ -65,43 +68,43 @@
 	: 2 if the Fn##object method pointer is extracted from the first argument
 |#
 
-(c_verbatim "/** return server-side id of given libtw function name with given prototype */")
+(c_doxygen "/** return server-side id of given libtw function name with given prototype */")
 (PROTOFindFunction (uldat _) (Find Function 0) (byte _ namelen) (char (V (A 1)) name) (byte _ protolen) (char (V (A 3)) proto))
 
-(c_verbatim "/** sync libtw socket: flush output buffer and wait for server replies */")
+(c_doxygen "/** sync libtw socket: flush output buffer and wait for server replies */")
 (PROTOSyncSocket (byte _)  (Sync Socket 0))
 
-(c_verbatim "/** return server idea of sizeof(type) */")
+(c_doxygen "/** return server idea of sizeof(type) */")
 (PROTO (byte _) (Server Sizeof 0) (byte _ type))
 
-(c_verbatim "/** return 1 if server supports compression (using zlib) */")
+(c_doxygen "/** return 1 if server supports compression (using zlib) */")
 (PROTO (byte _) (Can Compress 0))
 
-(c_verbatim "/** used internally by libtw to enable/disable compression only on server side;
+(c_doxygen "/** used internally by libtw to enable/disable compression only on server side;
  * DO NOT USE THIS, use Tw_EnableGzip() and Tw_DisableGzip() instead */")
 (PROTO (byte _) (Do Compress 0) (byte _ on_off))
 
-(c_verbatim "/** force a server display resize; used by twdisplay */")
+(c_doxygen "/** force a server display resize; used by twdisplay */")
 (PROTO (void v) (NeedResize Display 0))
 
-(c_verbatim "/** tell server to open a new display; used by twattach/twdisplay */")
+(c_doxygen "/** tell server to open a new display; used by twattach/twdisplay */")
 (PROTO (void v) (Attach HW 0) (uldat _ len) (char (V (A 1)) name) (byte _ flags))
-(c_verbatim "/** tell server to close given display */")
+(c_doxygen "/** tell server to close given display */")
 (PROTO (byte _) (Detach HW 0) (uldat _ len) (char (V (A 1)) name))
 
-(c_verbatim "/** set server global charset translation */")
+(c_doxygen "/** set server global charset translation */")
 (PROTO (void v) (Set FontTranslation 0)  (byte (V 128) trans))
-(c_verbatim "/** set server global charset translation */")
+(c_doxygen "/** set server global charset translation */")
 (PROTO (void v) (Set TRuneTranslation 0) (trune (V 128) trans))
 
-(c_verbatim "/** delete given object */")
+(c_doxygen "/** delete given object */")
 (PROTO (void v) (Delete Obj 0) (obj x O))
-(c_verbatim "/** change given field of object; new_value = (old_value & ~clearmask) ^ xormask */")
+(c_doxygen "/** change given field of object; new_value = (old_value & ~clearmask) ^ xormask */")
 (PROTO (void v) (ChangeField Obj 2) (obj x O) (udat _ field) (uldat _ clearmask) (uldat _ xormask))
 
 
 (PROTO (widget x)        (Create Widget 0) (dat _ w) (dat _ h) (uldat _ attrib) (uldat _ flags) (dat _ x) (dat _ y) (tcell _ fill))
-(c_verbatim "/** delete given widget and all its children */")
+(c_doxygen "/** delete given widget and all its children */")
 (PROTO (void v) (RecursiveDelete Widget 0) (widget x W))
 (PROTO (void v)             (Map Widget 2) (widget x W) (widget x parent))
 (PROTO (void v)           (UnMap Widget 2) (widget x W))

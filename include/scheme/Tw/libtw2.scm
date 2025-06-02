@@ -4,7 +4,7 @@
 ;;   chezscheme --script include/scheme/Tw/libtw2.scm > libs/libtw/libtw2_gen.h
 
 
-(define (c_verbatim str)
+(define (c_doxygen str)
   (display str)
   (newline))
 
