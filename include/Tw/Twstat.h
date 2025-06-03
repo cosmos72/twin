@@ -61,8 +61,9 @@
 #define TWS_trune_STR "\x07"
 #define TWS_tcell_STR "\x08"
 
-#define TWS_array_STR                                                                              \
-  "\xFD" /* used by server extensions as a shortcut for (TWS_vec | TWS_vecW | TWS_byte) */
+/* used by server extensions as a shortcut for (TWS_vec | TWS_vecW | TWS_byte) */
+#define TWS_array_STR "\xFD"
+#define TWS_tobj_STR "\xFF"
 
 #define TWS_field_byte val._
 #define TWS_field_num val._

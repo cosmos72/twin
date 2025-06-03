@@ -120,9 +120,9 @@ typedef struct s_fn_list {
 
 static fn_list Functions[] = {
 
-#include "libtw1_m4.h"
+#include "libtw1_gen.h"
 
-    {Tw_Stat, 7, 8, "Tw_StatObj", "0S0x" magic_id_STR(obj) "_" TWS_udat_STR "V" TWS_udat_STR},
+    {Tw_Stat, 7, 8, "Tw_StatObj", "0S0x" TWS_tobj_STR "_" TWS_udat_STR "V" TWS_udat_STR},
 
     {NULL, 0, 0, NULL, NULL}};
 
@@ -2137,10 +2137,10 @@ static uldat FindFunctionId(tw_d TwD, uldat order);
 
 #define DECL_MyReply                                                                               \
   byte *MyReply, *MyData;                                                                          \
-  uldat MyLen, MyCode;
+  uldat MyLen, MyCode
 #define INIT_MyReply                                                                               \
   (Pop(MyReply, uldat, MyLen), /*skip Serial:*/ Pop(MyReply, uldat, MyCode),                       \
-   Pop(MyReply, uldat, MyCode), MyData = MyReply, MyReply -= 3 * sizeof(uldat)),
+   Pop(MyReply, uldat, MyCode), MyData = MyReply, MyReply -= 3 * sizeof(uldat))
 
 #define ENCODE_FL_NOLOCK 1
 #define ENCODE_FL_LOCK 1
@@ -2151,7 +2151,8 @@ static tany _Tw_EncodeCall(byte flags, uldat o, tw_d TwD, ...) {
   struct s_tsfield a[TW_MAX_ARGS_N];
   tsfield b;
   va_list va;
-  DECL_MyReply uldat space, myId;
+  DECL_MyReply;
+  uldat space, myId;
   udat N;
 
   if (!TwD) {
@@ -2178,7 +2179,7 @@ static tany _Tw_EncodeCall(byte flags, uldat o, tw_d TwD, ...) {
 
         Send(TwD, (myId = NextSerial(TwD)), id_Tw[o]);
         if (flags & ENCODE_FL_RETURN) {
-          if ((MyReply = (void *)Wait4Reply(TwD, myId)) && (INIT_MyReply MyCode == OK_MAGIC)) {
+          if ((MyReply = (void *)Wait4Reply(TwD, myId)) && (INIT_MyReply, MyCode == OK_MAGIC)) {
             if (MyLen == 2 * sizeof(uldat) + a[0].label)
               DecodeReply((byte *)MyData, a);
             else
@@ -2804,7 +2805,8 @@ static tslist StatTSL(tw_d TwD, udat flags, byte *data, byte *end) {
 
 static tslist StatA(tw_d TwD, tobj Id, udat flags, uldat hN, const udat *h, tslist f) {
   tslist a0 = (tslist)TW_NOID;
-  DECL_MyReply uldat myId;
+  DECL_MyReply;
+  uldat myId;
   if (!TwD) {
     return a0;
   }
@@ -2820,7 +2822,7 @@ static tslist StatA(tw_d TwD, tobj Id, udat flags, uldat hN, const udat *h, tsli
         PushV(s, hN * sizeof(udat), h);
 
         Send(TwD, (myId = NextSerial(TwD)), id_Tw[order_StatObj]);
-        if ((MyReply = (void *)Wait4Reply(TwD, myId)) && (INIT_MyReply MyCode == OK_MAGIC)) {
+        if ((MyReply = (void *)Wait4Reply(TwD, myId)) && (INIT_MyReply, MyCode == OK_MAGIC)) {
           if (flags & TWS_SCALAR)
             a0 = StatScalar(f, (byte *)MyData, (byte *)MyReply + MyLen + sizeof(uldat));
           else
