@@ -804,7 +804,8 @@ static void sockMultiplexB(uldat id) {
     /* ensure type size WAS negotiated */                                                          \
     if (CAT(TWS_, type) <= TWS_tcolor || AlienSizeof(type, Slot)) {                                \
       /* move to first bytes on MSB machines */                                                    \
-      *(type *)&a[0] _any = (type)a[0] _any;                                                       \
+      const type a0 = (type)a[0] _any;                                                             \
+      memcpy(&a[0] _any, &a0, sizeof(type));                                                       \
       c = sizeof(type);                                                                            \
       break;                                                                                       \
     }                                                                                              \

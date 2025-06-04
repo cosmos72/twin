@@ -203,6 +203,7 @@ static byte *alienAllocReadVec(const byte *src, uldat len, uldat srcsize, uldat 
   return dst;
 }
 
+#if 0
 /*
  * translate to alien data, copying len bytes from srcsize chunks to dstsize chunks, optionally
  * flipping byte order. assume dst is large enough to hold translated data.
@@ -233,6 +234,7 @@ static void alienWriteVec(const byte *src, byte *dst, uldat len, uldat srcsize, 
     }
   }
 }
+#endif /* 0 */
 
 static void alienReply(uldat code, uldat alien_len, uldat len, const void *data) {
   byte AlienSizeofUldat = SIZEOF(uldat);
@@ -557,7 +559,8 @@ static void alienMultiplexB(uldat id) {
     /* ensure type size WAS negotiated */                                                          \
     if (CAT(TWS_, type) <= TWS_tcolor || SIZEOF(type)) {                                           \
       /* move to first bytes on MSB machines */                                                    \
-      *(type *)&a[0] _any = (type)a[0] _any;                                                       \
+      const type a0 = (type)a[0] _any;                                                             \
+      memcpy(&a[0] _any, &a0, sizeof(type));                                                       \
       c = SIZEOF(type);                                                                            \
       tmp = sizeof(type);                                                                          \
       break;                                                                                       \
@@ -645,7 +648,7 @@ static void AlienIO(int fd, uldat slot) {
     if (len < (uldat)tot)
       RemoteReadShrinkQueue(Slot, (uldat)tot - len);
 
-      /* ok, now process the data */
+    /* ok, now process the data */
 
 #ifdef CONF_SOCKET_GZ
     if ((gzSlot = LS.pairSlot) != NOSLOT) {
