@@ -521,12 +521,13 @@ inline void TWS_2_proto(udat tws_type, char proto[2]) {
 #define vecW_ TWS_vecW
 
 /* here a[0] is the first arg, N is the number of args */
-static void sockMultiplex_S(uldat id, Span<s_tsfield> a) {
+static tbool sockMultiplex_S(uldat id, Span<s_tsfield> a) {
   switch (id) {
-#include "socket1_m4.h"
+#include "socket1_gen.h"
   default:
     break;
   }
+  return tfalse;
 }
 
 /* here a[1] is the first arg, a[0] is the return value, N is the number of args + 1 */
@@ -543,9 +544,9 @@ static void sockMultiplex_S(uldat id, Span<s_tsfield> a) {
 
 /* here a[0] is the first arg, a.size is the number of args */
 static void sockMultiplexS(uldat id, Span<s_tsfield> a) {
-  sockMultiplex_S(id, a);
-  if (id < MaxFunct)
+  if (sockMultiplex_S(id, a)) {
     a[0] _type = proto_2_TWS(sockF[id].Format);
+  }
 }
 
 /* code to return array lengths V(expr) and W(expr) */
