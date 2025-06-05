@@ -23,6 +23,7 @@ $SCHEME include/scheme/Tw/proto1.scm  > include/Tw/proto1_gen.h
 $SCHEME include/scheme/Tw/libtw1.scm  > libs/libtw/libtw1_gen.h
 $SCHEME include/scheme/Tw/libtw2.scm  > libs/libtw/libtw2_gen.h
 $SCHEME include/scheme/socket1.scm    > server/socket1_gen.h
+$SCHEME include/scheme/socket2.scm    > server/socket2_gen.h
 
 for i in md5.c missing.c
 do

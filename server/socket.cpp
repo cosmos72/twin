@@ -458,7 +458,7 @@ typedef struct {
 } sockfn;
 
 static sockfn sockF[] = {
-#include "socket2_m4.h"
+#include "socket2_gen.h"
     {0, 0, "StatObj", "0S0x" Tobj_magic_STR "_" TWS_udat_STR "V" TWS_udat_STR}, {0, 0, NULL, NULL}};
 
 /* convert a 2-byte string "v"TWS_void_STR or "_"* or "V"* into a tsfield->type */

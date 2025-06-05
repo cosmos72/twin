@@ -1,15 +1,15 @@
-/* Copyright (C) 2000 by Massimiliano Ghilardi
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
-
-/* This file was automatically generated from m4/socket2.m4, do not edit! */
-
 /* clang-format off */
+
+/* This file was automatically generated with scheme from `twin/include/scheme/sockproto_inc.scm', do not edit! */
+
+/**
+ *  Copyright (C) 2001-2025 by Massimiliano Ghilardi
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
+ */
 
 { 0, 0, "FindFunction",
   "0" "_" TWS_uldat_STR "_" TWS_byte_STR "V" TWS_char_STR "_" TWS_byte_STR "V" TWS_char_STR },
