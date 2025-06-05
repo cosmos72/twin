@@ -12,7 +12,7 @@
 
 enum sockid {
 #define EL(name) CAT(order_, name),
-#include "socklist_m4.h"
+#include "socklist_gen.h"
 #undef EL
   order_StatObj
 };

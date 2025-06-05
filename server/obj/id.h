@@ -46,7 +46,7 @@ enum e_id /*: uldat*/ {
    *   B I G   F A T   WARNING:
    *
    * Tmsg_class_id is the magic number for user-created (tmsg) structures,
-   * while MSG_MAGIC (defined in socklist_m4.h) is the serial number reserved by
+   * while MSG_MAGIC (defined in socklist_gen.h) is the serial number reserved by
    * libtw to receive server messages (which are still (tmsg) structures).
    */
   Tmsg_class_id = 0xA3A61CE4ul, /* this must match tmsg_magic in include/Tw/Tw_defs.h */

@@ -1,13 +1,3 @@
-
-/* This file was automatically generated from m4/socklist.m4, do not edit!
- *  Copyright (C) 2002 by Massimiliano Ghilardi
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Library General Public
- *  License as published by the Free Software Foundation; either
- *  version 2 of the License, or (at your option) any later version.
- *
- */
 /* clang-format off */
 
 #define OK_MAGIC      ((uldat)0x3E4B4F3Cul)
@@ -15,6 +5,17 @@
 #define FIND_MAGIC    ((uldat)0x646E6946ul) /* i.e. "Find" */
 #define MSG_MAGIC     ((uldat)0x2167734dul) /* i.e. "Msg!" */
 
+
+/* This file was automatically generated with scheme from `twin/include/scheme/sockproto_inc.scm', do not edit! */
+
+/**
+ *  Copyright (C) 2001-2025 by Massimiliano Ghilardi
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
+ */
 EL(FindFunction)
 EL(SyncSocket)
 EL(ServerSizeof)

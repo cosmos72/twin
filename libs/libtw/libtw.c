@@ -135,7 +135,7 @@ typedef uldat v_id_vec[N_OF(Functions) - 1];
 typedef enum e_fn_order {
   order_DoesNotExist = -1,
 #define EL(funct) order_##funct,
-#include "socklist_m4.h"
+#include "socklist_gen.h"
 #undef EL
 
   order_StatObj,
