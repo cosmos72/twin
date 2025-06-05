@@ -1,15 +1,15 @@
-/* Copyright (C) 2000 by Massimiliano Ghilardi
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
-
-/* This file was automatically generated from m4/socket3.m4, do not edit! */
-
 /* clang-format off */
+
+/* This file was automatically generated with scheme from `twin/include/scheme/sockproto_inc.scm', do not edit! */
+
+/**
+ *  Copyright (C) 2001-2025 by Massimiliano Ghilardi
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
+ */
 
   case order_FindFunction:
     switch (n) {
@@ -32,13 +32,13 @@
 
   case order_SetFontTranslation:
     switch (n) {
-      case 1: L = 0x80; break;
+      case 1: L = 128; break;
     }
     break;
 
   case order_SetTRuneTranslation:
     switch (n) {
-      case 1: L = 0x80; break;
+      case 1: L = 128; break;
     }
     break;
 
@@ -73,6 +73,7 @@
       case 5: L = a[2]_any * a[3]_any; break;
     }
     break;
+
   case order_WriteTRunesGadget:
     switch (n) {
       case 5: L = a[2]_any * a[3]_any; break;
@@ -91,16 +92,19 @@
       case 3: L = a[2]_any; break;
     }
     break;
+
   case order_WriteUtf8Window:
     switch (n) {
       case 3: L = a[2]_any; break;
     }
     break;
+
   case order_WriteTRuneWindow:
     switch (n) {
       case 3: L = a[2]_any; break;
     }
     break;
+
   case order_WriteTCellWindow:
     switch (n) {
       case 5: L = a[4]_any; break;
@@ -137,6 +141,7 @@
       case 2: L = a[1]_any; break;
     }
     break;
+
   case order_FindMsgPort:
     switch (n) {
       case 3: L = a[2]_any; break;
@@ -154,6 +159,7 @@
       case 3: L = a[2]_any; break;
     }
     break;
+
   case order_BlindSendToMsgPort:
     switch (n) {
       case 3: L = a[2]_any; break;

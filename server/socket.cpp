@@ -556,7 +556,7 @@ static uldat sockLengths(uldat id, View<s_tsfield> a) {
 
   switch (id) {
 
-#include "socket3_m4.h"
+#include "socket3_gen.h"
 
   case order_StatObj:
     switch (n) {
