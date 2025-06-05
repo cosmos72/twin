@@ -1,20 +1,9 @@
 #!/bin/sh
 
 BISON=bison
-FIND=find
 FLEX=flex
-SED=sed
-M4=m4
 LN=ln
 SCHEME='chezscheme --script'
-
-$FIND -name \*.m4h | \
-while read i
-do
-  o="`echo \"$i\" | $SED 's,/m4/\(.*\).m4h,/\1_m4.h,g'`"
-  echo "$M4 -I include < \"$i\" > \"$o\""
-  $M4 -I include < "$i" > "$o"
-done
 
 $SCHEME include/scheme/Tw/common.scm  > include/Tw/common_gen.h
 $SCHEME include/scheme/Tw/common1.scm > include/Tw/common1_gen.h
