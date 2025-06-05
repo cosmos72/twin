@@ -733,7 +733,6 @@ static void sockMultiplexB(uldat id) {
   uldat nlen, n = 1;
   ldat fail = 1;
   const char *Format = sockF[id].Format;
-  uldat a0;
   byte c, self, flag, retT[2];
 
   self = (byte)*Format++;
@@ -832,11 +831,11 @@ static void sockMultiplexB(uldat id) {
       }
       break;
 
-    case 'x':
-      a0 = a[0] _obj ? a[0] _obj->Id : NOID;
+    case 'x': {
+      const uldat a0 = a[0] _obj ? a[0] _obj->Id : NOID;
       sockReply(OK_MAGIC, sizeof(tobj), &a0);
       return;
-
+    }
     case 'S':
     case 'v':
       return;

@@ -299,7 +299,6 @@ inline ldat alienDecodeArg(uldat id, const char *Format, uldat n, tsfield a, uld
   void *A;
   const void *av;
   topaque nlen;
-  uldat a0;
   byte c;
 
   switch ((c = (byte)*Format++)) {
@@ -338,6 +337,7 @@ inline ldat alienDecodeArg(uldat id, const char *Format, uldat n, tsfield a, uld
   case 'x':
     /* all kind of pointers */
     if (Left(SIZEOF(uldat))) {
+      uldat a0;
       POP(s, uldat, a0);
       c = (byte)*Format - base_magic_CHR;
       a[n] _obj = Id2Obj(e_class_byte(c), a0);
@@ -487,7 +487,6 @@ static void alienMultiplexB(uldat id) {
   uldat nlen, n = 1;
   ldat fail = 1;
   const char *Format = sockF[id].Format;
-  uldat a0;
   char retT[2];
   byte c, self, flag, tmp;
 
@@ -588,11 +587,11 @@ static void alienMultiplexB(uldat id) {
       }
       break;
 
-    case 'x':
-      a0 = a[0] _obj ? a[0] _obj->Id : NOID;
+    case 'x': {
+      const uldat a0 = a[0] _obj ? a[0] _obj->Id : NOID;
       REPLY(OK_MAGIC, uldat, &a0);
       return;
-
+    }
     case 'S':
     case 'v':
       return;
