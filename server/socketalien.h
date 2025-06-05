@@ -339,7 +339,7 @@ inline ldat alienDecodeArg(uldat id, const char *Format, uldat n, tsfield a, uld
     if (Left(SIZEOF(uldat))) {
       uldat a0;
       POP(s, uldat, a0);
-      c = (byte)*Format - base_magic_CHR;
+      c = (byte)*Format - Tbase_magic_CHR;
       a[n] _obj = Id2Obj(e_class_byte(c), a0);
       a[n] _type = obj_;
       break;
@@ -416,7 +416,7 @@ inline ldat alienDecodeArg(uldat id, const char *Format, uldat n, tsfield a, uld
     break;
   case 'X':
     nlen = sockLengths(id, View<s_tsfield>(a, n)) * SIZEOF(uldat);
-    c = (byte)*Format - base_magic_CHR;
+    c = (byte)*Format - Tbase_magic_CHR;
     if (Left(nlen)) {
       PopAddr(s, const byte, nlen, av);
       a[n] _cvec = av;
@@ -442,7 +442,7 @@ inline ldat alienDecodeArg(uldat id, const char *Format, uldat n, tsfield a, uld
     fail = -fail;
     break;
   case 'Y':
-    c = (byte)*Format - base_magic_CHR;
+    c = (byte)*Format - Tbase_magic_CHR;
 
     /* ensure 'topaque' size WAS negotiated */
     if (SIZEOF(topaque) && Left(SIZEOF(topaque))) {

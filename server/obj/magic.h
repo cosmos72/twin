@@ -37,26 +37,26 @@ enum e_class_byte /*: unsigned char*/ {
 };
 
 /*
- * These must have consecutive values, but obj_magic_STR can be changed
+ * These must have consecutive values, but Tobj_magic_STR can be changed
  * as long as it has the same value as obj_magic_CHR.
  * To avoid troubles with strlen(), you should not use '\0' or "\0"
  * for any of the values below.
  */
-#define base_magic_CHR '\x30'
-#define obj_magic_STR "\x30"
-#define widget_magic_STR "\x31"
-#define gadget_magic_STR "\x32"
-#define window_magic_STR "\x33"
-#define screen_magic_STR "\x34"
-#define ggroup_magic_STR "\x35"
-#define row_magic_STR "\x36"
-#define menuitem_magic_STR "\x37"
-#define menu_magic_STR "\x38"
+#define Tbase_magic_CHR '\x30'
+#define Tobj_magic_STR "\x30"
+#define Twidget_magic_STR "\x31"
+#define Tgadget_magic_STR "\x32"
+#define Twindow_magic_STR "\x33"
+#define Tscreen_magic_STR "\x34"
+#define Tgroup_magic_STR "\x35"
+#define Trow_magic_STR "\x36"
+#define Tmenuitem_magic_STR "\x37"
+#define Tmenu_magic_STR "\x38"
 #define Tmsgport_magic_STR "\x39"
-#define msg_magic_STR "\x3A"
-#define mutex_magic_STR "\x3B"
-#define module_magic_STR "\x3C"
-#define display_hw_magic_STR "\x3E"
-#define all_magic_STR "\x3F"
+#define Tmsg_magic_STR "\x3A"
+#define Tmutex_magic_STR "\x3B"
+#define Tmodule_magic_STR "\x3C"
+#define Tdisplay_magic_STR "\x3E"
+#define Tall_magic_STR "\x3F"
 
 #endif /* TWIN_MAGIC_H */

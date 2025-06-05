@@ -459,7 +459,7 @@ typedef struct {
 
 static sockfn sockF[] = {
 #include "socket2_m4.h"
-    {0, 0, "StatObj", "0S0x" obj_magic_STR "_" TWS_udat_STR "V" TWS_udat_STR}, {0, 0, NULL, NULL}};
+    {0, 0, "StatObj", "0S0x" Tobj_magic_STR "_" TWS_udat_STR "V" TWS_udat_STR}, {0, 0, NULL, NULL}};
 
 /* convert a 2-byte string "v"TWS_void_STR or "_"* or "V"* into a tsfield->type */
 inline udat proto_2_TWS(const char proto[2]) {
@@ -643,7 +643,7 @@ inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, ulda
     if (Left(sizeof(uldat))) {
       uldat a0;
       Pop(s, uldat, a0);
-      c = (byte)*Format - base_magic_CHR;
+      c = (byte)*Format - Tbase_magic_CHR;
       a[n] _obj = Id2Obj(e_class_byte(c), a0);
       a[n] _type = obj_;
       break;
@@ -689,7 +689,7 @@ inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, ulda
   case 'X':
     nlen = sockLengths(id, View<s_tsfield>(a, n)) * sizeof(uldat);
     if (Left(nlen)) {
-      c = (byte)*Format - base_magic_CHR;
+      c = (byte)*Format - Tbase_magic_CHR;
       PopAddr(s, const byte, nlen, av);
       if ((a[n] _vec = AllocId2ObjVec(flag, c, nlen / sizeof(uldat), (byte *)RemoveConst(av)))) {
         a[n] _len = nlen;
@@ -707,7 +707,7 @@ inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, ulda
 
       nlen *= sizeof(uldat);
       if (Left(nlen)) {
-        c = (byte)*Format - base_magic_CHR;
+        c = (byte)*Format - Tbase_magic_CHR;
         PopAddr(s, const byte, nlen, av);
         if ((a[n] _vec = AllocId2ObjVec(flag, c, nlen / sizeof(uldat), (byte *)RemoveConst(av)))) {
           a[n] _len = nlen;
