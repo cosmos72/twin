@@ -507,8 +507,9 @@ inline void TWS_2_proto(udat tws_type, char proto[2]) {
   }
 }
 
-#define _obj .TWS_field_obj
 #define _any .TWS_field_scalar
+#define _cell .TWS_field_cell
+#define _obj .TWS_field_obj
 #define _vec .TWS_field_vecV
 #define _cvec .TWS_field_vecCV
 #define _len .TWS_field_vecL

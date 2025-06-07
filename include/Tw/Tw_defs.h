@@ -57,21 +57,9 @@ enum tcolor_e {
   tmaxcol = 0xF,
 };
 
-#define TANSI2VGA(col) (((col)&0x1 ? tred : 0) | ((col)&0x2 ? tgreen : 0) | ((col)&0x4 ? tblue : 0))
+#define TANSI2VGA(col)                                                                             \
+  (((col) & 0x1 ? tred : 0) | ((col) & 0x2 ? tgreen : 0) | ((col) & 0x4 ? tblue : 0))
 #define TVGA2ANSI(col) TANSI2VGA(col)
-
-/* foreground / background colors handling */
-/*
- * NOTE: draw.c:DoShadowColor() assumes that
- * TCOL(fg1, bg1) | TCOL(fg2, bg2) == TCOL(fg1|fg2, bg1|bg2)
- * and
- * TCOL(fg1, bg1) & TCOL(fg2, bg2) == TCOL(fg1&fg2, bg1&bg2)
- */
-#define TFG(col) (col)
-#define TBG(col) ((col) << 4)
-#define TCOL(fg, bg) (TFG(fg) | TBG(bg))
-#define TCOLBG(col) ((col) >> 4)
-#define TCOLFG(col) ((col)&0x0F)
 
 /**********************************/
 

@@ -13,6 +13,10 @@
 #include <stdint.h> /* for uint8_t, uint32_t */
 #endif
 
+#ifdef TW_HAVE_STRING_H
+#include <string.h> /* for memcpy() */
+#endif
+
 #include <Tw/compiler.h> // for TW_INLINE
 
 #ifdef __cplusplus
@@ -33,21 +37,43 @@ typedef uldat tobj;
 typedef size_t topaque;
 typedef size_t tany;
 
-/* tcolor, trune, tcell */
-
-#ifdef TW_HAVE_STDINT_H
-typedef uint8_t tcolor;
-typedef uint32_t trune;
-typedef uint32_t tcell;
-#else
-typedef byte tcolor;
-typedef uldat trune;
-typedef uldat tcell;
-#endif
+/* tbool */
 
 typedef enum { tfalse, ttrue } tbool;
 
+/* tcolor, trune, tcell */
+
+#ifdef TW_HAVE_STDINT_H
+typedef uint16_t tcolor;
+typedef uint32_t trune;
+#else
+typedef udat tcolor;
+typedef uldat trune;
+#endif
+
+typedef struct {
+  byte fg;
+  byte bg;
+  byte runes[3];
+} tcell;
+
 /* miscellaneous types and constants */
+
+/* tcell <-> tcolor+trune conversion */
+#define TCELL(col, rune) Tw_make_tcell(col, rune)
+#define TCOLOR(cell) Tw_color(cell)
+#define TRUNE(cell) Tw_trune(cell)
+
+/* foreground / background colors handling */
+/*
+ * NOTE: draw.c:DoShadowColor() assumes that
+ * TCOL(fg1, bg1) | TCOL(fg2, bg2) == TCOL(fg1|fg2, bg1|bg2)
+ * and
+ * TCOL(fg1, bg1) & TCOL(fg2, bg2) == TCOL(fg1&fg2, bg1&bg2)
+ */
+#define TCOL(fg, bg) Tw_make_tcolor(fg, bg)
+#define TCOLBG(col) ((byte)((col) >> 8))
+#define TCOLFG(col) ((byte)(col))
 
 #define TW_NOID ((uldat)0)
 #define TW_BADID ((uldat) - 1)
@@ -59,18 +85,39 @@ typedef enum { tfalse, ttrue } tbool;
       10 + sizeof(uldat), sizeof(byte), sizeof(udat),  sizeof(uldat), sizeof(tcolor),              \
       sizeof(topaque),    sizeof(tany), sizeof(trune), sizeof(tcell), 0}
 
-/* tcell bytes are { 'utf21_low', 'utf21_mid', 'utf21_high', 'color' } */
+#define TCELL_COLMASK(cell) ((cell) & 0xFF000000)
+#define TCELL_FONTMASK(cell) ((cell) & 0x00FFFFFF)
+#define TRUNEEXTRA(cell) ((cell) & 0x00FFFFFF)
 
-/* tcell <-> tcolor+trune conversion */
-#define TCELL(col, font) ((tcell)(font) | ((tcell)(byte)(col) << 24))
-#define TCELL_COLMASK(attr) ((attr) & 0xFF000000)
-#define TCELL_FONTMASK(attr) ((attr) & 0x00FFFFFF)
-#define TCOLOR(attr) ((tcolor)((attr) >> 24))
-#define TRUNEEXTRA(attr) ((attr) & 0x00FFFFFF)
+TW_INLINE trune Tw_trune(tcell cell) {
+  trune ret = 0;
+#ifdef TW_WORDS_BIGENDIAN
+  memcpy((byte *)&ret + 1, cell.runes, 3);
+#else
+  memcpy(&ret, cell.runes, 3);
+#endif
+  return ret;
+}
 
-#define TRUNE(attr) Tw_trune(attr)
+TW_INLINE Tw_color(tcell cell) {
+  return cell.fg | (tcolor)cell.bg << 8;
+}
 
-trune Tw_trune(tcell attr);
+TW_INLINE tcell Tw_make_tcell(tcolor col, trune rune) {
+  tcell cell;
+  cell.fg = TCOLFG(col);
+  cell.bg = TCOLBG(col);
+#ifdef TW_WORDS_BIGENDIAN
+  memcpy(cell.runes, (const byte *)&rune + 1, 3);
+#else
+  memcpy(cell.runes, &rune, 3);
+#endif
+  return cell;
+}
+
+TW_INLINE tcolor Tw_make_tcolor(byte fg, byte bg) {
+  return fg | (tcolor)bg << 8;
+}
 
 /*
  * Notes about the timevalue struct:

@@ -4,6 +4,7 @@
 
 typedef union s_tsval {
   tany _;
+  tcell cell;
 #ifdef Tobj
   Tobj o;
 #endif

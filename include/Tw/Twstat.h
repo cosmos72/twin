@@ -73,7 +73,7 @@
 #define TWS_field_uldat val._
 #define TWS_field_tcolor val._
 #define TWS_field_trune val._
-#define TWS_field_tcell val._
+#define TWS_field_tcell val.cell
 #define TWS_field_topaque val._
 #define TWS_field_tany val._
 #define TWS_field_tobj val._

@@ -96,8 +96,7 @@ generates events (user input) is decided by the application.
 
    To compose and decompose a tcolor from fg/bg pair, you have the macros
 
-   TFG(fg), TBG(bg) and TCOL(fg,bg) to compose a tcolor
-      TCOL(fg,bg) is simply TFG(fg)|TBG(bg)
+   TCOL(fg,bg) to compose a tcolor
    TCOLBG(col) and TCOLFG(col) to decompose it
 
    To compose and decompose a tcell from tcolor/trune pair, you have the macros
