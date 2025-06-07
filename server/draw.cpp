@@ -138,7 +138,7 @@ void DrawDesktop(Tscreen screen, dat X1, dat Y1, dat X2, dat Y2, bool shaded) {
           attr = p_attr[x + y];
           col = DoShadowColor(TCOLOR(attr), shaded, shaded);
 
-          Video[X + Y] = TCELL(col, TRUNEEXTRA(attr));
+          Video[X + Y] = TCELL(col, TRUNE(attr));
         }
       } else {
         for (X = X1; X <= X2; X++, x++) {
@@ -160,7 +160,7 @@ void DrawDesktop(Tscreen screen, dat X1, dat Y1, dat X2, dat Y2, bool shaded) {
 
     if (shaded) {
       col = DoShadowColor(TCOLOR(attr), shaded, shaded);
-      attr = TCELL(col, TRUNEEXTRA(attr));
+      attr = TCELL(col, TRUNE(attr));
     }
     FillVideo(X1, Y1, X2, Y2, attr);
   }
@@ -511,7 +511,7 @@ void Swidget::DrawSelf(Sdraw *d) {
       cells += dx;
       for (ldat i = x1, v = 0; i <= x2; i++, v++) {
         tcolor color = DoShadowColor(TCOLOR(cells[v]), shaded, shaded);
-        Video[i + j * (ldat)dwidth] = TCELL(color, 0) | TCELL_FONTMASK(cells[v]);
+        Video[i + j * (ldat)dwidth] = TCELL(color, 0) | TCELL_RUNEMASK(cells[v]);
       }
       cells += pitch - dx;
     }
@@ -736,7 +736,7 @@ void Swindow::DrawSelf(Sdraw *d) {
               else
                 color = TCOLOR(currCont[v]);
 
-              Video[i + j * (ldat)dwidth] = TCELL(color, TRUNEEXTRA(currCont[v]));
+              Video[i + j * (ldat)dwidth] = TCELL(color, TRUNE(currCont[v]));
             }
           }
           currCont += w->WLogic;
@@ -757,7 +757,7 @@ void Swindow::DrawSelf(Sdraw *d) {
               color = TCOLOR(currCont[v]);
             color = DoShadowColor(color, shaded, shaded);
 
-            Video[i + j * (ldat)dwidth] = TCELL(color, TRUNEEXTRA(currCont[v]));
+            Video[i + j * (ldat)dwidth] = TCELL(color, TRUNE(currCont[v]));
           }
           currCont += w->WLogic;
           if (!row)

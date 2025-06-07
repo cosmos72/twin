@@ -45,7 +45,7 @@
   "0" "v" TWS_void_STR "x" Tobj_magic_STR },
 
 { 0, 0, "ChangeFieldObj",
-  "2" "v" TWS_void_STR "x" Tobj_magic_STR "_" TWS_udat_STR "_" TWS_uldat_STR "_" TWS_uldat_STR },
+  "2" "v" TWS_void_STR "x" Tobj_magic_STR "_" TWS_udat_STR "_" TWS_tany_STR "_" TWS_tany_STR },
 
 { 0, 0, "CreateWidget",
   "0" "x" Twidget_magic_STR "_" TWS_dat_STR "_" TWS_dat_STR "_" TWS_uldat_STR "_" TWS_uldat_STR "_" TWS_dat_STR "_" TWS_dat_STR "_" TWS_tcell_STR },

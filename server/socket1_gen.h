@@ -89,7 +89,7 @@ case order_DeleteObj:
 
 case order_ChangeFieldObj:
     if (a.size() >= 4) {
-        ((Tobj)a[1]_obj)->ChangeField((udat)a[2]_any, (uldat)a[3]_any, (uldat)a[4]_any);
+        ((Tobj)a[1]_obj)->ChangeField((udat)a[2]_any, (tany)a[3]_any, (tany)a[4]_any);
         return ttrue;
     }
     break;

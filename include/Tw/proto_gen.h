@@ -33,7 +33,7 @@ void Tw_SetTRuneTranslation(tdisplay TwD, const trune *trans);
 /** delete given object */
 void Tw_DeleteObj(tdisplay TwD, tobj O);
 /** change given field of object; new_value = (old_value & ~clearmask) ^ xormask */
-void Tw_ChangeField(tdisplay TwD, tobj O, udat field, uldat clearmask, uldat xormask);
+void Tw_ChangeField(tdisplay TwD, tobj O, udat field, tany clearmask, tany xormask);
 twidget Tw_CreateWidget(tdisplay TwD, dat w, dat h, uldat attrib, uldat flags, dat x, dat y, tcell fill);
 /** delete given widget and all its children */
 void Tw_RecursiveDeleteWidget(tdisplay TwD, twidget W);

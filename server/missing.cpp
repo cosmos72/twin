@@ -87,15 +87,3 @@ int Tw_option_strncmp(const char *s1, const char *s2, size_t n) {
     s2++;
   return strncmp(s1, s2, n);
 }
-
-enum {
-  utf21_size = 0x110000,
-};
-
-trune Tw_trune(tcell cell) {
-  cell &= 0x001FFFFF;
-  if (cell >= utf21_size) {
-    cell -= utf21_size;
-  }
-  return cell;
-}

@@ -115,10 +115,11 @@ bool Srow::SetTRune(uldat len, const trune *runes, bool default_color) {
   } else if (len) {
     CopyMem(runes, row->Text, len * sizeof(trune));
     if (!(row->Flags & ROW_DEFCOL) && !default_color) {
-      /* memset() will not work correctly if sizeof(tcolor) != 1 */
-      typedef char sizeof_tcolor_is_1[sizeof(tcolor) == 1 ? 1 : -1];
-
-      memset(row->ColText, TCOL(twhite, tblack), len * sizeof(tcolor));
+      tcolor col = TCOL(twhite, tblack);
+      uldat i;
+      for (i = 0; i < len; i++) {
+        row->ColText[i] = col;
+      }
     }
   }
   row->Len = len;

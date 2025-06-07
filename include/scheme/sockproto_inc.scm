@@ -100,7 +100,7 @@
 (c_doxygen "/** delete given object */")
 (PROTO (void v) (Delete Obj 0) (obj x O))
 (c_doxygen "/** change given field of object; new_value = (old_value & ~clearmask) ^ xormask */")
-(PROTO (void v) (ChangeField Obj 2) (obj x O) (udat _ field) (uldat _ clearmask) (uldat _ xormask))
+(PROTO (void v) (ChangeField Obj 2) (obj x O) (udat _ field) (tany _ clearmask) (tany _ xormask))
 
 
 (PROTO (widget x)        (Create Widget 0) (dat _ w) (dat _ h) (uldat _ attrib) (uldat _ flags) (dat _ x) (dat _ y) (tcell _ fill))

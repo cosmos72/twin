@@ -398,7 +398,7 @@ static void termcap_ShowMouse(void) {
       (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * (ldat)DisplayWidth;
   tcell h = Video[pos], c = TCELL_COLMASK(~h) ^ TCELL(TCOL(thigh, thigh), 0);
 
-  termcap_DrawTCell(HW->MouseState.x, HW->MouseState.y, c | TCELL_FONTMASK(h));
+  termcap_DrawTCell(HW->MouseState.x, HW->MouseState.y, c | TCELL_RUNEMASK(h));
 
   /* force updating the cursor */
   HW->XY[0] = HW->XY[1] = -1;

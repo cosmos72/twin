@@ -35,34 +35,49 @@ typedef unsigned int uldat;
 
 typedef uldat tobj;
 typedef size_t topaque;
-typedef size_t tany;
 
 /* tbool */
 
 typedef enum { tfalse, ttrue } tbool;
 
-/* tcolor, trune, tcell */
+/* tcolor, trune, tcell, tany */
 
-#ifdef TW_HAVE_STDINT_H
-typedef uint16_t tcolor;
+#if defined(UINT32_MAX) || defined(uint32_t)
+typedef uint32_t tcolor;
 typedef uint32_t trune;
 #else
-typedef udat tcolor;
+typedef uldat tcolor;
 typedef uldat trune;
 #endif
 
-typedef struct {
-  byte fg;
-  byte bg;
-  byte runes[3];
-} tcell;
+#if defined(UINT64_MAX) || defined(uint64_t)
+
+typedef uint64_t tcell;
+#if defined(TW_SIZEOF_SIZE_T) && TW_SIZEOF_SIZE_T < 8
+typedef uint64_t tany;
+#else
+typedef size_t tany;
+#endif
+
+#elif defined(TW_SIZEOF_UNSIGNED_LONG_LONG) && TW_SIZEOF_UNSIGNED_LONG_LONG >= 8
+
+typedef unsigned long long tcell;
+#if defined(TW_SIZEOF_SIZE_T) && TW_SIZEOF_SIZE_T < TW_SIZEOF_UNSIGNED_LONG_LONG
+typedef unsigned long long tany;
+#else
+typedef size_t tany;
+#endif
+
+#else
+#error "no 64-bit unsigned integer type found"
+#endif
 
 /* miscellaneous types and constants */
 
 /* tcell <-> tcolor+trune conversion */
-#define TCELL(col, rune) Tw_make_tcell(col, rune)
-#define TCOLOR(cell) Tw_color(cell)
-#define TRUNE(cell) Tw_trune(cell)
+#define TCELL(col, rune) (((tcell)(col) << 22) | (tcell)(rune))
+#define TCOLOR(cell) ((tcolor)((cell) >> 22))
+#define TRUNE(cell) ((trune)((cell) & 0x3FFFFF))
 
 /* foreground / background colors handling */
 /*
@@ -71,9 +86,12 @@ typedef struct {
  * and
  * TCOL(fg1, bg1) & TCOL(fg2, bg2) == TCOL(fg1&fg2, bg1&bg2)
  */
-#define TCOL(fg, bg) Tw_make_tcolor(fg, bg)
-#define TCOLBG(col) ((byte)((col) >> 8))
-#define TCOLFG(col) ((byte)(col))
+#define TCOL(fg, bg) ((tcolor)(fg) | (tcolor)(bg) << 21)
+#define TCOLBG(col) (((col) >> 21) & 0x1fffff)
+#define TCOLFG(col) ((col) & 0x1fffff)
+
+#define TCELL_COLMASK(cell) ((cell) & 0xFFFFFFFFFFC00000ull)
+#define TCELL_RUNEMASK(cell) ((cell) & 0x3FFFFF)
 
 #define TW_NOID ((uldat)0)
 #define TW_BADID ((uldat) - 1)
@@ -84,40 +102,6 @@ typedef struct {
   static byte id[10 + sizeof(uldat)] = {                                                           \
       10 + sizeof(uldat), sizeof(byte), sizeof(udat),  sizeof(uldat), sizeof(tcolor),              \
       sizeof(topaque),    sizeof(tany), sizeof(trune), sizeof(tcell), 0}
-
-#define TCELL_COLMASK(cell) ((cell) & 0xFF000000)
-#define TCELL_FONTMASK(cell) ((cell) & 0x00FFFFFF)
-#define TRUNEEXTRA(cell) ((cell) & 0x00FFFFFF)
-
-TW_INLINE trune Tw_trune(tcell cell) {
-  trune ret = 0;
-#ifdef TW_WORDS_BIGENDIAN
-  memcpy((byte *)&ret + 1, cell.runes, 3);
-#else
-  memcpy(&ret, cell.runes, 3);
-#endif
-  return ret;
-}
-
-TW_INLINE Tw_color(tcell cell) {
-  return cell.fg | (tcolor)cell.bg << 8;
-}
-
-TW_INLINE tcell Tw_make_tcell(tcolor col, trune rune) {
-  tcell cell;
-  cell.fg = TCOLFG(col);
-  cell.bg = TCOLBG(col);
-#ifdef TW_WORDS_BIGENDIAN
-  memcpy(cell.runes, (const byte *)&rune + 1, 3);
-#else
-  memcpy(cell.runes, &rune, 3);
-#endif
-  return cell;
-}
-
-TW_INLINE tcolor Tw_make_tcolor(byte fg, byte bg) {
-  return fg | (tcolor)bg << 8;
-}
 
 /*
  * Notes about the timevalue struct:

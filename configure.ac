@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.71])
-AC_INIT([twin],[0.9.1],[BUG-REPORT-ADDRESS])
+AC_INIT([twin],[0.9.2],[BUG-REPORT-ADDRESS])
 AC_CONFIG_SRCDIR([server/main.cpp])
 AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -142,7 +142,9 @@ AC_TYPE_INT32_T
 AC_TYPE_UINT8_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
 
+AC_CHECK_TYPE(unsigned long long)
 AC_CHECK_TYPE(gid_t,int)
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
@@ -167,6 +169,7 @@ AC_CHECK_SIZEOF([int])
 AC_CHECK_SIZEOF([long])
 AC_CHECK_SIZEOF([size_t])
 AC_CHECK_SIZEOF([void *])
+AC_CHECK_SIZEOF([unsigned long long])
 
 
 # Checks for functions and libraries.

@@ -39,19 +39,18 @@ static void XSYM(FillWindowTitle)(char *title, int maxlen) {
 }
 
 static void XSYM(HideCursor)(dat x, dat y) {
-  int xbegin = (x - xhw_startx) * xwfont,
-      ybegin = (y - xhw_starty) * xhfont; /* needed by XDRAW_ANY */
+  int xbegin = (x - xhw_startx) * xwfont;
+  int ybegin = (y - xhw_starty) * xhfont; /* needed by XDRAW */
 
   tcell V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
                 ? Video[x + y * (ldat)DisplayWidth]
                 : TCELL(TCOL(thigh | twhite, tblack), ' ');
   tcolor col = TCOLOR(V);
-  tcell extra = 0;
   trune f = xUTF_32_to_charset(TRUNE(V));
 
   XChar16 c = RawToXChar16(f);
 
-  XDRAW_ANY(&c, 1, col, extra);
+  XDRAW(col, &c, 1);
 }
 
 static void XSYM(ShowCursor)(uldat type, dat x, dat y) {
@@ -73,7 +72,7 @@ static void XSYM(ShowCursor)(uldat type, dat x, dat y) {
       v ^= TCOL(twhite, 0);
     f = xUTF_32_to_charset(TRUNE(V));
     c = RawToXChar16(f);
-    XDRAW_ANY(&c, 1, v, 0);
+    XDRAW(v, &c, 1);
   } else if (type & 0xF) {
     /* VGA hw-like cursor */
 

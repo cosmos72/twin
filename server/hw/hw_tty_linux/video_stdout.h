@@ -243,7 +243,7 @@ static void linux_ShowMouse(void) {
   tcell h = Video[pos];
   tcolor c = ~TCOLOR(h) ^ TCOL(thigh, thigh);
 
-  linux_DrawTCell(HW->MouseState.x, HW->MouseState.y, TCELL(c, TRUNEEXTRA(h)));
+  linux_DrawTCell(HW->MouseState.x, HW->MouseState.y, TCELL(c, TRUNE(h)));
 
   /* store current cursor state for correct updating */
   HW->XY[1] = HW->MouseState.y;

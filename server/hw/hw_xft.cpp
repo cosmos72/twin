@@ -59,8 +59,6 @@ static void XSYM(DrawString16)(Display *display, Drawable d, GC gc, int x, int y
     myXDrawImageString(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen);             \
   } while (0)
 
-#define XDRAW_ANY(buf, buflen, col, _) XDRAW(col, buf, buflen)
-
 #include "hw_x/util.h"
 #include "hw_x/common.h"
 

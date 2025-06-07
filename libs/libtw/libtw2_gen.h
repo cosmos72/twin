@@ -68,7 +68,7 @@ void Tw_DeleteObj(tw_d TwD, tobj a1) {
 }
 
 /** change given field of object; new_value = (old_value & ~clearmask) ^ xormask */
-void Tw_ChangeField(tw_d TwD, tobj a1, udat a2, uldat a3, uldat a4) {
+void Tw_ChangeField(tw_d TwD, tobj a1, udat a2, tany a3, tany a4) {
   _Tw_EncodeCall(ENCODE_FL_VOID, order_ChangeFieldObj, TwD, n(a1), n(a2), n(a3), n(a4));
 }
 
