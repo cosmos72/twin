@@ -21,7 +21,7 @@
 #include "draw.h"      // DrawAreaWidget()
 
 #include <Tw/datasizes.h>   // TW_SIZEOF_TCOLOR
-#include <Tw/Tw_defs.h>     // tmaxcol
+#include <Tw/Tw_defs.h>     // tpalette_n
 #include <Tw/Twstat_defs.h> // TWS_gadget_*
 #include <Tutf/utf_32.h>    // T_UTF_32_*_BLOCK
 #include <Tutf/Tutf.h>      // Tutf_CP437_to_UTF_32
@@ -94,7 +94,7 @@ Tgadget Sgadget::CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolo
       }
 
     size = (ldat)--xwidth * --ywidth;
-    bgcol &= TCOL(0, tmaxcol);
+    bgcol &= TCOL(0, thigh | twhite);
 
     for (i = 0; i < 4; i++) {
       for (j = k = 0; j < ywidth; j++, k += xwidth + 1) {

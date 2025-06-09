@@ -77,7 +77,7 @@ static void XSYM(ShowCursor)(uldat type, dat x, dat y) {
     /* VGA hw-like cursor */
 
     /* doesn't work as expected on paletted visuals... */
-    unsigned long fg = xcol[TCOLFG(TCOLOR(V)) ^ TCOLBG(TCOLOR(V))];
+    unsigned long fg = XSYM(ColorToPixel)(TCOLFG(TCOLOR(V)) ^ TCOLBG(TCOLOR(V)));
 
     udat i = xhfont * ((type & 0xF) - NOCURSOR) / (SOLIDCURSOR - NOCURSOR);
 

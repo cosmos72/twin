@@ -43,18 +43,27 @@ enum {
 /* maximum number of arguments of a libtw function */
 #define TW_MAX_ARGS_N 20
 
-/* enum for VGA (not ANSI!) colors */
+/* enum for common colors represented as 21-bit RGB */
 enum tcolor_e {
+#ifdef TWIN_PALETTE_SOLARIZED
+  tblack = 0x2 << 14 | 0x4 << 7 | 0x8,
+#else
   tblack = 0,
-  tblue = 1,
-  tgreen = 2,
-  tcyan = tblue | tgreen,
-  tred = 4,
-  tmagenta = tblue | tred,
+#endif
+  tblue = 0x55,            /* */
+  tgreen = 0x55 << 7,      /* */
+  tcyan = tblue | tgreen,  /* */
+  tred = 0x55 << 14,       /* */
+  tmagenta = tblue | tred, /* */
   tyellow = tgreen | tred,
+#ifdef TWIN_PALETTE_SOLARIZED
+  twhite = 0x5d << 14 | 0x5d << 7 | 0x5d,
+#else
   twhite = tblue | tgreen | tred,
-  thigh = 8,
-  tmaxcol = 0xF,
+#endif
+  thigh = 0x2a << 14 | 0x2a << 7 | 0x2a,
+
+  tpalette_n = 256,
 };
 
 #define TANSI2VGA(col)                                                                             \

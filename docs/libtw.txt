@@ -83,16 +83,8 @@ generates events (user input) is decided by the application.
    an ASCII character, but depending on libtw configuration, it may even
    contain a UNICODE character.
 
-   tcolor can hold a single foreground color + background color combination
-   This is loosely based on VGA colors, with 8 different colors
-
-   tblack, tblue, tgreen, tcyan, tred, tmagenta, tyellow, twhite
-
-   and a special thigh flag. The maximum possible color value is tmaxcol.
-
-   to convert between this representation and ANSI colors, there are two macros:
-
-   TANSI2VGA(col) and TVGA2ANSI(col)
+   tcolor can hold a single foreground color + background color combination,
+   where both foreground and background colors are 21-bit RGB values.
 
    To compose and decompose a tcolor from fg/bg pair, you have the macros
 

@@ -48,12 +48,12 @@ Chars confdir = CONFDIR;
 #define LIGHT M, M, M
 #endif
 
-rgb Palette[tmaxcol + 1] = {
+rgb8 Palette[tpalette_n] = {
     /* the default colour table, for VGA+ colour systems */
     {DARK},    {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {LIGHT},
     {L, L, L}, {L, L, H}, {L, H, L}, {L, H, H}, {H, L, L}, {H, L, H}, {H, H, L}, {H, H, H}};
 
-rgb defaultPalette[tmaxcol + 1] = {
+rgb8 defaultPalette[tpalette_n] = {
     /* the default colour table, for VGA+ colour systems */
     {DARK},    {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {LIGHT},
     {L, L, L}, {L, L, H}, {L, H, L}, {L, H, H}, {H, L, L}, {H, L, H}, {H, H, L}, {H, H, H}};

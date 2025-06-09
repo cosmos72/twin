@@ -595,13 +595,13 @@ void ConfigureHW(udat resource, byte todefault, udat value) {
 }
 
 void SetPaletteHW(udat N, udat R, udat G, udat B) {
-  if (N <= tmaxcol) {
-    rgb c;
+  if (N < tpalette_n) {
+    rgb8 c;
     c.Red = R;
     c.Green = G;
     c.Blue = B;
 
-    if (memcmp(&Palette[N], &c, sizeof(rgb))) {
+    if (memcmp(&Palette[N], &c, sizeof(rgb8))) {
       Palette[N] = c;
       forHW {
         HW->SetPalette(N, R, G, B);

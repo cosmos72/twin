@@ -12,9 +12,9 @@
 #include "stl/chars.h"
 
 #include <Tw/datatypes.h> // byte, udat, tcolor, trune
-#include <Tw/Tw_defs.h>   // tmaxcol
+#include <Tw/Tw_defs.h>   // tpalette_n
 
-struct rgb {
+struct rgb8 {
   byte Red, Green, Blue;
 };
 
@@ -24,7 +24,7 @@ extern Chars plugindir;
 // directory containing system-wide configuration file twinrc
 extern Chars confdir;
 
-extern rgb Palette[tmaxcol + 1], defaultPalette[tmaxcol + 1];
+extern rgb8 Palette[tpalette_n], defaultPalette[tpalette_n];
 
 struct keylist {
   const char *name;

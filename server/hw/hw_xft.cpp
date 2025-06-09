@@ -207,7 +207,7 @@ static char *XSYM(AutodetectFont)(const char *family, udat fontwidth, udat fonth
   return fontname;
 }
 
-static int XSYM(AllocColor)(Display *display, Visual *xvisual, Colormap colormap, XColor *xcolor,
+static int XSYM(AllocColor)(Display *display, Visual *visual, Colormap colormap, XColor *xcolor,
                             unsigned long *pixel, int color_num) {
   XRenderColor xrcolor;
   XftColor *xft_color;
@@ -223,7 +223,7 @@ static int XSYM(AllocColor)(Display *display, Visual *xvisual, Colormap colormap
   xrcolor.blue = xcolor->blue;
   xrcolor.alpha = 65535;
 
-  if (!XftColorAllocValue(xdisplay, xvisual, colormap, &xrcolor, xft_color)) {
+  if (!XftColorAllocValue(xdisplay, visual, colormap, &xrcolor, xft_color)) {
     return -1;
   }
   *pixel = xft_color->pixel;
@@ -235,7 +235,7 @@ static int XSYM(AllocColor)(Display *display, Visual *xvisual, Colormap colormap
 static void XSYM(FlavorQuitHW)(void) {
   int xscreen;
   Colormap colormap = (Colormap)0;
-  Visual *xvisual = (Visual *)0;
+  Visual *visual = (Visual *)0;
 
   if (xdisplay) {
     if (xsfont) {
@@ -243,17 +243,17 @@ static void XSYM(FlavorQuitHW)(void) {
     }
     xscreen = DefaultScreen(xdisplay);
     colormap = DefaultColormap(xdisplay, xscreen);
-    xvisual = DefaultVisual(xdisplay, xscreen);
+    visual = DefaultVisual(xdisplay, xscreen);
   }
   if (xftdraw) {
     XftDrawDestroy(xftdraw);
   }
-  for (int i = 0; i < tmaxcol; i++) {
+  for (int i = 0; i < tpalette_n; i++) {
     if (xftcolors[i] == NULL) {
       break;
     }
     if (xdisplay) {
-      XftColorFree(xdisplay, xvisual, colormap, xftcolors[i]);
+      XftColorFree(xdisplay, visual, colormap, xftcolors[i]);
     }
     FreeMem(xftcolors[i]);
     xftcolors[i] = NULL;

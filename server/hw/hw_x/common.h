@@ -6,6 +6,15 @@
 /* this can stay static, XSYM(FlushHW)() is not reentrant */
 static tcolor _col;
 
+static unsigned long XSYM(ColorToPixel)(trgb rgb) {
+  if (xtruecolor) {
+    return xrgb_info.pixel(rgb);
+  } else {
+    /// TODO: use 256-color palette
+    return xcol[(TRED(rgb) & 0x80) >> 5 | (TGREEN(rgb) & 0x80) >> 6 | (TBLUE(rgb) & 0x80) >> 7];
+  }
+}
+
 inline void XSYM(DrawSome)(dat x, dat y, ldat len) {
   tcell *V, *oV;
   tcolor col;
@@ -151,20 +160,17 @@ static int XSYM(check_hw_name)(char *hw_name) {
 
 static bool XSYM(InitHW)(void) {
   char *arg = HW->Name.data(); // guaranteed to be '\0' terminated
-  int xscreen;
-  unsigned int xdepth;
+
   XSetWindowAttributes xattr;
   XColor xcolor;
   XSizeHints *xhints;
   XEvent event;
-  Visual *xvisual;
-  Colormap colormap;
   char *s, *xdisplay_ = NULL, *xdisplay0 = NULL, *fontname = NULL, *fontname0 = NULL,
            *charset = NULL, *charset0 = NULL, title[X_TITLE_MAXLEN];
-  int i, nskip;
+  unsigned long xcreategc_mask = GCForeground | GCBackground | GCGraphicsExposures;
+  int i, nskip = 0;
   udat fontwidth = 10, fontheight = 20;
   byte drag = tfalse, noinput = tfalse;
-  unsigned long xcreategc_mask = GCForeground | GCBackground | GCGraphicsExposures;
 
   if (!(HW->Private = (XSYM(data) *)AllocMem(sizeof(XSYM(data))))) {
     log(ERROR) << "      " XSYM_STR(InitHW) "() Out of memory!\n";
@@ -265,33 +271,46 @@ static bool XSYM(InitHW)(void) {
 
   if ((xdisplay = XOpenDisplay(xdisplay_))) {
     do {
-
       (void)XSetIOErrorHandler(XSYM(Die));
 
-      xscreen = DefaultScreen(xdisplay);
-      xdepth = DefaultDepth(xdisplay, xscreen);
-      xvisual = DefaultVisual(xdisplay, xscreen);
-      colormap = DefaultColormap(xdisplay, xscreen);
+      XVisualInfo vistemplate;
+      const int screen = DefaultScreen(xdisplay);
+      const unsigned depth = DefaultDepth(xdisplay, screen);
+      Visual *visual = DefaultVisual(xdisplay, screen);
+      int visinfo_n = 0;
 
-      for (i = 0; i <= tmaxcol; i++) {
+      vistemplate.visualid = XVisualIDFromVisual(visual);
+
+      XVisualInfo *visinfo = XGetVisualInfo(xdisplay, VisualIDMask, &vistemplate, &visinfo_n);
+
+      if (visinfo != NULL && visinfo_n > 0) {
+        xrgb_info.init(visinfo);
+        xtruecolor = xrgb_info.is_truecolor(visinfo);
+      }
+
+      Colormap colormap = DefaultColormap(xdisplay, screen);
+
+      for (i = 0; i < tpalette_n; i++) {
         xcolor.red = 257 * (udat)Palette[i].Red;
         xcolor.green = 257 * (udat)Palette[i].Green;
         xcolor.blue = 257 * (udat)Palette[i].Blue;
-        if (!XSYM(AllocColor)(xdisplay, xvisual, colormap, &xcolor, &xcol[i], i)) {
+        if (!XSYM(AllocColor)(xdisplay, visual, colormap, &xcolor, &xcol[i], i)) {
           log(ERROR) << "      " XSYM_STR(InitHW) "() failed to allocate colors\n";
           break;
         }
       }
-      if (i <= tmaxcol)
+      if (i < tpalette_n) {
         break;
+      }
 
       xattr.background_pixel = xcol[0];
       xattr.event_mask = ExposureMask | VisibilityChangeMask | StructureNotifyMask |
                          SubstructureNotifyMask | KeyPressMask | ButtonPressMask |
                          ButtonReleaseMask | PointerMotionMask;
 
-      if (!XSYM(LoadFont)(fontname, fontwidth, fontheight))
+      if (!XSYM(LoadFont)(fontname, fontwidth, fontheight)) {
         break;
+      }
 
       if (xhw_view && xhw_startx >= 0 && xhw_starty >= 0 && xhw_endx > xhw_startx &&
           xhw_endy > xhw_starty) {
@@ -306,8 +325,8 @@ static bool XSYM(InitHW)(void) {
       }
 
       if ((xwindow =
-               XCreateWindow(xdisplay, DefaultRootWindow(xdisplay), 0, 0, xwidth, xheight, 0,
-                             xdepth, InputOutput, xvisual, CWBackPixel | CWEventMask, &xattr)) &&
+               XCreateWindow(xdisplay, DefaultRootWindow(xdisplay), 0, 0, xwidth, xheight, 0, depth,
+                             InputOutput, visual, CWBackPixel | CWEventMask, &xattr)) &&
 
           (xsgc.foreground = xsgc.background = xcol[0], xsgc.graphics_exposures = False,
 #if HW_X_DRIVER == HW_X11
@@ -323,7 +342,7 @@ static bool XSYM(InitHW)(void) {
         xcompose = static_xcompose;
 
 #if HW_X_DRIVER == HW_XFT
-        xftdraw = XftDrawCreate(xdisplay, xwindow, xvisual, colormap);
+        xftdraw = XftDrawCreate(xdisplay, xwindow, visual, colormap);
 #endif
 
 #ifdef TW_FEATURE_X11_XIM_XIC

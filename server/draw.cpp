@@ -26,13 +26,13 @@
 #include <Tutf/Tutf_defs.h>
 
 inline tcolor DoShadowColor(tcolor color, bool Fg, bool Bg) NOTHROW {
-  return (Bg   ? (color & TCOL(0, tmaxcol)) > TCOL(0, thigh | tblack) ? TCOL(0, thigh | tblack)
-                                                                      : TCOL(0, tblack)
-            : Fg ? color & TCOL(0, twhite)
-               : color & TCOL(0, tmaxcol)) |
-         (Fg ? (color & TCOL(tmaxcol, 0)) > TCOL(thigh | tblack, 0) ? TCOL(twhite, 0)
-                                                                    : TCOL(thigh | tblack, 0)
-             : color & TCOL(tmaxcol, 0));
+  return (Bg ? (color & TCOL(0, thigh | twhite)) > TCOL(0, thigh | tblack) ? TCOL(0, thigh | tblack)
+                                                                           : TCOL(0, tblack)
+          : Fg ? color & TCOL(0, twhite)
+               : color & TCOL(0, thigh | twhite)) |
+         (Fg ? (color & TCOL(thigh | twhite, 0)) > TCOL(thigh | tblack, 0) ? TCOL(twhite, 0)
+                                                                           : TCOL(thigh | tblack, 0)
+             : color & TCOL(thigh | twhite, 0));
 }
 
 /*

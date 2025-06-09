@@ -5,6 +5,7 @@
 
 #include "stl/view.h"
 
+static unsigned long XSYM(ColorToPixel)(trgb rgb);
 static void XSYM(FillWindowTitle)(char *title, int maxlen);
 static void XSYM(HideCursor)(dat x, dat y);
 static void XSYM(ShowCursor)(uldat type, dat x, dat y);

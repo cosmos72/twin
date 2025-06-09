@@ -864,14 +864,14 @@ static void setterm_command(void) {
   switch (Par[0]) {
 
   case 1: /* set fg color for underline mode */
-    if (Par[1] <= tmaxcol) {
+    if (Par[1] < tpalette_n) {
       Underline = TCOL(TANSI2VGA(Par[1]), 0);
       if (Effects & EFF_UNDERLINE)
         update_eff();
     }
     break;
   case 2: /* set color for half intensity mode */
-    if (Par[1] <= tmaxcol) {
+    if (Par[1] < tpalette_n) {
       HalfInten = TCOL(TANSI2VGA(Par[1]), 0);
       if (Effects & EFF_HALFINTENS)
         update_eff();
