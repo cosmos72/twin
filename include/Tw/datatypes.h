@@ -109,13 +109,16 @@ TW_INLINE trgb TRGB(byte red, byte green, byte blue) {
 }
 
 TW_INLINE byte TRED(trgb rgb) {
-  return (rgb >> 13) & 0xFE;
+  byte red = (rgb >> 13) & 0xFE;
+  return red | red >> 7;
 }
 TW_INLINE byte TGREEN(trgb rgb) {
-  return (rgb >> 6) & 0xFE;
+  byte green = (rgb >> 6) & 0xFE;
+  return green | green >> 7;
 }
 TW_INLINE byte TBLUE(trgb rgb) {
-  return (rgb << 1) & 0xFE;
+  byte blue = (rgb << 1) & 0xFE;
+  return blue | blue >> 7;
 }
 
 TW_INLINE tcell TCELL_COLMASK(tcell cell) {
