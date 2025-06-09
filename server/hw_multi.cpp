@@ -142,7 +142,7 @@ static bool module_InitHW(Chars arg) {
   const size_t separator = at < comma ? at : comma;
 
   Chars name = arg.view(0, separator != size_t(-1) ? separator : arg.size());
-  if (name == Chars("X")) {
+  if (name == Chars("X") || name == Chars("x11")) {
     name = Chars("X11");
   }
 
