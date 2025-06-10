@@ -75,10 +75,10 @@ static void Usage(void) {
 
 static byte InitButtons(char *bt1, char *bt2) {
   return TwCreateButtonGadget(Dialog_Win, strlen(bt1), 1, bt1, 1, 0, TCOL(tblack, twhite),
-                              TCOL(tblack, tgreen), TCOL(thigh | tblack, tgreen),
+                              TCOL(tblack, tgreen), TCOL(tBLACK, tgreen),
                               width / 2 - (bt2 ? strlen(bt1) + 2 : strlen(bt1) / 2), height - 2) &&
          (!bt2 || TwCreateButtonGadget(Dialog_Win, strlen(bt2), 1, bt2, 2, 0, TCOL(tblack, twhite),
-                                       TCOL(tblack, tgreen), TCOL(thigh | tblack, tgreen),
+                                       TCOL(tblack, tgreen), TCOL(tBLACK, tgreen),
                                        width / 2 + strlen(bt2) / 2, height - 2));
 }
 
@@ -271,8 +271,8 @@ static byte InitDialog(void) {
   return TwCheckMagic(dialog_magic) && TwOpen(NULL) &&
          (Dialog_MsgPort = TwCreateMsgPort(8, "twdialog")) &&
          (Dialog_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                                     TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
-                                     TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
+                                     TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), TCOL(tred, twhite),
+                                     TCOL(tred, tgreen), (byte)0)) &&
          (TwInfo4Menu(Dialog_Menu, TW_ROW_ACTIVE, 10, " Twin Dialog ",
                       (const tcolor *)"ptpppptpppppp"),
           ttrue) &&
@@ -283,8 +283,7 @@ static byte InitDialog(void) {
               TwCreateWindow(strlen(title), title, NULL, Dialog_Menu, TCOL(tblack, twhite),
                              TW_LINECURSOR, TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_CLOSE,
                              TW_WINDOWFL_ROWS_DEFCOL, width, height, 0)) &&
-         (TwSetColorsWindow(Dialog_Win, 1 << 6, 0, 0, 0, 0, 0, 0, TCOL(thigh | twhite, tblue), 0,
-                            0),
+         (TwSetColorsWindow(Dialog_Win, 1 << 6, 0, 0, 0, 0, 0, 0, TCOL(tWHITE, tblue), 0, 0),
           ttrue) &&
          (*mode)() && (TwMapWindow(Dialog_Win, TwFirstScreen()), ttrue) && TwFlush();
 }

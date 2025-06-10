@@ -16,6 +16,7 @@
 #include "methods.h"
 #include "main.h"
 
+#include "builtin.h"
 #include "extreg.h"
 #include "dl.h"
 #include "draw.h"
@@ -807,7 +808,7 @@ static bool InitScreens(void) {
   return false;
 }
 
-static const tcolor *ColorFill(tcolor *array, uldat len, tcolor fill) {
+const tcolor *ColorFill(tcolor *array, uldat len, tcolor fill) {
   for (uldat i = 0; i < len; i++) {
     array[i] = fill;
   }

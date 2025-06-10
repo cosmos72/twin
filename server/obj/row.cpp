@@ -11,6 +11,7 @@
  */
 
 #include "alloc.h"        // AllocMem0()
+#include "builtin.h"      // ColorFill()
 #include "draw.h"         // DrawAreaWidget()
 #include "fn.h"           // Fn_Tobj
 #include "methods.h"      // RemoveGeneric()
@@ -87,13 +88,6 @@ void Srow::Delete() {
 
   if (w && w->Parent && (w->Flags & WINDOWFL_MENU))
     ResizeRelWindow(w, 0, -1);
-}
-
-static const tcolor *ColorFill(tcolor *array, uldat len, tcolor fill) {
-  for (uldat i = 0; i < len; i++) {
-    array[i] = fill;
-  }
-  return array;
 }
 
 bool Srow::SetText(uldat len, const char *text, bool default_color) {

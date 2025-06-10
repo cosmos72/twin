@@ -79,13 +79,13 @@ static byte InitSysMon(int argc, char **argv) {
   ok = TwCheckMagic(sysmon_magic) && TwOpen(NULL) &&
 
        (SysMon_MsgPort = TwCreateMsgPort(8, "twsysmon")) &&
-       (SysMon_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                                   TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
-                                   TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
+       (SysMon_Menu =
+            TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
+                         TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
        TwItem4MenuCommon(SysMon_Menu) &&
 
        (SysMon_Win =
-            TwCreateWindow(len, name, NULL, SysMon_Menu, TCOL(thigh | tyellow, tblue), TW_NOCURSOR,
+            TwCreateWindow(len, name, NULL, SysMon_Menu, TCOL(tYELLOW, tblue), TW_NOCURSOR,
                            TW_WINDOW_DRAG | TW_WINDOW_CLOSE, (border ? 0 : TW_WINDOWFL_BORDERLESS),
                            numeric ? 29 : 24, 5, 0)) &&
 
@@ -350,39 +350,39 @@ static byte Update(byte i, usage Usage[2]) {
   if (U->Cpu.Total) {
     TwGotoXYWindow(SysMon_Win, 4, 0);
     if (numeric)
-      PrintPercent(TCOL(thigh | tyellow, tblue),
+      PrintPercent(TCOL(tYELLOW, tblue),
                    100 * (U->Cpu.Total - U->Cpu.Idle - U->Cpu.Wait) / U->Cpu.Total);
-    tmp = HBar(TCOL(thigh | tgreen, 0), U->Cpu.User, U->Cpu.Total, 0);
-    tmp = HBar(TCOL(thigh | tyellow, 0), U->Cpu.Nice, U->Cpu.Total, tmp);
-    tmp = HBar(TCOL(thigh | tred, 0), U->Cpu.System, U->Cpu.Total, tmp);
-    tmp = HBar(TCOL(thigh | tmagenta, 0), U->Cpu.HardInt, U->Cpu.Total, tmp);
-    tmp = HBar(TCOL(thigh | tcyan, 0), U->Cpu.SoftInt, U->Cpu.Total, tmp);
-    tmp = HBar(TCOL(thigh | tblue, 0), U->Cpu.Wait, U->Cpu.Total, tmp);
+    tmp = HBar(TCOL(tGREEN, 0), U->Cpu.User, U->Cpu.Total, 0);
+    tmp = HBar(TCOL(tYELLOW, 0), U->Cpu.Nice, U->Cpu.Total, tmp);
+    tmp = HBar(TCOL(tRED, 0), U->Cpu.System, U->Cpu.Total, tmp);
+    tmp = HBar(TCOL(tMAGENTA, 0), U->Cpu.HardInt, U->Cpu.Total, tmp);
+    tmp = HBar(TCOL(tCYAN, 0), U->Cpu.SoftInt, U->Cpu.Total, tmp);
+    tmp = HBar(TCOL(tBLUE, 0), U->Cpu.Wait, U->Cpu.Total, tmp);
     (void)HBar(TCOL(tblue, 0), U->Cpu.Idle, U->Cpu.Total, tmp);
   }
   if (U->Disk.Max) {
     TwGotoXYWindow(SysMon_Win, 4, 1);
     if (numeric)
-      PrintAbsoluteK(TCOL(thigh | tyellow, tblue), (U->Disk.Read + U->Disk.Write) >> 1);
-    tmp = HBar(TCOL(thigh | tgreen, 0), U->Disk.Read, U->Disk.Max, 0);
-    tmp = HBar(TCOL(thigh | tred, 0), U->Disk.Write, U->Disk.Max, tmp);
+      PrintAbsoluteK(TCOL(tYELLOW, tblue), (U->Disk.Read + U->Disk.Write) >> 1);
+    tmp = HBar(TCOL(tGREEN, 0), U->Disk.Read, U->Disk.Max, 0);
+    tmp = HBar(TCOL(tRED, 0), U->Disk.Write, U->Disk.Max, tmp);
     (void)HBar(TCOL(tblue, 0), U->Disk.Max - U->Disk.Read - U->Disk.Write, U->Disk.Max, tmp);
   }
   if (U->Mem.Total) {
     TwGotoXYWindow(SysMon_Win, 4, 2);
     if (numeric)
-      PrintAbsoluteK(TCOL(thigh | tyellow, tblue), (U->Mem.Total - U->Mem.Free));
-    tmp = HBar(TCOL(thigh | tgreen, 0), U->Mem.Used, U->Mem.Total, 0);
-    tmp = HBar(TCOL(thigh | tcyan, 0), U->Mem.Shared, U->Mem.Total, tmp);
-    tmp = HBar(TCOL(thigh | tyellow, 0), U->Mem.Buff, U->Mem.Total, tmp);
-    tmp = HBar(TCOL(thigh | tred, 0), U->Mem.Cache, U->Mem.Total, tmp);
+      PrintAbsoluteK(TCOL(tYELLOW, tblue), (U->Mem.Total - U->Mem.Free));
+    tmp = HBar(TCOL(tGREEN, 0), U->Mem.Used, U->Mem.Total, 0);
+    tmp = HBar(TCOL(tCYAN, 0), U->Mem.Shared, U->Mem.Total, tmp);
+    tmp = HBar(TCOL(tYELLOW, 0), U->Mem.Buff, U->Mem.Total, tmp);
+    tmp = HBar(TCOL(tRED, 0), U->Mem.Cache, U->Mem.Total, tmp);
     (void)HBar(TCOL(tblue, 0), U->Mem.Free, U->Mem.Total, tmp);
   }
   if (U->Swap.Total) {
     TwGotoXYWindow(SysMon_Win, 4, 3);
     if (numeric)
-      PrintAbsoluteK(TCOL(thigh | tyellow, tblue), U->Swap.Used);
-    tmp = HBar(TCOL(thigh | tgreen, 0), U->Swap.Used, U->Swap.Total, 0);
+      PrintAbsoluteK(TCOL(tYELLOW, tblue), U->Swap.Used);
+    tmp = HBar(TCOL(tGREEN, 0), U->Swap.Used, U->Swap.Total, 0);
     (void)HBar(TCOL(tblue, 0), U->Swap.Free, U->Swap.Total, tmp);
   }
 

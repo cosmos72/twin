@@ -55,11 +55,9 @@ static Twindow newTermWindow(const char *title) {
                        /*width*/ 80, /*height*/ 25, /*scrollbacklines*/ 1000);
 
   if (Window) {
-    Window->SetColors(0x1FF, TCOL(thigh | tyellow, tcyan), TCOL(thigh | tgreen, thigh | tblue),
-                      TCOL(twhite, thigh | tblue), TCOL(thigh | twhite, thigh | tblue),
-                      TCOL(thigh | twhite, thigh | tblue), TCOL(twhite, tblack),
-                      TCOL(thigh | tblack, thigh | twhite), TCOL(thigh | tblack, tblack),
-                      TCOL(tblack, thigh | tblack));
+    Window->SetColors(0x1FF, TCOL(tYELLOW, tcyan), TCOL(tGREEN, tBLUE), TCOL(twhite, tBLUE),
+                      TCOL(tWHITE, tBLUE), TCOL(tWHITE, tBLUE), TCOL(twhite, tblack),
+                      TCOL(tBLACK, tWHITE), TCOL(tBLACK, tblack), TCOL(tblack, tBLACK));
 
     Window->Configure((1 << 2) | (1 << 3), 0, 0, 7, 3, 0, 0);
   }
@@ -219,9 +217,9 @@ EXTERN_C byte InitModule(Tmodule Module) {
            (shell = strrchr(shellpath, '/')) ? CloneStr(shell) : CloneStr(shellpath)) &&
 
       (Term_MsgPort = New(msgport)(14, "builtin twterm", (uldat)0, (udat)0, (byte)0, TwinTermH)) &&
-      (Term_Menu = New(menu)(Term_MsgPort, TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                             TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
-                             TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
+      (Term_Menu =
+           New(menu)(Term_MsgPort, TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
+                     TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
       Info4Menu(Term_Menu, ROW_ACTIVE, (uldat)19, " Builtin Twin Term ",
                 (const tcolor *)"ptppppppptpppptpppp") &&
 

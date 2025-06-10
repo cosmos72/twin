@@ -16,6 +16,8 @@ bool InitBuiltin(void);
 void FillButtonWin(void);
 void UpdateOptionWin(void);
 
+const tcolor *ColorFill(tcolor *array, uldat len, tcolor fill);
+
 extern Twindow WinList, MessagesWin;
 extern Tmsgport Builtin_MsgPort;
 

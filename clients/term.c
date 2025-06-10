@@ -237,11 +237,9 @@ static twindow newTermWindow(const char *title) {
                      TW_WINDOWFL_CURSOR_ON | TW_WINDOWFL_USECONTENTS, 80, 25, 200);
 
   if (Window != TW_NOID) {
-    TwSetColorsWindow(Window, 0x1FF, TCOL(thigh | tyellow, tcyan),
-                      TCOL(thigh | tgreen, thigh | tblue), TCOL(twhite, thigh | tblue),
-                      TCOL(thigh | twhite, thigh | tblue), TCOL(thigh | twhite, thigh | tblue),
-                      TCOL(twhite, tblack), TCOL(thigh | tblack, thigh | twhite),
-                      TCOL(thigh | tblack, tblack), TCOL(tblack, thigh | tblack));
+    TwSetColorsWindow(Window, 0x1FF, TCOL(tYELLOW, tcyan), TCOL(tGREEN, tBLUE), TCOL(twhite, tBLUE),
+                      TCOL(tWHITE, tBLUE), TCOL(tWHITE, tBLUE), TCOL(twhite, tblack),
+                      TCOL(tBLACK, tWHITE), TCOL(tBLACK, tblack), TCOL(tblack, tBLACK));
 
     TwConfigureWindow(Window, (1 << 2) | (1 << 3), 0, 0, 5, 1, 0, 0);
   }
@@ -357,9 +355,9 @@ static byte InitTerm(void) {
 #endif
 
   if (TwCheckMagic(term_magic) && TwOpen(NULL) && (Term_MsgPort = TwCreateMsgPort(6, "twterm")) &&
-      (Term_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                                TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
-                                TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
+      (Term_Menu =
+           TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
+                        TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
       (TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ",
                    (const tcolor *)"ptpppppptpppptpppp"),
        ttrue) &&

@@ -97,8 +97,8 @@ public:
   }
 
   inline TMenu(tcolor ColItem = TCOL(tblack, twhite), tcolor ColSelect = TCOL(tblack, tgreen),
-               tcolor ColDisabled = TCOL(thigh | tblack, twhite),
-               tcolor ColSelectDisabled = TCOL(thigh | tblack, tblack),
+               tcolor ColDisabled = TCOL(tBLACK, twhite),
+               tcolor ColSelectDisabled = TCOL(tBLACK, tblack),
                tcolor ColShtCut = TCOL(tred, twhite), tcolor ColSelShtCut = TCOL(tred, tgreen),
                byte FlagDefColInfo = 0) {
     Id = TwCreateMenu(ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut, ColSelShtCut,
@@ -192,10 +192,9 @@ public:
   inline TGadget(const TWidget *parent, dat XWidth, dat YWidth, const char *TextNormal,
                  udat Code = 0, uldat Flags = TW_GADGETFL_USETEXT | TW_GADGETFL_TEXT_DEFCOL,
                  uldat Attr = 0, tcolor ColText = TCOL(tblack, tgreen),
-                 tcolor ColTextSelect = TCOL(thigh | twhite, tgreen),
-                 tcolor ColTextDisabled = TCOL(thigh | tblack, tgreen),
-                 tcolor ColTextSelectDisabled = TCOL(thigh | tblack, tgreen), dat Left = 0,
-                 dat Up = 0) {
+                 tcolor ColTextSelect = TCOL(tWHITE, tgreen),
+                 tcolor ColTextDisabled = TCOL(tBLACK, tgreen),
+                 tcolor ColTextSelectDisabled = TCOL(tBLACK, tgreen), dat Left = 0, dat Up = 0) {
     Id = TwCreateGadget(/* TwCreateGadget(...) is a macro... */
                         parent->Id, XWidth, YWidth, TextNormal, Attr, Flags, Code, ColText,
                         ColTextSelect, ColTextDisabled, ColTextSelectDisabled, Left, Up);
@@ -210,8 +209,8 @@ public:
                                       const char *name, udat Code = 0, uldat Flags = 0,
                                       tcolor BgCol = TCOL(tblack, twhite),
                                       tcolor Col = TCOL(tblack, tgreen),
-                                      tcolor ColDisabled = TCOL(thigh | tblack, tgreen),
-                                      dat Left = 0, dat Up = 0) {
+                                      tcolor ColDisabled = TCOL(tBLACK, tgreen), dat Left = 0,
+                                      dat Up = 0) {
     TGadget *G = new TGadget();
     G->Id = TwCreateButtonGadget(parent ? parent->Id : TW_NOID, XWidth, YWidth, name, Flags, Code,
                                  BgCol, Col, ColDisabled, Left, Up);
@@ -287,10 +286,10 @@ public:
   }
 
   inline TButton(const TWidget *parent, dat XWidth, dat YWidth, const char *name, udat Code = 0,
-                 uldat Flags = 0,                                   //
-                 tcolor BgCol = TCOL(tblack, twhite),               //
-                 tcolor Col = TCOL(tblack, tgreen),                 //
-                 tcolor ColDisabled = TCOL(thigh | tblack, tgreen), //
+                 uldat Flags = 0,                           //
+                 tcolor BgCol = TCOL(tblack, twhite),       //
+                 tcolor Col = TCOL(tblack, tgreen),         //
+                 tcolor ColDisabled = TCOL(tBLACK, tgreen), //
                  dat Left = 0, dat Up = 0) {
     Id = TwCreateButtonGadget(parent->Id, XWidth, YWidth, name, Flags, Code, BgCol, Col,
                               ColDisabled, Left, Up);
@@ -344,15 +343,14 @@ public:
   inline void setColText(tcolor C) const {
     TwSetColTextWindow(Id, C);
   }
-  inline void setColors(udat Bitmap, tcolor ColGadgets = TCOL(thigh | tyellow, tcyan),
-                        tcolor ColArrows = TCOL(thigh | tgreen, thigh | tblue),
-                        tcolor ColBars = TCOL(twhite, thigh | tblue),
-                        tcolor ColTabs = TCOL(thigh | twhite, thigh | tblue),
-                        tcolor ColBorder = TCOL(thigh | twhite, thigh | tblue),
+  inline void setColors(udat Bitmap, tcolor ColGadgets = TCOL(tYELLOW, tcyan),
+                        tcolor ColArrows = TCOL(tGREEN, tBLUE),
+                        tcolor ColBars = TCOL(twhite, tBLUE), tcolor ColTabs = TCOL(tWHITE, tBLUE),
+                        tcolor ColBorder = TCOL(tWHITE, tBLUE),
                         tcolor ColText = TCOL(tblack, twhite),
                         tcolor ColSelect = TCOL(twhite, tblack),
-                        tcolor ColDisabled = TCOL(thigh | tblack, tblack),
-                        tcolor ColSelectDisabled = TCOL(tblack, thigh | tblack)) const {
+                        tcolor ColDisabled = TCOL(tBLACK, tblack),
+                        tcolor ColSelectDisabled = TCOL(tblack, tBLACK)) const {
     TwSetColorsWindow(Id, Bitmap, ColGadgets, ColArrows, ColBars, ColTabs, ColBorder, ColText,
                       ColSelect, ColDisabled, ColSelectDisabled);
   }

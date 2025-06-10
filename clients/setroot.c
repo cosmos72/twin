@@ -37,8 +37,8 @@ TW_DECL_MAGIC(setroot_magic);
 TW_INLINE tcolor DefColor() {
   return TCOL(twhite, tblack);
 }
-#define Underline() TCOL(thigh | twhite, tblack)
-#define HalfInten() TCOL(thigh | tblack, tblack)
+#define Underline() TCOL(tWHITE, tblack)
+#define HalfInten() TCOL(tBLACK, tblack)
 
 static tcolor ColText, Color;
 

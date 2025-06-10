@@ -58,9 +58,9 @@ Twindow Swindow::Create4Menu(Tmenu menu) {
                                         WINDOWFL_ROWS_SELCURRENT,
                                     MIN_XWIN, MIN_YWIN, 0))) {
 
-    window->SetColors(0x1FF, TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(0, 0),
-                      TCOL(thigh | twhite, twhite), TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                      TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack));
+    window->SetColors(0x1FF, TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(tWHITE, twhite),
+                      TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
+                      TCOL(tBLACK, tblack));
     window->Configure(0x3F, 0, 1, MIN_XWIN, MIN_YWIN, TW_MAXDAT, TW_MAXDAT);
   }
   return window;
@@ -186,8 +186,8 @@ static bool InitTtyDataWindow(Twindow window, dat scrollbacklines) {
   window->Flags |= WINDOWFL_CURSOR_ON;
 #endif
   window->ColText = Data->Color = Data->DefColor = Data->saveColor = TCOL(twhite, tblack);
-  Data->Underline = TCOL(thigh | twhite, tblack);
-  Data->HalfInten = TCOL(thigh | tblack, tblack);
+  Data->Underline = TCOL(tWHITE, tblack);
+  Data->HalfInten = TCOL(tBLACK, tblack);
   Data->TabStop[0] = 0x01010100;
   Data->TabStop[1] = Data->TabStop[2] = Data->TabStop[3] = Data->TabStop[4] = 0x01010101;
   Data->nPar = 0;

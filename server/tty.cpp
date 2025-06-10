@@ -971,8 +971,8 @@ static void reset_tty(byte do_clear) {
   Bottom = SizeY;
 
   ColText = Color = DefColor = TCOL(twhite, tblack);
-  Underline = TCOL(thigh | twhite, tblack);
-  HalfInten = TCOL(thigh | tblack, tblack);
+  Underline = TCOL(tWHITE, tblack);
+  HalfInten = TCOL(tBLACK, tblack);
 
   Win->Flags |= WINDOWFL_CURSOR_ON;
   Win->CursorType = LINECURSOR;

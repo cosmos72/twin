@@ -36,20 +36,19 @@ byte InitTWCD(void) {
 
   TWCD_MsgPort = TwCreateMsgPort(4, "twcd");
 
-  TWCD_Menu =
-      TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(thigh | tblack, twhite),
-                   TCOL(thigh | tblack, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
-                   TCOL(thigh | tblack, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
-                   TCOL(thigh | tblack, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
-                   TCOL(thigh | tblack, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
-                   TCOL(thigh | tblack, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
-                   TCOL(thigh | tblack, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
-                   TCOL(thigh | tblack, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
+  TWCD_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
+                           TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
+                   TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
+                   TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
+                   TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
+                   TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
+                   TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
+                   TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
 
                    TwInfo4Menu(TWCD_Menu, TW_ROW_ACTIVE, (uldat)8, " Twin CD ", "ppppppttp");
 
                    TWCD_Win = TwCreateWindow(
-                       9, " Twin CD ", NULL, TWCD_Menu, TCOL(thigh | twhite, tblue), TW_NOCURSOR,
+                       9, " Twin CD ", NULL, TWCD_Menu, TCOL(tWHITE, tblue), TW_NOCURSOR,
                        TW_WINDOW_DRAG | TW_WINDOW_CLOSE | TW_WINDOW_WANT_MOUSE |
                            TW_WINDOW_WANT_KEYS,
                        TW_WINDOWFL_USEROWS | TW_WINDOWFL_ROWS_DEFCOL, (udat)18, (udat)3, (udat)0);

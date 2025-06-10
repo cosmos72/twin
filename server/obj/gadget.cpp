@@ -19,6 +19,7 @@
 #include "menuitem.h"  // COD_RESERVED
 #include "resize.h"    // PressGadget(), UnPressGadget()
 #include "draw.h"      // DrawAreaWidget()
+#include "builtin.h"   // ColorFill()
 
 #include <Tw/datasizes.h>   // TW_SIZEOF_TCOLOR
 #include <Tw/Tw_defs.h>     // tpalette_n
@@ -82,9 +83,9 @@ Tgadget Sgadget::CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolo
 
     size = (ldat)xwidth * ywidth;
 
-    for (i = 0; i < 4; i++)
+    for (i = 0; i < 4; i++) {
       g->USE.T.Text[i] = NULL, g->USE.T.Color[i] = NULL;
-
+    }
     for (i = 0; i < 4; i++)
       if (!(g->USE.T.Text[i] = (trune *)AllocMem(size * sizeof(trune))) ||
           !(g->USE.T.Color[i] = (tcolor *)AllocMem(size * sizeof(tcolor)))) {
@@ -94,7 +95,7 @@ Tgadget Sgadget::CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolo
       }
 
     size = (ldat)--xwidth * --ywidth;
-    bgcol &= TCOL(0, thigh | twhite);
+    bgcol &= TCOL(0, tWHITE);
 
     for (i = 0; i < 4; i++) {
       for (j = k = 0; j < ywidth; j++, k += xwidth + 1) {
@@ -102,14 +103,10 @@ Tgadget Sgadget::CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolo
         g->USE.T.Color[i][k + (i & 1 ? 0 : xwidth)] = bgcol;
       }
       g->USE.T.Text[i][k] = ' ';
-      for (j = 0; j < xwidth; j++)
+      for (j = 0; j < xwidth; j++) {
         g->USE.T.Text[i][k + 1 + j] = i & 1 ? ' ' : UPPER_;
-#if TW_SIZEOF_TCOLOR == 1
-      memset((void *)(g->USE.T.Color[i] + k), bgcol, xwidth + 1);
-#else
-      for (j = 0; j <= xwidth; j++)
-        g->USE.T.Color[i][k + j] = bgcol;
-#endif
+      }
+      ColorFill(&g->USE.T.Color[i][k], xwidth, bgcol);
     }
 
     g->G_Prev = g->G_Next = (Tgadget)0;

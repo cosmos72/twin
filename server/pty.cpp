@@ -65,7 +65,7 @@
 #include "main.h"
 #include "log.h"
 #include "util.h"
-#include "hw.cpp" // AllDefaultSignals()
+#include "hw.h" // AllDefaultSignals()
 
 /* pseudo-teletype connections handling functions */
 

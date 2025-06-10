@@ -44,7 +44,7 @@ static void XSYM(HideCursor)(dat x, dat y) {
 
   tcell V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
                 ? Video[x + y * (ldat)DisplayWidth]
-                : TCELL(TCOL(thigh | twhite, tblack), ' ');
+                : TCELL(TCOL(tWHITE, tblack), ' ');
   tcolor col = TCOLOR(V);
   trune f = xUTF_32_to_charset(TRUNE(V));
 
@@ -56,7 +56,7 @@ static void XSYM(HideCursor)(dat x, dat y) {
 static void XSYM(ShowCursor)(uldat type, dat x, dat y) {
   tcell V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
                 ? Video[x + y * (ldat)DisplayWidth]
-                : TCELL(TCOL(thigh | twhite, tblack), ' ');
+                : TCELL(TCOL(tWHITE, tblack), ' ');
 
   ldat xbegin = (x - xhw_startx) * xwfont;
   ldat ybegin = (y - xhw_starty) * xhfont;

@@ -302,9 +302,9 @@ static byte InitClient(void) {
   }
 
   if ((DM_MsgPort = TwCreateMsgPort(2, "DM")) &&
-      (DM_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                              TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
-                              TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
+      (DM_Menu =
+           TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
+                        TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
       TwItem4MenuCommon(DM_Menu) &&
       (TwInfo4Menu(DM_Menu, TW_ROW_ACTIVE, 61,
                    " Twin Display Manager. Enter user name and password to login.", NULL),
@@ -321,17 +321,16 @@ static byte InitClient(void) {
            TW_WINDOWFL_CURSOR_ON | TW_WINDOWFL_USEROWS | TW_WINDOWFL_ROWS_DEFCOL, 30, 1, 0)) &&
 
       TwCreateButtonGadget(DM_Window, 7, 1, " Login ", TW_GADGETFL_USETEXT, DM_GADGET_LOGIN,
-                           TCOL(twhite, tblue), TCOL(thigh | twhite, tgreen),
-                           TCOL(thigh | tblack, tgreen), 5, 12) &&
+                           TCOL(twhite, tblue), TCOL(tWHITE, tgreen), TCOL(tBLACK, tgreen), 5,
+                           12) &&
       TwCreateButtonGadget(DM_Window, 7, 1, " Clear ", TW_GADGETFL_USETEXT, DM_GADGET_CLEAR,
-                           TCOL(twhite, tblue), TCOL(thigh | twhite, tgreen),
-                           TCOL(thigh | tblack, tgreen), 16, 12) &&
+                           TCOL(twhite, tblue), TCOL(tWHITE, tgreen), TCOL(tBLACK, tgreen), 16,
+                           12) &&
       TwCreateButtonGadget(DM_Window, 7, 1, " Leave ", TW_GADGETFL_USETEXT, DM_GADGET_CONSOLE,
-                           TCOL(twhite, tblue), TCOL(thigh | twhite, tgreen),
-                           TCOL(thigh | tblack, tgreen), 27, 12)
+                           TCOL(twhite, tblue), TCOL(tWHITE, tgreen), TCOL(tBLACK, tgreen), 27, 12)
 
   ) {
-    TwSetColTextWindow(DM_Window, TCOL(thigh | tred, tblue));
+    TwSetColTextWindow(DM_Window, TCOL(tRED, tblue));
     TwGotoXYWindow(DM_Window, 7, 8);
     TwWriteCharsetWindow(DM_Window, 26, "L O G I N   F A I L E D  !");
 

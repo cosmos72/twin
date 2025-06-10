@@ -494,9 +494,9 @@ static bool TW_InitHW(void) {
                        /* Tw_DragAreaWindow, */ NULL) &&
 
       (tw_screen = Tw_FirstScreen(Td)) && (Tmsgport = Tw_CreateMsgPort(Td, 12, "Twin on Twin")) &&
-      (tw_menu = Tw_CreateMenu(Td, TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                               TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
-                               TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
+      (tw_menu =
+           Tw_CreateMenu(Td, TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
+                         TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
       Tw_Item4MenuCommon(Td, tw_menu)) {
     do {
 
@@ -515,11 +515,10 @@ static bool TW_InitHW(void) {
       if (!Twin)
         break;
 
-      Tw_SetColorsWindow(Td, Twin, 0x1FF, TCOL(thigh | tyellow, tcyan),
-                         TCOL(thigh | tgreen, thigh | tblue), TCOL(twhite, thigh | tblue),
-                         TCOL(thigh | twhite, thigh | tblue), TCOL(thigh | twhite, thigh | tblue),
-                         TCOL(twhite, tblack), TCOL(twhite, thigh | tblack),
-                         TCOL(thigh | tblack, tblack), TCOL(tblack, thigh | tblack));
+      Tw_SetColorsWindow(Td, Twin, 0x1FF, TCOL(tYELLOW, tcyan), TCOL(tGREEN, tBLUE),
+                         TCOL(twhite, tBLUE), TCOL(tWHITE, tBLUE), TCOL(tWHITE, tBLUE),
+                         TCOL(twhite, tblack), TCOL(twhite, tBLACK), TCOL(tBLACK, tblack),
+                         TCOL(tblack, tBLACK));
       Tw_MapWidget(Td, Twin, tw_screen);
 
       /*
