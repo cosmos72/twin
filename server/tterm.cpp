@@ -12,6 +12,7 @@
 
 #include "twin.h"
 #include "alloc.h"
+#include "builtin.h" // ColorFill
 #include "data.h"
 #include "methods.h"
 #include "obj/id.h" // Id2Obj()
@@ -208,8 +209,12 @@ static void OverrideMethods(bool enter) {
 }
 
 EXTERN_C byte InitModule(Tmodule Module) {
+  tcolor color[19];
   Twindow Window;
   const char *shellpath, *shell;
+
+  ColorFill(color, 19, TCOL(tblack, twhite));
+  color[14] = color[9] = color[1] = TCOL(tred, twhite);
 
   if (((shellpath = getenv("SHELL")) || (shellpath = "/bin/sh")) &&
       (default_args[0] = CloneStr(shellpath)) &&
@@ -220,8 +225,7 @@ EXTERN_C byte InitModule(Tmodule Module) {
       (Term_Menu =
            New(menu)(Term_MsgPort, TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
                      TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
-      Info4Menu(Term_Menu, ROW_ACTIVE, (uldat)19, " Builtin Twin Term ",
-                (const tcolor *)"ptppppppptpppptpppp") &&
+      Info4Menu(Term_Menu, ROW_ACTIVE, (uldat)19, " Builtin Twin Term ", color) &&
 
       (Window = Win4Menu(Term_Menu)) && Row4Menu(Window, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&
       Row4Menu(Window, COD_QUIT, tfalse, 6, " Exit ") &&
