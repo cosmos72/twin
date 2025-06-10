@@ -367,11 +367,11 @@ void FillButtonWin(void) {
 
       ButtonWin->TtyWriteTCell(15, 1 + i * 2, 2, h);
     }
-    Sgadget::Create(Builtin_MsgPort, (Twidget)ButtonWin, 3, 1, "[+]", 0, GADGETFL_TEXT_DEFCOL,
-                    3 | (j << 2), TCOL(tblack, twhite), TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite),
+    Sgadget::Create(Builtin_MsgPort, ButtonWin, 3, 1, "[+]", 0, GADGETFL_TEXT_DEFCOL, 3 | (j << 2),
+                    TCOL(tblack, twhite), TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite),
                     TCOL(tBLACK, tblack), 22, 1 + i * 2);
-    Sgadget::Create(Builtin_MsgPort, (Twidget)ButtonWin, 3, 1, "[-]", 0, GADGETFL_TEXT_DEFCOL,
-                    2 | (j << 2), TCOL(tblack, twhite), TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite),
+    Sgadget::Create(Builtin_MsgPort, ButtonWin, 3, 1, "[-]", 0, GADGETFL_TEXT_DEFCOL, 2 | (j << 2),
+                    TCOL(tblack, twhite), TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite),
                     TCOL(tBLACK, tblack), 19, 1 + i * 2);
   }
 }
@@ -991,18 +991,18 @@ bool InitBuiltin(void) {
     DisplaySubWin->SetColors(0x30, 0, 0, 0, 0, TCOL(tBLACK, twhite), TCOL(tBLACK, twhite), 0, 0, 0);
 
     DisplaySubWin->Configure(1 << 0 | 1 << 1, -1, -1, 0, 0, 0, 0);
-    DisplaySubWin->Map((Twidget)DisplayWin);
+    DisplaySubWin->Map(DisplayWin);
 
     DisplayWin->InstallHook(UpdateDisplayWin, &All->HookDisplay);
     WinList->MapUnMapHook = InstallRemoveWinListHook;
 
-    ButtonOK_About->FillButton((Twidget)AboutWin, COD_OK, 15, 11, 0, "   OK   ", (byte)0x2F,
-                               (byte)0x28);
+    ButtonOK_About->FillButton(AboutWin, COD_OK, 15, 11, 0, "   OK   ", TCOL(tWHITE, tgreen),
+                               TCOL(tBLACK, tgreen));
 
-    ButtonRemove->FillButton((Twidget)DisplaySubWin, COD_D_REMOVE, 1, 2, 0, " Remove ", (byte)0x2F,
-                             (byte)0x28);
-    ButtonThis->FillButton((Twidget)DisplaySubWin, COD_D_THIS, 1, 5, 0, "  This  ", (byte)0x2F,
-                           (byte)0x28);
+    ButtonRemove->FillButton(DisplaySubWin, COD_D_REMOVE, 1, 2, 0, " Remove ", TCOL(tWHITE, tgreen),
+                             TCOL(tBLACK, tgreen));
+    ButtonThis->FillButton(DisplaySubWin, COD_D_THIS, 1, 5, 0, "  This  ", TCOL(tWHITE, tgreen),
+                           TCOL(tBLACK, tgreen));
 
     OptionWin->CurX = 25;
     OptionWin->CurY = 1;
