@@ -32,21 +32,20 @@ static byte InitCat(void) {
   twindow Window;
 
   return TwCheckMagic(cat_magic) && TwOpen(NULL) && (Cat_MsgPort = TwCreateMsgPort(5, "twcat")) &&
-         (Cat_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                                  TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
-                                  TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
+         (Cat_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
+                                  TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen),
+                                  (byte)0)) &&
          (TwInfo4Menu(Cat_Menu, TW_ROW_ACTIVE, 10, " Twin Cat ", (const tcolor *)"ptpppptpppppp"),
-          (Cat_Win = TwCreateWindow(8, "Twin Cat", NULL, Cat_Menu, TCOL(tblack, thigh | tblack),
-                                    TW_LINECURSOR,
-                                    TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_X_BAR |
-                                        TW_WINDOW_Y_BAR | TW_WINDOW_CLOSE,
-                                    TW_WINDOWFL_USEROWS | TW_WINDOWFL_ROWS_DEFCOL, 80, 25, 0))) &&
+          (Cat_Win =
+               TwCreateWindow(8, "Twin Cat", NULL, Cat_Menu, TCOL(tblack, tBLACK), TW_LINECURSOR,
+                              TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_X_BAR |
+                                  TW_WINDOW_Y_BAR | TW_WINDOW_CLOSE,
+                              TW_WINDOWFL_USEROWS | TW_WINDOWFL_ROWS_DEFCOL, 80, 25, 0))) &&
          (Window = TwWin4Menu(Cat_Menu)) && TwItem4Menu(Cat_Menu, Window, ttrue, 6, " File ") &&
-         (TwSetColorsWindow(Cat_Win, 0x1FF, TCOL(thigh | tgreen, twhite), TCOL(tcyan, tblue),
-                            TCOL(thigh | tblue, tblack), TCOL(thigh | twhite, thigh | tblue),
-                            TCOL(thigh | twhite, thigh | tblue),
-                            TCOL(thigh | twhite, thigh | tblack), TCOL(thigh | tblack, twhite),
-                            TCOL(tblack, thigh | tblack), TCOL(tblack, twhite)),
+         (TwSetColorsWindow(Cat_Win, 0x1FF, TCOL(tGREEN, twhite), TCOL(tcyan, tblue),
+                            TCOL(tBLUE, tblack), TCOL(tWHITE, tBLUE), TCOL(tWHITE, tBLUE),
+                            TCOL(tWHITE, tBLACK), TCOL(tBLACK, twhite), TCOL(tblack, tBLACK),
+                            TCOL(tblack, twhite)),
           TwConfigureWindow(Cat_Win, 0xF << 2, 0, 0, 7, 3, TW_MAXDAT, TW_MAXDAT),
           TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X ")) &&
          TwItem4MenuCommon(Cat_Menu) && (TwMapWindow(Cat_Win, TwFirstScreen()), TwFlush());

@@ -88,6 +88,7 @@ typedef size_t tany;
  * and
  * TCOL(fg1, bg1) & TCOL(fg2, bg2) == TCOL(fg1&fg2, bg1&bg2)
  */
+#define TCOL0 ((tcolor)0)
 #define TCOL(fg, bg) ((tcolor)(fg) | (tcolor)(bg) << 21)
 #define TCOLBG(col) ((trgb)((col) >> 21) & 0x1fffff)
 #define TCOLFG(col) ((trgb)(col) & 0x1fffff)

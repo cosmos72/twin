@@ -63,6 +63,15 @@ enum tcolor_e {
 #endif
   thigh = 0x2a << 14 | 0x2a << 7 | 0x2a,
 
+  tBLACK = thigh | tblack,
+  tBLUE = thigh | tblue,
+  tGREEN = thigh | tgreen,
+  tCYAN = thigh | tcyan,
+  tRED = thigh | tred,
+  tMAGENTA = thigh | tmagenta,
+  tYELLOW = thigh | tyellow,
+  tWHITE = thigh | twhite,
+
   tpalette_n = 256,
 };
 

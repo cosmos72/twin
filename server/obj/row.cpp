@@ -89,6 +89,13 @@ void Srow::Delete() {
     ResizeRelWindow(w, 0, -1);
 }
 
+static const tcolor *ColorFill(tcolor *array, uldat len, tcolor fill) {
+  for (uldat i = 0; i < len; i++) {
+    array[i] = fill;
+  }
+  return array;
+}
+
 bool Srow::SetText(uldat len, const char *text, bool default_color) {
   Trow row = this;
   if (not EnsureLenRow(row, len, default_color)) {
@@ -99,9 +106,9 @@ bool Srow::SetText(uldat len, const char *text, bool default_color) {
     while (i-- > 0) {
       *row_text++ = Tutf_CP437_to_UTF_32[(byte)*text++];
     }
-    if (!(row->Flags & ROW_DEFCOL) && !default_color)
-      /* will not work correctly if sizeof(tcolor) != 1 */
-      memset(row->ColText, TCOL(twhite, tblack), len * sizeof(tcolor));
+    if (!(row->Flags & ROW_DEFCOL) && !default_color) {
+      ColorFill(row->ColText, len, TCOL(twhite, tblack));
+    }
   }
   row->Len = len;
   row->Gap = row->LenGap = 0;
