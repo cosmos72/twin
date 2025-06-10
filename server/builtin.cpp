@@ -367,12 +367,12 @@ void FillButtonWin(void) {
 
       ButtonWin->TtyWriteTCell(15, 1 + i * 2, 2, h);
     }
-    New(gadget)(Builtin_MsgPort, (Twidget)ButtonWin, 3, 1, "[+]", 0, GADGETFL_TEXT_DEFCOL,
-                3 | (j << 2), TCOL(tblack, twhite), TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite),
-                TCOL(tBLACK, tblack), 22, 1 + i * 2);
-    New(gadget)(Builtin_MsgPort, (Twidget)ButtonWin, 3, 1, "[-]", 0, GADGETFL_TEXT_DEFCOL,
-                2 | (j << 2), TCOL(tblack, twhite), TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite),
-                TCOL(tBLACK, tblack), 19, 1 + i * 2);
+    Sgadget::Create(Builtin_MsgPort, (Twidget)ButtonWin, 3, 1, "[+]", 0, GADGETFL_TEXT_DEFCOL,
+                    3 | (j << 2), TCOL(tblack, twhite), TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite),
+                    TCOL(tBLACK, tblack), 22, 1 + i * 2);
+    Sgadget::Create(Builtin_MsgPort, (Twidget)ButtonWin, 3, 1, "[-]", 0, GADGETFL_TEXT_DEFCOL,
+                    2 | (j << 2), TCOL(tblack, twhite), TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite),
+                    TCOL(tBLACK, tblack), 19, 1 + i * 2);
   }
 }
 
@@ -781,7 +781,7 @@ void FullUpdateWinList(Twidget listWin) {
 
 #ifdef CONF_PRINTK
 static byte InitMessagesWin(void) {
-  MessagesWin = New(window)(
+  MessagesWin = Swindow::Create(
       Builtin_MsgPort, 8, "Messages", NULL, Builtin_Menu, TCOL(twhite, tblack), LINECURSOR,
       WINDOW_DRAG | WINDOW_RESIZE | WINDOW_X_BAR | WINDOW_Y_BAR | WINDOW_CLOSE, WINDOWFL_CURSOR_ON,
       60, 20, 200);
@@ -816,25 +816,25 @@ static const tcolor *ColorFill(tcolor *array, uldat len, tcolor fill) {
 
 bool InitBuiltin(void) {
   Twindow w;
-  const char *greeting =
-      "\n"
-      "                TWIN              \n"
-      "        Text WINdows manager      \n\n"
-      "     Version " TWIN_VERSION_STR TWIN_VERSION_EXTRA_STR " (Unicode) by   \n\n"
-      "        Massimiliano Ghilardi     \n\n"
-      "  https://github.com/cosmos72/twin";
+  const char *greeting = "\n"
+                         "                TWIN              \n"
+                         "     Text WINdows manager " TWIN_VERSION_STR TWIN_VERSION_EXTRA_STR "\n"
+                         "        (UTF-32, truecolor)       \n\n"
+                         "      by Massimiliano Ghilardi    \n\n"
+                         "  https://github.com/cosmos72/twin";
   uldat grlen = strlen(greeting);
 
   tcolor color_array[42];
 
-  if ((Builtin_MsgPort = New(msgport)(4, "twin", 0, 0, 0, BuiltinH)) &&
+  if ((Builtin_MsgPort = Smsgport::Create(4, "twin", 0, 0, 0, BuiltinH)) &&
 
-      InitScreens() && /* New(screen)() requires Builtin_MsgPort ! */
+      InitScreens() && /* Sscreen::Create() requires Builtin_MsgPort ! */
 
-      (All->BuiltinRow = New(row)(0, ROW_ACTIVE | ROW_DEFCOL)) &&
+      (All->BuiltinRow = Srow::Create(0, ROW_ACTIVE | ROW_DEFCOL)) &&
 
-      (Builtin_Menu = New(menu)(Builtin_MsgPort, (byte)0x70, (byte)0x20, (byte)0x78, (byte)0x08,
-                                (byte)0x74, (byte)0x24, (byte)0)) &&
+      (Builtin_Menu = Smenu::Create(Builtin_MsgPort, TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                                    TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), TCOL(tred, twhite),
+                                    TCOL(tred, tgreen), TCOL0)) &&
       Info4Menu(Builtin_Menu, ROW_ACTIVE, (uldat)42, " Hit PAUSE or Mouse Right Button for Menu ",
                 ColorFill(color_array, 42, TCOL(tred, twhite))) &&
 
@@ -869,46 +869,46 @@ bool InitBuiltin(void) {
 
       Item4MenuCommon(Builtin_Menu) &&
 
-      (AboutWin =
-           New(window)(Builtin_MsgPort, 5, "About", ColorFill(color_array, 5, TCOL(twhite, tWHITE)),
-                       Builtin_Menu, TCOL(tblack, twhite), NOCURSOR,
-                       WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE,
-                       WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 36, 13, 0)) &&
+      (AboutWin = Swindow::Create(Builtin_MsgPort, 5, "About",
+                                  ColorFill(color_array, 5, TCOL(tWHITE, twhite)), Builtin_Menu,
+                                  TCOL(tblack, twhite), NOCURSOR,
+                                  WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE,
+                                  WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 36, 13, 0)) &&
 
-      (ClockWin = New(window)(Builtin_MsgPort, 5, "Clock", NULL, Builtin_Menu, TCOL(tyellow, tblue),
-                              NOCURSOR, WINDOW_DRAG | WINDOW_CLOSE,
-                              WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 10, 2, 0)) &&
+      (ClockWin = Swindow::Create(Builtin_MsgPort, 5, "Clock", NULL, Builtin_Menu,
+                                  TCOL(tyellow, tblue), NOCURSOR, WINDOW_DRAG | WINDOW_CLOSE,
+                                  WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 10, 2, 0)) &&
 
-      (OptionWin =
-           New(window)(Builtin_MsgPort, 7, "Options", NULL, Builtin_Menu, TCOL(tBLACK, tblack),
-                       NOCURSOR, WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE,
-                       WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 40, 18, 0)) &&
+      (OptionWin = Swindow::Create(
+           Builtin_MsgPort, 7, "Options", NULL, Builtin_Menu, TCOL(tBLACK, tblack), NOCURSOR,
+           WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE,
+           WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 40, 18, 0)) &&
 
-      (ButtonWin =
-           New(window)(Builtin_MsgPort, 7, "Buttons", NULL, Builtin_Menu, TCOL(tWHITE, twhite),
-                       NOCURSOR, WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE,
-                       WINDOWFL_USECONTENTS, 37, 19, 0)) &&
+      (ButtonWin = Swindow::Create(
+           Builtin_MsgPort, 7, "Buttons", NULL, Builtin_Menu, TCOL(tWHITE, twhite), NOCURSOR,
+           WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE, WINDOWFL_USECONTENTS,
+           37, 19, 0)) &&
 
-      (DisplayWin = New(window)(
+      (DisplayWin = Swindow::Create(
            Builtin_MsgPort, 7, "Display", NULL, Builtin_Menu, TCOL(tBLACK, twhite), NOCURSOR,
            WINDOW_WANT_MOUSE | WINDOW_AUTO_KEYS | WINDOW_DRAG | WINDOW_RESIZE | WINDOW_CLOSE |
                WINDOW_X_BAR | WINDOW_Y_BAR,
            WINDOWFL_USEROWS | WINDOWFL_ROWS_SELCURRENT | WINDOWFL_ROWS_DEFCOL, 31, 10, 0)) &&
 
-      (DisplaySubWin = New(window)(Builtin_MsgPort, 0, NULL, NULL, Builtin_Menu,
-                                   TCOL(tBLACK, twhite), NOCURSOR, WINDOW_AUTO_KEYS,
-                                   WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 10, TW_MAXDAT, 0)) &&
+      (DisplaySubWin = Swindow::Create(
+           Builtin_MsgPort, 0, NULL, NULL, Builtin_Menu, TCOL(tBLACK, twhite), NOCURSOR,
+           WINDOW_AUTO_KEYS, WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 10, TW_MAXDAT, 0)) &&
 
-      (WinList = New(window)(
+      (WinList = Swindow::Create(
            Builtin_MsgPort, 11, "Window List", NULL, Builtin_Menu, TCOL(twhite, tblue), NOCURSOR,
            WINDOW_WANT_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE /*|WINDOW_RESIZE*/ |
                WINDOW_X_BAR | WINDOW_Y_BAR,
            WINDOWFL_USEROWS | WINDOWFL_ROWS_SELCURRENT | WINDOWFL_ROWS_DEFCOL, 14, 2, 0)) &&
 
-      (ExecuteWin =
-           New(window)(Builtin_MsgPort, 10, "Execute...", NULL, Builtin_Menu, TCOL(twhite, tblue),
-                       LINECURSOR, WINDOW_WANT_KEYS | WINDOW_CLOSE | WINDOW_DRAG | WINDOW_X_BAR,
-                       WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL | WINDOWFL_CURSOR_ON, 38, 2, 0)) &&
+      (ExecuteWin = Swindow::Create(
+           Builtin_MsgPort, 10, "Execute...", NULL, Builtin_Menu, TCOL(twhite, tblue), LINECURSOR,
+           WINDOW_WANT_KEYS | WINDOW_CLOSE | WINDOW_DRAG | WINDOW_X_BAR,
+           WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL | WINDOWFL_CURSOR_ON, 38, 2, 0)) &&
 
 #ifdef CONF_PRINTK
       InitMessagesWin() &&
@@ -920,53 +920,54 @@ bool InitBuiltin(void) {
       (ButtonRemove = Sgadget::CreateEmptyButton(Builtin_MsgPort, 8, 1, TCOL(tblack, twhite))) &&
       (ButtonThis = Sgadget::CreateEmptyButton(Builtin_MsgPort, 8, 1, TCOL(tblack, twhite))) &&
 
-      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 27, 1, "[ ] Enable screen Scrolling", 0,
-                  GADGETFL_TEXT_DEFCOL, COD_O_SCREEN_SCROLL, TCOL(tblack, twhite),
-                  TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 16) &&
-      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 23, 1, "[ ] Menu Relaxed Arrows", 0,
-                  GADGETFL_TEXT_DEFCOL, COD_O_MENU_RELAX, TCOL(tblack, twhite),
-                  TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 14) &&
-      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 25, 1, "[ ] Menu Information Line", 0,
-                  GADGETFL_TEXT_DEFCOL, COD_O_MENU_INFO, TCOL(tblack, twhite), TCOL(tWHITE, tgreen),
-                  TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 12) &&
-      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 15, 1, "[ ] Hidden Menu", 0,
-                  GADGETFL_TEXT_DEFCOL, COD_O_MENU_HIDE, TCOL(tblack, twhite), TCOL(tWHITE, tgreen),
-                  TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 10) &&
-      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 32, 1, "[ ] Enable Blink/High Background", 0,
-                  GADGETFL_TEXT_DEFCOL, COD_O_BLINK, TCOL(tblack, twhite), TCOL(tWHITE, tgreen),
-                  TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 8) &&
-      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 22, 1, "[ ] Always Show Cursor", 0,
-                  GADGETFL_TEXT_DEFCOL, COD_O_CURSOR_ALWAYS, TCOL(tblack, twhite),
-                  TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 6) &&
-      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 37, 1,
-                  "[ ] New terminals start in UTF-8 mode", 0, GADGETFL_TEXT_DEFCOL,
-                  COD_O_TERMINALS_UTF8, TCOL(tblack, twhite), TCOL(tWHITE, tgreen),
-                  TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 4) &&
-      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 3, 1, "[+]", 0, GADGETFL_TEXT_DEFCOL,
-                  COD_O_Yp_SHADE, TCOL(tblack, twhite), TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite),
-                  TCOL(tBLACK, tblack), 21, 2) &&
-      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 3, 1, "[-]", 0, GADGETFL_TEXT_DEFCOL,
-                  COD_O_Yn_SHADE, TCOL(tblack, twhite), TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite),
-                  TCOL(tBLACK, tblack), 18, 2) &&
-      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 3, 1, "[+]", 0, GADGETFL_TEXT_DEFCOL,
-                  COD_O_Xp_SHADE, TCOL(tblack, twhite), TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite),
-                  TCOL(tBLACK, tblack), 21, 1) &&
-      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 3, 1, "[-]", 0, GADGETFL_TEXT_DEFCOL,
-                  COD_O_Xn_SHADE, TCOL(tblack, twhite), TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite),
-                  TCOL(tBLACK, tblack), 18, 1) &&
-      New(gadget)(Builtin_MsgPort, (Twidget)OptionWin, 11, 1, "[ ] Shadows", 0,
-                  GADGETFL_TEXT_DEFCOL, COD_O_SHADOWS, TCOL(tblack, twhite), TCOL(tWHITE, tgreen),
-                  TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 1) &&
-      New(gadget)(Builtin_MsgPort, (Twidget)ExecuteWin, 19, 1, "[ ] Run in Terminal", 0,
-                  GADGETFL_TEXT_DEFCOL, COD_E_TTY, TCOL(tYELLOW, tblue), TCOL(tWHITE, tgreen),
-                  TCOL(tBLACK, tblue), TCOL(tBLACK, tblue), 10, 1)
+      Sgadget::Create(Builtin_MsgPort, (Twidget)OptionWin, 27, 1, "[ ] Enable screen Scrolling", 0,
+                      GADGETFL_TEXT_DEFCOL, COD_O_SCREEN_SCROLL, TCOL(tblack, twhite),
+                      TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 16) &&
+      Sgadget::Create(Builtin_MsgPort, (Twidget)OptionWin, 23, 1, "[ ] Menu Relaxed Arrows", 0,
+                      GADGETFL_TEXT_DEFCOL, COD_O_MENU_RELAX, TCOL(tblack, twhite),
+                      TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 14) &&
+      Sgadget::Create(Builtin_MsgPort, (Twidget)OptionWin, 25, 1, "[ ] Menu Information Line", 0,
+                      GADGETFL_TEXT_DEFCOL, COD_O_MENU_INFO, TCOL(tblack, twhite),
+                      TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 12) &&
+      Sgadget::Create(Builtin_MsgPort, (Twidget)OptionWin, 15, 1, "[ ] Hidden Menu", 0,
+                      GADGETFL_TEXT_DEFCOL, COD_O_MENU_HIDE, TCOL(tblack, twhite),
+                      TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 10) &&
+      Sgadget::Create(Builtin_MsgPort, (Twidget)OptionWin, 32, 1,
+                      "[ ] Enable Blink/High Background", 0, GADGETFL_TEXT_DEFCOL, COD_O_BLINK,
+                      TCOL(tblack, twhite), TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite),
+                      TCOL(tBLACK, tblack), 2, 8) &&
+      Sgadget::Create(Builtin_MsgPort, (Twidget)OptionWin, 22, 1, "[ ] Always Show Cursor", 0,
+                      GADGETFL_TEXT_DEFCOL, COD_O_CURSOR_ALWAYS, TCOL(tblack, twhite),
+                      TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 6) &&
+      Sgadget::Create(Builtin_MsgPort, (Twidget)OptionWin, 37, 1,
+                      "[ ] New terminals start in UTF-8 mode", 0, GADGETFL_TEXT_DEFCOL,
+                      COD_O_TERMINALS_UTF8, TCOL(tblack, twhite), TCOL(tWHITE, tgreen),
+                      TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 4) &&
+      Sgadget::Create(Builtin_MsgPort, (Twidget)OptionWin, 3, 1, "[+]", 0, GADGETFL_TEXT_DEFCOL,
+                      COD_O_Yp_SHADE, TCOL(tblack, twhite), TCOL(tWHITE, tgreen),
+                      TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 21, 2) &&
+      Sgadget::Create(Builtin_MsgPort, (Twidget)OptionWin, 3, 1, "[-]", 0, GADGETFL_TEXT_DEFCOL,
+                      COD_O_Yn_SHADE, TCOL(tblack, twhite), TCOL(tWHITE, tgreen),
+                      TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 18, 2) &&
+      Sgadget::Create(Builtin_MsgPort, (Twidget)OptionWin, 3, 1, "[+]", 0, GADGETFL_TEXT_DEFCOL,
+                      COD_O_Xp_SHADE, TCOL(tblack, twhite), TCOL(tWHITE, tgreen),
+                      TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 21, 1) &&
+      Sgadget::Create(Builtin_MsgPort, (Twidget)OptionWin, 3, 1, "[-]", 0, GADGETFL_TEXT_DEFCOL,
+                      COD_O_Xn_SHADE, TCOL(tblack, twhite), TCOL(tWHITE, tgreen),
+                      TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 18, 1) &&
+      Sgadget::Create(Builtin_MsgPort, (Twidget)OptionWin, 11, 1, "[ ] Shadows", 0,
+                      GADGETFL_TEXT_DEFCOL, COD_O_SHADOWS, TCOL(tblack, twhite),
+                      TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 1) &&
+      Sgadget::Create(Builtin_MsgPort, (Twidget)ExecuteWin, 19, 1, "[ ] Run in Terminal", 0,
+                      GADGETFL_TEXT_DEFCOL, COD_E_TTY, TCOL(tYELLOW, tblue), TCOL(tWHITE, tgreen),
+                      TCOL(tBLACK, tblue), TCOL(tBLACK, tblue), 10, 1)
 
   ) {
     AboutWin->SetColors(0x1FF, TCOL(tGREEN, twhite), TCOL0, TCOL0, TCOL0, TCOL(tWHITE, twhite),
                         TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
                         TCOL(tBLACK, tblack));
 
-    ClockWin->SetColors(0x1FF, TCOL(tYELLOW, tblue), TCOL0, TCOL0, TCOL0, TCOL(tWHITE, tBLUE),
+    ClockWin->SetColors(0x1FF, TCOL(tYELLOW, tcyan), TCOL0, TCOL0, TCOL0, TCOL(tWHITE, tBLUE),
                         TCOL(tYELLOW, tblue), TCOL(tYELLOW, tcyan), TCOL(tBLACK, tblue),
                         TCOL(tBLACK, tblack));
 
