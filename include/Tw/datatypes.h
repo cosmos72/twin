@@ -77,15 +77,9 @@ typedef size_t tany;
 /* miscellaneous types and constants */
 
 /* tcell <-> tcolor+trune conversion */
-TW_INLINE tcell TCELL(tcolor col, trune rune) {
-  return (tcell)col << 22 | rune;
-}
-TW_INLINE tcolor TCOLOR(tcell cell) {
-  return (tcolor)(cell >> 22);
-}
-TW_INLINE trune TRUNE(tcell cell) {
-  return (trune)(cell & 0x3FFFFF);
-}
+#define TCELL(col, rune) ((tcell)(col) << 22 | (tcell)(rune))
+#define TCOLOR(cell) ((tcolor)((cell) >> 22))
+#define TRUNE(cell) ((trune)((cell) & 0x3FFFFF))
 
 /* foreground / background colors handling */
 /*
@@ -94,39 +88,28 @@ TW_INLINE trune TRUNE(tcell cell) {
  * and
  * TCOL(fg1, bg1) & TCOL(fg2, bg2) == TCOL(fg1&fg2, bg1&bg2)
  */
-TW_INLINE tcolor TCOL(trgb fg, trgb bg) {
-  return (tcolor)fg | (tcolor)bg << 21;
-}
-TW_INLINE trgb TCOLBG(tcolor col) {
-  return (trgb)(col >> 21) & 0x1fffff;
-}
-TW_INLINE trgb TCOLFG(tcolor col) {
-  return (trgb)(col) & 0x1fffff;
-}
+#define TCOL(fg, bg) ((tcolor)(fg) | (tcolor)(bg) << 21)
+#define TCOLBG(col) ((trgb)((col) >> 21) & 0x1fffff)
+#define TCOLFG(col) ((trgb)(col) & 0x1fffff)
 
-TW_INLINE trgb TRGB(byte red, byte green, byte blue) {
-  return (trgb)(red & 0xFE) << 13 | (trgb)(green & 0xFE) << 6 | (trgb)(blue & 0xFE) >> 1;
-}
+#define TRGB(red, green, blue)                                                                     \
+  ((trgb)((red) & 0xFE) << 13 | (trgb)((green) & 0xFE) << 6 | (trgb)((blue) & 0xFE) >> 1)
 
 TW_INLINE byte TRED(trgb rgb) {
-  byte red = (rgb >> 13) & 0xFE;
-  return red | red >> 7;
+  const byte red = (rgb >> 13) & 0xFE;
+  return red | (red != 0);
 }
 TW_INLINE byte TGREEN(trgb rgb) {
-  byte green = (rgb >> 6) & 0xFE;
-  return green | green >> 7;
+  const byte green = (rgb >> 6) & 0xFE;
+  return green | (green != 0);
 }
 TW_INLINE byte TBLUE(trgb rgb) {
-  byte blue = (rgb << 1) & 0xFE;
-  return blue | blue >> 7;
+  const byte blue = (rgb << 1) & 0xFE;
+  return blue | (blue != 0);
 }
 
-TW_INLINE tcell TCELL_COLMASK(tcell cell) {
-  return cell & 0xFFFFFFFFFFC00000ull;
-}
-TW_INLINE tcell TCELL_RUNEMASK(tcell cell) {
-  return cell & 0x3FFFFF;
-}
+#define TCELL_COLMASK(cell) ((cell) & 0xFFFFFFFFFFC00000ull)
+#define TCELL_RUNEMASK(cell) ((cell) & 0x3FFFFF)
 
 #define TW_NOID ((uldat)0)
 #define TW_BADID ((uldat) - 1)
