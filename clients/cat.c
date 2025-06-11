@@ -29,13 +29,16 @@ static twindow Cat_Win;
 TW_DECL_MAGIC(cat_magic);
 
 static byte InitCat(void) {
+  const tcolor b = TCOL(tblack, twhite), r = TCOL(tred, twhite);
+  const tcolor color_array[10] = {b, r, b, b, b, b, r, b, b, b};
+
   twindow Window;
 
   return TwCheckMagic(cat_magic) && TwOpen(NULL) && (Cat_MsgPort = TwCreateMsgPort(5, "twcat")) &&
          (Cat_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
                                   TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen),
                                   (byte)0)) &&
-         (TwInfo4Menu(Cat_Menu, TW_ROW_ACTIVE, 10, " Twin Cat ", (const tcolor *)"ptpppptpppppp"),
+         (TwInfo4Menu(Cat_Menu, TW_ROW_ACTIVE, 10, " Twin Cat ", color_array),
           (Cat_Win =
                TwCreateWindow(8, "Twin Cat", NULL, Cat_Menu, TCOL(tblack, tBLACK), TW_LINECURSOR,
                               TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_X_BAR |

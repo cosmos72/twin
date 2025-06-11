@@ -287,6 +287,10 @@ static bool XSYM(InitHW)(void) {
         xrgb_info.init(visinfo);
         xtruecolor = xrgb_info.is_truecolor(visinfo);
       }
+      if (visinfo != NULL) {
+        XFree(visinfo);
+        visinfo = NULL;
+      }
 
       Colormap colormap = DefaultColormap(xdisplay, screen);
 

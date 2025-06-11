@@ -23,15 +23,16 @@ static twindow Event_Win, Event_SubWin;
 TW_DECL_MAGIC(event_magic);
 
 static byte InitEvent(void) {
+  const tcolor b = TCOL(tblack, twhite), r = TCOL(tred, twhite);
+  const tcolor color_array[14] = {b, r, b, b, b, b, b, r, b, b, b, b, b, b};
+
   return TwCheckMagic(event_magic) && TwOpen(NULL) &&
          (Event_MsgPort = TwCreateMsgPort(7, "twevent")) &&
          (Event_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
                                     TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), TCOL(tred, twhite),
                                     TCOL(tred, tgreen), (byte)0)) &&
          TwItem4MenuCommon(Event_Menu) &&
-         (TwInfo4Menu(Event_Menu, TW_ROW_ACTIVE, 14, " Event Tester ",
-                      (const tcolor *)"ptppppptpppppp"),
-          ttrue) &&
+         (TwInfo4Menu(Event_Menu, TW_ROW_ACTIVE, 14, " Event Tester ", color_array), ttrue) &&
          (Event_Win = TwCreateWindow(
               12, "Event Tester", NULL, Event_Menu, TCOL(twhite, tblack), TW_NOCURSOR,
               TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_MOUSE | TW_WINDOW_WANT_CHANGES | TW_WINDOW_DRAG |

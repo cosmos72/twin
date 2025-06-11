@@ -266,6 +266,8 @@ static byte ParseArgs(int argc, char *argv[]) {
 TW_DECL_MAGIC(dialog_magic);
 
 static byte InitDialog(void) {
+  const tcolor b = TCOL(tblack, twhite), r = TCOL(tred, twhite);
+  const tcolor color_array[13] = {b, r, b, b, b, b, r, b, b, b, b, b, b};
   twindow Window;
 
   return TwCheckMagic(dialog_magic) && TwOpen(NULL) &&
@@ -273,9 +275,7 @@ static byte InitDialog(void) {
          (Dialog_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
                                      TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), TCOL(tred, twhite),
                                      TCOL(tred, tgreen), (byte)0)) &&
-         (TwInfo4Menu(Dialog_Menu, TW_ROW_ACTIVE, 10, " Twin Dialog ",
-                      (const tcolor *)"ptpppptpppppp"),
-          ttrue) &&
+         (TwInfo4Menu(Dialog_Menu, TW_ROW_ACTIVE, 13, " Twin Dialog ", color_array), ttrue) &&
          (Window = TwWin4Menu(Dialog_Menu)) &&
          TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 6, " Quit ") &&
          TwItem4Menu(Dialog_Menu, Window, ttrue, 6, " File ") && TwItem4MenuCommon(Dialog_Menu) &&

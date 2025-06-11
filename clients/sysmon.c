@@ -42,6 +42,8 @@ static char buf[TW_BIGBUFF + 1];
 TW_DECL_MAGIC(sysmon_magic);
 
 static byte InitSysMon(int argc, char **argv) {
+  const tcolor b = TCOL(tblack, twhite);
+  const tcolor color_array[16] = {b, b, b, b, b, b, b, b, b, b, b, b, b, b, b, b};
   char *name;
   ldat len;
   byte border = 1;
@@ -91,8 +93,7 @@ static byte InitSysMon(int argc, char **argv) {
 
        (TwSetColorsWindow(SysMon_Win, 0x1FF, (tcolor)0x3F, (tcolor)0, (tcolor)0, (tcolor)0,
                           (tcolor)0x9F, (tcolor)0x17, (tcolor)0x3F, (tcolor)0x18, (tcolor)0x08),
-        TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, 16, " System Monitor ",
-                    (const tcolor *)"pppppppppppppppp"),
+        TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, 16, " System Monitor ", color_array),
         TwWriteCharsetWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME"),
         TwMapWindow(SysMon_Win, TwFirstScreen()), ttrue);
 

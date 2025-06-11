@@ -19,6 +19,9 @@ static twindow Clip_Win;
 TW_DECL_MAGIC(clip_magic);
 
 static byte InitClip(void) {
+  const tcolor b = TCOL(tblack, twhite), r = TCOL(tred, twhite);
+  const tcolor color_array[16] = {b, r, b, b, b, b, r, b, b, b, b, b, b, b, b, b};
+
   twindow Window;
 
   return TwCheckMagic(clip_magic) && TwOpen(NULL) &&
@@ -26,8 +29,7 @@ static byte InitClip(void) {
          (Clip_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
                                    TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen),
                                    (byte)0)) &&
-         (TwInfo4Menu(Clip_Menu, TW_ROW_ACTIVE, 16, " Twin Clipboard ",
-                      (const tcolor *)"ptpppptppppppppp"),
+         (TwInfo4Menu(Clip_Menu, TW_ROW_ACTIVE, 16, " Twin Clipboard ", color_array),
           (Clip_Win = TwCreateWindow(
                14, "Twin Clipboard", NULL, Clip_Menu, TCOL(tWHITE, tBLACK), TW_LINECURSOR,
                TW_WINDOW_WANT_KEYS | TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_X_BAR |

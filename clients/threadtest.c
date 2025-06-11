@@ -31,13 +31,15 @@ pthread_t t1, t2;
 TW_DECL_MAGIC(threadtest_magic);
 
 byte InitThrd(void) {
+  const tcolor b = TCOL(tblack, twhite);
+  const tcolor color_array[13] = {b, b, b, b, b, b, b, b, b, b, b, b, b};
+
   return TwCheckMagic(threadtest_magic) && TwOpen(NULL) &&
          (Thrd_MsgPort = TwCreateMsgPort(10, "threadtest")) &&
          (Thrd_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
                                    TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen),
                                    (byte)0)) &&
-         (TwInfo4Menu(Thrd_Menu, TW_ROW_ACTIVE, 13, " Thread Test ",
-                      (const tcolor *)"ppppppppppppp"),
+         (TwInfo4Menu(Thrd_Menu, TW_ROW_ACTIVE, 13, " Thread Test ", color_array),
           TwItem4MenuCommon(Thrd_Menu));
 }
 

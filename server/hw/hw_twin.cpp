@@ -499,9 +499,9 @@ static bool TW_InitHW(void) {
                          TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
       Tw_Item4MenuCommon(Td, tw_menu)) {
     do {
-
-      Tw_Info4Menu(Td, tw_menu, TW_ROW_ACTIVE, (uldat)14, " Twin on Twin ",
-                   (const tcolor *)"ptppppppptpppp");
+      const tcolor b = TCOL(tblack, twhite), r = TCOL(tred, twhite);
+      const tcolor color_array[14] = {b, r, b, b, b, b, b, b, b, r, b, b, b, b};
+      Tw_Info4Menu(Td, tw_menu, TW_ROW_ACTIVE, (uldat)14, " Twin on Twin ", color_array);
 
       sprintf(name + 5, "%s on twin", TWDisplay);
       len = strlen(name);
@@ -511,10 +511,9 @@ static bool TW_InitHW(void) {
                                  TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_CLOSE,
                              TW_WINDOWFL_USECONTENTS | TW_WINDOWFL_CURSOR_ON,
                              (HW->X = GetDisplayWidth()), (HW->Y = GetDisplayHeight()), (uldat)0);
-
-      if (!Twin)
+      if (!Twin) {
         break;
-
+      }
       Tw_SetColorsWindow(Td, Twin, 0x1FF, TCOL(tYELLOW, tcyan), TCOL(tGREEN, tBLUE),
                          TCOL(twhite, tBLUE), TCOL(tWHITE, tBLUE), TCOL(tWHITE, tBLUE),
                          TCOL(twhite, tblack), TCOL(twhite, tBLACK), TCOL(tBLACK, tblack),

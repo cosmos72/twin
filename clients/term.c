@@ -341,6 +341,8 @@ static byte Add_Spawn_Row4Menu(twindow Window) {
 TW_DECL_MAGIC(term_magic);
 
 static byte InitTerm(void) {
+  const tcolor b = TCOL(tblack, twhite), r = TCOL(tred, twhite);
+  const tcolor color_array[18] = {b, r, b, b, b, b, b, b, r, b, b, b, b, r, b, b, b, b};
   twindow Window;
   uldat err;
 
@@ -358,9 +360,7 @@ static byte InitTerm(void) {
       (Term_Menu =
            TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
                         TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
-      (TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ",
-                   (const tcolor *)"ptpppppptpppptpppp"),
-       ttrue) &&
+      (TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ", color_array), ttrue) &&
       (Window = TwWin4Menu(Term_Menu)) && Add_Spawn_Row4Menu(Window) &&
       TwRow4Menu(Window, COD_QUIT, tfalse, 6, " Exit ") &&
       TwItem4Menu(Term_Menu, Window, ttrue, 6, " File ") && TwItem4MenuCommon(Term_Menu) &&
