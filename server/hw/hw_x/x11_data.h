@@ -85,6 +85,8 @@ struct XSYM(data) {
   XftColor *background; // current background color
   XftColor *xftcolors[tpalette_n];
 #endif
+  trgb xforeground_rgb;
+  trgb xbackground_rgb;
 #ifdef TW_FEATURE_X11_XIM_XIC /* autodetected */
   XIM xim;
   XIC xic;
@@ -121,6 +123,8 @@ struct XSYM(data) {
 #define xgc (xdata->xgc)
 #define xsgc (xdata->xsgc)
 #define xsfont (xdata->xsfont)
+#define xforeground_rgb (xdata->xforeground_rgb)
+#define xbackground_rgb (xdata->xbackground_rgb)
 #define xim (xdata->xim)
 #define xic (xdata->xic)
 #define xcompose (xdata->xcompose)

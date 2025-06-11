@@ -42,11 +42,11 @@ static void XSYM(HideCursor)(dat x, dat y) {
   int xbegin = (x - xhw_startx) * xwfont;
   int ybegin = (y - xhw_starty) * xhfont; /* needed by XDRAW */
 
-  tcell V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
-                ? Video[x + y * (ldat)DisplayWidth]
-                : TCELL(TCOL(tWHITE, tblack), ' ');
-  tcolor col = TCOLOR(V);
-  trune f = xUTF_32_to_charset(TRUNE(V));
+  tcell cell = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
+                   ? Video[x + y * (ldat)DisplayWidth]
+                   : TCELL(TCOL(tWHITE, tblack), ' ');
+  tcolor col = TCOLOR(cell);
+  trune f = xUTF_32_to_charset(TRUNE(cell));
 
   XChar16 c = RawToXChar16(f);
 
@@ -54,37 +54,38 @@ static void XSYM(HideCursor)(dat x, dat y) {
 }
 
 static void XSYM(ShowCursor)(uldat type, dat x, dat y) {
-  tcell V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
-                ? Video[x + y * (ldat)DisplayWidth]
-                : TCELL(TCOL(tWHITE, tblack), ' ');
-
+  tcell cell = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
+                   ? Video[x + y * (ldat)DisplayWidth]
+                   : TCELL(TCOL(tWHITE, tblack), ' ');
+  tcolor color = TCOLOR(cell);
   ldat xbegin = (x - xhw_startx) * xwfont;
   ldat ybegin = (y - xhw_starty) * xhfont;
 
   if (type & 0x10) {
     /* soft cursor */
-    tcolor v = (TCOLOR(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
+    tcolor v = (color | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
     trune f;
     XChar16 c;
-    if ((type & 0x20) && (TCOLOR(V) & TCOL(0, twhite)) == (v & TCOL(0, twhite)))
+    if ((type & 0x20) && (color & TCOL(0, twhite)) == (v & TCOL(0, twhite)))
       v ^= TCOL(0, twhite);
     if ((type & 0x40) && ((TCOLFG(v) & twhite) == (TCOLBG(v) & twhite)))
       v ^= TCOL(twhite, 0);
-    f = xUTF_32_to_charset(TRUNE(V));
+    f = xUTF_32_to_charset(TRUNE(cell));
     c = RawToXChar16(f);
     XDRAW(v, &c, 1);
   } else if (type & 0xF) {
     /* VGA hw-like cursor */
 
-    /* doesn't work as expected on paletted visuals... */
-    unsigned long fg = XSYM(ColorToPixel)(TCOLFG(TCOLOR(V)) ^ TCOLBG(TCOLOR(V)));
-
     udat i = xhfont * ((type & 0xF) - NOCURSOR) / (SOLIDCURSOR - NOCURSOR);
 
-    if (xsgc.foreground != fg) {
-      XSetForeground(xdisplay, xgc, xsgc.foreground = fg);
+    /* doesn't work as expected on paletted visuals... */
+    trgb fg = TCOLFG(color) ^ TCOLBG(color);
+
+    if (xforeground_rgb != fg) {
+      xforeground_rgb = fg;
+      XSetForeground(xdisplay, xgc, xsgc.foreground = XSYM(ColorToPixel)(fg));
 #if HW_X_DRIVER == HW_XFT
-      xforeground = xftcolors[TCOLFG(TCOLOR(V)) ^ TCOLBG(TCOLOR(V))];
+      xforeground = xftcolors[fg];
 #endif
     }
 

@@ -77,16 +77,17 @@ static void XSYM(DrawString16)(Display *display, Drawable d, GC gc, int x, int y
 
 /* manage foreground/background colors */
 static void XSYM(SetColors)(tcolor col) {
-  unsigned long fg = xcol[TCOLFG(col)];
-  if (xsgc.foreground != fg) {
-    XSetForeground(xdisplay, xgc, xsgc.foreground = fg);
-    xforeground = xftcolors[TCOLFG(col)];
+  const trgb fg = TCOLFG(col);
+  if (xforeground_rgb != fg) {
+    xforeground_rgb = fg;
+    XSetForeground(xdisplay, xgc, xsgc.foreground = XSYM(ColorToPixel)(fg));
+    xforeground = xftcolors[fg];
   }
-
-  unsigned long bg = xcol[TCOLBG(col)];
-  if (xsgc.background != bg) {
-    XSetBackground(xdisplay, xgc, xsgc.background = bg);
-    xbackground = xftcolors[TCOLBG(col)];
+  const trgb bg = TCOLBG(col);
+  if (xbackground_rgb != bg) {
+    xbackground_rgb = bg;
+    XSetBackground(xdisplay, xgc, xsgc.background = XSYM(ColorToPixel)(bg));
+    xbackground = xftcolors[bg];
   }
 }
 

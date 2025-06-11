@@ -57,13 +57,15 @@
 
 /* manage foreground/background colors */
 static void XSYM(SetColors)(tcolor col) {
-  unsigned long fg = XSYM(ColorToPixel)(TCOLFG(col));
-  if (xsgc.foreground != fg) {
-    XSetForeground(xdisplay, xgc, xsgc.foreground = fg);
+  const trgb fg = TCOLFG(col);
+  if (xforeground_rgb != fg) {
+    xforeground_rgb = fg;
+    XSetForeground(xdisplay, xgc, xsgc.foreground = XSYM(ColorToPixel)(fg));
   }
-  unsigned long bg = XSYM(ColorToPixel)(TCOLBG(col));
-  if (xsgc.background != bg) {
-    XSetBackground(xdisplay, xgc, xsgc.background = bg);
+  const trgb bg = TCOLBG(col);
+  if (xbackground_rgb != bg) {
+    xbackground_rgb = bg;
+    XSetBackground(xdisplay, xgc, xsgc.background = XSYM(ColorToPixel)(bg));
   }
 }
 

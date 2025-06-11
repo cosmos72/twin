@@ -332,7 +332,8 @@ static bool XSYM(InitHW)(void) {
                XCreateWindow(xdisplay, DefaultRootWindow(xdisplay), 0, 0, xwidth, xheight, 0, depth,
                              InputOutput, visual, CWBackPixel | CWEventMask, &xattr)) &&
 
-          (xsgc.foreground = xsgc.background = xcol[0], xsgc.graphics_exposures = False,
+          (xforeground_rgb = xbackground_rgb = tblack, xsgc.foreground = xsgc.background = xcol[0],
+           xsgc.graphics_exposures = False,
 #if HW_X_DRIVER == HW_X11
            xsgc.font = xsfont->fid, xcreategc_mask = xcreategc_mask | GCFont,
 #elif HW_X_DRIVER == HW_XFT
