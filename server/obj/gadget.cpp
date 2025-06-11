@@ -84,29 +84,29 @@ Tgadget Sgadget::CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolo
     size = (ldat)xwidth * ywidth;
 
     for (i = 0; i < 4; i++) {
-      g->USE.T.Text[i] = NULL, g->USE.T.Color[i] = NULL;
+      g->USE.T.Text[i] = NULL;
+      g->USE.T.Color[i] = NULL;
     }
-    for (i = 0; i < 4; i++)
+    bgcol &= TCOL(0, tWHITE);
+    for (i = 0; i < 4; i++) {
       if (!(g->USE.T.Text[i] = (trune *)AllocMem(size * sizeof(trune))) ||
           !(g->USE.T.Color[i] = (tcolor *)AllocMem(size * sizeof(tcolor)))) {
 
         g->Delete();
         return NULL;
       }
-
+      ColorFill(g->USE.T.Color[i], size, bgcol);
+    }
     size = (ldat)--xwidth * --ywidth;
-    bgcol &= TCOL(0, tWHITE);
 
     for (i = 0; i < 4; i++) {
       for (j = k = 0; j < ywidth; j++, k += xwidth + 1) {
         g->USE.T.Text[i][k + (i & 1 ? 0 : xwidth)] = i & 1 ? ' ' : k ? FULL_ : LOWER_;
-        g->USE.T.Color[i][k + (i & 1 ? 0 : xwidth)] = bgcol;
       }
       g->USE.T.Text[i][k] = ' ';
       for (j = 0; j < xwidth; j++) {
         g->USE.T.Text[i][k + 1 + j] = i & 1 ? ' ' : UPPER_;
       }
-      ColorFill(&g->USE.T.Color[i][k], xwidth, bgcol);
     }
 
     g->G_Prev = g->G_Next = (Tgadget)0;
