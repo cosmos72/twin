@@ -663,17 +663,21 @@ static void csi_m(void) {
     case 38:
       if (i < nPar) {
         if (Par[i + 1] == 5) {
-          /* ESC[38;5;<COL8BIT>m is only partially implemented */
-          uldat par2 = Par[i + 2];
-          if (par2 <= 7) {
-            fg = TANSI2VGA(par);
-          } else if (par2 <= 15) {
-            par2 -= 8, fg = thigh | TANSI2VGA(par2);
+          /* 8-bit palette foreground: ESC[38;5;<8BITPALETTE>m */
+          uldat index = Par[i + 2];
+          if (index <= 255) {
+            fg = Palette[index];
           }
           i += 3;
           continue;
         } else if (Par[i + 1] == 2) {
-          /* ESC[38;2;<R>;<G>;<B>m is not implemented */
+          /* 24-bit truecolor foreground: ESC[38;2;<R>;<G>;<B>m */
+          uldat r = Par[i + 2];
+          uldat g = Par[i + 3];
+          uldat b = Par[i + 4];
+          if (r <= 255 && g <= 255 && b <= 255) {
+            fg = TRGB(r, g, b);
+          }
           i += 5;
           continue;
         }
@@ -695,17 +699,21 @@ static void csi_m(void) {
     case 48:
       if (i < nPar) {
         if (Par[i + 1] == 5) {
-          /* ESC[48;5;<COL8BIT>m is only partially implemented */
-          uldat par2 = Par[i + 2];
-          if (par2 <= 7) {
-            bg = TANSI2VGA(par);
-          } else if (par2 <= 15) {
-            par2 -= 8, bg = thigh | TANSI2VGA(par2);
+          /* 8-bit palette background: ESC[48;5;<8BITPALETTE>m */
+          uldat index = Par[i + 2];
+          if (index <= 255) {
+            bg = Palette[index];
           }
           i += 3;
           continue;
         } else if (Par[i + 1] == 2) {
-          /* ESC[48;2;<R>;<G>;<B>m is not implemented */
+          /* 24-bit truecolor background: ESC[48;2;<R>;<G>;<B>m */
+          uldat r = Par[i + 2];
+          uldat g = Par[i + 3];
+          uldat b = Par[i + 4];
+          if (r <= 255 && g <= 255 && b <= 255) {
+            bg = TRGB(r, g, b);
+          }
           i += 5;
           continue;
         }
@@ -716,13 +724,13 @@ static void csi_m(void) {
       break;
     default:
       if (par >= 30 && par <= 37) {
-        par -= 30, fg = TANSI2VGA(par);
+        fg = Palette[par - 30];
       } else if (par >= 40 && par <= 47) {
-        par -= 40, bg = TANSI2VGA(par);
+        bg = Palette[par - 40];
       } else if (par >= 90 && par <= 97) {
-        par -= 90, fg = thigh | TANSI2VGA(par);
+        fg = Palette[par - 90 + 16];
       } else if (par >= 100 && par <= 107) {
-        par -= 100, bg = thigh | TANSI2VGA(par);
+        bg = Palette[par - 100 + 16];
       }
     }
     i++;
@@ -865,14 +873,14 @@ static void setterm_command(void) {
 
   case 1: /* set fg color for underline mode */
     if (Par[1] < tpalette_n) {
-      Underline = TCOL(TANSI2VGA(Par[1]), 0);
+      Underline = TCOL(Par[1], 0);
       if (Effects & EFF_UNDERLINE)
         update_eff();
     }
     break;
   case 2: /* set color for half intensity mode */
     if (Par[1] < tpalette_n) {
-      HalfInten = TCOL(TANSI2VGA(Par[1]), 0);
+      HalfInten = TCOL(Par[1], 0);
       if (Effects & EFF_HALFINTENS)
         update_eff();
     }

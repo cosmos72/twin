@@ -14,17 +14,13 @@
 #include <Tw/datatypes.h> // byte, udat, tcolor, trune
 #include <Tw/Tw_defs.h>   // tpalette_n
 
-struct rgb8 {
-  byte Red, Green, Blue;
-};
-
 // directory containing plugins: libhw_*.* librcparse.* libsocket.* libterm.*
 extern Chars plugindir;
 
 // directory containing system-wide configuration file twinrc
 extern Chars confdir;
 
-extern rgb8 Palette[tpalette_n], defaultPalette[tpalette_n];
+extern trgb Palette[tpalette_n];
 
 struct keylist {
   const char *name;

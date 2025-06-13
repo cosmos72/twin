@@ -146,13 +146,13 @@ inline void linux_SetColor(tcolor col) {
   if ((col & TCOL(0, twhite)) != (_col & TCOL(0, twhite))) {
     c = TCOLBG(col) & ~thigh;
     *colp++ = '4';
-    *colp++ = TVGA2ANSI(c) + '0';
+    *colp++ = c + '0';
     *colp++ = ';';
   }
   if ((col & TCOL(twhite, 0)) != (_col & TCOL(twhite, 0))) {
     c = TCOLFG(col) & ~thigh;
     *colp++ = '3';
-    *colp++ = TVGA2ANSI(c) + '0';
+    *colp++ = c + '0';
     *colp++ = ';';
   }
   _col = col;

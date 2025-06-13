@@ -211,12 +211,19 @@ TW_INLINE void csi_m(void) {
     case 49: /* restore default bg */
       bg = TCOLBG(DefColor());
       break;
-    default:
-      if (Par[i] >= 30 && Par[i] <= 37)
-        Par[i] -= 30, fg = TANSI2VGA(Par[i]);
-      else if (Par[i] >= 40 && Par[i] <= 47)
-        Par[i] -= 40, bg = TANSI2VGA(Par[i]);
+    default: {
+      const uldat par = Par[i];
+      if (par >= 30 && par <= 37) {
+        fg = par - 30;
+      } else if (par >= 40 && par <= 47) {
+        bg = par - 40;
+      } else if (par >= 90 && par <= 97) {
+        fg = thigh | (par - 90);
+      } else if (par >= 100 && par <= 107) {
+        bg = thigh | (par - 100);
+      }
       break;
+    }
     }
   Effects = effects;
   ColText = TCOL(fg, bg);

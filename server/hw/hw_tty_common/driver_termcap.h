@@ -295,14 +295,14 @@ inline void termcap_SetColor(tcolor col) {
     if ((col & TCOL(twhite, 0)) != (_col & TCOL(twhite, 0))) {
       *colp++ = '3';
       c = TCOLFG(col) & ~thigh;
-      *colp++ = TVGA2ANSI(c) + '0';
+      *colp++ = c + '0';
       *colp++ = ';';
     }
 
     if ((col & TCOL(0, twhite)) != (_col & TCOL(0, twhite))) {
       *colp++ = '4';
       c = TCOLBG(col) & ~thigh;
-      *colp++ = TVGA2ANSI(c) + '0';
+      *colp++ = c + '0';
       *colp++ = 'm';
     } else if (colp[-1] == ';') {
       colp[-1] = 'm';

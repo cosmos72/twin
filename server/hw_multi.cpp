@@ -596,13 +596,10 @@ void ConfigureHW(udat resource, byte todefault, udat value) {
 
 void SetPaletteHW(udat N, udat R, udat G, udat B) {
   if (N < tpalette_n) {
-    rgb8 c;
-    c.Red = R;
-    c.Green = G;
-    c.Blue = B;
+    const trgb col = TRGB(R, G, B);
 
-    if (memcmp(&Palette[N], &c, sizeof(rgb8))) {
-      Palette[N] = c;
+    if (Palette[N] != col) {
+      Palette[N] = col;
       forHW {
         HW->SetPalette(N, R, G, B);
       }

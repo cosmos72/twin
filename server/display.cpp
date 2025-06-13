@@ -60,31 +60,89 @@ char printk_buf[TW_BIGBUFF];
 
 String HOME;
 
-#define L 0x55
-#define M 0xAA
-#define H 0xFF
+#define L 0x55 /*  85 */
+#define M 0xAA /* 170 */
+#define H 0xFF /* 255 */
+
+#define A 0x40 /*  64 */
+#define B 0x68 /* 104 */
+#define C 0xA0 /* 144 */
+#define D 0xC4 /* 196 */
+#define E 0xFF /* 255 */
 
 #ifdef TWIN_PALETTE_SOLARIZED
-#define DARK 0x04, 0x08, 0x10
-#define LIGHT 0xBB, 0xBB, 0xBB
+#define DARK TRGB(0x04, 0x08, 0x10)
+#define LIGHT TRGB(0xBB, 0xBB, 0xBB)
 #else
-#define DARK 0, 0, 0
-#define LIGHT M, M, M
+#define DARK TRGB(0, 0, 0)
+#define LIGHT TRGB(M, M, M)
 #endif
 
-rgb8 Palette[tpalette_n] = {
-    /* the default colour table, for VGA+ colour systems */
-    {DARK},    {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {LIGHT},
-    {L, L, L}, {L, L, H}, {L, H, L}, {L, H, H}, {H, L, L}, {H, L, H}, {H, H, L}, {H, H, H}};
+/* the default 256-color palette, compatible with xterm-256color palette */
+const trgb defaultPalette[tpalette_n] = {
+    DARK,          TRGB(M, 0, 0), TRGB(0, M, 0), TRGB(M, M, 0), TRGB(0, 0, M), TRGB(M, 0, M),
+    TRGB(0, M, M), LIGHT, /**/
+    TRGB(L, L, L), TRGB(H, L, L), TRGB(L, H, L), TRGB(H, H, L), TRGB(L, L, H), TRGB(H, L, H),
+    TRGB(L, H, H), TRGB(H, H, H), /**/
 
-rgb8 defaultPalette[tpalette_n] = {
-    /* the default colour table, for VGA+ colour systems */
-    {DARK},    {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {LIGHT},
-    {L, L, L}, {L, L, H}, {L, H, L}, {L, H, H}, {H, L, L}, {H, L, H}, {H, H, L}, {H, H, H}};
+    TRGB(0, 0, 0), TRGB(0, 0, A), TRGB(0, 0, B), TRGB(0, 0, C), TRGB(0, 0, D), TRGB(0, 0, E),
+    TRGB(0, A, 0), TRGB(0, A, A), TRGB(0, A, B), TRGB(0, A, C), TRGB(0, A, D), TRGB(0, A, E),
+    TRGB(0, B, 0), TRGB(0, B, A), TRGB(0, B, B), TRGB(0, B, C), TRGB(0, B, D), TRGB(0, B, E),
+    TRGB(0, C, 0), TRGB(0, C, A), TRGB(0, C, B), TRGB(0, C, C), TRGB(0, C, D), TRGB(0, C, E),
+    TRGB(0, D, 0), TRGB(0, D, A), TRGB(0, D, B), TRGB(0, D, C), TRGB(0, D, D), TRGB(0, D, E),
+    TRGB(0, E, 0), TRGB(0, E, A), TRGB(0, E, B), TRGB(0, E, C), TRGB(0, E, D), TRGB(0, E, E),
+
+    TRGB(A, 0, 0), TRGB(A, 0, A), TRGB(A, 0, B), TRGB(A, 0, C), TRGB(A, 0, D), TRGB(A, 0, E),
+    TRGB(A, A, 0), TRGB(A, A, A), TRGB(A, A, B), TRGB(A, A, C), TRGB(A, A, D), TRGB(A, A, E),
+    TRGB(A, B, 0), TRGB(A, B, A), TRGB(A, B, B), TRGB(A, B, C), TRGB(A, B, D), TRGB(A, B, E),
+    TRGB(A, C, 0), TRGB(A, C, A), TRGB(A, C, B), TRGB(A, C, C), TRGB(A, C, D), TRGB(A, C, E),
+    TRGB(A, D, 0), TRGB(A, D, A), TRGB(A, D, B), TRGB(A, D, C), TRGB(A, D, D), TRGB(A, D, E),
+    TRGB(A, E, 0), TRGB(A, E, A), TRGB(A, E, B), TRGB(A, E, C), TRGB(A, E, D), TRGB(A, E, E),
+
+    TRGB(B, 0, 0), TRGB(B, 0, A), TRGB(B, 0, B), TRGB(B, 0, C), TRGB(B, 0, D), TRGB(B, 0, E),
+    TRGB(B, A, 0), TRGB(B, A, A), TRGB(B, A, B), TRGB(B, A, C), TRGB(B, A, D), TRGB(B, A, E),
+    TRGB(B, B, 0), TRGB(B, B, A), TRGB(B, B, B), TRGB(B, B, C), TRGB(B, B, D), TRGB(B, B, E),
+    TRGB(B, C, 0), TRGB(B, C, A), TRGB(B, C, B), TRGB(B, C, C), TRGB(B, C, D), TRGB(B, C, E),
+    TRGB(B, D, 0), TRGB(B, D, A), TRGB(B, D, B), TRGB(B, D, C), TRGB(B, D, D), TRGB(B, D, E),
+    TRGB(B, E, 0), TRGB(B, E, A), TRGB(B, E, B), TRGB(B, E, C), TRGB(B, E, D), TRGB(B, E, E),
+
+    TRGB(C, 0, 0), TRGB(C, 0, A), TRGB(C, 0, B), TRGB(C, 0, C), TRGB(C, 0, D), TRGB(C, 0, E),
+    TRGB(C, A, 0), TRGB(C, A, A), TRGB(C, A, B), TRGB(C, A, C), TRGB(C, A, D), TRGB(C, A, E),
+    TRGB(C, B, 0), TRGB(C, B, A), TRGB(C, B, B), TRGB(C, B, C), TRGB(C, B, D), TRGB(C, B, E),
+    TRGB(C, C, 0), TRGB(C, C, A), TRGB(C, C, B), TRGB(C, C, C), TRGB(C, C, D), TRGB(C, C, E),
+    TRGB(C, D, 0), TRGB(C, D, A), TRGB(C, D, B), TRGB(C, D, C), TRGB(C, D, D), TRGB(C, D, E),
+    TRGB(C, E, 0), TRGB(C, E, A), TRGB(C, E, B), TRGB(C, E, C), TRGB(C, E, D), TRGB(C, E, E),
+
+    TRGB(D, 0, 0), TRGB(D, 0, A), TRGB(D, 0, B), TRGB(D, 0, C), TRGB(D, 0, D), TRGB(D, 0, E),
+    TRGB(D, A, 0), TRGB(D, A, A), TRGB(D, A, B), TRGB(D, A, C), TRGB(D, A, D), TRGB(D, A, E),
+    TRGB(D, B, 0), TRGB(D, B, A), TRGB(D, B, B), TRGB(D, B, C), TRGB(D, B, D), TRGB(D, B, E),
+    TRGB(D, C, 0), TRGB(D, C, A), TRGB(D, C, B), TRGB(D, C, C), TRGB(D, C, D), TRGB(D, C, E),
+    TRGB(D, D, 0), TRGB(D, D, A), TRGB(D, D, B), TRGB(D, D, C), TRGB(D, D, D), TRGB(D, D, E),
+    TRGB(D, E, 0), TRGB(D, E, A), TRGB(D, E, B), TRGB(D, E, C), TRGB(D, E, D), TRGB(D, E, E),
+
+    TRGB(E, 0, 0), TRGB(E, 0, A), TRGB(E, 0, B), TRGB(E, 0, C), TRGB(E, 0, D), TRGB(E, 0, E),
+    TRGB(E, A, 0), TRGB(E, A, A), TRGB(E, A, B), TRGB(E, A, C), TRGB(E, A, D), TRGB(E, A, E),
+    TRGB(E, B, 0), TRGB(E, B, A), TRGB(E, B, B), TRGB(E, B, C), TRGB(E, B, D), TRGB(E, B, E),
+    TRGB(E, C, 0), TRGB(E, C, A), TRGB(E, C, B), TRGB(E, C, C), TRGB(E, C, D), TRGB(E, C, E),
+    TRGB(E, D, 0), TRGB(E, D, A), TRGB(E, D, B), TRGB(E, D, C), TRGB(E, D, D), TRGB(E, D, E),
+    TRGB(E, E, 0), TRGB(E, E, A), TRGB(E, E, B), TRGB(E, E, C), TRGB(E, E, D), TRGB(E, E, E),
+};
+
+/* the current 256-color palette, compatible with xterm-256color palette */
+trgb Palette[tpalette_n];
 
 #undef H
 #undef M
 #undef L
+
+#undef A
+#undef B
+#undef C
+#undef D
+#undef E
+
+#undef DARK
+#undef LIGHT
 
 static fdlist FdList[5];
 static uldat FdSize = 5, FdTop, FdBottom, FdWQueued;
@@ -312,6 +370,8 @@ static bool module_InitHW(Chars arg) {
                << "' :\n      " << Errstr << "\n";
   } else {
     log(INFO) << "twdisplay: starting display driver module `" << name << "'...\n";
+
+    memcpy(Palette, defaultPalette, sizeof(Palette));
 
     bool (*InitD)(void);
     if (!(InitD = m->DoInit) || !InitD()) {
@@ -654,12 +714,10 @@ void DragAreaHW(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
 
 void SetPaletteHW(udat N, udat R, udat G, udat B) {
   if (N < tpalette_n) {
-    rgb8 c;
-    c.Red = R;
-    c.Green = G;
-    c.Blue = B;
-    if (memcmp(&Palette[N], &c, sizeof(rgb8))) {
-      Palette[N] = c;
+    const trgb col = TRGB(R, G, B);
+
+    if (Palette[N] != col) {
+      Palette[N] = col;
       HW->SetPalette(N, R, G, B);
     }
   }

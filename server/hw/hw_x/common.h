@@ -292,19 +292,20 @@ static bool XSYM(InitHW)(void) {
         visinfo = NULL;
       }
 
-      Colormap colormap = DefaultColormap(xdisplay, screen);
-
-      for (i = 0; i < tpalette_n; i++) {
-        xcolor.red = 257 * (udat)Palette[i].Red;
-        xcolor.green = 257 * (udat)Palette[i].Green;
-        xcolor.blue = 257 * (udat)Palette[i].Blue;
-        if (!XSYM(AllocColor)(xdisplay, visual, colormap, &xcolor, &xcol[i], i)) {
-          log(ERROR) << "      " XSYM_STR(InitHW) "() failed to allocate colors\n";
+      if (!xtruecolor) {
+        Colormap colormap = DefaultColormap(xdisplay, screen);
+        for (i = 0; i < tpalette_n; i++) {
+          xcolor.red = 257 * (udat)TRED(Palette[i]);
+          xcolor.green = 257 * (udat)TGREEN(Palette[i]);
+          xcolor.blue = 257 * (udat)TBLUE(Palette[i]);
+          if (!XSYM(AllocColor)(xdisplay, visual, colormap, &xcolor, &xcol[i], i)) {
+            log(ERROR) << "      " XSYM_STR(InitHW) "() failed to allocate colors\n";
+            break;
+          }
+        }
+        if (i < tpalette_n) {
           break;
         }
-      }
-      if (i < tpalette_n) {
-        break;
       }
 
       xattr.background_pixel = xcol[0];

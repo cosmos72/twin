@@ -75,10 +75,6 @@ enum tcolor_e {
   tpalette_n = 256,
 };
 
-#define TANSI2VGA(col)                                                                             \
-  (((col) & 0x1 ? tred : 0) | ((col) & 0x2 ? tgreen : 0) | ((col) & 0x4 ? tblue : 0))
-#define TVGA2ANSI(col) TANSI2VGA(col)
-
 /**********************************/
 
 enum {
