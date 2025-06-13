@@ -60,15 +60,15 @@ char printk_buf[TW_BIGBUFF];
 
 String HOME;
 
-#define L 0x55 /*  85 */
-#define M 0xAA /* 170 */
-#define H 0xFF /* 255 */
+#define L 85
+#define M 170
+#define H 255
 
-#define A 0x40 /*  64 */
-#define B 0x68 /* 104 */
-#define C 0xA0 /* 144 */
-#define D 0xC4 /* 196 */
-#define E 0xFF /* 255 */
+#define A 73
+#define B 126
+#define C 174
+#define D 217
+#define E 255
 
 #define TGRAY(n) TRGB((n), (n), (n))
 

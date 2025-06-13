@@ -36,19 +36,21 @@ Chars confdir = CONFDIR;
 
 /* First, some structures */
 
-#define L 0x55
-#define M 0xAA
-#define H 0xFF
+#define L 85
+#define M 170
+#define H 255
 
-#define A 0x40 /*  64 */
-#define B 0x68 /* 104 */
-#define C 0xA0 /* 144 */
-#define D 0xC4 /* 196 */
-#define E 0xFF /* 255 */
+#define A 73
+#define B 126
+#define C 174
+#define D 217
+#define E 255
+
+#define TGRAY(n) TRGB((n), (n), (n))
 
 #ifdef TWIN_PALETTE_SOLARIZED
-#define TDARK TRGB(0x04, 0x08, 0x10)
-#define TLIGHT TRGB(0xBB, 0xBB, 0xBB)
+#define TDARK TRGB(4, 8, 16)
+#define TLIGHT TRGB(187, 187, 187)
 #else
 #define TDARK TRGB(0, 0, 0)
 #define TLIGHT TRGB(M, M, M)
@@ -102,6 +104,11 @@ const trgb Palette[tpalette_n] = {
     TRGB(E, C, 0), TRGB(E, C, A), TRGB(E, C, B), TRGB(E, C, C), TRGB(E, C, D), TRGB(E, C, E),
     TRGB(E, D, 0), TRGB(E, D, A), TRGB(E, D, B), TRGB(E, D, C), TRGB(E, D, D), TRGB(E, D, E),
     TRGB(E, E, 0), TRGB(E, E, A), TRGB(E, E, B), TRGB(E, E, C), TRGB(E, E, D), TRGB(E, E, E),
+
+    TGRAY(15),     TGRAY(25),     TGRAY(35),     TGRAY(45),     TGRAY(55),     TGRAY(65),
+    TGRAY(75),     TGRAY(85),     TGRAY(95),     TGRAY(105),    TGRAY(115),    TGRAY(125),
+    TGRAY(135),    TGRAY(145),    TGRAY(155),    TGRAY(165),    TGRAY(175),    TGRAY(185),
+    TGRAY(195),    TGRAY(205),    TGRAY(215),    TGRAY(225),    TGRAY(235),    TGRAY(245),
 };
 
 #undef H
@@ -114,6 +121,7 @@ const trgb Palette[tpalette_n] = {
 #undef D
 #undef E
 
+#undef TGRAY
 #undef TDARK
 #undef TLIGHT
 
