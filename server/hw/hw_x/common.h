@@ -291,9 +291,9 @@ static bool XSYM(InitHW)(void) {
         XFree(visinfo);
         visinfo = NULL;
       }
+      Colormap colormap = DefaultColormap(xdisplay, screen);
 
       if (!xtruecolor) {
-        Colormap colormap = DefaultColormap(xdisplay, screen);
         for (i = 0; i < tpalette_n; i++) {
           xcolor.red = 257 * (udat)TRED(Palette[i]);
           xcolor.green = 257 * (udat)TGREEN(Palette[i]);

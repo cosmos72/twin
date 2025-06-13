@@ -596,13 +596,8 @@ void ConfigureHW(udat resource, byte todefault, udat value) {
 
 void SetPaletteHW(udat N, udat R, udat G, udat B) {
   if (N < tpalette_n) {
-    const trgb col = TRGB(R, G, B);
-
-    if (Palette[N] != col) {
-      Palette[N] = col;
-      forHW {
-        HW->SetPalette(N, R, G, B);
-      }
+    forHW {
+      HW->SetPalette(N, R, G, B);
     }
   }
 }

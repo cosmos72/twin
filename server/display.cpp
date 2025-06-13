@@ -70,18 +70,20 @@ String HOME;
 #define D 0xC4 /* 196 */
 #define E 0xFF /* 255 */
 
+#define TGRAY(n) TRGB((n), (n), (n))
+
 #ifdef TWIN_PALETTE_SOLARIZED
-#define DARK TRGB(0x04, 0x08, 0x10)
-#define LIGHT TRGB(0xBB, 0xBB, 0xBB)
+#define TDARK TRGB(0x04, 0x08, 0x10)
+#define TLIGHT TRGB(0xBB, 0xBB, 0xBB)
 #else
-#define DARK TRGB(0, 0, 0)
-#define LIGHT TRGB(M, M, M)
+#define TDARK TRGB(0, 0, 0)
+#define TLIGHT TRGB(M, M, M)
 #endif
 
-/* the default 256-color palette, compatible with xterm-256color palette */
-const trgb defaultPalette[tpalette_n] = {
-    DARK,          TRGB(M, 0, 0), TRGB(0, M, 0), TRGB(M, M, 0), TRGB(0, 0, M), TRGB(M, 0, M),
-    TRGB(0, M, M), LIGHT, /**/
+/* the 256-color palette, compatible with xterm-256color palette */
+const trgb Palette[tpalette_n] = {
+    TDARK,         TRGB(M, 0, 0), TRGB(0, M, 0), TRGB(M, M, 0), TRGB(0, 0, M), TRGB(M, 0, M),
+    TRGB(0, M, M), TLIGHT, /**/
     TRGB(L, L, L), TRGB(H, L, L), TRGB(L, H, L), TRGB(H, H, L), TRGB(L, L, H), TRGB(H, L, H),
     TRGB(L, H, H), TRGB(H, H, H), /**/
 
@@ -126,10 +128,12 @@ const trgb defaultPalette[tpalette_n] = {
     TRGB(E, C, 0), TRGB(E, C, A), TRGB(E, C, B), TRGB(E, C, C), TRGB(E, C, D), TRGB(E, C, E),
     TRGB(E, D, 0), TRGB(E, D, A), TRGB(E, D, B), TRGB(E, D, C), TRGB(E, D, D), TRGB(E, D, E),
     TRGB(E, E, 0), TRGB(E, E, A), TRGB(E, E, B), TRGB(E, E, C), TRGB(E, E, D), TRGB(E, E, E),
-};
 
-/* the current 256-color palette, compatible with xterm-256color palette */
-trgb Palette[tpalette_n];
+    TGRAY(15),     TGRAY(25),     TGRAY(35),     TGRAY(45),     TGRAY(55),     TGRAY(65),
+    TGRAY(75),     TGRAY(85),     TGRAY(95),     TGRAY(105),    TGRAY(115),    TGRAY(125),
+    TGRAY(135),    TGRAY(145),    TGRAY(155),    TGRAY(165),    TGRAY(175),    TGRAY(185),
+    TGRAY(195),    TGRAY(205),    TGRAY(215),    TGRAY(225),    TGRAY(235),    TGRAY(245),
+};
 
 #undef H
 #undef M
@@ -141,8 +145,8 @@ trgb Palette[tpalette_n];
 #undef D
 #undef E
 
-#undef DARK
-#undef LIGHT
+#undef TDARK
+#undef TLIGHT
 
 static fdlist FdList[5];
 static uldat FdSize = 5, FdTop, FdBottom, FdWQueued;
@@ -370,8 +374,6 @@ static bool module_InitHW(Chars arg) {
                << "' :\n      " << Errstr << "\n";
   } else {
     log(INFO) << "twdisplay: starting display driver module `" << name << "'...\n";
-
-    memcpy(Palette, defaultPalette, sizeof(Palette));
 
     bool (*InitD)(void);
     if (!(InitD = m->DoInit) || !InitD()) {
@@ -713,14 +715,7 @@ void DragAreaHW(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
 }
 
 void SetPaletteHW(udat N, udat R, udat G, udat B) {
-  if (N < tpalette_n) {
-    const trgb col = TRGB(R, G, B);
-
-    if (Palette[N] != col) {
-      Palette[N] = col;
-      HW->SetPalette(N, R, G, B);
-    }
-  }
+  /* nop */
 }
 
 void ResetPaletteHW(void) {

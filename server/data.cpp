@@ -47,17 +47,17 @@ Chars confdir = CONFDIR;
 #define E 0xFF /* 255 */
 
 #ifdef TWIN_PALETTE_SOLARIZED
-#define DARK TRGB(0x04, 0x08, 0x10)
-#define LIGHT TRGB(0xBB, 0xBB, 0xBB)
+#define TDARK TRGB(0x04, 0x08, 0x10)
+#define TLIGHT TRGB(0xBB, 0xBB, 0xBB)
 #else
-#define DARK TRGB(0, 0, 0)
-#define LIGHT TRGB(M, M, M)
+#define TDARK TRGB(0, 0, 0)
+#define TLIGHT TRGB(M, M, M)
 #endif
 
-/* the default 256-color palette, compatible with xterm-256color palette */
-static const trgb defaultPalette[tpalette_n] = {
-    DARK,          TRGB(M, 0, 0), TRGB(0, M, 0), TRGB(M, M, 0), TRGB(0, 0, M), TRGB(M, 0, M),
-    TRGB(0, M, M), LIGHT, /**/
+/* the 256-color palette, compatible with xterm-256color palette */
+const trgb Palette[tpalette_n] = {
+    TDARK,         TRGB(M, 0, 0), TRGB(0, M, 0), TRGB(M, M, 0), TRGB(0, 0, M), TRGB(M, 0, M),
+    TRGB(0, M, M), TLIGHT, /**/
     TRGB(L, L, L), TRGB(H, L, L), TRGB(L, H, L), TRGB(H, H, L), TRGB(L, L, H), TRGB(H, L, H),
     TRGB(L, H, H), TRGB(H, H, H), /**/
 
@@ -104,9 +104,6 @@ static const trgb defaultPalette[tpalette_n] = {
     TRGB(E, E, 0), TRGB(E, E, A), TRGB(E, E, B), TRGB(E, E, C), TRGB(E, E, D), TRGB(E, E, E),
 };
 
-/* the initial 256-color palette, compatible with xterm-256color palette */
-trgb Palette[tpalette_n];
-
 #undef H
 #undef M
 #undef L
@@ -117,8 +114,8 @@ trgb Palette[tpalette_n];
 #undef D
 #undef E
 
-#undef DARK
-#undef LIGHT
+#undef TDARK
+#undef TLIGHT
 
 keylist TW_KeyList[] = {
 #define IS(key, len, seq) {#key, TW_##key, len, seq},
@@ -150,6 +147,5 @@ bool InitData(void) {
     for (j = 0; j < sizes[i]; j++)
       vec[i][j] = Tutf_CP437_to_UTF_32[(byte)vec[i][j]];
   }
-  memcpy(Palette, defaultPalette, sizeof(Palette));
   return AssignId_all(All);
 }

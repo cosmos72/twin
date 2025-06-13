@@ -20,7 +20,7 @@ extern Chars plugindir;
 // directory containing system-wide configuration file twinrc
 extern Chars confdir;
 
-extern trgb Palette[tpalette_n];
+extern const trgb Palette[tpalette_n];
 
 struct keylist {
   const char *name;

@@ -229,7 +229,7 @@ static byte termcap_InitVideo(void) {
   HW->Configure = termcap_Configure;
   HW->ConfigureKeyboard = termcap_ConfigureKeyboard;
   HW->SetPalette = (void (*)(udat, udat, udat, udat))NoOp;
-  HW->ResetPalette = (void (*)(void))NoOp;
+  HW->ResetPalette = NoOp;
 
   HW->QuitVideo = termcap_QuitVideo;
 
