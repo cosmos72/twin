@@ -4,6 +4,8 @@
  * this is used both inside twin terminal and inside Linux console.
  */
 
+#include "palette.h"
+
 static void linux_QuitVideo(void);
 static void linux_ShowMouse(void);
 static void linux_HideMouse(void);
@@ -125,34 +127,41 @@ static void linux_QuitVideo(void) {
 #define linux_DrawFinish() ((void)0)
 
 inline void linux_SetColor(tcolor col) {
-  char colbuf[] = "\033[2x;2x;4x;3xm";
+  const byte fg = TrueColorToPalette16(TCOLFG(col));
+  const byte bg = TrueColorToPalette16(TCOLBG(col));
+  const byte _fg = TrueColorToPalette16(TCOLFG(_col));
+  const byte _bg = TrueColorToPalette16(TCOLBG(_col));
+  char colbuf[] = "\033[2x;2x;3x;4xm";
   char *colp = colbuf + 2;
-  byte c;
 
-  if ((col & TCOL(thigh, 0)) != (_col & TCOL(thigh, 0))) {
-    if (col & TCOL(thigh, 0))
+  if ((fg & 8) != (_fg & 8)) {
+    /* ESC[1m  is bold/high intensity */
+    /* ESC[22m is normal intensity */
+    if (fg & 8) {
       *colp++ = '1';
-    /* '22m' is normal intensity. we used '21m', which is actually 'doubly underlined' */
-    else
-      *colp++ = '2', *colp++ = '2';
+    } else {
+      *colp++ = '2';
+      *colp++ = '2';
+    }
     *colp++ = ';';
   }
-  if ((col & TCOL(0, thigh)) != (_col & TCOL(0, thigh))) {
-    if (_col & TCOL(0, thigh))
+  if ((bg & 8) != (_bg & 8)) {
+    /* ESC[25m is blink */
+    /* ESC[5m  is don't blink */
+    if (_bg & 8) {
       *colp++ = '2';
+    }
     *colp++ = '5';
     *colp++ = ';';
   }
-  if ((col & TCOL(0, twhite)) != (_col & TCOL(0, twhite))) {
-    c = TCOLBG(col) & ~thigh;
-    *colp++ = '4';
-    *colp++ = c + '0';
+  if ((fg & 7) != (_fg & 7)) {
+    *colp++ = '3';
+    *colp++ = (fg & 7) + '0';
     *colp++ = ';';
   }
-  if ((col & TCOL(twhite, 0)) != (_col & TCOL(twhite, 0))) {
-    c = TCOLFG(col) & ~thigh;
-    *colp++ = '3';
-    *colp++ = c + '0';
+  if ((bg & 7) != (_bg & 7)) {
+    *colp++ = '4';
+    *colp++ = (bg & 7) + '0';
     *colp++ = ';';
   }
   _col = col;
@@ -160,15 +169,14 @@ inline void linux_SetColor(tcolor col) {
   if (colp[-1] == ';')
     --colp;
   *colp++ = 'm';
-  *colp = '\0';
 
-  fputs(colbuf, stdOUT);
+  fwrite(colbuf, 1, colp - colbuf, stdOUT);
 }
 
 inline void linux_DrawSome(dat x, dat y, uldat len) {
   tcell *V, *oV;
   tcolor col;
-  trune c, _c;
+  trune r, _r;
   byte sending = tfalse;
 
   V = Video + x + y * (ldat)DisplayWidth;
@@ -184,55 +192,55 @@ inline void linux_DrawSome(dat x, dat y, uldat len) {
       if (col != _col)
         linux_SetColor(col);
 
-      c = _c = TRUNE(*V);
-      if (c >= 128) {
+      r = _r = TRUNE(*V);
+      if (r >= 128) {
         if (tty_use_utf8) {
           /* use utf-8 to output this non-ASCII char. */
-          tty_DrawRune(c);
+          tty_DrawRune(r);
           continue;
-        } else if (tty_charset_to_UTF_32[c] != c) {
-          c = tty_UTF_32_to_charset(_c);
+        } else if (tty_charset_to_UTF_32[r] != r) {
+          r = tty_UTF_32_to_charset(_r);
         }
       }
-      if (tty_use_utf8 ? (c < 32 || c == 127)
-                       : (c < 32 && ((CTRL_ALWAYS >> c) & 1)) || c == 127 || c == 128 + 27) {
+      if (tty_use_utf8 ? (r < 32 || r == 127)
+                       : (r < 32 && ((CTRL_ALWAYS >> r) & 1)) || r == 127 || r == 128 + 27) {
         /* can't display it */
-        c = Tutf_UTF_32_to_ASCII(_c);
-        if (c < 32 || c >= 127)
-          c = 32;
+        r = Tutf_UTF_32_to_ASCII(_r);
+        if (r < 32 || r >= 127)
+          r = 32;
       }
-      putc((char)c, stdOUT);
+      putc((char)r, stdOUT);
     } else
       sending = tfalse;
   }
 }
 
 inline void linux_DrawTCell(dat x, dat y, tcell V) {
-  trune c, _c;
+  trune r, _r;
 
   linux_MoveToXY(x, y);
 
   if (TCOLOR(V) != _col)
     linux_SetColor(TCOLOR(V));
 
-  c = _c = TRUNE(V);
-  if (c >= 128) {
+  r = _r = TRUNE(V);
+  if (r >= 128) {
     if (tty_use_utf8) {
       /* use utf-8 to output this non-ASCII char. */
-      tty_DrawRune(c);
+      tty_DrawRune(r);
       return;
-    } else if (tty_charset_to_UTF_32[c] != c) {
-      c = tty_UTF_32_to_charset(_c);
+    } else if (tty_charset_to_UTF_32[r] != r) {
+      r = tty_UTF_32_to_charset(_r);
     }
   }
-  if (tty_use_utf8 ? (c < 32 || c == 127)
-                   : (c < 32 && ((CTRL_ALWAYS >> c) & 1)) || c == 127 || c == 128 + 27) {
+  if (tty_use_utf8 ? (r < 32 || r == 127)
+                   : (r < 32 && ((CTRL_ALWAYS >> r) & 1)) || r == 127 || r == 128 + 27) {
     /* can't display it */
-    c = Tutf_UTF_32_to_ASCII(_c);
-    if (c < 32 || c >= 127)
-      c = 32;
+    r = Tutf_UTF_32_to_ASCII(_r);
+    if (r < 32 || r >= 127)
+      r = 32;
   }
-  putc((char)c, stdOUT);
+  putc((char)r, stdOUT);
 }
 
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.

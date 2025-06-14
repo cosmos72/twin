@@ -2,6 +2,8 @@
 
 #ifdef CONF_HW_TTY_TERMCAP
 
+#include "palette.h"
+
 inline void termcap_SetCursorType(uldat type) {
   fprintf(stdOUT, "%s", (type & 0xFFFFFFl) == NOCURSOR ? tc_cursor_off : tc_cursor_on);
 }
@@ -262,57 +264,68 @@ static void termcap_QuitVideo(void) {
 #define termcap_DrawStart() (fputs(tc_attr_off, stdOUT), _col = TCOL(twhite, tblack))
 #define termcap_DrawFinish() ((void)0)
 
-inline char *termcap_CopyAttr(char *attr, char *dest) {
-  while ((*dest++ = *attr++)) {
+inline char *termcap_CopyAttr(const char *src, char *dst) {
+  while ((*dst = *src) != '\0') {
+    dst++;
+    src++;
   }
-  return --dest;
+  return dst;
 }
 
-inline void termcap_SetColor(tcolor col) {
-  static char colbuf[80];
+void termcap_SetColor(tcolor col) {
+  char colbuf[80];
   char *colp = colbuf;
-  byte c;
+  byte fg = TrueColorToPalette16(TCOLFG(col));
+  byte bg = TrueColorToPalette16(TCOLBG(col));
+  byte _fg = TrueColorToPalette16(TCOLFG(_col));
+  byte _bg = TrueColorToPalette16(TCOLBG(_col));
+  byte fg_high = fg & 8;
+  byte bg_high = bg & 8;
+  byte _fg_high = _fg & 8;
+  byte _bg_high = _bg & 8;
 
-  if ((col & TCOL(thigh, thigh)) != (_col & TCOL(thigh, thigh))) {
-
-    if (((_col & TCOL(0, thigh)) && !(col & TCOL(0, thigh))) ||
-        ((_col & TCOL(thigh, 0)) && !(col & TCOL(thigh, 0)))) {
-
+  if (fg_high != _fg_high || bg_high != _bg_high) {
+    if ((_fg_high && !fg_high) || (_bg_high && !bg_high)) {
       /* cannot turn off blinking or standout, reset everything */
       colp = termcap_CopyAttr(tc_attr_off, colp);
-      _col = TCOL(twhite, tblack);
+      _fg = 7;
+      _bg = 0;
     }
-    if ((col & TCOL(thigh, 0)) && !(_col & TCOL(thigh, 0)))
+    if (fg_high && !_fg_high) {
       colp = termcap_CopyAttr(tc_bold_on, colp);
-    if ((col & TCOL(0, thigh)) && !(_col & TCOL(0, thigh)))
+    }
+    if (bg_high && !_bg_high) {
       colp = termcap_CopyAttr(tc_blink_on, colp);
+    }
   }
 
-  if ((col & TCOL(twhite, twhite)) != (_col & TCOL(twhite, twhite))) {
+  fg &= 7;
+  bg &= 7;
+  _fg &= 7;
+  _bg &= 7;
+
+  if (fg != _fg || bg != _bg) {
     *colp++ = '\033';
     *colp++ = '[';
 
-    if ((col & TCOL(twhite, 0)) != (_col & TCOL(twhite, 0))) {
+    if (fg != _fg) {
       *colp++ = '3';
-      c = TCOLFG(col) & ~thigh;
-      *colp++ = c + '0';
+      *colp++ = fg + '0';
       *colp++ = ';';
     }
 
-    if ((col & TCOL(0, twhite)) != (_col & TCOL(0, twhite))) {
+    if (bg != _bg) {
       *colp++ = '4';
-      c = TCOLBG(col) & ~thigh;
-      *colp++ = c + '0';
+      *colp++ = bg + '0';
       *colp++ = 'm';
     } else if (colp[-1] == ';') {
       colp[-1] = 'm';
     }
   }
 
-  *colp = '\0';
   _col = col;
 
-  fputs(colbuf, stdOUT);
+  fwrite(colbuf, 1, colp - colbuf, stdOUT);
 }
 
 inline void termcap_DrawSome(dat x, dat y, uldat len) {

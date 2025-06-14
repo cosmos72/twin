@@ -225,7 +225,7 @@ static void stdin_Resize(dat x, dat y) {
      * can't resize the tty, just clear it so that
      * extra size will get padded with blanks
      */
-    fprintf(stdOUT, "\033[0m%s", tc_scr_clear);
+    fprintf(stdOUT, "\033[m%s", tc_scr_clear);
     fflush(stdOUT);
     /*
      * flush now not to risk arriving late
@@ -244,25 +244,26 @@ static void stdout_FlushHW(void) {
 }
 
 static void tty_DrawRune(trune h) {
-  char buf[5];
+  uldat len;
+  char buf[4];
 
   if (h <= 0x7FF) {
     buf[0] = (h >> 6) | 0xC0;
     buf[1] = (h & 0x3F) | 0x80;
-    buf[2] = 0;
+    len = 2;
   } else if (h <= 0xFFFF) {
     buf[0] = (h >> 12) | 0xE0;
     buf[1] = ((h >> 6) & 0x3F) | 0x80;
     buf[2] = (h & 0x3F) | 0x80;
-    buf[3] = 0;
+    len = 3;
   } else {
     buf[0] = (h >> 18) | 0xF0;
     buf[1] = ((h >> 12) & 0x3F) | 0x80;
     buf[2] = ((h >> 6) & 0x3F) | 0x80;
     buf[3] = (h & 0x3F) | 0x80;
-    buf[4] = 0;
+    len = 4;
   }
-  fputs(buf, stdOUT);
+  fwrite(buf, 1, len, stdOUT);
 }
 
 /*
