@@ -11,7 +11,7 @@ static unsigned long XSYM(ColorToPixel)(trgb rgb) {
   if (xtruecolor) {
     return xrgb_info.pixel(rgb);
   }
-  return xcol[TrueColorToPalette256(rgb)];
+  return xpalette[TrueColorToPalette256(rgb)];
 }
 
 inline void XSYM(DrawSome)(dat x, dat y, ldat len) {
@@ -303,7 +303,7 @@ static bool XSYM(InitHW)(void) {
           xcolor.red = 257 * (udat)TRED(Palette[i]);
           xcolor.green = 257 * (udat)TGREEN(Palette[i]);
           xcolor.blue = 257 * (udat)TBLUE(Palette[i]);
-          if (!XSYM(AllocColor)(xdisplay, visual, colormap, &xcolor, &xcol[i], i)) {
+          if (!XSYM(AllocColor)(xdisplay, visual, colormap, &xcolor, &xpalette[i], i)) {
             log(ERROR) << "      " XSYM_STR(InitHW) "() failed to allocate colors\n";
             break;
           }
@@ -313,7 +313,7 @@ static bool XSYM(InitHW)(void) {
         }
       }
 
-      xattr.background_pixel = xcol[0];
+      xattr.background_pixel = xpalette[0];
       xattr.event_mask = ExposureMask | VisibilityChangeMask | StructureNotifyMask |
                          SubstructureNotifyMask | KeyPressMask | ButtonPressMask |
                          ButtonReleaseMask | PointerMotionMask;
@@ -338,13 +338,11 @@ static bool XSYM(InitHW)(void) {
                XCreateWindow(xdisplay, DefaultRootWindow(xdisplay), 0, 0, xwidth, xheight, 0, depth,
                              InputOutput, visual, CWBackPixel | CWEventMask, &xattr)) &&
 
-          (xforeground_rgb = xbackground_rgb = tblack,  /**/
-           xsgc.foreground = xsgc.background = xcol[0], /**/
+          (xrgb_fg = xrgb_bg = tblack,                      /**/
+           xsgc.foreground = xsgc.background = xpalette[0], /**/
            xsgc.graphics_exposures = False,
 #if HW_X_DRIVER == HW_X11
            xsgc.font = xsfont->fid, xcreategc_mask = xcreategc_mask | GCFont,
-#elif HW_X_DRIVER == HW_XFT
-           xforeground = xbackground = xftcolors[0],
 #endif
            xgc = XCreateGC(xdisplay, xwindow, xcreategc_mask, &xsgc)) &&
 
@@ -354,7 +352,16 @@ static bool XSYM(InitHW)(void) {
         xcompose = static_xcompose;
 
 #if HW_X_DRIVER == HW_XFT
-        xftdraw = XftDrawCreate(xdisplay, xwindow, visual, colormap);
+        if (xtruecolor) {
+          xft_fg = &xdata->foreground_buf;
+          xft_bg = &xdata->background_buf;
+          /* force xft_fg and xft_bg initialization */
+          xrgb_fg = xrgb_bg = tWHITE;
+          XSYM(SetColors)(TCOL0);
+        } else {
+          xft_fg = xft_bg = xft_palette[0];
+        }
+        xft_draw = XftDrawCreate(xdisplay, xwindow, visual, colormap);
 #endif
 
 #ifdef TW_FEATURE_X11_XIM_XIC

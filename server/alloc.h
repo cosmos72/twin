@@ -19,11 +19,11 @@
 #include <cstring> // memcpy(), memmove()
 
 inline void *CopyMem(const void *from, void *to, size_t len) NOTHROW {
-  return std::memcpy(to, from, len);
+  return len ? std::memcpy(to, from, len) : to;
 }
 
 inline void *MoveMem(const void *from, void *to, size_t len) NOTHROW {
-  return std::memmove(to, from, len);
+  return len ? std::memmove(to, from, len) : to;
 }
 
 void *CloneMem(const void *From, uldat len) NOTHROW;

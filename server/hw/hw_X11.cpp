@@ -56,17 +56,23 @@
 #include "hw_x/common.h"
 
 /* manage foreground/background colors */
-static void XSYM(SetColors)(tcolor col) {
-  const trgb fg = TCOLFG(col);
-  if (xforeground_rgb != fg) {
-    xforeground_rgb = fg;
+static void XSYM(SetFg)(const trgb fg) {
+  if (xrgb_fg != fg) {
+    xrgb_fg = fg;
     XSetForeground(xdisplay, xgc, xsgc.foreground = XSYM(ColorToPixel)(fg));
   }
-  const trgb bg = TCOLBG(col);
-  if (xbackground_rgb != bg) {
-    xbackground_rgb = bg;
+}
+
+static void XSYM(SetBg)(const trgb bg) {
+  if (xrgb_bg != bg) {
+    xrgb_bg = bg;
     XSetBackground(xdisplay, xgc, xsgc.background = XSYM(ColorToPixel)(bg));
   }
+}
+
+static void XSYM(SetColors)(tcolor col) {
+  XSYM(SetFg)(TCOLFG(col));
+  XSYM(SetBg)(TCOLBG(col));
 }
 
 /*

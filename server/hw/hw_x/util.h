@@ -2,6 +2,8 @@
 
 #include "log.h"
 
+static void XSYM(SetFg)(const trgb fg);
+
 #define X_TITLE_MAXLEN 80
 
 static void XSYM(FillWindowTitle)(char *title, int maxlen) {
@@ -76,18 +78,10 @@ static void XSYM(ShowCursor)(uldat type, dat x, dat y) {
   } else if (type & 0xF) {
     /* VGA hw-like cursor */
 
-    udat i = xhfont * ((type & 0xF) - NOCURSOR) / (SOLIDCURSOR - NOCURSOR);
-
     /* doesn't work as expected on paletted visuals... */
-    trgb fg = TCOLFG(color) ^ TCOLBG(color);
+    XSYM(SetFg)(TCOLFG(color) ^ TCOLBG(color));
 
-    if (xforeground_rgb != fg) {
-      xforeground_rgb = fg;
-      XSetForeground(xdisplay, xgc, xsgc.foreground = XSYM(ColorToPixel)(fg));
-#if HW_X_DRIVER == HW_XFT
-      xforeground = xftcolors[fg];
-#endif
-    }
+    udat i = xhfont * ((type & 0xF) - NOCURSOR) / (SOLIDCURSOR - NOCURSOR);
 
     XSetFunction(xdisplay, xgc, xsgc.function = GXxor);
     XFillRectangle(xdisplay, xwindow, xgc, xbegin, ybegin + xhfont - i, xwfont, i);

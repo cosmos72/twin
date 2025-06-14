@@ -70,25 +70,55 @@ static void XSYM(DrawString16)(Display *display, Drawable d, GC gc, int x, int y
    * "underneath" the new one.  So we first draw a rectangle with the background color, and then
    * draw the text on top of it in the foreground color.
    */
-  XftDrawRect(xftdraw, xbackground, x, y - xsfont->ascent, length * xsfont->max_advance_width,
+  XftDrawRect(xft_draw, xft_bg, x, y - xsfont->ascent, length * xsfont->max_advance_width,
               xsfont->ascent + xsfont->descent);
-  XftDrawString16(xftdraw, xforeground, xsfont, x, y, string, length);
+  XftDrawString16(xft_draw, xft_fg, xsfont, x, y, string, length);
+}
+
+static XftColor *XSYM(SetColor)(trgb rgb, unsigned long pixel, XftColor *dst) {
+  dst->pixel = pixel;
+  dst->color.red = 257 * (udat)TRED(rgb);
+  dst->color.green = 257 * (udat)TGREEN(rgb);
+  dst->color.blue = 257 * (udat)TBLUE(rgb);
+  dst->color.alpha = 0xFFFF;
+  return dst;
 }
 
 /* manage foreground/background colors */
-static void XSYM(SetColors)(tcolor col) {
-  const trgb fg = TCOLFG(col);
-  if (xforeground_rgb != fg) {
-    xforeground_rgb = fg;
-    XSetForeground(xdisplay, xgc, xsgc.foreground = XSYM(ColorToPixel)(fg));
-    xforeground = xftcolors[fg];
+
+static void XSYM(SetFg)(const trgb fg) {
+  if (xrgb_fg != fg) {
+    xrgb_fg = fg;
+    if (xtruecolor) {
+      const unsigned long pixel = XSYM(ColorToPixel)(fg);
+      XSetForeground(xdisplay, xgc, xsgc.foreground = pixel);
+      XSYM(SetColor)(fg, pixel, xft_fg);
+    } else {
+      const byte index = TrueColorToPalette256(fg);
+      XSetForeground(xdisplay, xgc, xsgc.foreground = xpalette[index]);
+      xft_fg = xft_palette[index];
+    }
   }
-  const trgb bg = TCOLBG(col);
-  if (xbackground_rgb != bg) {
-    xbackground_rgb = bg;
-    XSetBackground(xdisplay, xgc, xsgc.background = XSYM(ColorToPixel)(bg));
-    xbackground = xftcolors[bg];
+}
+
+static void XSYM(SetBg)(const trgb bg) {
+  if (xrgb_bg != bg) {
+    xrgb_bg = bg;
+    if (xtruecolor) {
+      const unsigned long pixel = XSYM(ColorToPixel)(bg);
+      XSetBackground(xdisplay, xgc, xsgc.background = pixel);
+      XSYM(SetColor)(bg, pixel, xft_bg);
+    } else {
+      const byte index = TrueColorToPalette256(bg);
+      XSetBackground(xdisplay, xgc, xsgc.background = xpalette[index]);
+      xft_bg = xft_palette[index];
+    }
   }
+}
+
+static void XSYM(SetColors)(const tcolor col) {
+  XSYM(SetFg)(TCOLFG(col));
+  XSYM(SetBg)(TCOLBG(col));
 }
 
 static ldat XSYM(CalcFontScore)(udat fontwidth, udat fontheight, XftFont *fontp,
@@ -222,13 +252,13 @@ static int XSYM(AllocColor)(Display *display, Visual *visual, Colormap colormap,
   xrcolor.red = xcolor->red;
   xrcolor.green = xcolor->green;
   xrcolor.blue = xcolor->blue;
-  xrcolor.alpha = 65535;
+  xrcolor.alpha = 0xFFFF;
 
   if (!XftColorAllocValue(xdisplay, visual, colormap, &xrcolor, xft_color)) {
     return -1;
   }
   *pixel = xft_color->pixel;
-  xftcolors[color_num] = xft_color;
+  xft_palette[color_num] = xft_color;
 
   return 1;
 }
@@ -246,18 +276,18 @@ static void XSYM(FlavorQuitHW)(void) {
     colormap = DefaultColormap(xdisplay, xscreen);
     visual = DefaultVisual(xdisplay, xscreen);
   }
-  if (xftdraw) {
-    XftDrawDestroy(xftdraw);
+  if (xft_draw) {
+    XftDrawDestroy(xft_draw);
   }
   for (int i = 0; i < tpalette_n; i++) {
-    if (xftcolors[i] == NULL) {
+    if (xft_palette[i] == NULL) {
       break;
     }
     if (xdisplay) {
-      XftColorFree(xdisplay, visual, colormap, xftcolors[i]);
+      XftColorFree(xdisplay, visual, colormap, xft_palette[i]);
     }
-    FreeMem(xftcolors[i]);
-    xftcolors[i] = NULL;
+    FreeMem(xft_palette[i]);
+    xft_palette[i] = NULL;
   }
 }
 

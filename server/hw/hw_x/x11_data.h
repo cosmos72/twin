@@ -80,13 +80,14 @@ struct XSYM(data) {
   XFontStruct *xsfont;
 #elif HW_X_DRIVER == HW_XFT
   XftFont *xsfont;
-  XftDraw *xftdraw;
-  XftColor *foreground; // current foreground color
-  XftColor *background; // current background color
-  XftColor *xftcolors[tpalette_n];
+  XftDraw *xft_draw;
+  XftColor *xft_fg; // current Xft foreground color
+  XftColor *xft_bg; // current Xft background color
+  XftColor foreground_buf, background_buf;
+  XftColor *xft_palette[tpalette_n];
 #endif
-  trgb xforeground_rgb;
-  trgb xbackground_rgb;
+  trgb xrgb_fg;
+  trgb xrgb_bg;
 #ifdef TW_FEATURE_X11_XIM_XIC /* autodetected */
   XIM xim;
   XIC xic;
@@ -98,7 +99,7 @@ struct XSYM(data) {
   uldat xReqCount;
   uldat XReqCount;
   XSelectionRequestEvent XReq[NEST];
-  unsigned long xcol[tpalette_n];
+  unsigned long xpalette[tpalette_n];
   Atom xCOMPOUND_TEXT, xTARGETS, xTEXT, xUTF8_STRING, xWM_DELETE_WINDOW, xWM_PROTOCOLS;
 };
 
@@ -123,8 +124,8 @@ struct XSYM(data) {
 #define xgc (xdata->xgc)
 #define xsgc (xdata->xsgc)
 #define xsfont (xdata->xsfont)
-#define xforeground_rgb (xdata->xforeground_rgb)
-#define xbackground_rgb (xdata->xbackground_rgb)
+#define xrgb_fg (xdata->xrgb_fg)
+#define xrgb_bg (xdata->xrgb_bg)
 #define xim (xdata->xim)
 #define xic (xdata->xic)
 #define xcompose (xdata->xcompose)
@@ -138,7 +139,7 @@ struct XSYM(data) {
 #define xReqCount (xdata->xReqCount)
 #define XReqCount (xdata->XReqCount)
 #define XReq(j) (xdata->XReq[j])
-#define xcol (xdata->xcol)
+#define xpalette (xdata->xpalette)
 #define xCOMPOUND_TEXT (xdata->xCOMPOUND_TEXT)
 #define xTARGETS (xdata->xTARGETS)
 #define xTEXT (xdata->xTEXT)
@@ -147,8 +148,8 @@ struct XSYM(data) {
 #define xWM_DELETE_WINDOW (xdata->xWM_DELETE_WINDOW)
 
 #if HW_X_DRIVER == HW_XFT
-#define xftdraw (xdata->xftdraw)
-#define xforeground (xdata->foreground)
-#define xbackground (xdata->background)
-#define xftcolors (xdata->xftcolors)
+#define xft_draw (xdata->xft_draw)
+#define xft_fg (xdata->xft_fg)
+#define xft_bg (xdata->xft_bg)
+#define xft_palette (xdata->xft_palette)
 #endif
