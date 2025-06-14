@@ -169,7 +169,7 @@ static bool XSYM(InitHW)(void) {
   unsigned long xcreategc_mask = GCForeground | GCBackground | GCGraphicsExposures;
   int i, nskip = 0;
   udat fontwidth = 10, fontheight = 20;
-  byte drag = tfalse, noinput = tfalse;
+  bool drag = false, noinput = false, palette = false;
 
   if (!(HW->Private = (XSYM(data) *)AllocMem(sizeof(XSYM(data))))) {
     log(ERROR) << "      " XSYM_STR(InitHW) "() Out of memory!\n";
@@ -241,10 +241,13 @@ static bool XSYM(InitHW)(void) {
         xhw_endy += xhw_starty;
       } else if (!strncmp(arg, "drag", 4)) {
         arg += 4;
-        drag = ttrue;
+        drag = true;
       } else if (!strncmp(arg, "noinput", 7)) {
         arg += 7;
-        noinput = ttrue;
+        noinput = true;
+      } else if (!strncmp(arg, "palette", 7)) {
+        arg += 7;
+        palette = true;
       } else {
         log(INFO)
             << "   --hw=X11 and --hw=xft options:\n"
@@ -255,6 +258,7 @@ static bool XSYM(InitHW)(void) {
                "      ,fontsize=WxH    use specified font size\n"
                "      ,help            show this help\n"
                "      ,noinput         open a view-only X11 window - ignore input\n"
+               "      ,palette         use 256 color palette, disabling truecolor support\n"
                "      ,view=WxH+X+Y    only show a subarea of twin's desktop\n";
         goto fail;
       }
@@ -272,23 +276,25 @@ static bool XSYM(InitHW)(void) {
     do {
       (void)XSetIOErrorHandler(XSYM(Die));
 
-      XVisualInfo vistemplate;
       const int screen = DefaultScreen(xdisplay);
       const unsigned depth = DefaultDepth(xdisplay, screen);
       Visual *visual = DefaultVisual(xdisplay, screen);
-      int visinfo_n = 0;
 
-      vistemplate.visualid = XVisualIDFromVisual(visual);
+      if (!palette) {
+        XVisualInfo vistemplate;
+        XVisualInfo *visinfo = NULL;
+        int visinfo_n = 0;
+        vistemplate.visualid = XVisualIDFromVisual(visual);
+        visinfo = XGetVisualInfo(xdisplay, VisualIDMask, &vistemplate, &visinfo_n);
 
-      XVisualInfo *visinfo = XGetVisualInfo(xdisplay, VisualIDMask, &vistemplate, &visinfo_n);
-
-      if (visinfo != NULL && visinfo_n > 0) {
-        xrgb_info.init(visinfo);
-        xtruecolor = xrgb_info.is_truecolor(visinfo);
-      }
-      if (visinfo != NULL) {
-        XFree(visinfo);
-        visinfo = NULL;
+        if (visinfo != NULL && visinfo_n > 0) {
+          xrgb_info.init(visinfo);
+          xtruecolor = xrgb_info.is_truecolor(visinfo);
+        }
+        if (visinfo != NULL) {
+          XFree(visinfo);
+          visinfo = NULL;
+        }
       }
       Colormap colormap = DefaultColormap(xdisplay, screen);
 

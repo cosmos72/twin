@@ -139,10 +139,8 @@ static udat TrueColorDistance(const trgb rgb0, const trgb rgb1) {
 }
 
 byte TrueColorToPalette8(const trgb rgb) {
-  const byte red = TRED(rgb);
-  const byte green = TGREEN(rgb);
-  const byte blue = TBLUE(rgb);
-  return RgbToPaletteColorLow8(red, green, blue);
+  /* extract only highest bit of red, green and blue components */
+  return (TRED(rgb) >> 7) | (TGREEN(rgb) & 0x80) >> 6 | (TBLUE(rgb) & 0x80) >> 5;
 }
 
 byte TrueColorToPalette16(trgb rgb) {
