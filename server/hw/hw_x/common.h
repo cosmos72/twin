@@ -2,6 +2,7 @@
 
 #include "algo.h"
 #include "log.h"
+#include "palette.h"
 
 /* this can stay static, XSYM(FlushHW)() is not reentrant */
 static tcolor _col;
@@ -9,10 +10,8 @@ static tcolor _col;
 static unsigned long XSYM(ColorToPixel)(trgb rgb) {
   if (xtruecolor) {
     return xrgb_info.pixel(rgb);
-  } else {
-    /// TODO: use 256-color palette
-    return xcol[(TRED(rgb) & 0x80) >> 5 | (TGREEN(rgb) & 0x80) >> 6 | (TBLUE(rgb) & 0x80) >> 7];
   }
+  return xcol[TrueColorToPalette256(rgb)];
 }
 
 inline void XSYM(DrawSome)(dat x, dat y, ldat len) {

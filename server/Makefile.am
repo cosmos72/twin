@@ -17,10 +17,10 @@ endif
 AM_CPPFLAGS           = -I$(top_srcdir)/include $(LTDLINCL) -DPLUGINDIR="\"$(pkglibdir)\"" -DCONFDIR="\"$(sysconfdir)/twin\""
 twin_CPPFLAGS         = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir)\""
 
-twdisplay_SOURCES     = alloc.cpp display.cpp dl_helper.cpp log.cpp missing.cpp hw.cpp
+twdisplay_SOURCES     = alloc.cpp display.cpp dl_helper.cpp hw.cpp log.cpp missing.cpp palette.cpp
 twin_SOURCES          = wrapper.c
-twin_server_SOURCES   = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.cpp \
-                        extreg.cpp hw.cpp hw_multi.cpp log.cpp main.cpp methods.cpp missing.cpp \
+twin_server_SOURCES   = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.cpp extreg.cpp \
+                        hw.cpp hw_multi.cpp log.cpp main.cpp methods.cpp missing.cpp palette.cpp \
                         obj/all.cpp obj/display.cpp obj/gadget.cpp obj/group.cpp \
                         obj/id.cpp obj/menu.cpp obj/menuitem.cpp obj/module.cpp obj/msg.cpp obj/msgport.cpp \
                         obj/mutex.cpp obj/obj.cpp obj/row.cpp obj/screen.cpp obj/widget.cpp obj/window.cpp \

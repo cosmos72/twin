@@ -20,6 +20,7 @@
 #include "alloc.h"
 #include "data.h"
 #include "methods.h"
+#include "palette.h"
 #include "draw.h"
 #include "resize.h"
 
