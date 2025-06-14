@@ -558,10 +558,10 @@ static void update_eff(void) {
     bg = TCOLBG(tmp);
   }
   if (effects & EFF_INTENSITY) {
-    fg ^= thigh;
+    fg |= thigh;
   }
   if (effects & EFF_BLINK) {
-    bg ^= thigh;
+    bg |= thigh;
   }
   Color = TCOL(fg, bg);
 }
@@ -725,9 +725,9 @@ static void csi_m(void) {
       break;
     default:
       if (par >= 30 && par <= 37) {
-        fg = Palette[par - 30 + (effects & EFF_INTENSITY ? 8 : 0)];
+        fg = Palette[par - 30];
       } else if (par >= 40 && par <= 47) {
-        bg = Palette[par - 40 + (effects & EFF_INTENSITY ? 8 : 0)];
+        bg = Palette[par - 40];
       } else if (par >= 90 && par <= 97) {
         fg = Palette[par - 90 + 8];
       } else if (par >= 100 && par <= 107) {

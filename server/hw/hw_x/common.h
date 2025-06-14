@@ -353,15 +353,15 @@ static bool XSYM(InitHW)(void) {
 
 #if HW_X_DRIVER == HW_XFT
         if (xtruecolor) {
-          xft_fg = &xdata->foreground_buf;
-          xft_bg = &xdata->background_buf;
-          /* force xft_fg and xft_bg initialization */
+          xtfg = &xdata->foreground_buf;
+          xtbg = &xdata->background_buf;
+          /* force xtfg and xtbg initialization */
           xrgb_fg = xrgb_bg = tWHITE;
           XSYM(SetColors)(TCOL0);
         } else {
-          xft_fg = xft_bg = xft_palette[0];
+          xtfg = xtbg = xtpalette[0];
         }
-        xft_draw = XftDrawCreate(xdisplay, xwindow, visual, colormap);
+        xtdraw = XftDrawCreate(xdisplay, xwindow, visual, colormap);
 #endif
 
 #ifdef TW_FEATURE_X11_XIM_XIC

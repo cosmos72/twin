@@ -70,9 +70,9 @@ static void XSYM(DrawString16)(Display *display, Drawable d, GC gc, int x, int y
    * "underneath" the new one.  So we first draw a rectangle with the background color, and then
    * draw the text on top of it in the foreground color.
    */
-  XftDrawRect(xft_draw, xft_bg, x, y - xsfont->ascent, length * xsfont->max_advance_width,
+  XftDrawRect(xtdraw, xtbg, x, y - xsfont->ascent, length * xsfont->max_advance_width,
               xsfont->ascent + xsfont->descent);
-  XftDrawString16(xft_draw, xft_fg, xsfont, x, y, string, length);
+  XftDrawString16(xtdraw, xtfg, xsfont, x, y, string, length);
 }
 
 static XftColor *XSYM(SetColor)(trgb rgb, unsigned long pixel, XftColor *dst) {
@@ -92,11 +92,11 @@ static void XSYM(SetFg)(const trgb fg) {
     if (xtruecolor) {
       const unsigned long pixel = XSYM(ColorToPixel)(fg);
       XSetForeground(xdisplay, xgc, xsgc.foreground = pixel);
-      XSYM(SetColor)(fg, pixel, xft_fg);
+      XSYM(SetColor)(fg, pixel, xtfg);
     } else {
       const byte index = TrueColorToPalette256(fg);
       XSetForeground(xdisplay, xgc, xsgc.foreground = xpalette[index]);
-      xft_fg = xft_palette[index];
+      xtfg = xtpalette[index];
     }
   }
 }
@@ -107,11 +107,11 @@ static void XSYM(SetBg)(const trgb bg) {
     if (xtruecolor) {
       const unsigned long pixel = XSYM(ColorToPixel)(bg);
       XSetBackground(xdisplay, xgc, xsgc.background = pixel);
-      XSYM(SetColor)(bg, pixel, xft_bg);
+      XSYM(SetColor)(bg, pixel, xtbg);
     } else {
       const byte index = TrueColorToPalette256(bg);
       XSetBackground(xdisplay, xgc, xsgc.background = xpalette[index]);
-      xft_bg = xft_palette[index];
+      xtbg = xtpalette[index];
     }
   }
 }
@@ -258,7 +258,7 @@ static int XSYM(AllocColor)(Display *display, Visual *visual, Colormap colormap,
     return -1;
   }
   *pixel = xft_color->pixel;
-  xft_palette[color_num] = xft_color;
+  xtpalette[color_num] = xft_color;
 
   return 1;
 }
@@ -276,18 +276,18 @@ static void XSYM(FlavorQuitHW)(void) {
     colormap = DefaultColormap(xdisplay, xscreen);
     visual = DefaultVisual(xdisplay, xscreen);
   }
-  if (xft_draw) {
-    XftDrawDestroy(xft_draw);
+  if (xtdraw) {
+    XftDrawDestroy(xtdraw);
   }
   for (int i = 0; i < tpalette_n; i++) {
-    if (xft_palette[i] == NULL) {
+    if (xtpalette[i] == NULL) {
       break;
     }
     if (xdisplay) {
-      XftColorFree(xdisplay, visual, colormap, xft_palette[i]);
+      XftColorFree(xdisplay, visual, colormap, xtpalette[i]);
     }
-    FreeMem(xft_palette[i]);
-    xft_palette[i] = NULL;
+    FreeMem(xtpalette[i]);
+    xtpalette[i] = NULL;
   }
 }
 

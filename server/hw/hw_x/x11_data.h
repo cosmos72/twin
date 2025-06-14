@@ -80,11 +80,11 @@ struct XSYM(data) {
   XFontStruct *xsfont;
 #elif HW_X_DRIVER == HW_XFT
   XftFont *xsfont;
-  XftDraw *xft_draw;
-  XftColor *xft_fg; // current Xft foreground color
-  XftColor *xft_bg; // current Xft background color
+  XftDraw *xtdraw;
+  XftColor *xtfg; // current Xft foreground color
+  XftColor *xtbg; // current Xft background color
   XftColor foreground_buf, background_buf;
-  XftColor *xft_palette[tpalette_n];
+  XftColor *xtpalette[tpalette_n];
 #endif
   trgb xrgb_fg;
   trgb xrgb_bg;
@@ -148,8 +148,8 @@ struct XSYM(data) {
 #define xWM_DELETE_WINDOW (xdata->xWM_DELETE_WINDOW)
 
 #if HW_X_DRIVER == HW_XFT
-#define xft_draw (xdata->xft_draw)
-#define xft_fg (xdata->xft_fg)
-#define xft_bg (xdata->xft_bg)
-#define xft_palette (xdata->xft_palette)
+#define xtdraw (xdata->xtdraw)
+#define xtfg (xdata->xtfg)
+#define xtbg (xdata->xtbg)
+#define xtpalette (xdata->xtpalette)
 #endif
