@@ -280,13 +280,12 @@ void termcap_SetColor(tcolor col) {
   byte _fg = TrueColorToPalette16(TCOLFG(_col));
   byte _bg = TrueColorToPalette16(TCOLBG(_col));
   byte fg_high = fg & 8;
-  byte bg_high = bg & 8;
   byte _fg_high = _fg & 8;
-  byte _bg_high = _bg & 8;
 
-  if (fg_high != _fg_high || bg_high != _bg_high) {
-    if ((_fg_high && !fg_high) || (_bg_high && !bg_high)) {
-      /* cannot turn off blinking or standout, reset everything */
+  /* ignore high-intensity background: rendering it as blinking is visually annoying */
+  if (fg_high != _fg_high) {
+    if ((_fg_high && !fg_high)) {
+      /* cannot turn off standout, reset everything */
       colp = termcap_CopyAttr(tc_attr_off, colp);
       _fg = 7;
       _bg = 0;
@@ -294,11 +293,7 @@ void termcap_SetColor(tcolor col) {
     if (fg_high && !_fg_high) {
       colp = termcap_CopyAttr(tc_bold_on, colp);
     }
-    if (bg_high && !_bg_high) {
-      colp = termcap_CopyAttr(tc_blink_on, colp);
-    }
   }
-
   fg &= 7;
   bg &= 7;
   _fg &= 7;
@@ -322,7 +317,6 @@ void termcap_SetColor(tcolor col) {
       colp[-1] = 'm';
     }
   }
-
   _col = col;
 
   fwrite(colbuf, 1, colp - colbuf, stdOUT);
