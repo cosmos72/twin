@@ -73,21 +73,48 @@ AC_C_INLINE
 
 TW_C_FEATURES
 
-################################################################################
-
 # C++ flags '-g -O2' are already tested by AC_PROG_CC
 # C++ flags '-p -pg' are incompatible with -fomit-frame-pointer
 initial_CXXFLAGS="$CXXFLAGS"
-for try_flag in -std=c++98 -fomit-frame-pointer -fno-strict-aliasing \
-                -pipe -Wall -Wshadow -Wno-uninitialized -Wno-unused -Wundef \
-                -Wcast-qual -Wcast-align -Wpointer-arith -Wwrite-strings \
-                 # -Wstrict-prototypes -Wbad-function-cast -Wold-style-declaration -Wold-style-definition
-                 # -Wsign-compare
+for try_flag in -std=c++98 -fno-strict-aliasing -fwrapv -pipe \
+                -Wall -Wshadow -Wno-uninitialized -Wno-unused -Wundef \
+                -Wcast-qual -Wcast-align -Wpointer-arith -Wwrite-strings -Wsign-compare
 do
   save_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $try_flag"
   try_flag_id="`echo \"$try_flag\" | tr =+- _x_`"
-  AC_CACHE_CHECK(for C++ compiler flag $try_flag, ac_cv_cflag$try_flag_id, AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+  AC_CACHE_CHECK(for C++ compiler flag $try_flag, ac_cv_cxxflag$try_flag_id, AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+    int ret0(void) {
+      return 0;
+    }
+   ]], [[
+    int a = ret0();
+  ]])],[
+    eval "ac_cv_cxxflag$try_flag_id=yes"
+  ],[
+    eval "ac_cv_cxxflag$try_flag_id=no"
+    CXXFLAGS="$save_CXXFLAGS"
+  ]))
+done
+custom_CXXFLAGS="$CXXFLAGS"
+CXXFLAGS="$initial_CXXFLAGS"
+AC_LANG_POP([C++])
+
+################################################################################
+
+# C flags '-g -O2' are already tested by AC_PROG_CC
+# C flags '-p -pg' are incompatible with -fomit-frame-pointer
+initial_CFLAGS="$CFLAGS"
+for try_flag in -fno-strict-aliasing -fwrapv -pipe \
+                -Wall -Wshadow -Wno-uninitialized -Wno-unused -Wundef \
+                -Wcast-qual -Wcast-align -Wpointer-arith -Wwrite-strings \
+                -Wstrict-prototypes -Wbad-function-cast \
+                -Wold-style-declaration -Wold-style-definition -Wsign-compare
+do
+  save_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS $try_flag"
+  try_flag_id="`echo \"$try_flag\" | tr =+- _x_`"
+  AC_CACHE_CHECK(for C compiler flag $try_flag, ac_cv_cflag$try_flag_id, AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
     int ret0(void) {
       return 0;
     }
@@ -97,12 +124,11 @@ do
     eval "ac_cv_cflag$try_flag_id=yes"
   ],[
     eval "ac_cv_cflag$try_flag_id=no"
-    CXXFLAGS="$save_CXXFLAGS"
+    CFLAGS="$save_CFLAGS"
   ]))
 done
-custom_CXXFLAGS="$CXXFLAGS"
-CXXFLAGS="$initial_CXXFLAGS"
-AC_LANG_POP([C++])
+custom_CFLAGS="$CFLAGS"
+CFLAGS="$initial_CFLAGS"
 
 ################################################################################
 
@@ -303,6 +329,8 @@ AM_CONDITIONAL(LIBHW_XFT_la,     [test "$enable_hw_xft"     = yes])
 AM_CONDITIONAL(LIBRCPARSE_la,    [test "$enable_wm_rc"      = yes])
 AM_CONDITIONAL(LIBSOCKET_la,     [test "$enable_socket"     = yes])
 AM_CONDITIONAL(LIBTERM_la,       [test "$enable_term"       = yes])
+
+CFLAGS="$custom_CFLAGS"
 
 CXXFLAGS="$custom_CXXFLAGS"
 
