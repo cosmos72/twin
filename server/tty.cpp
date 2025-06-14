@@ -544,8 +544,8 @@ static void csi_X(int vpar) /* erase the following vpar positions */
 }
 
 static void update_eff(void) {
-  udat effects = Effects;
-  tcolor fg = TCOLFG(ColText), bg = TCOLBG(ColText);
+  trgb fg = TCOLFG(ColText), bg = TCOLBG(ColText);
+  const udat effects = Effects;
 
   if (effects & EFF_UNDERLINE) {
     fg = TCOLFG(Underline);
@@ -553,9 +553,10 @@ static void update_eff(void) {
     fg = TCOLFG(HalfInten);
   }
   if (!!(effects & EFF_REVERSE) != !!(*Flags & TTY_INVERTSCR)) {
-    tcolor tmp = TCOL(bg & ~thigh, fg & ~thigh) | TCOL(fg & thigh, bg & thigh);
-    fg = TCOLFG(tmp);
-    bg = TCOLBG(tmp);
+    const trgb inv_fg = (bg & ~thigh) | (fg & thigh);
+    const trgb inv_bg = (fg & ~thigh) | (bg & thigh);
+    fg = inv_fg;
+    bg = inv_bg;
   }
   if (effects & EFF_INTENSITY) {
     fg |= thigh;
