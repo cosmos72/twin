@@ -131,6 +131,12 @@ inline void linux_SetColor(tcolor col) {
   const byte bg = TrueColorToPalette16(TCOLBG(col));
   const byte _fg = TrueColorToPalette16(TCOLFG(_col));
   const byte _bg = TrueColorToPalette16(TCOLBG(_col));
+
+  _col = col;
+
+  if (fg == _fg && bg == _bg) {
+    return;
+  }
   char colbuf[] = "\033[2x;2x;3x;4xm";
   char *colp = colbuf + 2;
 
@@ -164,7 +170,6 @@ inline void linux_SetColor(tcolor col) {
     *colp++ = (bg & 7) + '0';
     *colp++ = ';';
   }
-  _col = col;
 
   if (colp[-1] == ';')
     --colp;

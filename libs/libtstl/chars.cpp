@@ -61,3 +61,16 @@ bool Chars::starts_with0(Chars str, Chars substr) NOTHROW {
   const char *s2 = substr.data();
   return s1 == s2 || !std::memcmp(s1, s2, n2);
 }
+
+bool Chars::ends_with0(Chars str, Chars substr) NOTHROW {
+  size_t n1 = str.size();
+  size_t n2 = substr.size();
+  if (n2 == 0) {
+    return true;
+  } else if (n1 < n2) {
+    return false;
+  }
+  const char *s1 = str.data();
+  const char *s2 = substr.data();
+  return (s1 == s2 && n1 == n2) || !std::memcmp(s1 + (n1 - n2), s2, n2);
+}

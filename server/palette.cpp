@@ -164,10 +164,10 @@ byte TrueColorToPalette256(trgb rgb) {
   const byte red = TRED(rgb);
   const byte green = TGREEN(rgb);
   const byte blue = TBLUE(rgb);
-  const byte index0 = RgbToPaletteColorLow8(red, green, blue);
-  const byte index1 = RgbToPaletteColorHigh8(red, green, blue);
-  const byte index2 = RgbToPaletteGray24(red, green, blue);
-  const byte index3 = RgbToPaletteColor216(red, green, blue);
+  const byte index0 = RgbToPaletteColor216(red, green, blue);
+  const byte index1 = RgbToPaletteGray24(red, green, blue);
+  const byte index2 = RgbToPaletteColorLow8(red, green, blue);
+  const byte index3 = RgbToPaletteColorHigh8(red, green, blue);
   const trgb rgb0 = Palette[index0];
   const trgb rgb1 = Palette[index1];
   const trgb rgb2 = Palette[index2];
@@ -176,6 +176,7 @@ byte TrueColorToPalette256(trgb rgb) {
   const udat distance1 = TrueColorDistance(rgb, rgb1);
   const udat distance2 = TrueColorDistance(rgb, rgb2);
   const udat distance3 = TrueColorDistance(rgb, rgb3);
+  /* prefer, in order: PaletteColor216, PaletteGray24, PaletteColorLow8, PaletteColorHigh8 */
   if (distance0 <= distance1) {
     if (distance2 <= distance3) {
       if (distance0 <= distance2) {

@@ -272,7 +272,7 @@ inline char *termcap_CopyAttr(const char *src, char *dst) {
   return dst;
 }
 
-void termcap_SetColor(tcolor col) {
+static void termcap_SetColor8(tcolor col) {
   char colbuf[80];
   char *colp = colbuf;
   byte fg = TrueColorToPalette16(TCOLFG(col));
@@ -281,6 +281,11 @@ void termcap_SetColor(tcolor col) {
   byte _bg = TrueColorToPalette16(TCOLBG(_col));
   byte fg_high = fg & 8;
   byte _fg_high = _fg & 8;
+
+  _col = col;
+  if (fg == _fg && bg == _bg) {
+    return;
+  }
 
   /* ignore high-intensity background: rendering it as blinking is visually annoying */
   if (fg_high != _fg_high) {
@@ -317,9 +322,116 @@ void termcap_SetColor(tcolor col) {
       colp[-1] = 'm';
     }
   }
-  _col = col;
-
   fwrite(colbuf, 1, colp - colbuf, stdOUT);
+}
+
+inline byte termcap_div10(byte value) {
+  /* faster than value / 10 */
+  return ((udat)value * 205) / 2048;
+}
+
+static char *termcap_print_colon_number(char *dst, byte value) {
+  byte hundreds;
+  *dst++ = ';';
+  if (value >= 200) {
+    hundreds = 2;
+    *dst++ = '2';
+    value -= 200;
+  } else if (value >= 100) {
+    hundreds = 1;
+    *dst++ = '1';
+    value -= 100;
+  } else {
+    hundreds = 0;
+  }
+  const byte tens = termcap_div10(value);
+  if (hundreds || tens) {
+    *dst++ = tens + '0';
+    value -= tens * 10;
+  }
+  *dst++ = value + '0';
+  return dst;
+}
+
+static char *termcap_print_colon_rgb(char *dst, trgb rgb) {
+  dst = termcap_print_colon_number(dst, TRED(rgb));
+  dst = termcap_print_colon_number(dst, TGREEN(rgb));
+  dst = termcap_print_colon_number(dst, TBLUE(rgb));
+  return dst;
+}
+
+static void termcap_SetColor256(tcolor col) {
+  char colbuf[] = "\033[38;5;xxx;48;5;xxxm";
+  char *colp = colbuf + 2;
+  byte fg = TrueColorToPalette256(TCOLFG(col));
+  byte bg = TrueColorToPalette256(TCOLBG(col));
+  byte _fg = TrueColorToPalette256(TCOLFG(_col));
+  byte _bg = TrueColorToPalette256(TCOLBG(_col));
+
+  _col = col;
+  if (fg == _fg && bg == _bg) {
+    return;
+  }
+  if (fg != _fg) {
+    /* colp + 4 skips "38;5" */
+    colp = termcap_print_colon_number(colp + 4, fg);
+  }
+  if (bg != _bg) {
+    if (fg != _fg) {
+      *colp++ = ';';
+    }
+    *colp++ = '4';
+    *colp++ = '8';
+    *colp++ = ';';
+    *colp++ = '5';
+    colp = termcap_print_colon_number(colp, bg);
+  }
+  *colp++ = 'm';
+  fwrite(colbuf, 1, colp - colbuf, stdOUT);
+}
+
+static void termcap_SetColor16M(tcolor col) {
+  char colbuf[] = "\033[38;2;xxx;xxx;xxx;48;2;xxx;xxx;xxxm";
+  char *colp = colbuf + 2;
+  trgb fg = TCOLFG(col);
+  trgb bg = TCOLBG(col);
+  trgb _fg = TCOLFG(_col);
+  trgb _bg = TCOLBG(_col);
+
+  _col = col;
+  if (fg == _fg && bg == _bg) {
+    return;
+  }
+  if (fg != _fg) {
+    /* colp + 4 skips "38;2" */
+    colp = termcap_print_colon_rgb(colp + 4, fg);
+  }
+  if (bg != _bg) {
+    if (fg != _fg) {
+      *colp++ = ';';
+    }
+    *colp++ = '4';
+    *colp++ = '8';
+    *colp++ = ';';
+    *colp++ = '2';
+    colp = termcap_print_colon_rgb(colp, bg);
+  }
+  *colp++ = 'm';
+  fwrite(colbuf, 1, colp - colbuf, stdOUT);
+}
+
+static void termcap_SetColor(tcolor col) {
+  switch (tty_palettemode(paletteN)) {
+  case tty_palette16M:
+    termcap_SetColor16M(col);
+    break;
+  case tty_palette256:
+    termcap_SetColor256(col);
+    break;
+  default:
+    termcap_SetColor8(col);
+    break;
+  }
 }
 
 inline void termcap_DrawSome(dat x, dat y, uldat len) {

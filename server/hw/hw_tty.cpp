@@ -57,6 +57,13 @@
 #include "hw_tty_common/driver_termcap_decls.h"
 #endif
 
+enum tty_palettemode {
+  tty_palette_autodetect = 0,
+  tty_palette8 = 1,
+  tty_palette256 = 2,
+  tty_palette16M = 3,
+};
+
 struct tty_data {
   String tty_NAME, tty_TERM;
   int tty_fd, VcsaFd, tty_number;
@@ -83,7 +90,7 @@ struct tty_data {
 
 #ifdef CONF_HW_TTY_TERMCAP
   char *tc_cap[tc_cap_N];
-  byte colorbug, wrapglitch;
+  byte colorbug, wrapglitch, paletteN;
 #else
   char *tc_scr_clear;
 #endif
@@ -137,6 +144,7 @@ struct tty_data {
 #define tc_charset_end (tc_cap[tc_seq_charset_end])
 #define colorbug (ttydata->colorbug)
 #define wrapglitch (ttydata->wrapglitch)
+#define paletteN (ttydata->paletteN)
 #else
 #define tc_scr_clear (ttydata->tc_scr_clear)
 #endif
@@ -276,7 +284,8 @@ static bool tty_InitHW(void) {
   enum /*: byte*/ { NEVER = 0, MAYBE = 1, ALWAYS = 2 };
   byte autotry_video = MAYBE, try_stdout = MAYBE, try_termcap = MAYBE, autotry_kbd = MAYBE,
        try_lrawkbd = MAYBE, force_mouse = tfalse, tc_colorbug = tfalse,
-       need_persistent_slot = tfalse, try_ctty = tfalse, display_is_ctty = tfalse;
+       need_persistent_slot = tfalse, try_ctty = tfalse, display_is_ctty = tfalse,
+       tty_TERM_override = tfalse;
 
   if (!(HW->Private = (struct tty_data *)AllocMem0(sizeof(struct tty_data)))) {
     log(ERROR) << "      tty_InitHW(): Out of memory!\n";
@@ -330,6 +339,7 @@ static bool tty_InitHW(void) {
           log(ERROR) << "      tty_InitHW(): out of memory!\n";
           return false;
         }
+        tty_TERM_override = true;
       } else if (arg0.starts_with(Chars(",charset="))) {
         if (!charset.format(arg0.view(9, comma))) {
           log(ERROR) << "      tty_InitHW(): out of memory!\n";
@@ -345,12 +355,29 @@ static bool tty_InitHW(void) {
         try_ctty = ttrue;
       } else if (arg0 == Chars(",colorbug")) {
         tc_colorbug = ttrue;
+      } else if (arg0.starts_with(Chars(",palette="))) {
+        arg0 = arg0.view(9, comma);
+        if (arg0 == Chars("8")) {
+          paletteN = tty_palette8;
+        } else if (arg0 == Chars("256")) {
+          paletteN = tty_palette256;
+        } else if (arg0 == Chars("16M")) {
+          paletteN = tty_palette16M;
+        } else {
+          log(ERROR) << "      tty_InitHW(): unsupported 'palette=" << arg0
+                     << "', expecting one of: 8, 256 or 16M\n";
+          return false;
+        }
       } else if (arg0.starts_with(Chars(",mouse="))) {
         arg0 = arg0.view(7, comma);
         if (arg0 == Chars("xterm")) {
           force_mouse = ttrue;
         } else if (arg0 == Chars("twterm")) {
           force_mouse = ttrue + ttrue;
+        } else {
+          log(ERROR) << "      tty_InitHW(): unsupported 'mouse=" << arg0
+                     << "', expecting one of: xterm twterm\n";
+          return false;
         }
       } else if (arg0 == Chars(",noinput")) {
         HW->FlagsHW |= FlHWNoInput;
@@ -368,11 +395,14 @@ static bool tty_InitHW(void) {
                "      ,help                 show this help\n"
                "      ,mouse=[xterm|twterm] assume specified mouse reporting protocol\n"
                "      ,noinput              open a view-only display on tty - ignore input\n"
+               "      ,palette=[8|256|16M]  assume terminal supports this many colors\n"
                "      ,raw[=no]             use Linux raw keyboard\n"
                "      ,slow                 assume terminal is slow\n"
                "      ,stdout[=no]          use hard-coded escape sequences\n"
                "      ,TERM=TERM_NAME       assume terminal type is TERM_NAME\n"
-               "      ,termcap[=no]         use libtermcap escape sequences\n";
+               "      ,termcap[=no]         use libtermcap escape sequences\n"
+               "      ,truecolor            same as palette=16M\n"
+               "      ,utf8[=no]            assume terminal supports UTF-8";
         return false;
       }
       arg = arg.view(comma, end);
@@ -445,6 +475,18 @@ static bool tty_InitHW(void) {
           return false;
         }
       }
+    }
+  }
+  if (paletteN == tty_palette_autodetect) {
+    Chars env_colorterm;
+    if (!tty_TERM_override &&
+        ((env_colorterm = Chars::from_c(getenv("COLORTERM"))) == Chars("truecolor") ||
+         env_colorterm == Chars("24bit"))) {
+      paletteN = tty_palette16M;
+    } else if (tty_TERM.ends_with(Chars("256")) || tty_TERM.ends_with(Chars("256color"))) {
+      paletteN = tty_palette256;
+    } else {
+      paletteN = tty_palette8;
     }
   }
   fflush(stdOUT);
