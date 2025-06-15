@@ -46,7 +46,7 @@ static int open_a_console(char *fnam) {
   return fd;
 }
 
-int getfd() {
+int getfd(void) {
   int fd;
 
   fd = open_a_console("/dev/tty");

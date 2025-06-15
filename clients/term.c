@@ -227,7 +227,7 @@ static void FreeStringVec(char **cmd) {
 }
 
 static char **default_args;
-static char *default_title = "Twin Term";
+static const char *default_title = "Twin Term";
 
 static twindow newTermWindow(const char *title) {
   twindow Window =

@@ -115,7 +115,8 @@ typedef tw_errno s_tw_errno_vec;
 typedef struct s_fn_list {
   void *Fn;
   byte len, formatlen;
-  char *name, *format;
+  const char *name;
+  const char *format;
 } fn_list;
 
 static fn_list Functions[] = {

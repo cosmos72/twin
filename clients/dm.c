@@ -238,7 +238,7 @@ static void shortsleep(void) {
 }
 
 static byte InitAttach(void) {
-  char *attach, *path_attach;
+  const char *attach, *path_attach;
   char buff[] = "--twin@:\0\0\0";
 
   if (use_twdisplay == DM_ATTACH ||

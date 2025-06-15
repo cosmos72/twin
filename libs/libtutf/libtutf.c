@@ -383,13 +383,12 @@ typedef enum {
 } id_e;
 
 #define DECL_NAME(ch)                                                                              \
-  static char *T_CAT(names_, ch)[] = {T_CAT((char *)T_NAME_, ch), T_CAT((char *)T_ALIASES_, ch),   \
-                                      NULL};
+  static const char *T_CAT(names_, ch)[] = {T_CAT(T_NAME_, ch), T_CAT(T_ALIASES_, ch), NULL};
 _LIST(DECL_NAME)
 #undef DECL_NAME
 
 typedef struct {
-  char *TUTF_CONST *names;
+  const char **names;
   Tutf_array array;
   Tutf_function function;
 } Tutf_struct;
@@ -400,7 +399,7 @@ static Tutf_struct Tutf_structs[] = {{T_CAT(names_, UTF_32), NULL, NULL}, _NLIST
 
 #undef DECL_CH
 
-static int strloosecmp(TUTF_CONST char *s1, TUTF_CONST char *s2) {
+static int strloosecmp(const char *s1, const char *s2) {
   byte c1, c2;
 
   do {
@@ -421,9 +420,9 @@ static int strloosecmp(TUTF_CONST char *s1, TUTF_CONST char *s2) {
   return (int)c1 - (int)c2;
 }
 
-uldat Tutf_charset_id(TUTF_CONST char *alias) {
+uldat Tutf_charset_id(const char *alias) {
   Tutf_struct *CH;
-  char *TUTF_CONST *names;
+  const char **names;
   if (alias)
     for (CH = Tutf_structs; (names = CH->names); CH++) {
       for (; *names; names++) {
@@ -434,11 +433,11 @@ uldat Tutf_charset_id(TUTF_CONST char *alias) {
   return (uldat)-1;
 }
 
-TUTF_CONST char *Tutf_charset_name(uldat id) {
+const char *Tutf_charset_name(uldat id) {
   return id < sizeof(Tutf_structs) / sizeof(Tutf_structs[0]) ? Tutf_structs[id].names[0] : NULL;
 }
 
-TUTF_CONST char *Tutf_charset_alias(TUTF_CONST char *alias) {
+const char *Tutf_charset_alias(const char *alias) {
   uldat id = Tutf_charset_id(alias);
   return id != (uldat)-1 ? Tutf_structs[id].names[0] : NULL;
 }

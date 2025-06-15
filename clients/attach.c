@@ -106,6 +106,7 @@ static char *fix_tty(char *arg, byte is_our_tty[1], byte err[1]) {
   char *target = NULL;
   char *opts = arg + 7;
   char *comma = strchr(opts, ',');
+  const char *rest;
   const char *tty = ttyname(0);
   byte is_srv_tty = 0;
   if (!tty) {
@@ -131,10 +132,12 @@ static char *fix_tty(char *arg, byte is_our_tty[1], byte err[1]) {
     return NULL;
   }
 
-  if (comma)
+  if (comma) {
     *comma = ',';
-  else
-    comma = "";
+    rest = comma;
+  } else {
+    rest = "";
+  }
 
   if (*is_our_tty) {
     const char *term = getenv("TERM");

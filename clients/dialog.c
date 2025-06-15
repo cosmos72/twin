@@ -26,7 +26,7 @@ static tmenu Dialog_Menu;
 static twindow Dialog_Win;
 
 static byte separate_output;
-static char *title = "twdialog", *backtitle, *text, *input;
+static const char *title = "twdialog", *backtitle, *text, *input;
 
 static dat width = 80, height = 25, percent;
 
@@ -73,7 +73,7 @@ static void Usage(void) {
           "  --gauge     <text> <height> <width> <percent>\n");
 }
 
-static byte InitButtons(char *bt1, char *bt2) {
+static byte InitButtons(const char *bt1, const char *bt2) {
   return TwCreateButtonGadget(Dialog_Win, strlen(bt1), 1, bt1, 1, 0, TCOL(tblack, twhite),
                               TCOL(tblack, tgreen), TCOL(tBLACK, tgreen),
                               width / 2 - (bt2 ? strlen(bt1) + 2 : strlen(bt1) / 2), height - 2) &&
@@ -86,7 +86,7 @@ static byte InitGadgets(byte radio) {
   return tfalse;
 }
 
-static int CountNewLines(char *s) {
+static int CountNewLines(const char *s) {
   int ret = 0;
   while (s) {
     if ((s = strchr(s, '\n'))) {

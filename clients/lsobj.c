@@ -37,10 +37,10 @@ udat field_list[] = {
 };
 
 /* these are hardcoded in libtw ABI, so we can hardcode them here too. */
-char *type_list[TWS_highest + 2] = {"void",   "char",  "dat",   "ldat", "tcolor", "time_t",
-                                    "frac_t", "trune", "tcell", "tobj", "unknown"};
+const char *type_list[TWS_highest + 2] = {"void",   "char",  "dat",   "ldat", "tcolor", "time_t",
+                                          "frac_t", "trune", "tcell", "tobj", "unknown"};
 
-char *name_list[] = {
+const char *name_list[] = {
 #define EL(field) TWS_STR(field),
     TWS_field_list_EL(EL) TWS_field_list_List_EL(EL)
 #undef EL

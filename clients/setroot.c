@@ -34,7 +34,7 @@ tcell *load_ascii_art(FILE *aaFILE, uldat *x, uldat *y, uldat padX, uldat padY);
 
 TW_DECL_MAGIC(setroot_magic);
 
-TW_INLINE tcolor DefColor() {
+TW_INLINE tcolor DefColor(void) {
   return TCOL(twhite, tblack);
 }
 #define Underline() TCOL(tWHITE, tblack)
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
   tcell *image;
   uldat X, Y, padX = 0, padY = 0, err;
   enum { def, aa, padx, pady } state = def;
-  char *aafile = NULL;
+  const char *aafile = NULL;
 
   name = *argv;
 

@@ -251,7 +251,7 @@ int main(int argc, char *argv[]) {
         human_print(EventN->Len, EventN->Data);
         putchar('\n');
       } else if (msg->Type == TW_MSG_WIDGET_MOUSE) {
-        char *s1, *s2, *s3, *s4, *s5, *s6, *s7, *s8, *s9;
+        const char *s1, *s2, *s3, *s4, *s5, *s6, *s7, *s8, *s9;
         tevent_mouse EventM = &msg->Event.EventMouse;
 
         Code = EventM->Code;
