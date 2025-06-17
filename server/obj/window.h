@@ -46,13 +46,15 @@ enum tpos /*: byte*/ {
   POS_ROOT = 30,
 };
 
-struct Sremotedata {
+class Sremotedata {
+public:
   int Fd;
   pid_t ChildPid;
   uldat FdSlot; /* index in the FdList array (remote.c) */
 };
 
-struct SwindowFn {
+class SwindowFn {
+public:
   /* Twidget */
   Twidget (*KbdFocus)(Twidget);
   /* Twindow */
@@ -63,7 +65,8 @@ struct SwindowFn {
   tpos (*FindBorder)(Twindow w, dat u, dat v, byte border, tcell *ptrattr);
 };
 
-struct Swindow : public Swidget {
+class Swindow : public Swidget {
+public:
   /* Twindow */
   Tmenu Menu;
   Tmenuitem MenuItem; /* from which the Twindow depends */

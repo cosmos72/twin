@@ -21,7 +21,8 @@
 
 /* functions to manage Ids */
 
-struct s_idvec {
+class s_idvec {
+public:
   Tobj *Vec;
   uldat Bottom, Top, Size;
 

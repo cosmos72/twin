@@ -18,7 +18,8 @@
 
 /* Tgroup -- group of Tgadget:s */
 
-struct Sgroup : public Sobj {
+class Sgroup : public Sobj {
+public:
   TobjFn Fn;
   Tgroup Prev, Next; /* list in the same Tmsgport */
   Tmsgport MsgPort;

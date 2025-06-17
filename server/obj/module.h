@@ -21,13 +21,15 @@
 
 /* Tmodule */
 
-struct SmoduleFn {
+class SmoduleFn {
+public:
   /* Tmodule */
   bool (*DlOpen)(Tmodule);
   void (*DlClose)(Tmodule);
 };
 
-struct Smodule : public Sobj {
+class Smodule : public Sobj {
+public:
   TmoduleFn Fn;
   Tmodule Prev, Next; /* in the same All */
   Tall All;

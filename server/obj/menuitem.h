@@ -15,7 +15,8 @@
 
 #include "obj/row.h"
 
-struct Smenuitem : public Srow {
+class Smenuitem : public Srow {
+public:
   /* Tmenuitem */
   Twindow Window;
   dat Left, ShortCut;

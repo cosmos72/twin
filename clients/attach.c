@@ -146,12 +146,12 @@ static char *fix_tty(char *arg, byte is_our_tty[1], byte err[1]) {
     }
     target = (char *)malloc(strlen(tty) + 9 + strlen(comma) + (*term ? 6 + strlen(term) : 0));
     if (target) {
-      sprintf(target, "-hw=tty@%s%s%s%s", tty, (*term ? ",TERM=" : ""), term, comma);
+      sprintf(target, "-hw=tty@%s%s%s%s", tty, (*term ? ",TERM=" : ""), term, rest);
     }
   } else if (is_srv_tty) {
-    target = malloc(8 + strlen(comma));
+    target = malloc(8 + strlen(rest));
     if (target) {
-      sprintf(target, "-hw=tty%s", comma);
+      sprintf(target, "-hw=tty%s", rest);
     }
   } else {
     target = strdup(arg);

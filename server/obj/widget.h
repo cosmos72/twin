@@ -79,7 +79,8 @@ struct s_GT { /* for GADGETFL_USETEXT gadgets */
   tcolor *Color[4];
 };
 
-struct Sdraw {
+class Sdraw {
+public:
   Sdraw *Next;
   Tscreen Screen;
   Twidget TopW;
@@ -100,12 +101,14 @@ struct Sdraw {
   void DrawArea();
 };
 
-struct SwidgetFn {
+class SwidgetFn {
+public:
   /* Twidget */
   Twidget (*KbdFocus)(Twidget);
 };
 
-struct Swidget : public Sobj {
+class Swidget : public Sobj {
+public:
   TwidgetFn Fn;
   Twidget Prev, Next; /* list in the same parent */
   Twidget Parent;     /* where this Twidget sits */

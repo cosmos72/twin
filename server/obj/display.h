@@ -18,13 +18,15 @@
 #include "obj/obj.h"
 #include "stl_types.h"
 
-struct mouse_state {
+class mouse_state {
+public:
   dat x, y;
   dat delta_x, delta_y;
   byte keys;
 };
 
-struct Sdisplay : public Sobj {
+class Sdisplay : public Sobj {
+public:
   TobjFn Fn;
   Tdisplay Prev, Next; /* in the same All */
   Tall All;

@@ -15,7 +15,8 @@
 
 #include "obj/widget.h"
 
-struct Sgadget : public Swidget {
+class Sgadget : public Swidget {
+public:
   /* Tgadget */
   tcolor ColText, ColSelect, ColDisabled, ColSelectDisabled;
   udat Code;

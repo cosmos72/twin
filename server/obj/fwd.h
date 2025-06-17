@@ -13,37 +13,37 @@
 #ifndef TWIN_FWD_H
 #define TWIN_FWD_H
 
-typedef struct SobjList *TobjList;
-typedef struct SobjEntry *TobjEntry;
+typedef class SobjList *TobjList;
+typedef class SobjEntry *TobjEntry;
 struct ttydata;
-typedef struct Sremotedata Tremotedata;
+typedef class Sremotedata Tremotedata;
 
-typedef struct Sobj *Tobj;
-typedef struct Swidget *Twidget;
-typedef struct Sgadget *Tgadget;
-typedef struct Swindow *Twindow;
-typedef struct Sscreen *Tscreen;
-typedef struct Sgroup *Tgroup;
-typedef struct Srow *Trow;
-typedef struct Smenuitem *Tmenuitem;
-typedef struct Smenu *Tmenu;
-typedef struct Smsg *Tmsg;
-typedef struct Smsgport *Tmsgport;
-typedef struct Smutex *Tmutex;
-typedef struct Smodule *Tmodule;
-typedef struct Sdisplay *Tdisplay;
+typedef class Sobj *Tobj;
+typedef class Swidget *Twidget;
+typedef class Sgadget *Tgadget;
+typedef class Swindow *Twindow;
+typedef class Sscreen *Tscreen;
+typedef class Sgroup *Tgroup;
+typedef class Srow *Trow;
+typedef class Smenuitem *Tmenuitem;
+typedef class Smenu *Tmenu;
+typedef class Smsg *Tmsg;
+typedef class Smsgport *Tmsgport;
+typedef class Smutex *Tmutex;
+typedef class Smodule *Tmodule;
+typedef class Sdisplay *Tdisplay;
 
-typedef struct SobjFn *TobjFn;
-typedef struct SwidgetFn *TwidgetFn;
-typedef struct SwindowFn *TwindowFn;
-typedef struct SmsgFn *TmsgFn;
-typedef struct SmsgportFn *TmsgportFn;
-typedef struct SmutexFn *TmutexFn;
-typedef struct SmoduleFn *TmoduleFn;
+typedef class SobjFn *TobjFn;
+typedef class SwidgetFn *TwidgetFn;
+typedef class SwindowFn *TwindowFn;
+typedef class SmsgFn *TmsgFn;
+typedef class SmsgportFn *TmsgportFn;
+typedef class SmutexFn *TmutexFn;
+typedef class SmoduleFn *TmoduleFn;
 
-typedef struct Ssetup *Tsetup;
-typedef struct Sselection *Tselection;
-typedef struct Sall *Tall;
+typedef class Ssetup *Tsetup;
+typedef class Sselection *Tselection;
+typedef class Sall *Tall;
 
 typedef void (*HookFn)(Twidget);
 

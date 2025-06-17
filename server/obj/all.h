@@ -21,7 +21,8 @@
 
 #include <Tw/Tw.h> /* TW_MAX_MIMELEN */
 
-struct Ssetup {
+class Ssetup {
+public:
   dat MaxMouseSnap;
   udat MinAllocSize;
   byte Flags;
@@ -78,7 +79,8 @@ typedef struct s_button_vec {
   byte changed;
 } button_vec;
 
-struct Sselection {
+class Sselection {
+public:
   timevalue Time;
   Tmsgport Owner;
   Tdisplay OwnerOnce;
@@ -90,7 +92,8 @@ struct Sselection {
   void paste();
 };
 
-struct Sall : public Sobj {
+class Sall : public Sobj {
+public:
   TobjFn Fn;
   Tobj Prev, Next, Parent;
 

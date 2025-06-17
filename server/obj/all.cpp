@@ -70,6 +70,6 @@ void Sall::Remove() {
 void Sall::Delete() {
 }
 
-static struct Sall _All;
+static Sall _All;
 
 Tall const All = _All.Init();

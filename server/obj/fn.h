@@ -15,7 +15,8 @@
 
 #include "obj/fwd.h"
 
-struct SstructFn {
+class SstructFn {
+public:
   TobjFn Obj;
   TwidgetFn Widget;
   TwidgetFn Gadget;

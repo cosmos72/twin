@@ -212,7 +212,7 @@ void Sobj::Delete() {
 ////////////////////////////////////////////////////////////////////////////////
 /// Smodule methods
 
-static struct SmoduleFn _FnModule = {
+static SmoduleFn _FnModule = {
     (bool (*)(Tmodule))NoOp, /* DlOpen       */
     (void (*)(Tmodule))NoOp, /* DlClose      */
 };
@@ -307,7 +307,7 @@ static bool module_InitHW(Chars arg) {
 
 static Tdisplay CreateDisplayHW(Chars name);
 
-static struct SobjFn _FnDisplay = {};
+static SobjFn _FnDisplay = {};
 
 Tdisplay Sdisplay::Init(Chars name) {
   Fn = &_FnDisplay;

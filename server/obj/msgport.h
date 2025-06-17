@@ -14,11 +14,12 @@
 #define TWIN_MSGPORT_H
 
 #include "obj/fwd.h"
-#include "obj/window.h" // struct Sremotedata
+#include "obj/window.h" // class Sremotedata
 
 #include <Tw/datatypes.h>
 
-struct Smsgport : public Sobj {
+class Smsgport : public Sobj {
+public:
   TobjFn Fn;
   Tmsgport Prev, Next; /* list in the same All */
   Tall All;

@@ -15,7 +15,8 @@
 
 #include "obj/widget.h"
 
-struct Sscreen : public Swidget {
+class Sscreen : public Swidget {
+public:
   dat NameLen;
   char *Name;
   Twindow MenuWindow, ClickWindow;

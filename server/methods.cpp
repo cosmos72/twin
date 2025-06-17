@@ -100,7 +100,7 @@ void RemoveGeneric(TobjEntry obj, TobjList parent, ldat *objcount) {
 
 /* Tobj */
 
-static struct SobjFn _FnObj = {};
+static SobjFn _FnObj = {};
 
 /* Twidget */
 
@@ -130,13 +130,13 @@ Twidget FakeKbdFocus(Twidget w) {
   return oldW;
 }
 
-static struct SwidgetFn _FnWidget = {
+static SwidgetFn _FnWidget = {
     TtyKbdFocus,
 };
 
 /* Tgadget */
 
-static struct SwidgetFn _FnGadget = {
+static SwidgetFn _FnGadget = {
     TtyKbdFocus,
 };
 
@@ -184,7 +184,7 @@ tpos FakeFindBorderWindow(Twindow w, dat u, dat v, byte Border, tcell *PtrAttr) 
   return v ? POS_ROOT : POS_TITLE;
 }
 
-static struct SwindowFn _FnWindow = {
+static SwindowFn _FnWindow = {
     /* Twidget */
     TtyKbdFocus,
     /* Twindow */
@@ -197,7 +197,7 @@ static struct SwindowFn _FnWindow = {
 
 /* Tscreen */
 
-static struct SwidgetFn _FnScreen = {
+static SwidgetFn _FnScreen = {
     (Twidget(*)(Twidget))NoOp, /* KbdFocus */
 };
 
@@ -220,7 +220,7 @@ byte FindInfo(Tmenu Menu, dat i) {
 
 /* Tmodule */
 
-static struct SmoduleFn _FnModule = {
+static SmoduleFn _FnModule = {
     /* Tmodule */
     DlOpen,
     DlClose,

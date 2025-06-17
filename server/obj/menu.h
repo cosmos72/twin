@@ -15,7 +15,8 @@
 
 #include "obj/obj.h"
 
-struct Smenu : public Sobj {
+class Smenu : public Sobj {
+public:
   TobjFn Fn;
   Tmenu Prev, Next; /* in the same Tmsgport */
   Tmsgport MsgPort;
