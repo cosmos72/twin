@@ -519,19 +519,6 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
       }
     }
   }
-  if (self->colormode == tty_color_autodetect) {
-    Chars env_colorterm;
-    if (!term_override &&
-        ((env_colorterm = Chars::from_c(getenv("COLORTERM"))) == Chars("truecolor") ||
-         env_colorterm == Chars("24bit"))) {
-      self->colormode = tty_color16M;
-    } else if (self->tty_term.ends_with(Chars("256")) ||
-               self->tty_term.ends_with(Chars("256color"))) {
-      self->colormode = tty_color256;
-    } else {
-      self->colormode = tty_color8;
-    }
-  }
   fflush(self->out);
   setvbuf(self->out, NULL, _IOFBF, BUFSIZ);
 
@@ -615,6 +602,23 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
         } else {
           self->tty_UTF_32_to_charset = Tutf_UTF_32_to_charset_function(self->tty_charset);
           self->tty_charset_to_UTF_32 = Tutf_charset_to_UTF_32_array(self->tty_charset);
+        }
+
+        /*
+         * must be deferred until now, as termcap_InitVideo() can detect truecolor support
+         */
+        if (self->colormode == tty_color_autodetect) {
+          Chars env_colorterm;
+          if (!term_override &&
+              ((env_colorterm = Chars::from_c(getenv("COLORTERM"))) == Chars("truecolor") ||
+               env_colorterm == Chars("24bit"))) {
+            self->colormode = tty_color16M;
+          } else if (self->tty_term.ends_with(Chars("256")) ||
+                     self->tty_term.ends_with(Chars("256color"))) {
+            self->colormode = tty_color256;
+          } else {
+            self->colormode = tty_color8;
+          }
         }
 
         /*

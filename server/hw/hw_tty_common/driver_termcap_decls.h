@@ -21,20 +21,14 @@ extern char *tgetstr(char *id, char **area);
 
 #else /* rest of the world */
 
-#ifdef TW_HAVE_TERMCAP_H
+#if defined(TW_HAVE_TERMCAP_H)
 #include <termcap.h>
-#else
-#ifdef TW_HAVE_NCURSES_TERMCAP_H
+#elif defined(TW_HAVE_NCURSES_TERMCAP_H)
 #include <ncurses/termcap.h>
-#else
-#ifdef TW_HAVE_NCURSES_H
+#elif defined(TW_HAVE_NCURSES_H)
 #include <ncurses.h>
-#else
-#ifdef TW_HAVE_NCURSES_NCURSES_H
+#elif defined(TW_HAVE_NCURSES_NCURSES_H)
 #include <ncurses/ncurses.h>
-#endif
-#endif
-#endif
 #endif
 
 #endif /* rest of the world */
