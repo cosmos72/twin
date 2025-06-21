@@ -48,8 +48,9 @@ bool tty_driver::xterm_InitMouse(Tdisplay hw, byte force) {
                       "      can only report click, drag and release, not motion.\n";
       self->mouse_motion_seq = self->mouse_start_seq;
     }
-  } else if (term.starts_with(Chars("xterm")) || term.starts_with(Chars("rxvt")) ||
-             term.starts_with(Chars("alacritty")) || term.starts_with(Chars("Eterm"))) {
+  } else if (term.starts_with(Chars("xterm")) || term.starts_with(Chars("mlterm")) ||
+             term.starts_with(Chars("rxvt")) || term.starts_with(Chars("alacritty")) ||
+             term.starts_with(Chars("Eterm"))) {
     /* try to enable more common protocols first,
      * then try to enable progressively more complete protocols */
     self->mouse_start_seq = "\033[?1001s\033[?1000h\033[?1002h\033[?1006h";
