@@ -4,18 +4,18 @@
 
 #include "palette.h"
 
-void tty_driver::termcap_SetCursorType(Tdisplay hw, uldat type) {
+TW_ATTR_HIDDEN void tty_driver::termcap_SetCursorType(Tdisplay hw, uldat type) {
   tty_driver *self = ttydriver(hw);
   fputs((type & 0xFFFFFFl) == NOCURSOR ? self->tc[tc_seq_cursor_off] : self->tc[tc_seq_cursor_on],
         self->out);
 }
-void tty_driver::termcap_MoveToXY(Tdisplay hw, udat x, udat y) {
+TW_ATTR_HIDDEN void tty_driver::termcap_MoveToXY(Tdisplay hw, udat x, udat y) {
   tty_driver *self = ttydriver(hw);
   fputs(tgoto(self->tc[tc_seq_cursor_goto], x, y), self->out);
 }
 
-udat tty_driver::termcap_LookupKey(Tdisplay hw, udat *ShiftFlags, byte *slen, char *s, byte *retlen,
-                                   const char **ret) {
+TW_ATTR_HIDDEN udat tty_driver::termcap_LookupKey(Tdisplay hw, udat *ShiftFlags, byte *slen,
+                                                  char *s, byte *retlen, const char **ret) {
   struct linux_keys {
     udat k;
     byte l;
@@ -113,7 +113,7 @@ static char *termcap_extract(const char *cap, char **dest) {
   return *dest = CloneStr(buf);
 }
 
-void tty_driver::termcap_Cleanup(Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::termcap_Cleanup(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
   for (char **n = self->tc; n < self->tc + tc_seq_N; n++) {
     if (*n) {
@@ -123,7 +123,7 @@ void tty_driver::termcap_Cleanup(Tdisplay hw) {
   }
 }
 
-void tty_driver::termcap_FixColorBug(Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::termcap_FixColorBug(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
   char *attr_off = self->tc[tc_seq_attr_off];
   uldat len = strlen(attr_off);
@@ -136,7 +136,7 @@ void tty_driver::termcap_FixColorBug(Tdisplay hw) {
   }
 }
 
-bool tty_driver::termcap_InitVideo(Tdisplay hw) {
+TW_ATTR_HIDDEN bool tty_driver::termcap_InitVideo(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
   const char *term = self->tty_term.data(); // guaranteed to be '\0' terminated
   const char *tc_name[tc_seq_N + 1] = {"cl", "cm", "ve", "vi", "md", "mb", "me", "ks", "ke",
@@ -249,7 +249,7 @@ bool tty_driver::termcap_InitVideo(Tdisplay hw) {
   return true;
 }
 
-void tty_driver::termcap_QuitVideo(Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::termcap_QuitVideo(Tdisplay hw) {
   termcap_MoveToXY(hw, 0, DisplayHeight - 1);
   termcap_SetCursorType(hw, LINECURSOR);
 
@@ -286,7 +286,7 @@ inline char *termcap_CopyAttr(const char *src, char *dst) {
   return dst;
 }
 
-void tty_driver::termcap_SetColor8(Tdisplay hw, tcolor col) {
+TW_ATTR_HIDDEN void tty_driver::termcap_SetColor8(Tdisplay hw, tcolor col) {
   char colbuf[80];
   char *colp = colbuf;
   tty_driver *self = ttydriver(hw);
@@ -375,7 +375,7 @@ static char *termcap_print_colon_rgb(char *dst, trgb rgb) {
   return dst;
 }
 
-void tty_driver::termcap_SetColor256(Tdisplay hw, tcolor col) {
+TW_ATTR_HIDDEN void tty_driver::termcap_SetColor256(Tdisplay hw, tcolor col) {
   char colbuf[] = "\033[38;5;xxx;48;5;xxxm";
   char *colp = colbuf + 2;
   byte fg = TrueColorToPalette256(TCOLFG(col));
@@ -406,7 +406,7 @@ void tty_driver::termcap_SetColor256(Tdisplay hw, tcolor col) {
   fwrite(colbuf, 1, colp - colbuf, self->out);
 }
 
-void tty_driver::termcap_SetColor16M(Tdisplay hw, tcolor col) {
+TW_ATTR_HIDDEN void tty_driver::termcap_SetColor16M(Tdisplay hw, tcolor col) {
   char colbuf[] = "\033[38;2;xxx;xxx;xxx;48;2;xxx;xxx;xxxm";
   char *colp = colbuf + 2;
   trgb fg = TCOLFG(col);
@@ -437,7 +437,7 @@ void tty_driver::termcap_SetColor16M(Tdisplay hw, tcolor col) {
   fwrite(colbuf, 1, colp - colbuf, self->out);
 }
 
-void tty_driver::termcap_SetColor(Tdisplay hw, tcolor col) {
+TW_ATTR_HIDDEN void tty_driver::termcap_SetColor(Tdisplay hw, tcolor col) {
   tty_driver *self = ttydriver(hw);
   switch (tty_colormode(self->colormode)) {
   case tty_color16M:
@@ -452,7 +452,7 @@ void tty_driver::termcap_SetColor(Tdisplay hw, tcolor col) {
   }
 }
 
-void tty_driver::termcap_DrawSome(Tdisplay hw, dat x, dat y, uldat len) {
+TW_ATTR_HIDDEN void tty_driver::termcap_DrawSome(Tdisplay hw, dat x, dat y, uldat len) {
   tty_driver *self = ttydriver(hw);
   tcell *V, *oV;
   tcolor col;
@@ -500,7 +500,7 @@ void tty_driver::termcap_DrawSome(Tdisplay hw, dat x, dat y, uldat len) {
   }
 }
 
-void tty_driver::termcap_DrawTCell(Tdisplay hw, dat x, dat y, tcell V) {
+TW_ATTR_HIDDEN void tty_driver::termcap_DrawTCell(Tdisplay hw, dat x, dat y, tcell V) {
   tty_driver *self = ttydriver(hw);
   trune c, _c;
 
@@ -535,7 +535,7 @@ void tty_driver::termcap_DrawTCell(Tdisplay hw, dat x, dat y, tcell V) {
 
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.
  * so we have linux_ and termcap_ versions, not GPM_ ones... */
-void tty_driver::termcap_ShowMouse(Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::termcap_ShowMouse(Tdisplay hw) {
   uldat pos =
       (hw->Last_x = hw->MouseState.x) + (hw->Last_y = hw->MouseState.y) * (ldat)DisplayWidth;
   tcell h = Video[pos], c = TCELL_COLMASK(~h) ^ TCELL(TCOL(thigh, thigh), 0);
@@ -547,7 +547,7 @@ void tty_driver::termcap_ShowMouse(Tdisplay hw) {
   hw->setFlush();
 }
 
-void tty_driver::termcap_HideMouse(Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::termcap_HideMouse(Tdisplay hw) {
   uldat pos = hw->Last_x + hw->Last_y * (ldat)DisplayWidth;
 
   termcap_DrawTCell(hw, hw->Last_x, hw->Last_y, Video[pos]);
@@ -557,13 +557,13 @@ void tty_driver::termcap_HideMouse(Tdisplay hw) {
   hw->setFlush();
 }
 
-void tty_driver::termcap_Beep(Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::termcap_Beep(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
   fputs(self->tc[tc_seq_audio_bell], self->out);
   hw->setFlush();
 }
 
-void tty_driver::termcap_UpdateCursor(Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::termcap_UpdateCursor(Tdisplay hw) {
   if (!ValidOldVideo ||
       (CursorType != NOCURSOR && (CursorX != hw->XY[0] || CursorY != hw->XY[1]))) {
     termcap_MoveToXY(hw, hw->XY[0] = CursorX, hw->XY[1] = CursorY);
@@ -575,7 +575,7 @@ void tty_driver::termcap_UpdateCursor(Tdisplay hw) {
   }
 }
 
-void tty_driver::termcap_UpdateMouseAndCursor(Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::termcap_UpdateMouseAndCursor(Tdisplay hw) {
   if ((hw->FlagsHW & FlHWSoftMouse) && (hw->FlagsHW & FlHWChangedMouseFlag)) {
     hw->HideMouse();
     hw->ShowMouse();
@@ -584,7 +584,8 @@ void tty_driver::termcap_UpdateMouseAndCursor(Tdisplay hw) {
   termcap_UpdateCursor(hw);
 }
 
-void tty_driver::termcap_ConfigureKeyboard(Tdisplay hw, udat resource, byte todefault, udat value) {
+TW_ATTR_HIDDEN void tty_driver::termcap_ConfigureKeyboard(Tdisplay hw, udat resource,
+                                                          byte todefault, udat value) {
   tty_driver *self = ttydriver(hw);
   switch (resource) {
   case HW_KBDAPPLIC:
@@ -608,7 +609,8 @@ void tty_driver::termcap_ConfigureKeyboard(Tdisplay hw, udat resource, byte tode
   }
 }
 
-void tty_driver::termcap_Configure(Tdisplay hw, udat resource, byte todefault, udat value) {
+TW_ATTR_HIDDEN void tty_driver::termcap_Configure(Tdisplay hw, udat resource, byte todefault,
+                                                  udat value) {
   switch (resource) {
   case HW_KBDAPPLIC:
   case HW_ALTCURSKEYS:
@@ -626,13 +628,13 @@ void tty_driver::termcap_Configure(Tdisplay hw, udat resource, byte todefault, u
   }
 }
 
-bool tty_driver::termcap_CanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
-                                     dat DstUp) {
+TW_ATTR_HIDDEN bool tty_driver::termcap_CanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn,
+                                                    dat DstLeft, dat DstUp) {
   return Left == 0 && Rgt == hw->X - 1 && Dwn == hw->Y - 1 && DstUp == 0;
 }
 
-void tty_driver::termcap_DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
-                                  dat DstUp) {
+TW_ATTR_HIDDEN void tty_driver::termcap_DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn,
+                                                 dat DstLeft, dat DstUp) {
   tty_driver *self = ttydriver(hw);
   udat delta = Up - DstUp;
 
@@ -658,7 +660,7 @@ void tty_driver::termcap_DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dw
   NeedRedrawVideo(hw, 0, DstUp + (Dwn - Up) + 1, hw->X - 1, hw->Y - 1);
 }
 
-void tty_driver::termcap_FlushVideo(Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::termcap_FlushVideo(Tdisplay hw) {
   dat i, j;
   dat start, end;
   byte FlippedVideo = tfalse, FlippedOldVideo = tfalse;

@@ -155,6 +155,7 @@ public:
   static bool stdin_InitKeyboard(Tdisplay hw);
   static void stdin_Resize(Tdisplay hw, dat x, dat y);
   static void stdin_QuitKeyboard(Tdisplay hw);
+  static bool stdin_TestTty(Tdisplay hw);
 
   static void termcap_Beep(Tdisplay hw);
   static void termcap_Cleanup(Tdisplay hw);
@@ -206,7 +207,7 @@ static tcolor _col;
 #include "hw_tty_common/driver_termcap.h"
 #endif
 
-void tty_driver::null_InitMouse(Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::null_InitMouse(Tdisplay hw) {
   hw->mouse_slot = NOSLOT; /* no mouse at all :( */
   hw->fnConfigureMouse = (void (*)(Tdisplay, udat, byte, udat))NoOp;
   hw->fnMouseEvent = NULL;
@@ -218,7 +219,7 @@ void tty_driver::null_InitMouse(Tdisplay hw) {
   hw->fnShowMouse = hw->fnHideMouse = NULL;
 }
 
-bool tty_driver::null_InitMouseConfirm(Tdisplay hw) {
+TW_ATTR_HIDDEN bool tty_driver::null_InitMouseConfirm(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
   byte c = '\0';
 
@@ -242,7 +243,7 @@ bool tty_driver::null_InitMouseConfirm(Tdisplay hw) {
   return false;
 }
 
-void tty_driver::stdin_DetectSize(Tdisplay hw, dat *x, dat *y) {
+TW_ATTR_HIDDEN void tty_driver::stdin_DetectSize(Tdisplay hw, dat *x, dat *y) {
   struct winsize wsiz;
   tty_driver *self = ttydriver(hw);
 
@@ -254,12 +255,12 @@ void tty_driver::stdin_DetectSize(Tdisplay hw, dat *x, dat *y) {
   *y = hw->Y;
 }
 
-void tty_driver::stdin_CheckResize(Tdisplay hw, dat *x, dat *y) {
+TW_ATTR_HIDDEN void tty_driver::stdin_CheckResize(Tdisplay hw, dat *x, dat *y) {
   *x = Min2(*x, hw->X);
   *y = Min2(*y, hw->Y);
 }
 
-void tty_driver::stdin_Resize(Tdisplay hw, dat x, dat y) {
+TW_ATTR_HIDDEN void tty_driver::stdin_Resize(Tdisplay hw, dat x, dat y) {
   if (x < hw->usedX || y < hw->usedY) {
     tty_driver *self = ttydriver(hw);
     /*
@@ -278,14 +279,14 @@ void tty_driver::stdin_Resize(Tdisplay hw, dat x, dat y) {
   hw->usedY = y;
 }
 
-void tty_driver::FlushHW(Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::FlushHW(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
   if (fflush(self->out) != 0)
     hw->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
   hw->clrFlush();
 }
 
-void tty_driver::DrawRune(Tdisplay hw, trune h) {
+TW_ATTR_HIDDEN void tty_driver::DrawRune(Tdisplay hw, trune h) {
   uldat len;
   char buf[4];
 
@@ -313,7 +314,7 @@ void tty_driver::DrawRune(Tdisplay hw, trune h) {
  * note: during xxx_InitHW() initialization, DON'T use DisplayWidth/DisplayHeight
  * as they may be not up to date. Use GetDisplayWidth() / GetDisplayHeight().
  */
-bool tty_driver::InitHW(Tdisplay hw) {
+TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
   String charset;
   Chars arg = hw->Name;
   tty_driver *self;
@@ -664,7 +665,7 @@ bool tty_driver::InitHW(Tdisplay hw) {
   return false;
 }
 
-void tty_driver::QuitHW(Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::QuitHW(Tdisplay hw) {
   hw->QuitMouse();
   hw->QuitKeyboard();
   hw->QuitVideo();

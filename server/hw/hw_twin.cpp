@@ -75,13 +75,13 @@ public:
 
 #define twdata(hw) (twdriver(hw)->TSelReq)
 
-void tw_driver::Beep(Tdisplay hw) {
+TW_ATTR_HIDDEN void tw_driver::Beep(Tdisplay hw) {
   tw_driver *self = twdriver(hw);
   Tw_WriteCharsetWindow(self->dpy, self->win, 1, "\007");
   hw->setFlush();
 }
 
-void tw_driver::Configure(Tdisplay hw, udat resource, byte todefault, udat value) {
+TW_ATTR_HIDDEN void tw_driver::Configure(Tdisplay hw, udat resource, byte todefault, udat value) {
   tw_driver *self = twdriver(hw);
   switch (resource) {
   case HW_KBDAPPLIC:
@@ -124,7 +124,7 @@ void tw_driver::Configure(Tdisplay hw, udat resource, byte todefault, udat value
   }
 }
 
-void tw_driver::HandleMsg(Tdisplay hw, tmsg msg) {
+TW_ATTR_HIDDEN void tw_driver::HandleMsg(Tdisplay hw, tmsg msg) {
   tevent_any event = &msg->Event;
   tw_driver *self = twdriver(hw);
   dat x, y, dx, dy;
@@ -184,7 +184,7 @@ void tw_driver::HandleMsg(Tdisplay hw, tmsg msg) {
   }
 }
 
-void tw_driver::KeyboardEvent(int fd, Tdisplay hw) {
+TW_ATTR_HIDDEN void tw_driver::KeyboardEvent(int fd, Tdisplay hw) {
   tw_driver *self = twdriver(hw);
   tmsg msg;
   SaveHW;
@@ -208,7 +208,7 @@ void tw_driver::KeyboardEvent(int fd, Tdisplay hw) {
   RestoreHW;
 }
 
-void tw_driver::DrawSome(Tdisplay hw, dat x, dat y, uldat len) {
+TW_ATTR_HIDDEN void tw_driver::DrawSome(Tdisplay hw, dat x, dat y, uldat len) {
   tw_driver *self = twdriver(hw);
   tcell *V, *oV;
   uldat buflen = 0;
@@ -235,7 +235,7 @@ void tw_driver::DrawSome(Tdisplay hw, dat x, dat y, uldat len) {
     Tw_WriteTCellWindow(self->dpy, self->win, xbegin, ybegin, buflen, buf);
 }
 
-void tw_driver::FlushVideo(Tdisplay hw) {
+TW_ATTR_HIDDEN void tw_driver::FlushVideo(Tdisplay hw) {
   tw_driver *self = twdriver(hw);
   dat start, end;
   udat i;
@@ -272,7 +272,7 @@ void tw_driver::FlushVideo(Tdisplay hw) {
   hw->RedrawVideo = tfalse;
 }
 
-void tw_driver::FlushHW(Tdisplay hw) {
+TW_ATTR_HIDDEN void tw_driver::FlushHW(Tdisplay hw) {
   tw_driver *self = twdriver(hw);
   byte ret = Tw_TimidFlush(self->dpy);
   if (ret == tfalse) {
@@ -291,15 +291,15 @@ void tw_driver::FlushHW(Tdisplay hw) {
   }
 }
 
-void tw_driver::DetectSize(Tdisplay hw, dat *x, dat *y) {
+TW_ATTR_HIDDEN void tw_driver::DetectSize(Tdisplay hw, dat *x, dat *y) {
   *x = hw->X;
   *y = hw->Y;
 }
 
-void tw_driver::CheckResize(Tdisplay hw, dat *x, dat *y) { /* always ok */
+TW_ATTR_HIDDEN void tw_driver::CheckResize(Tdisplay hw, dat *x, dat *y) { /* always ok */
 }
 
-void tw_driver::Resize(Tdisplay hw, dat x, dat y) {
+TW_ATTR_HIDDEN void tw_driver::Resize(Tdisplay hw, dat x, dat y) {
   tw_driver *self = twdriver(hw);
   if (x != hw->X || y != hw->Y) {
     Tw_ResizeWindow(self->dpy, self->win, hw->X = x, hw->Y = y);
@@ -308,12 +308,12 @@ void tw_driver::Resize(Tdisplay hw, dat x, dat y) {
 }
 
 #if 0
-bool tw_driver::CanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
+TW_ATTR_HIDDEN bool tw_driver::CanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
                             dat DstUp) {
   return (ldat)(Rgt - Left + 1) * (Dwn - Up + 1) > 20;
 }
 
-void tw_driver::DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
+TW_ATTR_HIDDEN void tw_driver::DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
   Tw_DragAreaWindow(self->dpy, self->win, self->win, Left, Up, Rgt, Dwn, DstLeft, DstUp);
   hw->setFlush();
 }
@@ -322,14 +322,14 @@ void tw_driver::DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat Ds
 /*
  * import Selection from libtw
  */
-bool tw_driver::SelectionImport_TW(Tdisplay hw) {
+TW_ATTR_HIDDEN bool tw_driver::SelectionImport_TW(Tdisplay hw) {
   return !hw->SelectionPrivate;
 }
 
 /*
  * export our Selection to libtw
  */
-void tw_driver::SelectionExport_TW(Tdisplay hw) {
+TW_ATTR_HIDDEN void tw_driver::SelectionExport_TW(Tdisplay hw) {
   if (!hw->SelectionPrivate) {
     tw_driver *self = twdriver(hw);
 #ifdef DEBUG_HW_TWIN
@@ -344,7 +344,7 @@ void tw_driver::SelectionExport_TW(Tdisplay hw) {
 /*
  * request Selection from libtw
  */
-void tw_driver::SelectionRequest_TW(Tdisplay hw, Tobj requestor, uldat reqprivate) {
+TW_ATTR_HIDDEN void tw_driver::SelectionRequest_TW(Tdisplay hw, Tobj requestor, uldat reqprivate) {
   if (!hw->SelectionPrivate) {
     tw_driver *self = twdriver(hw);
     if (self->TSelCount < TSELMAX) {
@@ -372,7 +372,7 @@ void tw_driver::SelectionRequest_TW(Tdisplay hw, Tobj requestor, uldat reqprivat
 /*
  * request twin Selection from upper layer
  */
-void tw_driver::SelectionRequest_up(Tdisplay hw, uldat requestor, uldat reqprivate) {
+TW_ATTR_HIDDEN void tw_driver::SelectionRequest_up(Tdisplay hw, uldat requestor, uldat reqprivate) {
   tw_driver *self = twdriver(hw);
   if (self->SelCount < TSELMAX) {
 #ifdef DEBUG_HW_TWIN
@@ -396,8 +396,8 @@ void tw_driver::SelectionRequest_up(Tdisplay hw, uldat requestor, uldat reqpriva
 /*
  * notify our Selection to libtw
  */
-void tw_driver::SelectionNotify_TW(Tdisplay hw, uldat reqprivate, e_id magic, Chars mime,
-                                   Chars data) {
+TW_ATTR_HIDDEN void tw_driver::SelectionNotify_TW(Tdisplay hw, uldat reqprivate, e_id magic,
+                                                  Chars mime, Chars data) {
   tw_driver *self = twdriver(hw);
 #ifdef DEBUG_HW_TWIN
   printf("notifying selection (%d/%d) to libtw server\n", reqprivate, self->SelCount - 1);
@@ -417,8 +417,8 @@ void tw_driver::SelectionNotify_TW(Tdisplay hw, uldat reqprivate, e_id magic, Ch
 /*
  * notify the libtw Selection to twin upper layer
  */
-void tw_driver::SelectionNotify_up(Tdisplay hw, uldat reqprivate, e_id magic, Chars mime,
-                                   Chars data) {
+TW_ATTR_HIDDEN void tw_driver::SelectionNotify_up(Tdisplay hw, uldat reqprivate, e_id magic,
+                                                  Chars mime, Chars data) {
   tw_driver *self = twdriver(hw);
 #ifdef DEBUG_HW_TWIN
   printf("notifying selection (%d/%d) to twin core\n", reqprivate, self->TSelCount - 1);
@@ -430,7 +430,7 @@ void tw_driver::SelectionNotify_up(Tdisplay hw, uldat reqprivate, e_id magic, Ch
   }
 }
 
-void tw_driver::QuitHW(Tdisplay hw) {
+TW_ATTR_HIDDEN void tw_driver::QuitHW(Tdisplay hw) {
   tw_driver *self = twdriver(hw);
 
   /*
@@ -450,7 +450,7 @@ void tw_driver::QuitHW(Tdisplay hw) {
 
 TW_DECL_MAGIC(hw_twin_magic);
 
-bool tw_driver::InitHW(Tdisplay hw) {
+TW_ATTR_HIDDEN bool tw_driver::InitHW(Tdisplay hw) {
   Chars arg = hw->Name;
   char name[] = "twin :??? on twin";
   uldat len;

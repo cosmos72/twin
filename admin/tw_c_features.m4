@@ -48,4 +48,11 @@ AC_CACHE_CHECK(for gcc-compatible 'attribute((aligned(1)))', ac_cv_c_attribute_a
   *(int * __attribute__((aligned(1))))p = 0;
 ]]])],[ac_cv_c_attribute_aligned_1='__attribute__((aligned(1)))'],[ac_cv_c_attribute_aligned_1=no]))
 
+AC_CACHE_CHECK(for gcc-compatible 'attribute((visibility("hidden")))', ac_cv_c_attribute_hidden, AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+]], [[[
+#undef __attribute__
+  extern int __attribute__((visibility("hidden"))) buf;
+  int *addr = &buf;
+]]])],[ac_cv_c_attribute_hidden='__attribute__((visibility("hidden")))'],[ac_cv_c_attribute_hidden=no]))
+
 ])

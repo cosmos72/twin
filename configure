@@ -22229,6 +22229,41 @@ fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_attribute_aligned_1" >&5
 printf "%s\n" "$ac_cv_c_attribute_aligned_1" >&6; }
 
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for gcc-compatible 'attribute((visibility(\"hidden\")))'" >&5
+printf %s "checking for gcc-compatible 'attribute((visibility(\"hidden\")))'... " >&6; }
+if test ${ac_cv_c_attribute_hidden+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+int
+main (void)
+{
+
+#undef __attribute__
+  extern int __attribute__((visibility("hidden"))) buf;
+  int *addr = &buf;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"
+then :
+  ac_cv_c_attribute_hidden='__attribute__((visibility("hidden")))'
+else case e in #(
+  e) ac_cv_c_attribute_hidden=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_attribute_hidden" >&5
+printf "%s\n" "$ac_cv_c_attribute_hidden" >&6; }
+
 
 
 # C++ flags '-g -O2' are already tested by AC_PROG_CC
@@ -24715,6 +24750,10 @@ cat >>confdefs.h <<_ACEOF
 #define ATTR_PTR_ALIGNED_1 `echo $ac_cv_c_attribute_aligned_1 | $SED -e 's/^no$//g'`
 _ACEOF
 
+
+cat >>confdefs.h <<_ACEOF
+#define ATTR_HIDDEN `echo $ac_cv_c_attribute_hidden    | $SED -e 's/^no$//g'`
+_ACEOF
 
 
 if test "$ac_cv_search_crypt" != "no" -o "$ac_cv_func_crypt" != "no"; then

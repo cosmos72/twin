@@ -210,7 +210,7 @@ static void set_console_ifthere(uldat k) {
 }
 
 /* get the last used console */
-uldat get_console_last() {
+static uldat get_console_last() {
   uldat b = get_console_bitmap();
   uldat k = 0;
   while (b >>= 1) {
@@ -798,7 +798,7 @@ static void set_lights(int lights) {
 
 static udat *lrawkbd_keymaps[lrawkbd_KEYMAPS_N];
 
-void tty_driver::lrawkbd_FreeKeymaps() {
+TW_ATTR_HIDDEN void tty_driver::lrawkbd_FreeKeymaps() {
   udat *keymap;
   ldat table;
   for (table = 0; table < lrawkbd_KEYMAPS_N; table++) {
@@ -809,7 +809,7 @@ void tty_driver::lrawkbd_FreeKeymaps() {
   }
 }
 
-bool tty_driver::lrawkbd_LoadKeymaps() {
+TW_ATTR_HIDDEN bool tty_driver::lrawkbd_LoadKeymaps() {
   struct kbentry ke;
   tty_driver *self = ttydriver(lrawkbd_hw);
   ldat table, keycode;
@@ -951,8 +951,8 @@ static udat handle_keycode(byte keycode, byte up) {
   return twk;
 }
 
-udat tty_driver::lrawkbd_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen,
-                                   char **ret) {
+TW_ATTR_HIDDEN udat tty_driver::lrawkbd_LookupKey(udat *ShiftFlags, byte *slen, char *s,
+                                                  byte *retlen, char **ret) {
   udat twk;
   byte k = (byte)*s;
 

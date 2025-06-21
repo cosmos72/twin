@@ -5,7 +5,7 @@
 
 #include "util.h" /* for SetAlarm(), AlarmReceived */
 
-static bool stdin_TestTty(Tdisplay hw) {
+TW_ATTR_HIDDEN bool tty_driver::stdin_TestTty(Tdisplay hw) {
   struct termios ttyb;
   tty_driver *self = ttydriver(hw);
   byte buf[16], *s = buf + 3, c;
@@ -68,7 +68,7 @@ static bool stdin_TestTty(Tdisplay hw) {
 }
 
 /* return tfalse if failed */
-bool tty_driver::stdin_InitKeyboard(Tdisplay hw) {
+TW_ATTR_HIDDEN bool tty_driver::stdin_InitKeyboard(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
 
   if (self->fnLookupKey == NULL
@@ -93,7 +93,7 @@ bool tty_driver::stdin_InitKeyboard(Tdisplay hw) {
   return true;
 }
 
-void tty_driver::stdin_QuitKeyboard(Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::stdin_QuitKeyboard(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
 
   tty_setioctl(self->tty_fd, &ttysave);
@@ -104,8 +104,8 @@ void tty_driver::stdin_QuitKeyboard(Tdisplay hw) {
 }
 
 /* kludge! this is ok for linux terminals only... */
-udat tty_driver::linux_LookupKey(Tdisplay hw, udat *ShiftFlags, byte *slen, char *s, byte *retlen,
-                                 const char **ret) {
+TW_ATTR_HIDDEN udat tty_driver::linux_LookupKey(Tdisplay hw, udat *ShiftFlags, byte *slen, char *s,
+                                                byte *retlen, const char **ret) {
   byte used = 0, len = *slen;
 
   *ShiftFlags = 0;
@@ -300,7 +300,7 @@ udat tty_driver::linux_LookupKey(Tdisplay hw, udat *ShiftFlags, byte *slen, char
   return TW_Null;
 }
 
-void tty_driver::stdin_KeyboardEvent(int fd, Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::stdin_KeyboardEvent(int fd, Tdisplay hw) {
   static char buf[TW_SMALLBUFF];
   static fd_set rfds;
   static struct timeval t;

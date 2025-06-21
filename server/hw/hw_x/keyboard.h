@@ -86,12 +86,12 @@
 #define CXX_STD_MAP std::map
 #endif
 
-void XDRIVER::Beep(Tdisplay hw) {
+TW_ATTR_HIDDEN void XDRIVER::Beep(Tdisplay hw) {
   XBell(xdriver(hw)->xdisplay, 0);
   hw->setFlush();
 }
 
-void XDRIVER::Configure(Tdisplay hw, udat resource, byte todefault, udat value) {
+TW_ATTR_HIDDEN void XDRIVER::Configure(Tdisplay hw, udat resource, byte todefault, udat value) {
   XDRIVER *self = xdriver(hw);
   XKeyboardControl xctrl;
 
@@ -135,7 +135,7 @@ typedef CXX_STD_MAP<KeySym, XDRIVER::key_to_tw> XSYM(keymap_to_tw);
 
 static XSYM(keymap_to_tw) XSYM(keys);
 
-void XDRIVER::InitKeys() {
+TW_ATTR_HIDDEN void XDRIVER::InitKeys() {
   for (size_t i = 0; i < N_OF(XSYM(keys_impl)); i++) {
     KeySym xkey = XSYM(keys_impl)[i].xkey;
     key_to_tw &entry = XSYM(keys)[xkey];
@@ -163,13 +163,13 @@ static void X_DEBUG_SHOW_KEY(const char *prefix, KeySym sym, udat len, const cha
 #define X_DEBUG_SHOW_KEY(prefix, sym, len, seq) ((void)0)
 #endif
 
-bool XDRIVER::IsNumericKeypad(Twkey key) {
+TW_ATTR_HIDDEN bool XDRIVER::IsNumericKeypad(Twkey key) {
   return key >= TW_KP_Begin && key <= TW_KP_9;
 }
 
 /* convert an X11 KeySym into a libtw key code and ASCII sequence */
 
-Twkey XDRIVER::LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
+TW_ATTR_HIDDEN Twkey XDRIVER::LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
   XKeyEvent *kev = &ev->xkey;
   KeySym sym = XK_VoidSymbol;
 
@@ -252,7 +252,7 @@ Twkey XDRIVER::LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
   return tkey == TW_Null && *len != 0 ? TW_Other : tkey;
 }
 
-void XDRIVER::HandleEvent(XEvent *event) {
+TW_ATTR_HIDDEN void XDRIVER::HandleEvent(XEvent *event) {
   char seq[TW_SMALLBUFF];
   dat x, y, dx, dy;
   udat len = sizeof(seq), ShiftFlags;
@@ -390,7 +390,7 @@ void XDRIVER::HandleEvent(XEvent *event) {
     }
 }
 
-void XDRIVER::KeyboardEvent(int fd, Tdisplay hw) {
+TW_ATTR_HIDDEN void XDRIVER::KeyboardEvent(int fd, Tdisplay hw) {
   XEvent event;
   XDRIVER *self = xdriver(hw);
   SaveHW;

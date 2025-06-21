@@ -51,21 +51,21 @@
 #include "hw_x/common.h"
 
 /* manage foreground/background colors */
-void XDRIVER::SetFg(const trgb fg) {
+TW_ATTR_HIDDEN void XDRIVER::SetFg(const trgb fg) {
   if (this->xrgb_fg != fg) {
     this->xrgb_fg = fg;
     XSetForeground(this->xdisplay, this->xgc, this->xsgc.foreground = ColorToPixel(fg));
   }
 }
 
-void XDRIVER::SetBg(const trgb bg) {
+TW_ATTR_HIDDEN void XDRIVER::SetBg(const trgb bg) {
   if (this->xrgb_bg != bg) {
     this->xrgb_bg = bg;
     XSetBackground(this->xdisplay, this->xgc, this->xsgc.background = ColorToPixel(bg));
   }
 }
 
-void XDRIVER::SetColors(tcolor col) {
+TW_ATTR_HIDDEN void XDRIVER::SetColors(tcolor col) {
   SetFg(TCOLFG(col));
   SetBg(TCOLBG(col));
 }
@@ -74,7 +74,7 @@ void XDRIVER::SetColors(tcolor col) {
  * return ttrue if each font glyph is either 'narrow' (latin, etc.) or 'wide' (CJK...)
  * with 'wide' characters exactly twice as wide as 'narrow' ones
  */
-bool XDRIVER::FontIsDualWidth(const XFontStruct *info) {
+TW_ATTR_HIDDEN bool XDRIVER::FontIsDualWidth(const XFontStruct *info) {
   XCharStruct *pc = info->per_char;
   ldat wide = info->max_bounds.width, narrow = info->min_bounds.width, i, n_chars, w;
   if (wide != narrow * 2) {
@@ -99,8 +99,8 @@ bool XDRIVER::FontIsDualWidth(const XFontStruct *info) {
 }
 
 /* if font is monospaced, return its score. otherwise return MINLDAT */
-ldat XDRIVER::MonospaceFontScore(const XFontStruct *info, udat fontwidth, udat fontheight,
-                                 ldat best_score) {
+ldat TW_ATTR_HIDDEN XDRIVER::MonospaceFontScore(const XFontStruct *info, udat fontwidth,
+                                                udat fontheight, ldat best_score) {
   ldat score = TW_MINLDAT, width = info->min_bounds.width,
        height = (ldat)info->ascent + info->descent, max_width = info->max_bounds.width;
 
@@ -113,7 +113,7 @@ ldat XDRIVER::MonospaceFontScore(const XFontStruct *info, udat fontwidth, udat f
 }
 
 /* return name of selected font in allocated (char *) */
-char *XDRIVER::AutodetectFont(const char *family, udat fontwidth, udat fontheight) {
+TW_ATTR_HIDDEN char *XDRIVER::AutodetectFont(const char *family, udat fontwidth, udat fontheight) {
   struct {
     const char *wildcard;
     ldat score_adj;
@@ -191,8 +191,8 @@ char *XDRIVER::AutodetectFont(const char *family, udat fontwidth, udat fontheigh
   return best;
 }
 
-bool XDRIVER::AllocColor(Visual *xvisual, Colormap colormap, XColor *color, unsigned long *pixel,
-                         int color_num) {
+TW_ATTR_HIDDEN bool XDRIVER::AllocColor(Visual *xvisual, Colormap colormap, XColor *color,
+                                        unsigned long *pixel, int color_num) {
   if (XAllocColor(this->xdisplay, colormap, color)) {
     *pixel = color->pixel;
     return true;
@@ -200,7 +200,7 @@ bool XDRIVER::AllocColor(Visual *xvisual, Colormap colormap, XColor *color, unsi
   return false;
 }
 
-Tutf_function XDRIVER::UTF_32_to_charset_function(const char *charset) {
+Tutf_function TW_ATTR_HIDDEN XDRIVER::UTF_32_to_charset_function(const char *charset) {
   const char *s, *fontname = NULL;
   unsigned long prop;
   uldat i;

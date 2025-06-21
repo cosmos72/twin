@@ -11,8 +11,7 @@ static bool gpm_used;
  * mouse input uses libgpm to connect to `gpm' mouse daemon
  * and read mouse state, but draws mouse pointer manually
  */
-
-int tty_driver::gpm_Open(Tdisplay hw) {
+TW_ATTR_HIDDEN int tty_driver::gpm_Open(Tdisplay hw) {
   /*
    * HACK! this works around a quirk in libgpm:
    * if Gpm_Open fails, it sets gpm_tried to non-zero
@@ -54,7 +53,7 @@ int tty_driver::gpm_Open(Tdisplay hw) {
 }
 
 /* return tfalse if failed */
-bool tty_driver::gpm_InitMouse(Tdisplay hw) {
+TW_ATTR_HIDDEN bool tty_driver::gpm_InitMouse(Tdisplay hw) {
   if (gpm_used) {
     log(ERROR) << "      gpm_InitMouse() failed: already connected to `gpm'.\n";
     return false;
@@ -84,7 +83,7 @@ bool tty_driver::gpm_InitMouse(Tdisplay hw) {
   return true;
 }
 
-void tty_driver::gpm_QuitMouse(Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::gpm_QuitMouse(Tdisplay hw) {
   /* we cannot be sure that some InitVideo() initialized HW->HideMouse */
 #if 0
   hw->HideMouse();
@@ -99,7 +98,8 @@ void tty_driver::gpm_QuitMouse(Tdisplay hw) {
   hw->fnQuitMouse = NULL;
 }
 
-void tty_driver::gpm_ConfigureMouse(Tdisplay hw, udat resource, byte todefault, udat value) {
+TW_ATTR_HIDDEN void tty_driver::gpm_ConfigureMouse(Tdisplay hw, udat resource, byte todefault,
+                                                   udat value) {
   switch (resource) {
   case HW_MOUSEMOTIONEVENTS:
     /* nothing to do */
@@ -109,7 +109,7 @@ void tty_driver::gpm_ConfigureMouse(Tdisplay hw, udat resource, byte todefault, 
   }
 }
 
-void tty_driver::gpm_MouseEvent(int fd, Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::gpm_MouseEvent(int fd, Tdisplay hw) {
   Gpm_Event ev;
   tty_driver *self = ttydriver(hw);
   int left = 0;

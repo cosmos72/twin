@@ -52,7 +52,7 @@
 #include "hw_x/util.h"
 #include "hw_x/common.h"
 
-void XDRIVER::DrawString16(int x, int y, XChar16 *string, int length) {
+TW_ATTR_HIDDEN void XDRIVER::DrawString16(int x, int y, XChar16 *string, int length) {
   /*
    * XftDrawString16 doesn't erase the existing character before it draws a new one, and when
    * it draws the new one, it only draws the strokes, so you see some of the previous character
@@ -65,7 +65,7 @@ void XDRIVER::DrawString16(int x, int y, XChar16 *string, int length) {
   XftDrawString16(this->xtdraw, this->xtfg, this->xsfont, x, y, string, length);
 }
 
-void XDRIVER::CopyColor(trgb rgb, unsigned long pixel, XftColor *dst) {
+TW_ATTR_HIDDEN void XDRIVER::CopyColor(trgb rgb, unsigned long pixel, XftColor *dst) {
   dst->pixel = pixel;
   dst->color.red = 257 * (udat)TRED(rgb);
   dst->color.green = 257 * (udat)TGREEN(rgb);
@@ -75,7 +75,7 @@ void XDRIVER::CopyColor(trgb rgb, unsigned long pixel, XftColor *dst) {
 
 /* manage foreground/background colors */
 
-void XDRIVER::SetFg(const trgb fg) {
+TW_ATTR_HIDDEN void XDRIVER::SetFg(const trgb fg) {
   if (this->xrgb_fg != fg) {
     this->xrgb_fg = fg;
     if (this->xtruecolor) {
@@ -90,7 +90,7 @@ void XDRIVER::SetFg(const trgb fg) {
   }
 }
 
-void XDRIVER::SetBg(const trgb bg) {
+TW_ATTR_HIDDEN void XDRIVER::SetBg(const trgb bg) {
   if (this->xrgb_bg != bg) {
     this->xrgb_bg = bg;
     if (this->xtruecolor) {
@@ -105,12 +105,13 @@ void XDRIVER::SetBg(const trgb bg) {
   }
 }
 
-void XDRIVER::SetColors(const tcolor col) {
+TW_ATTR_HIDDEN void XDRIVER::SetColors(const tcolor col) {
   SetFg(TCOLFG(col));
   SetBg(TCOLBG(col));
 }
 
-ldat XDRIVER::CalcFontScore(udat fontwidth, udat fontheight, XftFont *fontp, const char *fontname) {
+ldat TW_ATTR_HIDDEN XDRIVER::CalcFontScore(udat fontwidth, udat fontheight, XftFont *fontp,
+                                           const char *fontname) {
   if (FC_CHARSET_MAP_SIZE >= 256 / 32) {
     FcChar32 map[FC_CHARSET_MAP_SIZE] = {}, *ptr = map, mask = (FcChar32)-1;
     FcChar32 next, first = FcCharSetFirstPage(fontp->charset, map, &next);
@@ -154,7 +155,7 @@ ldat XDRIVER::CalcFontScore(udat fontwidth, udat fontheight, XftFont *fontp, con
 }
 
 /* return name of selected font in allocated (char *) */
-char *XDRIVER::AutodetectFont(const char *family, udat fontwidth, udat fontheight) {
+TW_ATTR_HIDDEN char *XDRIVER::AutodetectFont(const char *family, udat fontwidth, udat fontheight) {
   char *fontname = NULL;
   FcPattern *best_pattern = NULL;
   ldat best_score = TW_MINLDAT;
@@ -226,8 +227,8 @@ char *XDRIVER::AutodetectFont(const char *family, udat fontwidth, udat fontheigh
   return fontname;
 }
 
-bool XDRIVER::AllocColor(Visual *visual, Colormap colormap, XColor *color, unsigned long *pixel,
-                         int color_num) {
+TW_ATTR_HIDDEN bool XDRIVER::AllocColor(Visual *visual, Colormap colormap, XColor *color,
+                                        unsigned long *pixel, int color_num) {
   XftColor *fcolor;
   XRenderColor rcolor;
 
@@ -250,7 +251,7 @@ bool XDRIVER::AllocColor(Visual *visual, Colormap colormap, XColor *color, unsig
   return true;
 }
 
-Tutf_function XDRIVER::UTF_32_to_charset_function(const char *charset) {
+Tutf_function TW_ATTR_HIDDEN XDRIVER::UTF_32_to_charset_function(const char *charset) {
   /* this is sufficient for xft fonts which are 16-bit unicode */
   return UTF_32_to_UCS_2;
 }

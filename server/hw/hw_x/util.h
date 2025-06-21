@@ -4,7 +4,7 @@
 
 #define X_TITLE_MAXLEN 80
 
-void XDRIVER::FillWindowTitle(char *title, int maxlen) {
+TW_ATTR_HIDDEN void XDRIVER::FillWindowTitle(char *title, int maxlen) {
   int left = maxlen;
   int chunk = 0;
 
@@ -38,7 +38,7 @@ void XDRIVER::FillWindowTitle(char *title, int maxlen) {
   title[0] = '\0';
 }
 
-void XDRIVER::HideCursor(dat x, dat y) {
+TW_ATTR_HIDDEN void XDRIVER::HideCursor(dat x, dat y) {
   int xbegin = (x - this->xhw_startx) * this->xwfont;
   int ybegin = (y - this->xhw_starty) * this->xhfont; /* needed by XDRAW */
 
@@ -53,7 +53,7 @@ void XDRIVER::HideCursor(dat x, dat y) {
   XDRAW(col, &c, 1);
 }
 
-void XDRIVER::ShowCursor(uldat type, dat x, dat y) {
+TW_ATTR_HIDDEN void XDRIVER::ShowCursor(uldat type, dat x, dat y) {
   tcell cell = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
                    ? Video[x + y * (ldat)DisplayWidth]
                    : TCELL(TCOL(tWHITE, tblack), ' ');
@@ -88,7 +88,7 @@ void XDRIVER::ShowCursor(uldat type, dat x, dat y) {
   }
 }
 
-void XDRIVER::FlushVideo(Tdisplay hw) {
+TW_ATTR_HIDDEN void XDRIVER::FlushVideo(Tdisplay hw) {
   XDRIVER *self = xdriver(hw);
   uldat i;
   dat start, end;
@@ -132,12 +132,12 @@ void XDRIVER::FlushVideo(Tdisplay hw) {
   hw->FlagsHW &= ~FlHWChangedMouseFlag;
 }
 
-void XDRIVER::FlushHW(Tdisplay hw) {
+TW_ATTR_HIDDEN void XDRIVER::FlushHW(Tdisplay hw) {
   XFlush(xdriver(hw)->xdisplay);
   hw->clrFlush();
 }
 
-void XDRIVER::DetectSize(Tdisplay hw, dat *x, dat *y) {
+TW_ATTR_HIDDEN void XDRIVER::DetectSize(Tdisplay hw, dat *x, dat *y) {
   XDRIVER *self = xdriver(hw);
   if (!self->xhw_view) {
     *x = hw->X = self->xwidth / self->xwfont;
@@ -145,11 +145,11 @@ void XDRIVER::DetectSize(Tdisplay hw, dat *x, dat *y) {
   }
 }
 
-void XDRIVER::CheckResize(Tdisplay /*hw*/, dat * /*x*/, dat * /*y*/) {
+TW_ATTR_HIDDEN void XDRIVER::CheckResize(Tdisplay /*hw*/, dat * /*x*/, dat * /*y*/) {
   /* always ok */
 }
 
-void XDRIVER::Resize(Tdisplay hw, dat x, dat y) {
+TW_ATTR_HIDDEN void XDRIVER::Resize(Tdisplay hw, dat x, dat y) {
   XDRIVER *self = xdriver(hw);
   if (x != hw->X || y != hw->Y) {
     if (!self->xhw_view) {
@@ -164,14 +164,14 @@ void XDRIVER::Resize(Tdisplay hw, dat x, dat y) {
 /*
  * import X11 Selection
  */
-bool XDRIVER::SelectionImport_X11(Tdisplay hw) {
+TW_ATTR_HIDDEN bool XDRIVER::SelectionImport_X11(Tdisplay hw) {
   return !hw->SelectionPrivate;
 }
 
 /*
  * export our Selection to X11
  */
-void XDRIVER::SelectionExport_X11(Tdisplay hw) {
+TW_ATTR_HIDDEN void XDRIVER::SelectionExport_X11(Tdisplay hw) {
   XDRIVER *self = xdriver(hw);
   if (!hw->SelectionPrivate) {
     XSetSelectionOwner(self->xdisplay, XA_PRIMARY, self->xwindow, CurrentTime);
@@ -180,7 +180,7 @@ void XDRIVER::SelectionExport_X11(Tdisplay hw) {
   }
 }
 
-void XDRIVER::utf8_to_wchar(Chars src, Vector<wchar_t> &dst) {
+TW_ATTR_HIDDEN void XDRIVER::utf8_to_wchar(Chars src, Vector<wchar_t> &dst) {
   dst.reserve(src.size());
   Utf8 seq;
   while (src) {
@@ -192,8 +192,8 @@ void XDRIVER::utf8_to_wchar(Chars src, Vector<wchar_t> &dst) {
 /*
  * notify our Selection to X11
  */
-void XDRIVER::SelectionNotify_X11(Tdisplay hw, uldat reqprivate, e_id Magic, Chars /*mime*/,
-                                  Chars data) {
+TW_ATTR_HIDDEN void XDRIVER::SelectionNotify_X11(Tdisplay hw, uldat reqprivate, e_id Magic,
+                                                 Chars /*mime*/, Chars data) {
   XEvent ev;
   XDRIVER *self = xdriver(hw);
   Atom target;
@@ -282,7 +282,7 @@ void XDRIVER::SelectionNotify_X11(Tdisplay hw, uldat reqprivate, e_id Magic, Cha
 /*
  * notify the X11 Selection to twin upper layer
  */
-void XDRIVER::SelectionNotify_up(Window win, Atom prop) {
+TW_ATTR_HIDDEN void XDRIVER::SelectionNotify_up(Window win, Atom prop) {
   long nread = 0;
   unsigned long i, nitems, bytes_after = TW_BIGBUFF;
   Atom actual_type;
@@ -348,7 +348,7 @@ void XDRIVER::SelectionNotify_up(Window win, Atom prop) {
 /*
  * request X11 Selection
  */
-void XDRIVER::SelectionRequest_X11(Tdisplay hw, Tobj requestor, uldat reqprivate) {
+TW_ATTR_HIDDEN void XDRIVER::SelectionRequest_X11(Tdisplay hw, Tobj requestor, uldat reqprivate) {
 
   if (!hw->SelectionPrivate) {
     XDRIVER *self = xdriver(hw);
@@ -385,7 +385,7 @@ void XDRIVER::SelectionRequest_X11(Tdisplay hw, Tobj requestor, uldat reqprivate
 /*
  * request twin Selection
  */
-void XDRIVER::SelectionRequest_up(XSelectionRequestEvent *req) {
+TW_ATTR_HIDDEN void XDRIVER::SelectionRequest_up(XSelectionRequestEvent *req) {
   if (this->XReqCount == NEST) {
     log(ERROR) << THIS ".c: " XSTR(
         XDRIVER) ".SelectionRequest_up(): too many nested X Selection Request events!\n";
@@ -403,14 +403,16 @@ void XDRIVER::SelectionRequest_up(XSelectionRequestEvent *req) {
   /* the call **CAN** arrive while we are still inside TwinSelectionRequest() !!! */
 }
 
-bool XDRIVER::CanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
+TW_ATTR_HIDDEN bool XDRIVER::CanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn,
+                                         dat DstLeft, dat DstUp) {
   return !hw->RedrawVideo /* if window is not up-to-date, XCopyArea() is unusable */
          /* if window is partially covered, XCopyArea() cannot work */
          && xdriver(hw)->xwindow_AllVisible         /**/
          && (Rgt - Left + 1) * (Dwn - Up + 1) > 20; /* avoid XCopyArea() for very small areas */
 }
 
-void XDRIVER::DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
+TW_ATTR_HIDDEN void XDRIVER::DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
+                                      dat DstUp) {
   XDRIVER *self = xdriver(hw);
   dat DstRgt = (Rgt - Left) + DstLeft;
   dat DstDwn = (Dwn - Up) + DstUp;
@@ -435,34 +437,33 @@ void XDRIVER::DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstL
 
 #if 0
 /* does NOT work... libX11 insists on doing exit(1) */
- int XDRIVER::Die(Display *d) {
-    /*
-     * this is not exactly trivial:
-     * find our hw, shut it down
-     * and quit if it was the last hw.
-     *
-     * don't rely on hw->Private only, as non-X11 displays
-     * may use it differently and have by chance the same value for it.
-     */
-    forallHW {
-        if (hw->QuitHW == &XDRIVER::QuitHW && hw->Private
-            && d == this->xdisplay) {
+TW_ATTR_HIDDEN int XDRIVER::Die(Display *d) {
+  /*
+   * this is not exactly trivial:
+   * find our hw, shut it down
+   * and quit if it was the last hw.
+   *
+   * don't rely on hw->Private only, as non-X11 displays
+   * may use it differently and have by chance the same value for it.
+   */
+  forallHW {
+    if (hw->QuitHW == &XDRIVER::QuitHW && hw->Private && d == this->xdisplay) {
 
-            hw->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+      hw->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
 
-            break;
-        }
+      break;
     }
-    return 0;
+  }
+  return 0;
 }
 #else
-int XDRIVER::Die(Display * /*d*/) {
+TW_ATTR_HIDDEN int XDRIVER::Die(Display * /*d*/) {
   Quit(0);
   return 0;
 }
 #endif
 
-trune XDRIVER::UTF_32_to_UCS_2(trune c) {
+TW_ATTR_HIDDEN trune XDRIVER::UTF_32_to_UCS_2(trune c) {
   if ((c & 0x1FFE00) == 0xF000) {
     /* private use codepoints. for compatibility, treat as "direct-to-font" zone */
     c &= 0x01FF;

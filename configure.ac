@@ -264,7 +264,7 @@ fi
 AC_DEFINE_UNQUOTED(ATTR_FN_CONST,      [`echo $ac_cv_c_attribute_const     | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((const)),      or to empty if not supported.])
 AC_DEFINE_UNQUOTED(ATTR_TYPE_PACKED,   [`echo $ac_cv_c_attribute_packed    | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((packed)),     or to empty if not supported.])
 AC_DEFINE_UNQUOTED(ATTR_PTR_ALIGNED_1, [`echo $ac_cv_c_attribute_aligned_1 | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((aligned(1))), or to empty if not supported.])
-
+AC_DEFINE_UNQUOTED(ATTR_HIDDEN,     [`echo $ac_cv_c_attribute_hidden    | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((visiibility("hidden"))), or to empty if not supported.])
 
 if test "$ac_cv_search_crypt" != "no" -o "$ac_cv_func_crypt" != "no"; then
   AC_DEFINE(HAVE_CRYPT, 1, [Define to 1 if you have the `crypt'  function.])

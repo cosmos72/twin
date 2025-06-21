@@ -7,6 +7,10 @@
    supported. */
 #undef ATTR_FN_CONST
 
+/* Define to compiler's variant of __attribute__((visiibility("hidden"))), or
+   to empty if not supported. */
+#undef ATTR_HIDDEN
+
 /* Define to compiler's variant of __attribute__((aligned(1))), or to empty if
    not supported. */
 #undef ATTR_PTR_ALIGNED_1

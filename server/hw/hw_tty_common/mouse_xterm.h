@@ -8,7 +8,7 @@
  */
 
 /* return false if failed */
-bool tty_driver::xterm_InitMouse(Tdisplay hw, byte force) {
+TW_ATTR_HIDDEN bool tty_driver::xterm_InitMouse(Tdisplay hw, byte force) {
   tty_driver *self = ttydriver(hw);
   Chars term = self->tty_term; // guaranteed to be '\0' terminated
 
@@ -75,13 +75,14 @@ bool tty_driver::xterm_InitMouse(Tdisplay hw, byte force) {
   return true;
 }
 
-void tty_driver::xterm_QuitMouse(Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::xterm_QuitMouse(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
   fputs(self->mouse_end_seq, self->out);
   hw->fnQuitMouse = NULL;
 }
 
-void tty_driver::xterm_ConfigureMouse(Tdisplay hw, udat resource, byte todefault, udat value) {
+TW_ATTR_HIDDEN void tty_driver::xterm_ConfigureMouse(Tdisplay hw, udat resource, byte todefault,
+                                                     udat value) {
   tty_driver *self = ttydriver(hw);
   switch (resource) {
   case HW_MOUSEMOTIONEVENTS:
@@ -140,7 +141,7 @@ static udat xterm_ParseBase10(const char **s_ptr, byte *len_ptr) {
   return val;
 }
 
-void tty_driver::xterm_MouseEvent(int fd, Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::xterm_MouseEvent(int fd, Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
   const char *s = self->xterm_mouse_seq;
   udat buttons = 0, id;

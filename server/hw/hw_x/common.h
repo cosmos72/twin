@@ -7,14 +7,14 @@
 /** FIXME: refactor as XDRIVER field */
 static tcolor _col;
 
-unsigned long XDRIVER::ColorToPixel(trgb rgb) {
+TW_ATTR_HIDDEN unsigned long XDRIVER::ColorToPixel(trgb rgb) {
   if (this->xtruecolor) {
     return this->xrgb_info.pixel(rgb);
   }
   return this->xpalette[TrueColorToPalette256(rgb)];
 }
 
-void XDRIVER::DrawSome(dat x, dat y, ldat len) {
+TW_ATTR_HIDDEN void XDRIVER::DrawSome(dat x, dat y, ldat len) {
   tcell *V, *oV;
   tcolor col;
   udat buflen = 0;
@@ -68,7 +68,7 @@ void XDRIVER::DrawSome(dat x, dat y, ldat len) {
 
 enum { MAX_FONT_SCORE = 100 };
 
-ldat XDRIVER::FontScoreOf(udat fontwidth, udat fontheight, ldat width, ldat height) {
+TW_ATTR_HIDDEN ldat XDRIVER::FontScoreOf(udat fontwidth, udat fontheight, ldat width, ldat height) {
   /*
    * TODO xft: since xft fonts are scalable, we could just consider the aspect ratio
    * compared to fontwidth X fontheight.
@@ -82,7 +82,7 @@ ldat XDRIVER::FontScoreOf(udat fontwidth, udat fontheight, ldat width, ldat heig
   return score;
 }
 
-bool XDRIVER::LoadFont(const char *fontname, udat fontwidth, udat fontheight) {
+TW_ATTR_HIDDEN bool XDRIVER::LoadFont(const char *fontname, udat fontwidth, udat fontheight) {
   char *alloc_fontname = NULL;
   byte loaded = false;
 
@@ -115,7 +115,7 @@ bool XDRIVER::LoadFont(const char *fontname, udat fontwidth, udat fontheight) {
   return loaded;
 }
 
-int XDRIVER::check_hw_name(char *hw_name) {
+TW_ATTR_HIDDEN int XDRIVER::check_hw_name(char *hw_name) {
   char *comma, *at;
   if (strncmp(hw_name, "-hw=", 4) != 0) {
     return -1;
@@ -130,7 +130,7 @@ int XDRIVER::check_hw_name(char *hw_name) {
   return at ? at - hw_name : -1;
 }
 
-bool XDRIVER::InitHW(Tdisplay hw) {
+TW_ATTR_HIDDEN bool XDRIVER::InitHW(Tdisplay hw) {
   XDRIVER *self;
   if (!(hw->Private = self = (XDRIVER *)AllocMem0(sizeof(XDRIVER)))) {
     log(ERROR) << "      " XSTR(XDRIVER) ".InitHW() Out of memory!\n";
@@ -144,7 +144,7 @@ bool XDRIVER::InitHW(Tdisplay hw) {
   return false;
 }
 
-bool XDRIVER::InitHW() {
+TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
   char *arg = hw->Name.data(); // guaranteed to be '\0' terminated
 
   XSetWindowAttributes attr;
@@ -502,7 +502,7 @@ fail:
   return false;
 }
 
-void XDRIVER::QuitHW(Tdisplay hw) {
+TW_ATTR_HIDDEN void XDRIVER::QuitHW(Tdisplay hw) {
   XDRIVER *self = xdriver(hw);
   if (self) {
     self->QuitHW();
@@ -512,7 +512,7 @@ void XDRIVER::QuitHW(Tdisplay hw) {
   }
 }
 
-void XDRIVER::QuitHW() {
+TW_ATTR_HIDDEN void XDRIVER::QuitHW() {
 #ifdef TW_FEATURE_X11_XIM_XIC
   if (this->xic) {
     XDestroyIC(this->xic);

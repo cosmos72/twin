@@ -25,12 +25,12 @@
 #include "hw_dirty.h"
 #include "common.h"
 
-class display_data {
+class dpy_driver {
 public:
   Tmsgport display, Helper;
 };
 
-#define displaydata(hw) ((display_data *)(hw)->Private)
+#define dpydriver(hw) ((dpy_driver *)(hw)->Private)
 
 static Tmsg gmsg;
 static event_display *ev;
@@ -43,7 +43,7 @@ inline void display_CreateMsg(Tdisplay hw, udat Code, udat Len) {
 
 static void display_Beep(Tdisplay hw) {
   display_CreateMsg(hw, ev_dpy_Beep, 0);
-  Ext(Socket, SendMsg)(displaydata(hw)->display, gmsg);
+  Ext(Socket, SendMsg)(dpydriver(hw)->display, gmsg);
   hw->setFlush();
 }
 
@@ -55,14 +55,14 @@ static void display_Configure(Tdisplay hw, udat resource, byte todefault, udat v
     ev->Y = -1;
   else
     ev->Y = (dat)value;
-  Ext(Socket, SendMsg)(displaydata(hw)->display, gmsg);
+  Ext(Socket, SendMsg)(dpydriver(hw)->display, gmsg);
   hw->setFlush();
 }
 
 /* handle messages from twdisplay */
 static void display_HandleEvent(Tdisplay hw) {
   Tmsg msg;
-  Tmsgport helper = displaydata(hw)->Helper;
+  Tmsgport helper = dpydriver(hw)->Helper;
   event_any *Event;
   dat x, y, dx, dy;
   udat keys;
@@ -175,7 +175,7 @@ inline void display_DrawTCell(Tdisplay hw, dat x, dat y, udat buflen, tcell *buf
   ev->X = x;
   ev->Y = y;
   ev->Data = buf;
-  Ext(Socket, SendMsg)(displaydata(hw)->display, gmsg);
+  Ext(Socket, SendMsg)(dpydriver(hw)->display, gmsg);
 }
 
 inline void display_DrawSome(Tdisplay hw, dat x, dat y, uldat len) {
@@ -209,13 +209,13 @@ inline void display_MoveToXY(Tdisplay hw, udat x, udat y) {
   display_CreateMsg(hw, ev_dpy_MoveToXY, 0);
   ev->X = x;
   ev->Y = y;
-  Ext(Socket, SendMsg)(displaydata(hw)->display, gmsg);
+  Ext(Socket, SendMsg)(dpydriver(hw)->display, gmsg);
 }
 
 inline void display_SetCursorType(Tdisplay hw, uldat type) {
   display_CreateMsg(hw, ev_dpy_SetCursorType, sizeof(uldat));
   ev->Data = &type;
-  Ext(Socket, SendMsg)(displaydata(hw)->display, gmsg);
+  Ext(Socket, SendMsg)(dpydriver(hw)->display, gmsg);
 }
 
 static void display_FlushVideo(Tdisplay hw) {
@@ -249,7 +249,7 @@ static void display_FlushVideo(Tdisplay hw) {
 
 static void display_FlushHW(Tdisplay hw) {
   display_CreateMsg(hw, ev_dpy_FlushHW, 0);
-  Ext(Socket, SendMsg)(displaydata(hw)->display, gmsg);
+  Ext(Socket, SendMsg)(dpydriver(hw)->display, gmsg);
   if (RemoteFlush(hw->AttachSlot)) {
     hw->clrFlush();
   }
@@ -282,7 +282,7 @@ static void display_Resize(Tdisplay hw, dat x, dat y) {
       hw->Y = y;
     }
 
-    Ext(Socket, SendMsg)(displaydata(hw)->display, gmsg);
+    Ext(Socket, SendMsg)(dpydriver(hw)->display, gmsg);
     hw->setFlush();
   }
 }
@@ -307,7 +307,7 @@ static void display_DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, da
   ev->Y = Up;
   ev->Data = data;
 
-  Ext(Socket, SendMsg)(displaydata(hw)->display, gmsg);
+  Ext(Socket, SendMsg)(dpydriver(hw)->display, gmsg);
   hw->setFlush();
 }
 
@@ -322,13 +322,13 @@ static void display_SetPalette(Tdisplay hw, udat N, udat R, udat G, udat B) {
   ev->X = N;
   ev->Data = data;
 
-  Ext(Socket, SendMsg)(displaydata(hw)->display, gmsg);
+  Ext(Socket, SendMsg)(dpydriver(hw)->display, gmsg);
   hw->setFlush();
 }
 
 static void display_ResetPalette(Tdisplay hw) {
   display_CreateMsg(hw, ev_dpy_ResetPalette, 0);
-  Ext(Socket, SendMsg)(displaydata(hw)->display, gmsg);
+  Ext(Socket, SendMsg)(dpydriver(hw)->display, gmsg);
   hw->setFlush();
 }
 
@@ -344,9 +344,9 @@ static bool display_SelectionImport_display(Tdisplay hw) {
  */
 static void display_SelectionExport_display(Tdisplay hw) {
   if (!hw->SelectionPrivate) {
-    hw->SelectionPrivate = (tany)displaydata(hw)->display;
+    hw->SelectionPrivate = (tany)dpydriver(hw)->display;
     display_CreateMsg(hw, ev_dpy_SelectionExport, 0);
-    Ext(Socket, SendMsg)(displaydata(hw)->display, gmsg);
+    Ext(Socket, SendMsg)(dpydriver(hw)->display, gmsg);
     hw->setFlush();
   }
 }
@@ -360,7 +360,7 @@ static void display_SelectionRequest_display(Tdisplay hw, Tobj requestor, uldat 
      * shortcut: since (display) is a Tmsgport, use fail-safe TwinSelectionRequest()
      * to send message to twdisplay.
      */
-    TwinSelectionRequest(requestor, reqprivate, (Tobj)displaydata(hw)->display);
+    TwinSelectionRequest(requestor, reqprivate, (Tobj)dpydriver(hw)->display);
   }
   /* else race! someone else became Selection owner in the meanwhile... */
 }
@@ -374,19 +374,19 @@ static void display_SelectionNotify_display(Tdisplay hw, uldat reqprivate, e_id 
    * shortcut: since (display) is a Tmsgport, use fail-safe TwinSelectionNotify()
    * to send message to twdisplay.
    */
-  TwinSelectionNotify((Tobj)displaydata(hw)->display, reqprivate, magic, mime, data);
+  TwinSelectionNotify((Tobj)dpydriver(hw)->display, reqprivate, magic, mime, data);
 }
 
 static void display_QuitHW(Tdisplay hw) {
   /* tell twdisplay to cleanly quit */
   display_CreateMsg(hw, ev_dpy_Quit, 4 * sizeof(dat));
-  Ext(Socket, SendMsg)(displaydata(hw)->display, gmsg);
+  Ext(Socket, SendMsg)(dpydriver(hw)->display, gmsg);
   RemoteFlush(hw->AttachSlot);
 
   /* then cleanup */
 
-  displaydata(hw)->Helper->AttachHW = (Tdisplay)0; /* to avoid infinite loop */
-  displaydata(hw)->Helper->Delete();
+  dpydriver(hw)->Helper->AttachHW = (Tdisplay)0; /* to avoid infinite loop */
+  dpydriver(hw)->Helper->Delete();
 
   if (!--Used && gmsg) {
     gmsg->Delete();
@@ -447,14 +447,14 @@ static bool display_InitHW(Tdisplay hw) {
     return false;
   }
 
-  if (!(hw->Private = (display_data *)AllocMem0(sizeof(class display_data))) ||
-      !(displaydata(hw)->Helper =
+  if (!(hw->Private = (dpy_driver *)AllocMem0(sizeof(dpy_driver))) ||
+      !(dpydriver(hw)->Helper =
             Smsgport::Create(16, "twdisplay Helper", 0, 0, 0, display_HelperH)) ||
       (!gmsg && !(gmsg = Smsg::Create(msg_display, sizeof(uldat))))) {
 
     if (hw->Private) {
-      if (displaydata(hw)->Helper) {
-        displaydata(hw)->Helper->Delete();
+      if (dpydriver(hw)->Helper) {
+        dpydriver(hw)->Helper->Delete();
       }
       FreeMem(hw->Private);
     }
@@ -463,8 +463,8 @@ static bool display_InitHW(Tdisplay hw) {
   }
 
   ev = &gmsg->Event.EventDisplay;
-  displaydata(hw)->display = Port;
-  displaydata(hw)->Helper->AttachHW = hw;
+  dpydriver(hw)->display = Port;
+  dpydriver(hw)->Helper->AttachHW = hw;
 
   hw->mouse_slot = NOSLOT;
   hw->keyboard_slot = NOSLOT;
@@ -524,10 +524,10 @@ static bool display_InitHW(Tdisplay hw) {
   hw->CanResize = arg.contains(Chars(",resize"));
   hw->merge_Threshold = 0;
 
-  display_CreateMsg(hw, ev_dpy_Helper, sizeof(displaydata(hw)->Helper->Id));
+  display_CreateMsg(hw, ev_dpy_Helper, sizeof(dpydriver(hw)->Helper->Id));
   ev->Len = sizeof(uldat);
-  ev->Data = &displaydata(hw)->Helper->Id;
-  Ext(Socket, SendMsg)(displaydata(hw)->display, gmsg);
+  ev->Data = &dpydriver(hw)->Helper->Id;
+  Ext(Socket, SendMsg)(dpydriver(hw)->display, gmsg);
   /* don't flush now, twdisplay waits for attach messages */
 
   size_t pos;
