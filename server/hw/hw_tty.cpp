@@ -397,8 +397,8 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
         try_ctty = true;
       } else if (arg0 == Chars(",colorbug")) {
         have_colorbug = true;
-      } else if (arg0.starts_with(Chars(",palette="))) {
-        arg0 = arg0.view(9, comma);
+      } else if (arg0.starts_with(Chars(",colors="))) {
+        arg0 = arg0.view(8, comma);
         if (arg0 == Chars("8")) {
           self->colormode = tty_color8;
         } else if (arg0 == Chars("256")) {
@@ -406,7 +406,7 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
         } else if (arg0 == Chars("16M")) {
           self->colormode = tty_color16M;
         } else {
-          log(ERROR) << "      tty.InitHW(): unsupported 'palette=" << arg0
+          log(ERROR) << "      tty.InitHW(): unsupported 'colors=" << arg0
                      << "', expecting one of: 8, 256 or 16M\n";
           return false;
         }
@@ -434,17 +434,17 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
                "      ,charset=CHARSET_NAME use specified charset encoding\n"
                "      ,ctty[=no]            set tty device as the controlling tty\n"
                "      ,colorbug             assume terminal has colorbug\n"
+               "      ,colors=[8|256|16M]   assume terminal supports this many colors\n"
                "      ,help                 show this help\n"
                "      ,mouse=[xterm|twterm] assume specified mouse reporting protocol\n"
                "      ,noinput              open a view-only display on tty - ignore input\n"
-               "      ,palette=[8|256|16M]  assume terminal supports this many colors\n"
                "      ,raw[=no]             use Linux raw keyboard\n"
                "      ,slow                 assume terminal is slow\n"
                "      ,stdout[=no]          use hard-coded escape sequences\n"
                "      ,TERM=TERM_NAME       assume terminal type is TERM_NAME\n"
                "      ,termcap[=no]         use libtermcap escape sequences\n"
-               "      ,truecolor            same as palette=16M\n"
-               "      ,utf8[=no]            assume terminal supports UTF-8";
+               "      ,truecolor            same as colors=16M\n"
+               "      ,utf8[=no]            assume terminal supports UTF-8\n";
         return false;
       }
       arg = arg.view(comma, end);
