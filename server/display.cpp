@@ -83,11 +83,11 @@ void Quit(int status);
 
 void NoOp(void) {
 }
-byte AlwaysFalse(void) {
-  return tfalse;
+bool AlwaysFalse(void) {
+  return false;
 }
-byte AlwaysTrue(void) {
-  return ttrue;
+bool AlwaysTrue(void) {
+  return true;
 }
 void *AlwaysNull(void) {
   return NULL;
@@ -213,8 +213,8 @@ void Sobj::Delete() {
 /// Smodule methods
 
 static SmoduleFn _FnModule = {
-    (bool (*)(Tmodule))NoOp, /* DlOpen       */
-    (void (*)(Tmodule))NoOp, /* DlClose      */
+    (bool (*)(Tmodule))AlwaysFalse, /* DlOpen       */
+    (void (*)(Tmodule))NoOp,        /* DlClose      */
 };
 
 Tmodule Smodule::Init(Chars /*name*/) {
@@ -261,7 +261,7 @@ static Tmodule DlLoadAny(Chars name) {
   return NULL;
 }
 
-static bool module_InitHW(Chars arg) {
+static bool module_InitHW(Tdisplay hw, Chars arg) {
   Tmodule m = NULL;
 
   if (arg.size() <= 4) {
@@ -288,12 +288,12 @@ static bool module_InitHW(Chars arg) {
   } else {
     log(INFO) << "twdisplay: starting display driver module `" << name << "'...\n";
 
-    bool (*InitD)(void);
-    if (!(InitD = m->DoInit) || !InitD()) {
+    bool (*fnInit)(Tdisplay hw);
+    if (!(fnInit = m->DoInit) || !fnInit(hw)) {
       log(ERROR) << "twdisplay: ...module `" << name << "' failed to start.\n";
     } else {
       log(INFO) << "twdisplay: ...module `" << name << "' successfully started.\n";
-      HW->Module = m;
+      hw->Module = m;
       m->Used++;
       return true;
     }
@@ -340,11 +340,11 @@ void warn_NoHW(uldat len, const char *arg, uldat tried) {
   log(ERROR) << "\n";
 }
 
-static void UpdateFlagsHW(void) NOTHROW {
-  if (!HW->Quitted) {
-    NeedOldVideo = HW->FlagsHW & FlHWNeedOldVideo;
-    ExpensiveFlushVideo = HW->FlagsHW & FlHWExpensiveFlushVideo;
-    CanDragArea = !!HW->CanDragArea;
+static void UpdateFlagsHW(Tdisplay hw) NOTHROW {
+  if (!hw->Quitted) {
+    NeedOldVideo = hw->FlagsHW & FlHWNeedOldVideo;
+    ExpensiveFlushVideo = hw->FlagsHW & FlHWExpensiveFlushVideo;
+    CanDragArea = !!hw->fnCanDragArea;
   }
 }
 
@@ -352,28 +352,28 @@ static void UpdateFlagsHW(void) NOTHROW {
  * InitDisplay runs HW specific InitXXX() functions, starting from best setup
  * and falling back in case some of them fails.
  */
-static bool InitDisplay(Tdisplay display) {
-  if (!display) {
+static bool InitDisplay(Tdisplay hw) {
+  if (!hw) {
     return false;
   }
-  Chars arg = display->Name;
+  Chars arg = hw->Name;
   uldat tried = 0;
   bool success;
 
   SaveHW;
-  SetHW(display);
+  SetHW(hw);
 
-  display->DisplayIsCTTY = display->NeedHW = display->FlagsHW = tfalse;
+  hw->DisplayIsCTTY = hw->NeedHW = hw->FlagsHW = tfalse;
 
   if (arg.starts_with(Chars("-hw="))) {
     arg = arg.view(4, arg.size());
   } else {
     arg = Chars();
   }
-#define TRY4(hw_name) (tried++, module_InitHW(Chars(hw_name)))
+#define TRY4(hw_name) (tried++, module_InitHW(hw, Chars(hw_name)))
 
   if (arg) {
-    success = module_InitHW(display->Name);
+    success = module_InitHW(hw, hw->Name);
   } else {
     success = TRY4("-hw=xft") || TRY4("-hw=X11") || TRY4("-hw=twin") ||
 #if 0 /* cannot use `--hw=display' inside twdisplay! */
@@ -382,22 +382,23 @@ static bool InitDisplay(Tdisplay display) {
               TRY4("-hw=tty");
   }
   if (success) {
-    display->Quitted = tfalse;
-    if (!DisplayHWCTTY && display->DisplayIsCTTY)
-      DisplayHWCTTY = display;
-    UpdateFlagsHW();
-  } else
-    warn_NoHW(display->Name.size(), HW->Name.data(), tried);
-
+    hw->Quitted = tfalse;
+    if (!DisplayHWCTTY && hw->DisplayIsCTTY) {
+      DisplayHWCTTY = hw;
+    }
+    UpdateFlagsHW(hw);
+  } else {
+    warn_NoHW(hw->Name.size(), HW->Name.data(), tried);
+  }
   RestoreHW;
 
   return success;
 }
 
-static void QuitDisplay(Tdisplay display) {
-  if (display && display->QuitHW) {
-    HW = display;
-    display->QuitHW();
+static void QuitDisplay(Tdisplay hw) {
+  if (hw && hw->fnQuitHW) {
+    HW = hw;
+    hw->QuitHW();
   }
 }
 
@@ -620,7 +621,7 @@ static byte ResizeDisplay(void) {
 }
 
 byte AllHWCanDragAreaNow(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-  return (CanDragArea && HW->CanDragArea && HW->CanDragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp));
+  return (CanDragArea && HW->fnCanDragArea && HW->CanDragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp));
 }
 
 void DragAreaHW(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
@@ -656,8 +657,8 @@ static void HandleMsg(tmsg msg) {
      * Cast it to (Tobj) as expected by HW displays...
      * we will cast it back when needed
      */
-    HW->HWSelectionRequest((Tobj)(topaque)msg->Event.EventSelectionRequest.Requestor,
-                           msg->Event.EventSelectionRequest.ReqPrivate);
+    HW->SelectionRequest((Tobj)(topaque)msg->Event.EventSelectionRequest.Requestor,
+                         msg->Event.EventSelectionRequest.ReqPrivate);
     break;
   case TW_MSG_SELECTIONNOTIFY:
 #if 0
@@ -665,7 +666,7 @@ static void HandleMsg(tmsg msg) {
 #endif
     /* notify selection to underlying HW */
 
-    HW->HWSelectionNotify(
+    HW->SelectionNotify(
         msg->Event.EventSelectionNotify.ReqPrivate,                                 //
         e_id(msg->Event.EventSelectionNotify.Magic),                                //
         Chars::from_c_maxlen(msg->Event.EventSelectionNotify.MIME, TW_MAX_MIMELEN), //
@@ -760,7 +761,7 @@ static void SocketIO(void) {
 }
 
 void SelectionExport(void) {
-  HW->HWSelectionExport();
+  HW->SelectionExport();
   NeedHW &= ~NEEDSelectionExport;
 }
 
@@ -807,13 +808,13 @@ void TwinSelectionRequest(Tobj Requestor, uldat ReqPrivate, Tobj Owner) {
   TwRequestSelection((topaque)Owner, ReqPrivate);
 }
 
-static byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
+static byte StdAddMouseEvent(Tdisplay hw, udat Code, dat MouseX, dat MouseY) {
   tevent_mouse Event;
   tmsg msg;
 
-  if (HW->FlagsHW & FlHWNoInput)
+  if (hw && (hw->FlagsHW & FlHWNoInput)) {
     return ttrue;
-
+  }
   if ((msg = TwCreateMsg(TW_MSG_WIDGET_MOUSE, sizeof(event_mouse)))) {
     Event = &msg->Event.EventMouse;
 
@@ -828,14 +829,14 @@ static byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
   return tfalse;
 }
 
-byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
+byte MouseEventCommon(Tdisplay hw, dat x, dat y, dat dx, dat dy, udat Buttons) {
   dat prev_x, prev_y;
   udat OldButtons, i;
   mouse_state *OldState;
   udat result;
   byte ret = ttrue;
 
-  OldState = &HW->MouseState;
+  OldState = &hw->MouseState;
   OldButtons = OldState->keys;
   prev_x = OldState->x;
   prev_y = OldState->y;
@@ -848,9 +849,9 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
   y = Min2(y, DisplayHeight - 1);
   OldState->delta_y = y == 0 ? Min2(dy, 0) : y == DisplayHeight - 1 ? Max2(dy, 0) : 0;
 
-  if (x != prev_x || y != prev_y)
-    HW->FlagsHW |= FlHWChangedMouseFlag;
-
+  if (x != prev_x || y != prev_y) {
+    hw->FlagsHW |= FlHWChangedMouseFlag;
+  }
   OldState->x = x;
   OldState->y = y;
 
@@ -859,27 +860,27 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
   if (Buttons != OldButtons || ((MouseMotionN || OldButtons) && (x != prev_x || y != prev_y))) {
 
     if ((MouseMotionN || OldButtons) && (x != prev_x || y != prev_y)) {
-      ret = StdAddMouseEvent(MOVE_MOUSE | OldButtons, x, y);
+      ret = StdAddMouseEvent(hw, MOVE_MOUSE | OldButtons, x, y);
     }
     for (i = 0; i < BUTTON_N_MAX && ret; i++) {
       if ((Buttons & HOLD_CODE(i)) != (OldButtons & HOLD_CODE(i))) {
         result = (Buttons & HOLD_CODE(i) ? PRESS_CODE(i) : RELEASE_CODE(i)) |
                  (OldButtons &= ~HOLD_CODE(i));
         OldButtons |= Buttons & HOLD_CODE(i);
-        ret = StdAddMouseEvent(result, x, y);
+        ret = StdAddMouseEvent(hw, result, x, y);
       }
     }
   }
   return ret;
 }
 
-byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) {
+bool KeyboardEventCommon(Tdisplay hw, udat Code, udat ShiftFlags, udat Len, const char *Seq) {
   tevent_keyboard Event;
   tmsg msg;
 
-  if (HW->FlagsHW & FlHWNoInput)
-    return ttrue;
-
+  if (hw->FlagsHW & FlHWNoInput) {
+    return true;
+  }
   if ((msg = TwCreateMsg(TW_MSG_WIDGET_KEY, Len + 1 + sizeof(s_tevent_keyboard)))) {
     Event = &msg->Event.EventKeyboard;
 
@@ -890,9 +891,9 @@ byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) 
     Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
 
     TwBlindSendMsg(tw_helper, msg);
-    return ttrue;
+    return true;
   }
-  return tfalse;
+  return false;
 }
 
 static void MainLoop(int Fd) {

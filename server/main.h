@@ -28,8 +28,8 @@ extern int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *e
 void Quit(int status);
 
 void NoOp(void);
-byte AlwaysTrue(void);
-byte AlwaysFalse(void);
+bool AlwaysTrue(void);
+bool AlwaysFalse(void);
 void *AlwaysNull(void);
 
 #endif /* TWIN_MAIN_H */

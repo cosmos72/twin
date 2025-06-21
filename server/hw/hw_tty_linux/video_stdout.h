@@ -6,32 +6,20 @@
 
 #include "palette.h"
 
-static void linux_QuitVideo(void);
-static void linux_ShowMouse(void);
-static void linux_HideMouse(void);
-static void linux_FlushVideo(void);
-
-static void linux_Beep(void);
-static void linux_Configure(udat resource, byte todefault, udat value);
-static void linux_ConfigureKeyboard(udat resource, byte todefault, udat value);
-static void linux_SetPalette(udat N, udat R, udat G, udat B);
-static void linux_ResetPalette(void);
-static void linux_UpdateMouseAndCursor(void);
-
-static byte linux_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
-static void linux_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
-
-inline void linux_SetCursorType(uldat type) {
-  fprintf(stdOUT, "\033[?%d;%d;%dc", (int)(type & 0xFF), (int)((type >> 8) & 0xFF),
+inline void linux_SetCursorType(Tdisplay hw, uldat type) {
+  tty_driver *self = ttydriver(hw);
+  fprintf(self->out, "\033[?%d;%d;%dc", (int)(type & 0xFF), (int)((type >> 8) & 0xFF),
           (int)((type >> 16) & 0xFF));
 }
-inline void linux_MoveToXY(udat x, udat y) {
-  fprintf(stdOUT, "\033[%d;%dH", y + 1, x + 1);
+inline void linux_MoveToXY(Tdisplay hw, udat x, udat y) {
+  tty_driver *self = ttydriver(hw);
+  fprintf(self->out, "\033[%d;%dH", y + 1, x + 1);
 }
 
 /* return tfalse if failed */
-static byte linux_InitVideo(void) {
-  Chars term = tty_TERM;
+static byte linux_InitVideo(Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
+  Chars term = self->tty_term;
 
   if (!term) {
     log(ERROR) << "      linux_InitVideo() failed: unknown terminal type.\n";
@@ -43,75 +31,63 @@ static byte linux_InitVideo(void) {
     return tfalse;
   }
 
-  if (!(tc_scr_clear = CloneStr("\033[2J"))) {
+  if (!(self->tc_scr_clear = CloneStr("\033[2J"))) {
     log(ERROR) << "      linux_InitVideo() failed: out of memory!";
     return tfalse;
   }
 
-  if (tty_use_utf8 == ttrue + ttrue) {
-    if (ttypar[0] == 6 && ttypar[1] != 3 && ttypar[1] != 4) {
-      /* plain linux console supports utf-8, and also twin >= 0.3.11 does. */
-      tty_use_utf8 = ttrue;
-    } else {
-      tty_use_utf8 = tfalse;
-
-      if (tty_charset == (uldat)-1) {
-        log(WARNING)
-            << "      linux_InitVideo() warning: this 'linux' terminal seems to be an old twin "
-               "(version <= 0.3.11) without UTF-8 support. Setting charset='ASCII'\n";
-      }
-    }
-  }
   /* clear colors, enable/disable UTF-8 mode */
   /* if UTF-8 mode is disabled, set TTY_DISPCTRL */
-  fprintf(stdOUT, "\033[0m%s", (tty_use_utf8 ? "\033[3l\033%G" : "\033%@\033[3h"));
+  fprintf(self->out, "\033[0m%s", (self->tty_use_utf8 ? "\033[3l\033%G" : "\033%@\033[3h"));
 
-  HW->FlushVideo = linux_FlushVideo;
-  HW->FlushHW = stdout_FlushHW;
+  hw->fnFlushVideo = &tty_driver::linux_FlushVideo;
+  hw->fnFlushHW = &tty_driver::FlushHW;
 
-  HW->ShowMouse = linux_ShowMouse;
-  HW->HideMouse = linux_HideMouse;
-  HW->UpdateMouseAndCursor = linux_UpdateMouseAndCursor;
+  hw->fnShowMouse = &tty_driver::linux_ShowMouse;
+  hw->fnHideMouse = &tty_driver::linux_HideMouse;
+  hw->fnUpdateMouseAndCursor = &tty_driver::linux_UpdateMouseAndCursor;
 
-  HW->DetectSize = stdin_DetectSize;
-  HW->CheckResize = stdin_CheckResize;
-  HW->Resize = stdin_Resize;
+  hw->fnDetectSize = &tty_driver::stdin_DetectSize;
+  hw->fnCheckResize = &tty_driver::stdin_CheckResize;
+  hw->fnResize = &tty_driver::stdin_Resize;
 
-  HW->HWSelectionImport = AlwaysFalse;
-  HW->HWSelectionExport = NoOp;
-  HW->HWSelectionRequest = (void (*)(Tobj, uldat))NoOp;
-  HW->HWSelectionNotify = (void (*)(uldat, e_id, Chars, Chars))NoOp;
-  HW->HWSelectionPrivate = 0;
+  hw->fnSelectionImport = NULL;
+  hw->fnSelectionExport = NULL;
+  hw->fnSelectionRequest = NULL;
+  hw->fnSelectionNotify = NULL;
+  hw->SelectionPrivate = 0;
 
-  HW->CanDragArea = linux_CanDragArea;
-  HW->DragArea = linux_DragArea;
+  hw->fnCanDragArea = &tty_driver::linux_CanDragArea;
+  hw->fnDragArea = &tty_driver::linux_DragArea;
 
-  HW->XY[0] = HW->XY[1] = -1;
-  HW->TT = (uldat)-1; /* force updating the cursor */
+  hw->XY[0] = hw->XY[1] = -1;
+  hw->TT = (uldat)-1; /* force updating the cursor */
 
-  HW->Beep = linux_Beep;
-  HW->Configure = linux_Configure;
-  HW->ConfigureKeyboard = linux_ConfigureKeyboard;
-  HW->SetPalette = linux_SetPalette;
-  HW->ResetPalette = linux_ResetPalette;
+  hw->fnBeep = &tty_driver::linux_Beep;
+  hw->fnConfigure = &tty_driver::linux_Configure;
+  hw->fnConfigureKeyboard = &tty_driver::linux_ConfigureKeyboard;
+  hw->fnSetPalette = &tty_driver::linux_SetPalette;
+  hw->fnResetPalette = &tty_driver::linux_ResetPalette;
 
-  HW->QuitVideo = linux_QuitVideo;
+  hw->fnQuitVideo = &tty_driver::linux_QuitVideo;
 
-  HW->FlagsHW |= FlHWNeedOldVideo;
-  HW->FlagsHW &= ~FlHWExpensiveFlushVideo;
-  HW->NeedHW = 0;
-  HW->merge_Threshold = 0;
+  hw->FlagsHW |= FlHWNeedOldVideo;
+  hw->FlagsHW &= ~FlHWExpensiveFlushVideo;
+  hw->NeedHW = 0;
+  hw->merge_Threshold = 0;
 
   return ttrue;
 }
 
-static void linux_QuitVideo(void) {
-  linux_MoveToXY(0, DisplayHeight - 1);
-  linux_SetCursorType(LINECURSOR);
-  /* restore original colors, TTY_DISPCTRL, alt cursor keys, keypad settings */
-  fputs("\033[0m\033[3l\033[?1l\033>\n", stdOUT);
+void tty_driver::linux_QuitVideo(Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
 
-  HW->QuitVideo = NoOp;
+  linux_MoveToXY(hw, 0, DisplayHeight - 1);
+  linux_SetCursorType(hw, LINECURSOR);
+  /* restore original colors, TTY_DISPCTRL, alt cursor keys, keypad settings */
+  fputs("\033[0m\033[3l\033[?1l\033>\n", self->out);
+
+  hw->fnQuitVideo = NULL;
 }
 
 #define CTRL_ALWAYS 0x0800f501 /* Cannot be overridden by TTY_DISPCTRL */
@@ -120,13 +96,16 @@ static void linux_QuitVideo(void) {
  * the linux console is a noisy place... kernel and daemons often write there.
  * for better results, reinit UTF-8 mode and TTY_DISPCTRL every time
  */
-#define linux_DrawStart()                                                                          \
-  (fputs(tty_use_utf8 ? "\033[3l\033%G\033[m" : "\033%@\033[3h\033[m", stdOUT),                    \
-   _col = TCOL(twhite, tblack))
+void tty_driver::linux_DrawStart(Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
 
-#define linux_DrawFinish() ((void)0)
+  fputs(self->tty_use_utf8 ? "\033[3l\033%G\033[m" : "\033%@\033[3h\033[m", self->out);
+  _col = TCOL(twhite, tblack);
+}
 
-inline void linux_SetColor(tcolor col) {
+#define linux_DrawFinish(hw) ((void)0)
+
+void tty_driver::linux_SetColor(Tdisplay hw, tcolor col) {
   const byte fg = TrueColorToPalette16(TCOLFG(col));
   const byte bg = TrueColorToPalette16(TCOLBG(col));
   const byte _fg = TrueColorToPalette16(TCOLFG(_col));
@@ -175,10 +154,12 @@ inline void linux_SetColor(tcolor col) {
     --colp;
   *colp++ = 'm';
 
-  fwrite(colbuf, 1, colp - colbuf, stdOUT);
+  tty_driver *self = ttydriver(hw);
+  fwrite(colbuf, 1, colp - colbuf, self->out);
 }
 
-inline void linux_DrawSome(dat x, dat y, uldat len) {
+void tty_driver::linux_DrawSome(Tdisplay hw, dat x, dat y, uldat len) {
+  tty_driver *self = ttydriver(hw);
   tcell *V, *oV;
   tcolor col;
   trune r, _r;
@@ -190,126 +171,130 @@ inline void linux_DrawSome(dat x, dat y, uldat len) {
   for (; len; V++, oV++, x++, len--) {
     if (!ValidOldVideo || *V != *oV) {
       if (!sending)
-        sending = ttrue, linux_MoveToXY(x, y);
+        sending = ttrue, linux_MoveToXY(hw, x, y);
 
       col = TCOLOR(*V);
 
       if (col != _col)
-        linux_SetColor(col);
+        linux_SetColor(hw, col);
 
       r = _r = TRUNE(*V);
       if (r >= 128) {
-        if (tty_use_utf8) {
+        if (self->tty_use_utf8) {
           /* use utf-8 to output this non-ASCII char. */
-          tty_DrawRune(r);
+          DrawRune(hw, r);
           continue;
-        } else if (tty_charset_to_UTF_32[r] != r) {
-          r = tty_UTF_32_to_charset(_r);
+        } else if (self->tty_charset_to_UTF_32[r] != r) {
+          r = self->tty_UTF_32_to_charset(_r);
         }
       }
-      if (tty_use_utf8 ? (r < 32 || r == 127)
-                       : (r < 32 && ((CTRL_ALWAYS >> r) & 1)) || r == 127 || r == 128 + 27) {
+      if (self->tty_use_utf8 ? (r < 32 || r == 127)
+                             : (r < 32 && ((CTRL_ALWAYS >> r) & 1)) || r == 127 || r == 128 + 27) {
         /* can't display it */
         r = Tutf_UTF_32_to_ASCII(_r);
         if (r < 32 || r >= 127)
           r = 32;
       }
-      putc((char)r, stdOUT);
+      putc((char)r, self->out);
     } else
       sending = tfalse;
   }
 }
 
-inline void linux_DrawTCell(dat x, dat y, tcell V) {
+void tty_driver::linux_DrawTCell(Tdisplay hw, dat x, dat y, tcell V) {
   trune r, _r;
 
-  linux_MoveToXY(x, y);
+  linux_MoveToXY(hw, x, y);
 
-  if (TCOLOR(V) != _col)
-    linux_SetColor(TCOLOR(V));
+  if (TCOLOR(V) != _col) {
+    linux_SetColor(hw, TCOLOR(V));
+  }
 
+  tty_driver *self = ttydriver(hw);
   r = _r = TRUNE(V);
   if (r >= 128) {
-    if (tty_use_utf8) {
+    if (self->tty_use_utf8) {
       /* use utf-8 to output this non-ASCII char. */
-      tty_DrawRune(r);
+      DrawRune(hw, r);
       return;
-    } else if (tty_charset_to_UTF_32[r] != r) {
-      r = tty_UTF_32_to_charset(_r);
+    } else if (self->tty_charset_to_UTF_32[r] != r) {
+      r = self->tty_UTF_32_to_charset(_r);
     }
   }
-  if (tty_use_utf8 ? (r < 32 || r == 127)
-                   : (r < 32 && ((CTRL_ALWAYS >> r) & 1)) || r == 127 || r == 128 + 27) {
+  if (self->tty_use_utf8 ? (r < 32 || r == 127)
+                         : (r < 32 && ((CTRL_ALWAYS >> r) & 1)) || r == 127 || r == 128 + 27) {
     /* can't display it */
     r = Tutf_UTF_32_to_ASCII(_r);
     if (r < 32 || r >= 127)
       r = 32;
   }
-  putc((char)r, stdOUT);
+  putc((char)r, self->out);
 }
 
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.
  * so we have linux_ and termcap_ versions, not GPM_ ones... */
-static void linux_ShowMouse(void) {
+void tty_driver::linux_ShowMouse(Tdisplay hw) {
   uldat pos =
-      (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * (ldat)DisplayWidth;
+      (hw->Last_x = hw->MouseState.x) + (hw->Last_y = hw->MouseState.y) * (ldat)DisplayWidth;
   tcell h = Video[pos];
   tcolor c = ~TCOLOR(h) ^ TCOL(thigh, thigh);
 
-  linux_DrawTCell(HW->MouseState.x, HW->MouseState.y, TCELL(c, TRUNE(h)));
+  linux_DrawTCell(hw, hw->MouseState.x, hw->MouseState.y, TCELL(c, TRUNE(h)));
 
   /* store current cursor state for correct updating */
-  HW->XY[1] = HW->MouseState.y;
-  HW->XY[0] = HW->MouseState.x + 1;
+  hw->XY[1] = hw->MouseState.y;
+  hw->XY[0] = hw->MouseState.x + 1;
   /* linux terminals have VT100 wrapglitch */
-  if (HW->XY[0] == HW->X)
-    HW->XY[0]--;
-  setFlush();
+  if (hw->XY[0] == hw->X) {
+    hw->XY[0]--;
+  }
+  hw->setFlush();
 }
 
-static void linux_HideMouse(void) {
-  uldat pos = HW->Last_x + HW->Last_y * (ldat)DisplayWidth;
+void tty_driver::linux_HideMouse(Tdisplay hw) {
+  uldat pos = hw->Last_x + hw->Last_y * (ldat)DisplayWidth;
 
-  linux_DrawTCell(HW->Last_x, HW->Last_y, Video[pos]);
+  linux_DrawTCell(hw, hw->Last_x, hw->Last_y, Video[pos]);
 
   /* store current cursor state for correct updating */
-  HW->XY[1] = HW->Last_y;
-  HW->XY[0] = HW->Last_x + 1;
+  hw->XY[1] = hw->Last_y;
+  hw->XY[0] = hw->Last_x + 1;
   /* linux terminals have VT100 wrapglitch */
-  if (HW->XY[0] == HW->X)
-    HW->XY[0]--;
-  setFlush();
+  if (hw->XY[0] == hw->X) {
+    hw->XY[0]--;
+  }
+  hw->setFlush();
 }
 
-static void linux_UpdateCursor(void) {
+void tty_driver::linux_UpdateCursor(Tdisplay hw) {
   if (!ValidOldVideo ||
-      (CursorType != NOCURSOR && (CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
-    linux_MoveToXY(HW->XY[0] = CursorX, HW->XY[1] = CursorY);
-    setFlush();
+      (CursorType != NOCURSOR && (CursorX != hw->XY[0] || CursorY != hw->XY[1]))) {
+    linux_MoveToXY(hw, hw->XY[0] = CursorX, hw->XY[1] = CursorY);
+    hw->setFlush();
   }
-  if (!ValidOldVideo || CursorType != HW->TT) {
-    linux_SetCursorType(HW->TT = CursorType);
-    setFlush();
+  if (!ValidOldVideo || CursorType != hw->TT) {
+    linux_SetCursorType(hw, hw->TT = CursorType);
+    hw->setFlush();
   }
 }
 
-static void linux_UpdateMouseAndCursor(void) {
-  if ((HW->FlagsHW & FlHWSoftMouse) && (HW->FlagsHW & FlHWChangedMouseFlag)) {
-    HW->HideMouse();
-    HW->ShowMouse();
-    HW->FlagsHW &= ~FlHWChangedMouseFlag;
+void tty_driver::linux_UpdateMouseAndCursor(Tdisplay hw) {
+  if ((hw->FlagsHW & FlHWSoftMouse) && (hw->FlagsHW & FlHWChangedMouseFlag)) {
+    hw->HideMouse();
+    hw->ShowMouse();
+    hw->FlagsHW &= ~FlHWChangedMouseFlag;
   }
 
-  linux_UpdateCursor();
+  linux_UpdateCursor(hw);
 }
 
-static void linux_FlushVideo(void) {
+void tty_driver::linux_FlushVideo(Tdisplay hw) {
   dat i, j, start, end, XY[2] = {0, 0};
   byte FlippedVideo = tfalse, FlippedOldVideo = tfalse;
   tcell savedOldVideo;
 
   if (!ChangedVideoFlag) {
-    HW->UpdateMouseAndCursor();
+    hw->UpdateMouseAndCursor();
     linux_DrawFinish();
     return;
   }
@@ -317,162 +302,172 @@ static void linux_FlushVideo(void) {
   /* hide the mouse if needed */
 
   /* first, check the old mouse position */
-  if (HW->FlagsHW & FlHWSoftMouse) {
-    if (HW->FlagsHW & FlHWChangedMouseFlag) {
+  if (hw->FlagsHW & FlHWSoftMouse) {
+    if (hw->FlagsHW & FlHWChangedMouseFlag) {
       /* dirty the old mouse position, so that it will be overwritten */
 
       /*
        * with multi-display this is a hack, but since OldVideo gets restored
        * below *BEFORE* returning from linux_FlushVideo(), that's ok.
        */
-      DirtyVideo(HW->Last_x, HW->Last_y, HW->Last_x, HW->Last_y);
+      DirtyVideo(hw->Last_x, hw->Last_y, hw->Last_x, hw->Last_y);
       if (ValidOldVideo) {
         FlippedOldVideo = ttrue;
-        savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth];
-        OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth] =
-            ~Video[HW->Last_x + HW->Last_y * (ldat)DisplayWidth];
+        savedOldVideo = OldVideo[hw->Last_x + hw->Last_y * (ldat)DisplayWidth];
+        OldVideo[hw->Last_x + hw->Last_y * (ldat)DisplayWidth] =
+            ~Video[hw->Last_x + hw->Last_y * (ldat)DisplayWidth];
       }
     }
 
-    i = HW->MouseState.x;
-    j = HW->MouseState.y;
+    i = hw->MouseState.x;
+    j = hw->MouseState.y;
     /*
      * instead of calling ShowMouse(),
      * we flip the new mouse position in Video[] and dirty it if necessary.
      */
-    if ((HW->FlagsHW & FlHWChangedMouseFlag) || (FlippedVideo = Plain_isDirtyVideo(i, j))) {
+    if ((hw->FlagsHW & FlHWChangedMouseFlag) || (FlippedVideo = Plain_isDirtyVideo(i, j))) {
       VideoFlip(i, j);
       if (!FlippedVideo)
         DirtyVideo(i, j, i, j);
-      HW->FlagsHW &= ~FlHWChangedMouseFlag;
+      hw->FlagsHW &= ~FlHWChangedMouseFlag;
       FlippedVideo = ttrue;
     } else
       FlippedVideo = tfalse;
   }
 
-  linux_DrawStart();
+  linux_DrawStart(hw);
   for (i = 0; i < DisplayHeight * 2; i++) {
     start = ChangedVideo[i >> 1][i & 1][0];
     end = ChangedVideo[i >> 1][i & 1][1];
 
     if (start != -1) {
       /* also keep track of cursor position */
-      linux_DrawSome(start, (XY[1] = i >> 1), (XY[0] = end) - start + 1);
+      linux_DrawSome(hw, start, (XY[1] = i >> 1), (XY[0] = end) - start + 1);
     }
   }
 
   /* store current cursor state for correct updating */
-  HW->XY[1] = XY[1];
-  if ((HW->XY[0] = XY[0] + 1) == HW->X) {
+  hw->XY[1] = XY[1];
+  if ((hw->XY[0] = XY[0] + 1) == hw->X) {
     /* linux terminals have VT100 wrapglitch */
-    HW->XY[0]--;
+    hw->XY[0]--;
   }
 
-  setFlush();
+  hw->setFlush();
 
   /* ... and this redraws the mouse */
-  if (HW->FlagsHW & FlHWSoftMouse) {
+  if (hw->FlagsHW & FlHWSoftMouse) {
     if (FlippedOldVideo)
-      OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth] = savedOldVideo;
+      OldVideo[hw->Last_x + hw->Last_y * (ldat)DisplayWidth] = savedOldVideo;
     if (FlippedVideo)
-      VideoFlip(HW->Last_x = HW->MouseState.x, HW->Last_y = HW->MouseState.y);
-    else if (HW->FlagsHW & FlHWChangedMouseFlag)
-      HW->ShowMouse();
+      VideoFlip(hw->Last_x = hw->MouseState.x, hw->Last_y = hw->MouseState.y);
+    else if (hw->FlagsHW & FlHWChangedMouseFlag)
+      hw->ShowMouse();
   }
-  linux_UpdateCursor();
+  linux_UpdateCursor(hw);
 
-  linux_DrawFinish();
+  linux_DrawFinish(hw);
 
-  HW->FlagsHW &= ~FlHWChangedMouseFlag;
+  hw->FlagsHW &= ~FlHWChangedMouseFlag;
 }
 
-static void linux_Beep(void) {
-  fputs("\033[3l\007\033[3h", stdOUT);
-  setFlush();
+void tty_driver::linux_Beep(Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
+  fputs("\033[3l\007\033[3h", self->out);
+  hw->setFlush();
 }
 
-static void linux_ConfigureKeyboard(udat resource, byte todefault, udat value) {
+void tty_driver::linux_ConfigureKeyboard(Tdisplay hw, udat resource, byte todefault, udat value) {
+  tty_driver *self = ttydriver(hw);
   switch (resource) {
   case HW_KBDAPPLIC:
-    fputs(todefault || !value ? "\033>" : "\033=", stdOUT);
-    setFlush();
+    fputs(todefault || !value ? "\033>" : "\033=", self->out);
+    hw->setFlush();
     break;
   case HW_ALTCURSKEYS:
-    fputs(todefault || !value ? "\033[?1l" : "\033[?1h", stdOUT);
-    setFlush();
+    fputs(todefault || !value ? "\033[?1l" : "\033[?1h", self->out);
+    hw->setFlush();
     break;
   }
 }
 
-static void linux_Configure(udat resource, byte todefault, udat value) {
+void tty_driver::linux_Configure(Tdisplay hw, udat resource, byte todefault, udat value) {
+  tty_driver *self = ttydriver(hw);
   switch (resource) {
   case HW_KBDAPPLIC:
   case HW_ALTCURSKEYS:
-    HW->ConfigureKeyboard(resource, todefault, value);
+    hw->ConfigureKeyboard(resource, todefault, value);
     break;
   case HW_BELLPITCH:
-    if (todefault)
-      fputs("\033[10]", stdOUT);
-    else
-      fprintf(stdOUT, "\033[10;%hd]", value);
-    setFlush();
+    if (todefault) {
+      fputs("\033[10]", self->out);
+    } else {
+      fprintf(self->out, "\033[10;%hd]", value);
+    }
+    hw->setFlush();
     break;
   case HW_BELLDURATION:
-    if (todefault)
-      fputs("\033[11]", stdOUT);
-    else
-      fprintf(stdOUT, "\033[11;%hd]", value);
-    setFlush();
+    if (todefault) {
+      fputs("\033[11]", self->out);
+    } else {
+      fprintf(self->out, "\033[11;%hd]", value);
+    }
+    hw->setFlush();
     break;
   case HW_MOUSEMOTIONEVENTS:
-    HW->ConfigureMouse(resource, todefault, value);
+    hw->ConfigureMouse(resource, todefault, value);
     break;
   default:
     break;
   }
 }
 
-static void linux_SetPalette(udat N, udat R, udat G, udat B) {
-  fprintf(stdOUT, "\033]P%1hx%02hx%02hx%02hx", N, R, G, B);
-  setFlush();
+void tty_driver::linux_SetPalette(Tdisplay hw, udat N, udat R, udat G, udat B) {
+  tty_driver *self = ttydriver(hw);
+  fprintf(self->out, "\033]P%1hx%02hx%02hx%02hx", N, R, G, B);
+  hw->setFlush();
 }
 
-static void linux_ResetPalette(void) {
-  fputs("\033]R", stdOUT);
-  setFlush();
+void tty_driver::linux_ResetPalette(Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
+  fputs("\033]R", self->out);
+  hw->setFlush();
 }
 
-static byte linux_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
+bool tty_driver::linux_CanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
+                                   dat DstUp) {
   /*
    * tty scrolling capabilities are very limited...
    * do not even consider using tty `ESC [ <n> M' (delete_line)
    * or `ESC [ <n> L' (insert_line) as they are *SLOW*,
    * so the only usable one is '\n' (newline).
    */
-  return Left == 0 && Rgt == HW->X - 1 && Dwn == HW->Y - 1 && DstUp == 0;
+  return Left == 0 && Rgt == hw->X - 1 && Dwn == hw->Y - 1 && DstUp == 0;
 }
 
-static void linux_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
+void tty_driver::linux_DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
+                                dat DstUp) {
+  FILE *out = ttydriver(hw)->out;
   udat delta = Up - DstUp;
 
-  HW->HideMouse();
-  HW->FlagsHW |= FlHWChangedMouseFlag;
+  hw->HideMouse();
+  hw->FlagsHW |= FlHWChangedMouseFlag;
 
-  fprintf(stdOUT, "%s\033[m\033[%d;1H", /* hide cursor, reset color, go to last line */
-          HW->TT == NOCURSOR ? "" : "\033[?1c", HW->Y);
+  fprintf(out, "%s\033[m\033[%d;1H", /* hide cursor, reset color, go to last line */
+          hw->TT == NOCURSOR ? "" : "\033[?1c", hw->Y);
 
-  while (delta--)
-    putc('\n', stdOUT);
-
-  if (HW->FlushVideo == linux_FlushVideo)
-    setFlush();
-  else
-    fflush(stdOUT);
-
+  while (delta--) {
+    putc('\n', out);
+  }
+  if (hw->fnFlushVideo == &tty_driver::linux_FlushVideo) {
+    hw->setFlush();
+  } else {
+    fflush(out);
+  }
   /* store actual cursor state for correct updating */
-  HW->XY[0] = 0;
-  HW->XY[1] = HW->Y - 1;
-  HW->TT = NOCURSOR;
+  hw->XY[0] = 0;
+  hw->XY[1] = hw->Y - 1;
+  hw->TT = NOCURSOR;
 
   /*
    * Now the last trick: tty scroll erased the part
@@ -481,5 +476,5 @@ static void linux_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat 
    * you are supposed to redraw the original position with whatever
    * is under the obj ect you dragged away, but better safe than sorry.
    */
-  NeedRedrawVideo(0, DstUp + (Dwn - Up) + 1, HW->X - 1, HW->Y - 1);
+  NeedRedrawVideo(hw, 0, DstUp + (Dwn - Up) + 1, hw->X - 1, hw->Y - 1);
 }

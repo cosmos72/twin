@@ -13,8 +13,10 @@
 #endif
 
 #if HW_X_DRIVER == HW_X11
+#define XDRIVER x11_driver
 #define XSYM(name) x11_##name
 #elif HW_X_DRIVER == HW_XFT
+#define XDRIVER xft_driver
 #define XSYM(name) xft_##name
 #else
 #error invalid HW_X_DRIVER value: must be either HW_X11 or HW_XFT
@@ -22,4 +24,3 @@
 
 #define XSTR_(s) #s
 #define XSTR(s) XSTR_(s)
-#define XSYM_STR(s) XSTR(XSYM(s))

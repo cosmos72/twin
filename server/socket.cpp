@@ -1924,7 +1924,7 @@ static uldat GetRandomData(void) {
   return len;
 }
 
-static byte CreateAuth(char *path) {
+static bool CreateAuth(char *path) {
   int fd, got = -1;
   uldat len = 0;
 
@@ -1936,25 +1936,26 @@ static byte CreateAuth(char *path) {
       for (len = 0; len < AuthLen; len += got) {
         got = write(fd, AuthData + len, AuthLen - len);
         if (got < 0) {
-          if (errno == EINTR || errno == EWOULDBLOCK)
+          if (errno == EINTR || errno == EWOULDBLOCK) {
             got = 0;
-          else
+          } else {
             break;
+          }
         }
       }
     close(fd);
   }
 
-  return len == AuthLen ? ttrue : Error(SYSERROR);
+  return len == AuthLen ? true : Error(SYSERROR);
 }
 
-static byte sockInitAuth(void) {
+static bool sockInitAuth(void) {
   int fd, got;
   uldat len;
 
-  if (!HOME)
-    return tfalse;
-
+  if (!HOME) {
+    return false;
+  }
   len = HOME.size();
   len = Min2(len, TotalLen - 11);
   CopyMem(HOME.data(), AuthData, len);
@@ -1975,10 +1976,10 @@ static byte sockInitAuth(void) {
     }
   }
   close(fd);
-  if (len < AuthLen)
+  if (len < AuthLen) {
     return CreateAuth(AuthData);
-
-  return ttrue;
+  }
+  return true;
 }
 
 static byte SendChallenge(void) {

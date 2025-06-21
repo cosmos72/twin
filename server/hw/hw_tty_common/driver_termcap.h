@@ -4,37 +4,37 @@
 
 #include "palette.h"
 
-inline void termcap_SetCursorType(uldat type) {
-  fprintf(stdOUT, "%s", (type & 0xFFFFFFl) == NOCURSOR ? tc_cursor_off : tc_cursor_on);
+void tty_driver::termcap_SetCursorType(Tdisplay hw, uldat type) {
+  tty_driver *self = ttydriver(hw);
+  fputs((type & 0xFFFFFFl) == NOCURSOR ? self->tc[tc_seq_cursor_off] : self->tc[tc_seq_cursor_on],
+        self->out);
 }
-inline void termcap_MoveToXY(udat x, udat y) {
-  fputs(tgoto(tc_cursor_goto, x, y), stdOUT);
+void tty_driver::termcap_MoveToXY(Tdisplay hw, udat x, udat y) {
+  tty_driver *self = ttydriver(hw);
+  fputs(tgoto(self->tc[tc_seq_cursor_goto], x, y), self->out);
 }
 
-static udat termcap_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen,
-                              const char **ret) {
+udat tty_driver::termcap_LookupKey(Tdisplay hw, udat *ShiftFlags, byte *slen, char *s, byte *retlen,
+                                   const char **ret) {
   struct linux_keys {
     udat k;
     byte l;
     const char *s;
   };
-  static struct linux_keys const linux_key[] = {
-#define IS(k, l, s) {CAT(TW_, k), l, s},
-      IS(F1, 4, "\033[[A") IS(F2, 4, "\033[[B") IS(F3, 4, "\033[[C") IS(F4, 4, "\033[[D")
-          IS(F5, 4, "\033[[E") IS(F6, 5, "\033[17~") IS(F7, 5, "\033[18~") IS(F8, 5, "\033[19~")
-              IS(F9, 5, "\033[20~") IS(F10, 5, "\033[21~") IS(F11, 5, "\033[23~")
-                  IS(F12, 5, "\033[24~")
-
-                      IS(Pause, 3, "\033[P") IS(Home, 4, "\033[1~") IS(End, 4, "\033[4~")
-                          IS(Delete, 4, "\033[3~") IS(Insert, 4, "\033[2~") IS(Next, 4, "\033[6~")
-                              IS(Prior, 4, "\033[5~")
-
-                                  IS(Left, 3, "\033[D") IS(Up, 3, "\033[A") IS(Right, 3, "\033[C")
-                                      IS(Down, 3, "\033[B")
+  static const linux_keys keys[] = {
+#define IS(k, l, s) {CAT(TW_, k), l, s}
+      IS(F1, 4, "\033[[A"),     IS(F2, 4, "\033[[B"),     IS(F3, 4, "\033[[C"),
+      IS(F4, 4, "\033[[D"),     IS(F5, 4, "\033[[E"),     IS(F6, 5, "\033[17~"),
+      IS(F7, 5, "\033[18~"),    IS(F8, 5, "\033[19~"),    IS(F9, 5, "\033[20~"),
+      IS(F10, 5, "\033[21~"),   IS(F11, 5, "\033[23~"),   IS(F12, 5, "\033[24~"),
+      IS(Pause, 3, "\033[P"),   IS(Home, 4, "\033[1~"),   IS(End, 4, "\033[4~"),
+      IS(Delete, 4, "\033[3~"), IS(Insert, 4, "\033[2~"), IS(Next, 4, "\033[6~"),
+      IS(Prior, 4, "\033[5~"),  IS(Left, 3, "\033[D"),    IS(Up, 3, "\033[A"),
+      IS(Right, 3, "\033[C"),   IS(Down, 3, "\033[B"),
 #undef IS
   };
-  struct linux_keys const *lk;
-
+  tty_driver *self = ttydriver(hw);
+  const linux_keys *lk;
   char **key;
   byte keylen, len = *slen;
 
@@ -55,9 +55,9 @@ static udat termcap_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retle
       return (udat)s[1];
     }
 
-    for (key = tc_cap + tc_key_first; key < tc_cap + tc_key_last; key++) {
+    for (key = self->tc + tc_key_first; key < self->tc + tc_key_last; key++) {
       if (*key && **key && (keylen = strlen(*key)) <= len && !memcmp(*key, s, keylen)) {
-        lk = linux_key + (key - &tc_cap[tc_key_first]);
+        lk = keys + (key - &self->tc[tc_key_first]);
         *slen = keylen;
         *retlen = lk->l;
         *ret = lk->s;
@@ -113,28 +113,33 @@ static char *termcap_extract(const char *cap, char **dest) {
   return *dest = CloneStr(buf);
 }
 
-static void termcap_cleanup(void) {
-  char **n;
-  for (n = tc_cap; n < tc_cap + tc_cap_N; n++) {
-    if (*n)
+void tty_driver::termcap_Cleanup(Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
+  for (char **n = self->tc; n < self->tc + tc_seq_N; n++) {
+    if (*n) {
       FreeMem(*n);
+      *n = NULL;
+    }
   }
 }
 
-static void fixup_colorbug(void) {
-  uldat len = strlen(tc_attr_off);
+void tty_driver::termcap_FixColorBug(Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
+  char *attr_off = self->tc[tc_seq_attr_off];
+  uldat len = strlen(attr_off);
   char *s = (char *)AllocMem(len + 9);
   if (s) {
-    CopyMem(tc_attr_off, s, len);
+    CopyMem(attr_off, s, len);
     CopyMem("\033[37;40m", s + len, 9);
-    FreeMem(tc_attr_off);
-    tc_attr_off = s;
+    FreeMem(attr_off);
+    self->tc[tc_seq_attr_off] = s;
   }
 }
 
-static byte termcap_InitVideo(void) {
-  const char *term = tty_TERM.data(); // guaranteed to be '\0' terminated
-  const char *tc_name[tc_cap_N + 1] = {"cl", "cm", "ve", "vi", "md", "mb", "me", "ks", "ke",
+bool tty_driver::termcap_InitVideo(Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
+  const char *term = self->tty_term.data(); // guaranteed to be '\0' terminated
+  const char *tc_name[tc_seq_N + 1] = {"cl", "cm", "ve", "vi", "md", "mb", "me", "ks", "ke",
                                        "bl", "as", "ae", "k1", "k2", "k3", "k4", "k5", "k6",
                                        "k7", "k8", "k9", "k;", "F1", "F2", "&7", "kh", "@7",
                                        "kD", "kI", "kN", "kP", "kl", "ku", "kr", "kd", NULL};
@@ -144,7 +149,7 @@ static byte termcap_InitVideo(void) {
 
   if (!term) {
     log(ERROR) << "      termcap_InitVideo() failed: unknown terminal type.\n";
-    return tfalse;
+    return false;
   }
 
   switch (tgetent(tcbuf, term)) {
@@ -154,115 +159,124 @@ static byte termcap_InitVideo(void) {
     log(ERROR) << "      termcap_InitVideo() failed: no entry for `" << Chars::from_c(term)
                << "' in the terminal database.\n"
                   "      Please set your $TERM environment variable correctly.\n";
-    return tfalse;
+    return false;
   default:
     log(ERROR) << "      termcap_InitVideo() failed: system call error in tgetent(): "
                << Chars::from_c(strerror(errno)) << "\n";
-    return tfalse;
+    return false;
   }
 
-  tty_is_xterm = !strncmp(term, "xterm", 5);
+  self->tty_is_xterm = !strncmp(term, "xterm", 5);
 
-  /* do not use alternate character set mode, i.e. "as" and "ae" ... it causes more problems than it
-   * solves */
+  /* do not use alternate character set mode, i.e. "as" and "ae" ...
+   * it causes more problems than it solves */
   tc_name[tc_seq_charset_start] = tc_name[tc_seq_charset_end] = "";
-  tc_charset_start = tc_charset_end = NULL;
+  self->tc[tc_seq_charset_start] = self->tc[tc_seq_charset_end] = NULL;
 
-  for (n = tc_name, d = tc_cap; *n; n++, d++) {
+  for (n = tc_name, d = self->tc; *n; n++, d++) {
     if (**n && !termcap_extract(*n, d)) {
       log(ERROR) << "      termcap_InitVideo() failed: Out of memory!\n";
-      termcap_cleanup();
-      return tfalse;
+      termcap_Cleanup(hw);
+      return false;
     }
   }
 
-  if (!*tc_cursor_goto) {
+  if (!*self->tc[tc_seq_cursor_goto]) {
     log(ERROR) << "      termcap_InitVideo() failed: terminal lacks `cursor goto' capability\n";
-    termcap_cleanup();
-    return tfalse;
+    termcap_Cleanup(hw);
+    return false;
   }
 
-  if (tty_use_utf8 == ttrue + ttrue) {
-    /* cannot really autodetect an utf8-capable terminal... use a whitelist */
-    uldat termlen = strlen(term);
-    tty_use_utf8 = ((termlen == 5 && (!memcmp(term, "xterm", 5) || !memcmp(term, "linux", 5))) ||
-                    (termlen >= 6 && !memcmp(term, "xterm-", 6)) ||
-                    (termlen >= 12 && !memcmp(term, "rxvt-unicode", 12)));
-  }
-  if (tty_use_utf8 == ttrue) {
-    if (!(tc_charset_start = CloneStr("\033%G")) || !(tc_charset_end = CloneStr("\033%@"))) {
+  if (self->tty_use_utf8) {
+    if (!(self->tc[tc_seq_charset_start] = CloneStr("\033%G")) ||
+        !(self->tc[tc_seq_charset_end] = CloneStr("\033%@"))) {
       log(ERROR) << "      termcap_InitVideo() failed: Out of memory!\n";
-      termcap_cleanup();
-      return tfalse;
+      termcap_Cleanup(hw);
+      return false;
     }
   }
 
-  wrapglitch = tgetflag("xn");
-  if (colorbug)
-    fixup_colorbug();
+  self->wrapglitch = tgetflag("xn");
+  if (self->colorbug) {
+    termcap_FixColorBug(hw);
+  }
+  fputs(self->tc[tc_seq_attr_off], self->out);
+  if (self->tc[tc_seq_charset_start]) {
+    fputs(self->tc[tc_seq_charset_start], self->out);
+  }
+  if (self->tty_is_xterm) {
+    fputs("\033[?1h", self->out);
+  }
 
-  fprintf(stdOUT, "%s%s%s", tc_attr_off, (tc_charset_start ? (const char *)tc_charset_start : ""),
-          (tty_is_xterm ? "\033[?1h" : ""));
+  hw->fnFlushVideo = &tty_driver::termcap_FlushVideo;
+  hw->fnFlushHW = &tty_driver::FlushHW;
 
-  HW->FlushVideo = termcap_FlushVideo;
-  HW->FlushHW = stdout_FlushHW;
+  hw->fnShowMouse = &tty_driver::termcap_ShowMouse;
+  hw->fnHideMouse = &tty_driver::termcap_HideMouse;
+  hw->fnUpdateMouseAndCursor = &tty_driver::termcap_UpdateMouseAndCursor;
 
-  HW->ShowMouse = termcap_ShowMouse;
-  HW->HideMouse = termcap_HideMouse;
-  HW->UpdateMouseAndCursor = termcap_UpdateMouseAndCursor;
+  hw->fnDetectSize = &tty_driver::stdin_DetectSize;
+  hw->fnCheckResize = &tty_driver::stdin_CheckResize;
+  hw->fnResize = &tty_driver::stdin_Resize;
 
-  HW->DetectSize = stdin_DetectSize;
-  HW->CheckResize = stdin_CheckResize;
-  HW->Resize = stdin_Resize;
+  hw->fnSelectionImport = NULL;
+  hw->fnSelectionExport = NULL;
+  hw->fnSelectionRequest = NULL;
+  hw->fnSelectionNotify = NULL;
+  hw->SelectionPrivate = 0;
 
-  HW->HWSelectionImport = AlwaysFalse;
-  HW->HWSelectionExport = NoOp;
-  HW->HWSelectionRequest = (void (*)(Tobj, uldat))NoOp;
-  HW->HWSelectionNotify = (void (*)(uldat, e_id, Chars, Chars))NoOp;
-  HW->HWSelectionPrivate = 0;
+  hw->fnCanDragArea = &tty_driver::termcap_CanDragArea;
+  hw->fnDragArea = &tty_driver::termcap_DragArea;
 
-  HW->CanDragArea = termcap_CanDragArea;
-  HW->DragArea = termcap_DragArea;
+  hw->XY[0] = hw->XY[1] = -1;
+  hw->TT = -1; /* force updating the cursor */
 
-  HW->XY[0] = HW->XY[1] = -1;
-  HW->TT = -1; /* force updating the cursor */
+  hw->fnBeep = &tty_driver::termcap_Beep;
+  hw->fnConfigure = &tty_driver::termcap_Configure;
+  hw->fnConfigureKeyboard = &tty_driver::termcap_ConfigureKeyboard;
+  hw->fnSetPalette = NULL;
+  hw->fnResetPalette = NULL;
 
-  HW->Beep = termcap_Beep;
-  HW->Configure = termcap_Configure;
-  HW->ConfigureKeyboard = termcap_ConfigureKeyboard;
-  HW->SetPalette = (void (*)(udat, udat, udat, udat))NoOp;
-  HW->ResetPalette = NoOp;
+  hw->fnQuitVideo = termcap_QuitVideo;
 
-  HW->QuitVideo = termcap_QuitVideo;
+  hw->FlagsHW |= FlHWNeedOldVideo;
+  hw->FlagsHW &= ~FlHWExpensiveFlushVideo;
+  hw->NeedHW = 0;
+  hw->merge_Threshold = 0;
 
-  HW->FlagsHW |= FlHWNeedOldVideo;
-  HW->FlagsHW &= ~FlHWExpensiveFlushVideo;
-  HW->NeedHW = 0;
-  HW->merge_Threshold = 0;
+  self->fnLookupKey = &tty_driver::termcap_LookupKey;
 
-  LookupKey = termcap_LookupKey;
-
-  return ttrue;
+  return true;
 }
 
-static void termcap_QuitVideo(void) {
+void tty_driver::termcap_QuitVideo(Tdisplay hw) {
+  termcap_MoveToXY(hw, 0, DisplayHeight - 1);
+  termcap_SetCursorType(hw, LINECURSOR);
 
-  termcap_MoveToXY(0, DisplayHeight - 1);
-  termcap_SetCursorType(LINECURSOR);
+  tty_driver *self = ttydriver(hw);
+
   /* reset colors and charset */
-  fprintf(stdOUT, "%s%s", tc_attr_off, tc_charset_end ? tc_charset_end : "");
+  fputs(self->tc[tc_seq_attr_off], self->out);
+  if (self->tc[tc_seq_charset_end]) {
+    fputs(self->tc[tc_seq_charset_end], self->out);
+  }
 
   /* restore original alt cursor keys, keypad settings */
-  HW->Configure(HW_KBDAPPLIC, ttrue, 0);
-  HW->Configure(HW_ALTCURSKEYS, ttrue, 0);
+  hw->Configure(HW_KBDAPPLIC, ttrue, 0);
+  hw->Configure(HW_ALTCURSKEYS, ttrue, 0);
 
-  termcap_cleanup();
+  termcap_Cleanup(hw);
 
-  HW->QuitVideo = NoOp;
+  hw->fnQuitVideo = NULL;
 }
 
-#define termcap_DrawStart() (fputs(tc_attr_off, stdOUT), _col = TCOL(twhite, tblack))
-#define termcap_DrawFinish() ((void)0)
+inline void termcap_DrawStart(Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
+  fputs(self->tc[tc_seq_attr_off], self->out);
+  _col = TCOL(twhite, tblack);
+}
+
+#define termcap_DrawFinish(hw) ((void)0)
 
 inline char *termcap_CopyAttr(const char *src, char *dst) {
   while ((*dst = *src) != '\0') {
@@ -272,9 +286,10 @@ inline char *termcap_CopyAttr(const char *src, char *dst) {
   return dst;
 }
 
-static void termcap_SetColor8(tcolor col) {
+void tty_driver::termcap_SetColor8(Tdisplay hw, tcolor col) {
   char colbuf[80];
   char *colp = colbuf;
+  tty_driver *self = ttydriver(hw);
   byte fg = TrueColorToPalette16(TCOLFG(col));
   byte bg = TrueColorToPalette16(TCOLBG(col));
   byte _fg = TrueColorToPalette16(TCOLFG(_col));
@@ -291,12 +306,12 @@ static void termcap_SetColor8(tcolor col) {
   if (fg_high != _fg_high) {
     if ((_fg_high && !fg_high)) {
       /* cannot turn off standout, reset everything */
-      colp = termcap_CopyAttr(tc_attr_off, colp);
+      colp = termcap_CopyAttr(self->tc[tc_seq_attr_off], colp);
       _fg = 7;
       _bg = 0;
     }
     if (fg_high && !_fg_high) {
-      colp = termcap_CopyAttr(tc_bold_on, colp);
+      colp = termcap_CopyAttr(self->tc[tc_seq_bold_on], colp);
     }
   }
   fg &= 7;
@@ -322,7 +337,7 @@ static void termcap_SetColor8(tcolor col) {
       colp[-1] = 'm';
     }
   }
-  fwrite(colbuf, 1, colp - colbuf, stdOUT);
+  fwrite(colbuf, 1, colp - colbuf, self->out);
 }
 
 inline byte termcap_div10(byte value) {
@@ -360,7 +375,7 @@ static char *termcap_print_colon_rgb(char *dst, trgb rgb) {
   return dst;
 }
 
-static void termcap_SetColor256(tcolor col) {
+void tty_driver::termcap_SetColor256(Tdisplay hw, tcolor col) {
   char colbuf[] = "\033[38;5;xxx;48;5;xxxm";
   char *colp = colbuf + 2;
   byte fg = TrueColorToPalette256(TCOLFG(col));
@@ -387,10 +402,11 @@ static void termcap_SetColor256(tcolor col) {
     colp = termcap_print_colon_number(colp, bg);
   }
   *colp++ = 'm';
-  fwrite(colbuf, 1, colp - colbuf, stdOUT);
+  tty_driver *self = ttydriver(hw);
+  fwrite(colbuf, 1, colp - colbuf, self->out);
 }
 
-static void termcap_SetColor16M(tcolor col) {
+void tty_driver::termcap_SetColor16M(Tdisplay hw, tcolor col) {
   char colbuf[] = "\033[38;2;xxx;xxx;xxx;48;2;xxx;xxx;xxxm";
   char *colp = colbuf + 2;
   trgb fg = TCOLFG(col);
@@ -417,31 +433,34 @@ static void termcap_SetColor16M(tcolor col) {
     colp = termcap_print_colon_rgb(colp, bg);
   }
   *colp++ = 'm';
-  fwrite(colbuf, 1, colp - colbuf, stdOUT);
+  tty_driver *self = ttydriver(hw);
+  fwrite(colbuf, 1, colp - colbuf, self->out);
 }
 
-static void termcap_SetColor(tcolor col) {
-  switch (tty_palettemode(paletteN)) {
-  case tty_palette16M:
-    termcap_SetColor16M(col);
+void tty_driver::termcap_SetColor(Tdisplay hw, tcolor col) {
+  tty_driver *self = ttydriver(hw);
+  switch (tty_colormode(self->colormode)) {
+  case tty_color16M:
+    termcap_SetColor16M(hw, col);
     break;
-  case tty_palette256:
-    termcap_SetColor256(col);
+  case tty_color256:
+    termcap_SetColor256(hw, col);
     break;
   default:
-    termcap_SetColor8(col);
+    termcap_SetColor8(hw, col);
     break;
   }
 }
 
-inline void termcap_DrawSome(dat x, dat y, uldat len) {
-  uldat delta = x + y * (uldat)DisplayWidth;
+void tty_driver::termcap_DrawSome(Tdisplay hw, dat x, dat y, uldat len) {
+  tty_driver *self = ttydriver(hw);
   tcell *V, *oV;
   tcolor col;
   trune c, _c;
-  byte sending = tfalse;
+  uldat delta = x + y * (uldat)DisplayWidth;
+  bool sending = false;
 
-  if (!wrapglitch && delta + len >= (uldat)DisplayWidth * DisplayHeight)
+  if (!self->wrapglitch && delta + len >= (uldat)DisplayWidth * DisplayHeight)
     len = (uldat)DisplayWidth * DisplayHeight - delta - 1;
 
   V = Video + delta;
@@ -449,265 +468,274 @@ inline void termcap_DrawSome(dat x, dat y, uldat len) {
 
   for (; len; V++, oV++, x++, len--) {
     if (!ValidOldVideo || *V != *oV) {
-      if (!sending)
-        sending = ttrue, termcap_MoveToXY(x, y);
-
+      if (!sending) {
+        sending = true;
+        termcap_MoveToXY(hw, x, y);
+      }
       col = TCOLOR(*V);
-
-      if (col != _col)
-        termcap_SetColor(col);
-
+      if (col != _col) {
+        termcap_SetColor(hw, col);
+      }
       c = _c = TRUNE(*V);
       if (c >= 128) {
-        if (tty_use_utf8) {
+        if (self->tty_use_utf8) {
           /* use utf-8 to output this non-ASCII char */
-          tty_DrawRune(_c);
+          DrawRune(hw, _c);
           continue;
-        } else if (tty_charset_to_UTF_32[c] != c) {
-          c = tty_UTF_32_to_charset(_c);
+        } else if (self->tty_charset_to_UTF_32[c] != c) {
+          c = self->tty_UTF_32_to_charset(_c);
         }
       }
       if (c < 32 || c == 127 || c == 128 + 27) {
         /* can't display it */
         c = Tutf_UTF_32_to_ASCII(_c);
-        if (c < 32 || c >= 127)
+        if (c < 32 || c >= 127) {
           c = 32;
+        }
       }
-      putc((char)c, stdOUT);
-    } else
-      sending = tfalse;
+      putc((char)c, self->out);
+    } else {
+      sending = false;
+    }
   }
 }
 
-inline void termcap_DrawTCell(dat x, dat y, tcell V) {
+void tty_driver::termcap_DrawTCell(Tdisplay hw, dat x, dat y, tcell V) {
+  tty_driver *self = ttydriver(hw);
   trune c, _c;
 
-  if (!wrapglitch && x == DisplayWidth - 1 && y == DisplayHeight - 1)
+  if (!self->wrapglitch && x == DisplayWidth - 1 && y == DisplayHeight - 1) {
     /* wrapglitch is required to write to last screen position without scrolling */
     return;
+  }
+  termcap_MoveToXY(hw, x, y);
 
-  termcap_MoveToXY(x, y);
-
-  if (TCOLOR(V) != _col)
-    termcap_SetColor(TCOLOR(V));
-
+  if (TCOLOR(V) != _col) {
+    termcap_SetColor(hw, TCOLOR(V));
+  }
   c = _c = TRUNE(V);
   if (c >= 128) {
-    if (tty_use_utf8) {
+    if (self->tty_use_utf8) {
       /* use utf-8 to output this non-ASCII char */
-      tty_DrawRune(_c);
+      DrawRune(hw, _c);
       return;
-    } else if (tty_charset_to_UTF_32[c] != c) {
-      c = tty_UTF_32_to_charset(_c);
+    } else if (self->tty_charset_to_UTF_32[c] != c) {
+      c = self->tty_UTF_32_to_charset(_c);
     }
   }
   if (c < 32 || c == 127 || c == 128 + 27) {
     /* can't display it */
     c = Tutf_UTF_32_to_ASCII(_c);
-    if (c < 32 || c >= 127)
+    if (c < 32 || c >= 127) {
       c = 32;
+    }
   }
-  putc((char)c, stdOUT);
+  putc((char)c, self->out);
 }
 
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.
  * so we have linux_ and termcap_ versions, not GPM_ ones... */
-static void termcap_ShowMouse(void) {
+void tty_driver::termcap_ShowMouse(Tdisplay hw) {
   uldat pos =
-      (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * (ldat)DisplayWidth;
+      (hw->Last_x = hw->MouseState.x) + (hw->Last_y = hw->MouseState.y) * (ldat)DisplayWidth;
   tcell h = Video[pos], c = TCELL_COLMASK(~h) ^ TCELL(TCOL(thigh, thigh), 0);
 
-  termcap_DrawTCell(HW->MouseState.x, HW->MouseState.y, c | TCELL_RUNEMASK(h));
+  termcap_DrawTCell(hw, hw->MouseState.x, hw->MouseState.y, c | TCELL_RUNEMASK(h));
 
   /* force updating the cursor */
-  HW->XY[0] = HW->XY[1] = -1;
-  setFlush();
+  hw->XY[0] = hw->XY[1] = -1;
+  hw->setFlush();
 }
 
-static void termcap_HideMouse(void) {
-  uldat pos = HW->Last_x + HW->Last_y * (ldat)DisplayWidth;
+void tty_driver::termcap_HideMouse(Tdisplay hw) {
+  uldat pos = hw->Last_x + hw->Last_y * (ldat)DisplayWidth;
 
-  termcap_DrawTCell(HW->Last_x, HW->Last_y, Video[pos]);
+  termcap_DrawTCell(hw, hw->Last_x, hw->Last_y, Video[pos]);
 
   /* force updating the cursor */
-  HW->XY[0] = HW->XY[1] = -1;
-  setFlush();
+  hw->XY[0] = hw->XY[1] = -1;
+  hw->setFlush();
 }
 
-static void termcap_Beep(void) {
-  fputs(tc_audio_bell, stdOUT);
-  setFlush();
+void tty_driver::termcap_Beep(Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
+  fputs(self->tc[tc_seq_audio_bell], self->out);
+  hw->setFlush();
 }
 
-static void termcap_UpdateCursor(void) {
+void tty_driver::termcap_UpdateCursor(Tdisplay hw) {
   if (!ValidOldVideo ||
-      (CursorType != NOCURSOR && (CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
-    termcap_MoveToXY(HW->XY[0] = CursorX, HW->XY[1] = CursorY);
-    setFlush();
+      (CursorType != NOCURSOR && (CursorX != hw->XY[0] || CursorY != hw->XY[1]))) {
+    termcap_MoveToXY(hw, hw->XY[0] = CursorX, hw->XY[1] = CursorY);
+    hw->setFlush();
   }
-  if (!ValidOldVideo || CursorType != HW->TT) {
-    termcap_SetCursorType(HW->TT = CursorType);
-    setFlush();
+  if (!ValidOldVideo || CursorType != hw->TT) {
+    termcap_SetCursorType(hw, hw->TT = CursorType);
+    hw->setFlush();
   }
 }
 
-static void termcap_UpdateMouseAndCursor(void) {
-  if ((HW->FlagsHW & FlHWSoftMouse) && (HW->FlagsHW & FlHWChangedMouseFlag)) {
-    HW->HideMouse();
-    HW->ShowMouse();
-    HW->FlagsHW &= ~FlHWChangedMouseFlag;
+void tty_driver::termcap_UpdateMouseAndCursor(Tdisplay hw) {
+  if ((hw->FlagsHW & FlHWSoftMouse) && (hw->FlagsHW & FlHWChangedMouseFlag)) {
+    hw->HideMouse();
+    hw->ShowMouse();
+    hw->FlagsHW &= ~FlHWChangedMouseFlag;
   }
-
-  termcap_UpdateCursor();
+  termcap_UpdateCursor(hw);
 }
 
-static void termcap_ConfigureKeyboard(udat resource, byte todefault, udat value) {
+void tty_driver::termcap_ConfigureKeyboard(Tdisplay hw, udat resource, byte todefault, udat value) {
+  tty_driver *self = ttydriver(hw);
   switch (resource) {
   case HW_KBDAPPLIC:
-    if (tty_is_xterm) {
-      fputs(todefault || !value ? tc_kpad_on : tc_kpad_off, stdOUT);
+    if (self->tty_is_xterm) {
+      fputs(self->tc[todefault || !value ? tc_seq_kpad_on : tc_seq_kpad_off], self->out);
       /*
        * on xterm, tc_kpad_off has the undesired side-effect
        * of changing the sequences produced by cursor keys,
        * so we must restore the usual sequences
        */
-      fputs("\033[?1h", stdOUT);
-      setFlush();
+      fputs("\033[?1h", self->out);
+      hw->setFlush();
     }
     break;
   case HW_ALTCURSKEYS:
     /*
-     fputs(todefault || !value ? "\033[?1l" : "\033[?1h", stdOUT);
-     setFlush();
+     fputs(todefault || !value ? "\033[?1l" : "\033[?1h", self->out);
+     hw->setFlush();
      */
     break;
   }
 }
 
-static void termcap_Configure(udat resource, byte todefault, udat value) {
+void tty_driver::termcap_Configure(Tdisplay hw, udat resource, byte todefault, udat value) {
   switch (resource) {
   case HW_KBDAPPLIC:
   case HW_ALTCURSKEYS:
-    HW->ConfigureKeyboard(resource, todefault, value);
+    hw->ConfigureKeyboard(resource, todefault, value);
     break;
   case HW_BELLPITCH:
   case HW_BELLDURATION:
     /* unsupported */
     break;
   case HW_MOUSEMOTIONEVENTS:
-    HW->ConfigureMouse(resource, todefault, value);
+    hw->ConfigureMouse(resource, todefault, value);
     break;
   default:
     break;
   }
 }
 
-static byte termcap_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-  return Left == 0 && Rgt == HW->X - 1 && Dwn == HW->Y - 1 && DstUp == 0;
+bool tty_driver::termcap_CanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
+                                     dat DstUp) {
+  return Left == 0 && Rgt == hw->X - 1 && Dwn == hw->Y - 1 && DstUp == 0;
 }
 
-static void termcap_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
+void tty_driver::termcap_DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
+                                  dat DstUp) {
+  tty_driver *self = ttydriver(hw);
   udat delta = Up - DstUp;
 
-  HW->HideMouse();
-  HW->FlagsHW |= FlHWChangedMouseFlag;
+  hw->HideMouse();
+  hw->FlagsHW |= FlHWChangedMouseFlag;
 
-  fprintf(stdOUT, "%s\033[0m%s",                               /* hide cursor, reset color */
-          tc_cursor_off, tgoto(tc_cursor_goto, 0, HW->Y - 1)); /* go to last line */
+  fprintf(self->out, "%s\033[0m%s", /* hide cursor, reset color */
+          self->tc[tc_seq_cursor_off],
+          tgoto(self->tc[tc_seq_cursor_goto], 0, hw->Y - 1)); /* go to last line */
 
-  while (delta--)
-    putc('\n', stdOUT);
-
-  setFlush();
+  while (delta--) {
+    putc('\n', self->out);
+  }
+  hw->setFlush();
 
   /* force updating the cursor */
-  HW->XY[0] = HW->XY[1] = -1;
+  hw->XY[0] = hw->XY[1] = -1;
 
   /*
    * now the last trick: tty scroll erased the part
    * below DstUp + (Dwn - Up) so we must redraw it.
    */
-  NeedRedrawVideo(0, DstUp + (Dwn - Up) + 1, HW->X - 1, HW->Y - 1);
+  NeedRedrawVideo(hw, 0, DstUp + (Dwn - Up) + 1, hw->X - 1, hw->Y - 1);
 }
 
-static void termcap_FlushVideo(void) {
+void tty_driver::termcap_FlushVideo(Tdisplay hw) {
   dat i, j;
   dat start, end;
   byte FlippedVideo = tfalse, FlippedOldVideo = tfalse;
   tcell savedOldVideo;
 
   if (!ChangedVideoFlag) {
-    HW->UpdateMouseAndCursor();
+    hw->UpdateMouseAndCursor();
     return;
   }
 
   /* hide the mouse if needed */
 
   /* first, check the old mouse position */
-  if (HW->FlagsHW & FlHWSoftMouse) {
-    if (HW->FlagsHW & FlHWChangedMouseFlag) {
+  if (hw->FlagsHW & FlHWSoftMouse) {
+    if (hw->FlagsHW & FlHWChangedMouseFlag) {
       /* dirty the old mouse position, so that it will be overwritten */
 
       /*
        * with multi-display this is a hack, but since OldVideo gets restored
        * below *BEFORE* returning from termcap_FlushVideo(), that's ok.
        */
-      DirtyVideo(HW->Last_x, HW->Last_y, HW->Last_x, HW->Last_y);
+      DirtyVideo(hw->Last_x, hw->Last_y, hw->Last_x, hw->Last_y);
       if (ValidOldVideo) {
         FlippedOldVideo = ttrue;
-        savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth];
-        OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth] =
-            ~Video[HW->Last_x + HW->Last_y * (ldat)DisplayWidth];
+        savedOldVideo = OldVideo[hw->Last_x + hw->Last_y * (ldat)DisplayWidth];
+        OldVideo[hw->Last_x + hw->Last_y * (ldat)DisplayWidth] =
+            ~Video[hw->Last_x + hw->Last_y * (ldat)DisplayWidth];
       }
     }
 
-    i = HW->MouseState.x;
-    j = HW->MouseState.y;
+    i = hw->MouseState.x;
+    j = hw->MouseState.y;
     /*
      * instead of calling ShowMouse(),
      * we flip the new mouse position in Video[] and dirty it if necessary.
      */
-    if ((HW->FlagsHW & FlHWChangedMouseFlag) || (FlippedVideo = Plain_isDirtyVideo(i, j))) {
+    if ((hw->FlagsHW & FlHWChangedMouseFlag) || (FlippedVideo = Plain_isDirtyVideo(i, j))) {
       VideoFlip(i, j);
       if (!FlippedVideo)
         DirtyVideo(i, j, i, j);
-      HW->FlagsHW &= ~FlHWChangedMouseFlag;
+      hw->FlagsHW &= ~FlHWChangedMouseFlag;
       FlippedVideo = ttrue;
     } else
       FlippedVideo = tfalse;
   }
-  termcap_DrawStart();
+  termcap_DrawStart(hw);
 
-  if (HW->TT != NOCURSOR)
-    termcap_SetCursorType(HW->TT = NOCURSOR);
+  if (hw->TT != NOCURSOR) {
+    termcap_SetCursorType(hw, hw->TT = NOCURSOR);
+  }
   for (i = 0; i < DisplayHeight * 2; i++) {
     start = ChangedVideo[i >> 1][i & 1][0];
     end = ChangedVideo[i >> 1][i & 1][1];
-
-    if (start != -1)
-      termcap_DrawSome(start, i >> 1, end - start + 1);
+    if (start != -1) {
+      termcap_DrawSome(hw, start, i >> 1, end - start + 1);
+    }
   }
 
   /* force updating the cursor */
-  HW->XY[0] = HW->XY[1] = -1;
+  hw->XY[0] = hw->XY[1] = -1;
 
-  setFlush();
+  hw->setFlush();
 
   /* ... and this redraws the mouse */
-  if (HW->FlagsHW & FlHWSoftMouse) {
+  if (hw->FlagsHW & FlHWSoftMouse) {
     if (FlippedOldVideo)
-      OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth] = savedOldVideo;
+      OldVideo[hw->Last_x + hw->Last_y * (ldat)DisplayWidth] = savedOldVideo;
     if (FlippedVideo)
-      VideoFlip(HW->Last_x = HW->MouseState.x, HW->Last_y = HW->MouseState.y);
-    else if (HW->FlagsHW & FlHWChangedMouseFlag)
-      HW->ShowMouse();
+      VideoFlip(hw->Last_x = hw->MouseState.x, hw->Last_y = hw->MouseState.y);
+    else if (hw->FlagsHW & FlHWChangedMouseFlag)
+      hw->ShowMouse();
   }
 
-  termcap_UpdateCursor();
+  termcap_UpdateCursor(hw);
+  termcap_DrawFinish(hw);
 
-  termcap_DrawFinish();
-
-  HW->FlagsHW &= ~FlHWChangedMouseFlag;
+  hw->FlagsHW &= ~FlHWChangedMouseFlag;
 }
 
 #endif /* CONF_HW_TTY_TERMCAP */

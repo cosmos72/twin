@@ -28,7 +28,7 @@ extern struct termios ttysave;
 void FillOldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, tcell Attr);
 void saveDisplaySize(void);
 
-void NeedRedrawVideo(dat Left, dat Up, dat Right, dat Down);
+void NeedRedrawVideo(Tdisplay hw, dat Left, dat Up, dat Right, dat Down);
 
 extern Tdisplay HW;
 

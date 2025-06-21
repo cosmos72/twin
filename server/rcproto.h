@@ -15,6 +15,6 @@
 extern ldat GlobalFlags[4];
 extern ldat GlobalShadows[2];
 
-bool rcload(void);
+bool rcload(Tdisplay);
 
 #endif /* TWIN_RCPROTO_H */

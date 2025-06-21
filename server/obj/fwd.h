@@ -13,37 +13,68 @@
 #ifndef TWIN_FWD_H
 #define TWIN_FWD_H
 
-typedef class SobjList *TobjList;
-typedef class SobjEntry *TobjEntry;
-struct ttydata;
-typedef class Sremotedata Tremotedata;
+class SobjList;
+class SobjEntry;
+class ttydata;
+class Sremotedata;
 
-typedef class Sobj *Tobj;
-typedef class Swidget *Twidget;
-typedef class Sgadget *Tgadget;
-typedef class Swindow *Twindow;
-typedef class Sscreen *Tscreen;
-typedef class Sgroup *Tgroup;
-typedef class Srow *Trow;
-typedef class Smenuitem *Tmenuitem;
-typedef class Smenu *Tmenu;
-typedef class Smsg *Tmsg;
-typedef class Smsgport *Tmsgport;
-typedef class Smutex *Tmutex;
-typedef class Smodule *Tmodule;
-typedef class Sdisplay *Tdisplay;
+class Sobj;
+class Swidget;
+class Sgadget;
+class Swindow;
+class Sscreen;
+class Sgroup;
+class Srow;
+class Smenuitem;
+class Smenu;
+class Smsg;
+class Smsgport;
+class Smutex;
+class Smodule;
+class Sdisplay;
 
-typedef class SobjFn *TobjFn;
-typedef class SwidgetFn *TwidgetFn;
-typedef class SwindowFn *TwindowFn;
-typedef class SmsgFn *TmsgFn;
-typedef class SmsgportFn *TmsgportFn;
-typedef class SmutexFn *TmutexFn;
-typedef class SmoduleFn *TmoduleFn;
+class SobjFn;
+class SwidgetFn;
+class SwindowFn;
+class SmsgFn;
+class SmsgportFn;
+class SmutexFn;
+class SmoduleFn;
 
-typedef class Ssetup *Tsetup;
-typedef class Sselection *Tselection;
-typedef class Sall *Tall;
+class Ssetup;
+class Sselection;
+class Sall;
+
+typedef SobjList *TobjList;
+typedef SobjEntry *TobjEntry;
+typedef Sremotedata Tremotedata;
+
+typedef Sobj *Tobj;
+typedef Swidget *Twidget;
+typedef Sgadget *Tgadget;
+typedef Swindow *Twindow;
+typedef Sscreen *Tscreen;
+typedef Sgroup *Tgroup;
+typedef Srow *Trow;
+typedef Smenuitem *Tmenuitem;
+typedef Smenu *Tmenu;
+typedef Smsg *Tmsg;
+typedef Smsgport *Tmsgport;
+typedef Smutex *Tmutex;
+typedef Smodule *Tmodule;
+typedef Sdisplay *Tdisplay;
+
+typedef SobjFn *TobjFn;
+typedef SwidgetFn *TwidgetFn;
+typedef SwindowFn *TwindowFn;
+typedef SmsgFn *TmsgFn;
+typedef SmsgportFn *TmsgportFn;
+typedef SmutexFn *TmutexFn;
+typedef SmoduleFn *TmoduleFn;
+
+typedef Ssetup *Tsetup;
+typedef Sselection *Tselection;
+typedef Sall *Tall;
 
 typedef void (*HookFn)(Twidget);
 

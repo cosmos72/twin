@@ -138,7 +138,7 @@ static void ScrollerH(Tmsgport MsgPort) {
     if (!WinScrolled)
       ScrollerAutoRepeat();
 
-    StdAddMouseEvent(MOVE_MOUSE | Mouse->keys, Mouse->x, Mouse->y);
+    StdAddMouseEvent((Tdisplay)0, MOVE_MOUSE | Mouse->keys, Mouse->x, Mouse->y);
   } else {
     if (!WinScrolled)
       ScrollerDelayRepeat();

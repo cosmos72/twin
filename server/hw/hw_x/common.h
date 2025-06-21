@@ -4,17 +4,17 @@
 #include "log.h"
 #include "palette.h"
 
-/* this can stay static, XSYM(FlushHW)() is not reentrant */
+/** FIXME: refactor as XDRIVER field */
 static tcolor _col;
 
-static unsigned long XSYM(ColorToPixel)(trgb rgb) {
-  if (xtruecolor) {
-    return xrgb_info.pixel(rgb);
+unsigned long XDRIVER::ColorToPixel(trgb rgb) {
+  if (this->xtruecolor) {
+    return this->xrgb_info.pixel(rgb);
   }
-  return xpalette[TrueColorToPalette256(rgb)];
+  return this->xpalette[TrueColorToPalette256(rgb)];
 }
 
-inline void XSYM(DrawSome)(dat x, dat y, ldat len) {
+void XDRIVER::DrawSome(dat x, dat y, ldat len) {
   tcell *V, *oV;
   tcolor col;
   udat buflen = 0;
@@ -25,21 +25,22 @@ inline void XSYM(DrawSome)(dat x, dat y, ldat len) {
   if (len <= 0) {
     return;
   }
-  if (xhw_view) {
-    if (x >= xhw_endx || x + len < xhw_startx || y < xhw_starty || y >= xhw_endy)
+  if (this->xhw_view) {
+    if (x >= this->xhw_endx || x + len < this->xhw_startx || y < this->xhw_starty ||
+        y >= this->xhw_endy) {
       return;
+    }
+    if (x + len >= this->xhw_endx)
+      len = this->xhw_endx - x;
 
-    if (x + len >= xhw_endx)
-      len = xhw_endx - x;
-
-    if (x < xhw_startx) {
-      len -= xhw_startx - x;
-      x = xhw_startx;
+    if (x < this->xhw_startx) {
+      len -= this->xhw_startx - x;
+      x = this->xhw_startx;
     }
   }
 
-  xbegin = (x - xhw_startx) * (ldat)xwfont;
-  ybegin = (y - xhw_starty) * (ldat)xhfont;
+  xbegin = (x - this->xhw_startx) * (ldat)this->xwfont;
+  ybegin = (y - this->xhw_starty) * (ldat)this->xhfont;
 
   V = Video + x + y * (ldat)DisplayWidth;
   oV = OldVideo + x + y * (ldat)DisplayWidth;
@@ -52,10 +53,10 @@ inline void XSYM(DrawSome)(dat x, dat y, ldat len) {
     }
     if (!ValidOldVideo || *V != *oV) {
       if (!buflen) {
-        xbegin = (x - xhw_startx) * (ldat)xwfont;
+        xbegin = (x - this->xhw_startx) * (ldat)this->xwfont;
         _col = col;
       }
-      f = xUTF_32_to_charset(TRUNE(*V));
+      f = this->xUTF_32_to_charset(TRUNE(*V));
       buf[buflen++] = RawToXChar16(f);
     }
   }
@@ -67,7 +68,7 @@ inline void XSYM(DrawSome)(dat x, dat y, ldat len) {
 
 enum { MAX_FONT_SCORE = 100 };
 
-static ldat XSYM(FontScoreOf)(udat fontwidth, udat fontheight, ldat width, ldat height) {
+ldat XDRIVER::FontScoreOf(udat fontwidth, udat fontheight, ldat width, ldat height) {
   /*
    * TODO xft: since xft fonts are scalable, we could just consider the aspect ratio
    * compared to fontwidth X fontheight.
@@ -81,68 +82,40 @@ static ldat XSYM(FontScoreOf)(udat fontwidth, udat fontheight, ldat width, ldat 
   return score;
 }
 
-static byte XSYM(LoadFont)(const char *fontname, udat fontwidth, udat fontheight) {
+bool XDRIVER::LoadFont(const char *fontname, udat fontwidth, udat fontheight) {
   char *alloc_fontname = NULL;
-  byte loaded = tfalse;
+  byte loaded = false;
 
-  fontname = alloc_fontname = XSYM(AutodetectFont)(fontname, fontwidth, fontheight);
+  fontname = alloc_fontname = AutodetectFont(fontname, fontwidth, fontheight);
 #if HW_X_DRIVER == HW_X11
-
-  if ((fontname && (xsfont = XLoadQueryFont(xdisplay, fontname))) ||
-      (xsfont = XLoadQueryFont(xdisplay, fontname = "fixed")))
+  if ((fontname && (this->xsfont = XLoadQueryFont(this->xdisplay, fontname))) ||
+      (this->xsfont = XLoadQueryFont(this->xdisplay, fontname = "fixed")))
 #elif HW_X_DRIVER == HW_XFT
-  if (fontname && (xsfont = XftFontOpenName(xdisplay, DefaultScreen(xdisplay), fontname)))
+  if (fontname &&
+      (this->xsfont = XftFontOpenName(this->xdisplay, DefaultScreen(this->xdisplay), fontname)))
 #endif
   {
-    loaded = ttrue;
+    loaded = true;
 
 #if HW_X_DRIVER == HW_X11
-    xwfont = xsfont->min_bounds.width;
+    this->xwfont = this->xsfont->min_bounds.width;
 #elif HW_X_DRIVER == HW_XFT
-    xwfont = xsfont->max_advance_width;
+    this->xwfont = this->xsfont->max_advance_width;
 #endif
-    xwidth = xwfont * (unsigned)(HW->X = GetDisplayWidth());
-    xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
-    xheight = xhfont * (unsigned)(HW->Y = GetDisplayHeight());
+    this->xwidth = this->xwfont * (unsigned)(hw->X = GetDisplayWidth());
+    this->xhfont = (this->xupfont = this->xsfont->ascent) + this->xsfont->descent;
+    this->xheight = this->xhfont * (unsigned)(hw->Y = GetDisplayHeight());
 
-    log(INFO) << "      selected " << xwfont << "x" << xhfont << " font `"
+    log(INFO) << "      selected " << this->xwfont << "x" << this->xhfont << " font `"
               << Chars::from_c(fontname) << "'\n";
   }
-  if (alloc_fontname)
+  if (alloc_fontname) {
     free(alloc_fontname); /* allocated by FcNameUnparse() */
-
+  }
   return loaded;
 }
 
-static void XSYM(QuitHW)(void) {
-#ifdef TW_FEATURE_X11_XIM_XIC
-  if (xic)
-    XDestroyIC(xic);
-  if (xim)
-    XCloseIM(xim);
-#endif
-  XSYM(FlavorQuitHW)();
-  if (xgc != None)
-    XFreeGC(xdisplay, xgc);
-  if (xwindow != None) {
-    XUnmapWindow(xdisplay, xwindow);
-    XDestroyWindow(xdisplay, xwindow);
-  }
-  XCloseDisplay(xdisplay);
-  xdisplay = NULL;
-
-  if (HW->keyboard_slot != NOSLOT)
-    UnRegisterRemote(HW->keyboard_slot);
-  HW->keyboard_slot = NOSLOT;
-  HW->KeyboardEvent = (void (*)(int, Tdisplay))NoOp;
-
-  HW->QuitHW = NoOp;
-
-  FreeMem(HW->Private);
-  HW->Private = NULL;
-}
-
-static int XSYM(check_hw_name)(char *hw_name) {
+int XDRIVER::check_hw_name(char *hw_name) {
   char *comma, *at;
   if (strncmp(hw_name, "-hw=", 4) != 0) {
     return -1;
@@ -157,38 +130,46 @@ static int XSYM(check_hw_name)(char *hw_name) {
   return at ? at - hw_name : -1;
 }
 
-static bool XSYM(InitHW)(void) {
-  char *arg = HW->Name.data(); // guaranteed to be '\0' terminated
+bool XDRIVER::InitHW(Tdisplay hw) {
+  XDRIVER *self;
+  if (!(hw->Private = self = (XDRIVER *)AllocMem0(sizeof(XDRIVER)))) {
+    log(ERROR) << "      " XSTR(XDRIVER) ".InitHW() Out of memory!\n";
+    return false;
+  }
+  self->hw = hw;
+  if (self->InitHW()) {
+    return true;
+  }
+  QuitHW(hw);
+  return false;
+}
 
-  XSetWindowAttributes xattr;
-  XColor xcolor;
-  XSizeHints *xhints;
+bool XDRIVER::InitHW() {
+  char *arg = hw->Name.data(); // guaranteed to be '\0' terminated
+
+  XSetWindowAttributes attr;
+  XSizeHints *hints;
   XEvent event;
-  char *s, *xdisplay_ = NULL, *xdisplay0 = NULL, *fontname = NULL, *fontname0 = NULL,
-           *charset = NULL, *charset0 = NULL, title[X_TITLE_MAXLEN];
-  unsigned long xcreategc_mask = GCForeground | GCBackground | GCGraphicsExposures;
+  XDRIVER *p;
+  char *s, *display = NULL, *display0 = NULL, *fontname = NULL, *fontname0 = NULL, *charset = NULL,
+           *charset0 = NULL, title[X_TITLE_MAXLEN];
+  unsigned long creategc_mask = GCForeground | GCBackground | GCGraphicsExposures;
   int i, nskip = 0;
   udat fontwidth = 10, fontheight = 20;
   bool drag = false, noinput = false, palette = false;
 
-  if (!(HW->Private = (XSYM(data) *)AllocMem(sizeof(XSYM(data))))) {
-    log(ERROR) << "      " XSYM_STR(InitHW) "() Out of memory!\n";
-    return false;
-  }
-  memset(HW->Private, 0, sizeof(XSYM(data)));
-
   /* default: show the whole screen */
-  xhw_view = xhw_startx = xhw_starty = xhw_endx = xhw_endy = 0;
+  this->xhw_view = this->xhw_startx = this->xhw_starty = this->xhw_endx = this->xhw_endy = 0;
 
   /* not yet opened */
-  xdisplay = NULL;
+  this->xdisplay = NULL;
 
-  if (arg && *arg && ((nskip = XSYM(check_hw_name)(arg)) >= 0)) {
+  if (arg && *arg && ((nskip = check_hw_name(arg)) >= 0)) {
     arg += nskip;
 
     if (*arg == '@') {
-      if ((s = strchr(xdisplay_ = ++arg, ','))) {
-        *(xdisplay0 = s) = '\0';
+      if ((s = strchr(display = ++arg, ','))) {
+        *(display0 = s) = '\0';
         arg = s + 1;
       } else
         arg = NULL;
@@ -232,13 +213,13 @@ static bool XSYM(InitHW)(void) {
           *(charset0 = s++) = '\0';
         arg = s;
       } else if (!strncmp(arg, "view=", 5)) {
-        xhw_view = 1;
-        xhw_endx = strtol(arg + 5, &arg, 0);
-        xhw_endy = strtol(arg + 1, &arg, 0);
-        xhw_startx = strtol(arg + 1, &arg, 0);
-        xhw_starty = strtol(arg + 1, &arg, 0);
-        xhw_endx += xhw_startx;
-        xhw_endy += xhw_starty;
+        this->xhw_view = 1;
+        this->xhw_endx = strtol(arg + 5, &arg, 0);
+        this->xhw_endy = strtol(arg + 1, &arg, 0);
+        this->xhw_startx = strtol(arg + 1, &arg, 0);
+        this->xhw_starty = strtol(arg + 1, &arg, 0);
+        this->xhw_endx += this->xhw_startx;
+        this->xhw_endy += this->xhw_starty;
       } else if (!strncmp(arg, "drag", 4)) {
         arg += 4;
         drag = true;
@@ -265,46 +246,47 @@ static bool XSYM(InitHW)(void) {
     }
   }
 
-  xsfont = NULL;
-  xhints = NULL;
-  xwindow = None;
-  xgc = None;
-  xReqCount = XReqCount = 0;
-  HW->keyboard_slot = NOSLOT;
+  this->xsfont = NULL;
+  hints = NULL;
+  this->xwindow = None;
+  this->xgc = None;
+  this->xReqCount = this->XReqCount = 0;
+  hw->keyboard_slot = NOSLOT;
 
-  if ((xdisplay = XOpenDisplay(xdisplay_))) {
+  if ((this->xdisplay = XOpenDisplay(display))) {
     do {
-      (void)XSetIOErrorHandler(XSYM(Die));
+      (void)XSetIOErrorHandler(&XDRIVER::Die);
 
-      const int screen = DefaultScreen(xdisplay);
-      const unsigned depth = DefaultDepth(xdisplay, screen);
-      Visual *visual = DefaultVisual(xdisplay, screen);
+      const int screen = DefaultScreen(this->xdisplay);
+      const unsigned depth = DefaultDepth(this->xdisplay, screen);
+      Visual *visual = DefaultVisual(this->xdisplay, screen);
 
       if (!palette) {
         XVisualInfo vistemplate;
         XVisualInfo *visinfo = NULL;
         int visinfo_n = 0;
         vistemplate.visualid = XVisualIDFromVisual(visual);
-        visinfo = XGetVisualInfo(xdisplay, VisualIDMask, &vistemplate, &visinfo_n);
+        visinfo = XGetVisualInfo(this->xdisplay, VisualIDMask, &vistemplate, &visinfo_n);
 
         if (visinfo != NULL && visinfo_n > 0) {
-          xrgb_info.init(visinfo);
-          xtruecolor = xrgb_info.is_truecolor(visinfo);
+          this->xrgb_info.init(visinfo);
+          this->xtruecolor = this->xrgb_info.is_truecolor(visinfo);
         }
         if (visinfo != NULL) {
           XFree(visinfo);
           visinfo = NULL;
         }
       }
-      Colormap colormap = DefaultColormap(xdisplay, screen);
+      Colormap colormap = DefaultColormap(this->xdisplay, screen);
 
-      if (!xtruecolor) {
+      if (!this->xtruecolor) {
+        XColor color;
         for (i = 0; i < tpalette_n; i++) {
-          xcolor.red = 257 * (udat)TRED(Palette[i]);
-          xcolor.green = 257 * (udat)TGREEN(Palette[i]);
-          xcolor.blue = 257 * (udat)TBLUE(Palette[i]);
-          if (!XSYM(AllocColor)(xdisplay, visual, colormap, &xcolor, &xpalette[i], i)) {
-            log(ERROR) << "      " XSYM_STR(InitHW) "() failed to allocate colors\n";
+          color.red = 257 * (udat)TRED(Palette[i]);
+          color.green = 257 * (udat)TGREEN(Palette[i]);
+          color.blue = 257 * (udat)TBLUE(Palette[i]);
+          if (!AllocColor(visual, colormap, &color, &this->xpalette[i], i)) {
+            log(ERROR) << "      " XSTR(XDRIVER) ".InitHW() failed to allocate colors\n";
             break;
           }
         }
@@ -313,216 +295,288 @@ static bool XSYM(InitHW)(void) {
         }
       }
 
-      xattr.background_pixel = xpalette[0];
-      xattr.event_mask = ExposureMask | VisibilityChangeMask | StructureNotifyMask |
-                         SubstructureNotifyMask | KeyPressMask | ButtonPressMask |
-                         ButtonReleaseMask | PointerMotionMask;
+      attr.background_pixel = this->xpalette[0];
+      attr.event_mask = ExposureMask | VisibilityChangeMask | StructureNotifyMask |
+                        SubstructureNotifyMask | KeyPressMask | ButtonPressMask |
+                        ButtonReleaseMask | PointerMotionMask;
 
-      if (!XSYM(LoadFont)(fontname, fontwidth, fontheight)) {
+      if (!LoadFont(fontname, fontwidth, fontheight)) {
         break;
       }
 
-      if (xhw_view && xhw_startx >= 0 && xhw_starty >= 0 && xhw_endx > xhw_startx &&
-          xhw_endy > xhw_starty) {
+      if (this->xhw_view && this->xhw_startx >= 0 && this->xhw_starty >= 0 &&
+          this->xhw_endx > this->xhw_startx && this->xhw_endy > this->xhw_starty) {
         /* a valid view was specified */
 
-        xwidth = xwfont * (ldat)(xhw_endx - xhw_startx);
-        xheight = xhfont * (ldat)(xhw_endy - xhw_starty);
+        this->xwidth = this->xwfont * (ldat)(this->xhw_endx - this->xhw_startx);
+        this->xheight = this->xhfont * (ldat)(this->xhw_endy - this->xhw_starty);
       } else {
-        xhw_view = xhw_startx = xhw_starty = 0;
-        xhw_endx = HW->X;
-        xhw_endy = HW->Y;
+        this->xhw_view = this->xhw_startx = this->xhw_starty = 0;
+        this->xhw_endx = hw->X;
+        this->xhw_endy = hw->Y;
       }
 
-      if ((xwindow =
-               XCreateWindow(xdisplay, DefaultRootWindow(xdisplay), 0, 0, xwidth, xheight, 0, depth,
-                             InputOutput, visual, CWBackPixel | CWEventMask, &xattr)) &&
+      if ((this->xwindow = XCreateWindow(this->xdisplay, DefaultRootWindow(this->xdisplay), 0, 0,
+                                         this->xwidth, this->xheight, 0, depth, InputOutput, visual,
+                                         CWBackPixel | CWEventMask, &attr)) &&
 
-          (xrgb_fg = xrgb_bg = tblack,                      /**/
-           xsgc.foreground = xsgc.background = xpalette[0], /**/
-           xsgc.graphics_exposures = False,
+          (this->xrgb_fg = this->xrgb_bg = tblack,                            /**/
+           this->xsgc.foreground = this->xsgc.background = this->xpalette[0], /**/
+           this->xsgc.graphics_exposures = False,
 #if HW_X_DRIVER == HW_X11
-           xsgc.font = xsfont->fid, xcreategc_mask = xcreategc_mask | GCFont,
+           this->xsgc.font = this->xsfont->fid, creategc_mask = creategc_mask | GCFont,
 #endif
-           xgc = XCreateGC(xdisplay, xwindow, xcreategc_mask, &xsgc)) &&
+           this->xgc = XCreateGC(this->xdisplay, this->xwindow, creategc_mask, &this->xsgc)) &&
 
-          (xhints = XAllocSizeHints())) {
+          (hints = XAllocSizeHints())) {
 
         static XComposeStatus static_xcompose;
-        xcompose = static_xcompose;
+        this->xcompose = static_xcompose;
 
 #if HW_X_DRIVER == HW_XFT
-        if (xtruecolor) {
-          xtfg = &xdata->foreground_buf;
-          xtbg = &xdata->background_buf;
+        if (this->xtruecolor) {
+          this->xtfg = &this->foreground_buf;
+          this->xtbg = &this->background_buf;
           /* force xtfg and xtbg initialization */
-          xrgb_fg = xrgb_bg = tWHITE;
-          XSYM(SetColors)(TCOL0);
+          this->xrgb_fg = this->xrgb_bg = tWHITE;
+          SetColors(TCOL0);
         } else {
-          xtfg = xtbg = xtpalette[0];
+          this->xtfg = this->xtbg = this->xtpalette[0];
         }
-        xtdraw = XftDrawCreate(xdisplay, xwindow, visual, colormap);
+        this->xtdraw = XftDrawCreate(this->xdisplay, this->xwindow, visual, colormap);
 #endif
 
 #ifdef TW_FEATURE_X11_XIM_XIC
-        xim = XOpenIM(xdisplay, NULL, NULL, NULL);
-        if (xim != NULL) {
-          xic = XCreateIC(xim, XNInputStyle, XIMStatusNothing | XIMPreeditNothing, XNClientWindow,
-                          xwindow, XNFocusWindow, xwindow, NULL);
-          if (xic == NULL) {
-            XCloseIM(xim);
-            xim = NULL;
+        this->xim = XOpenIM(this->xdisplay, NULL, NULL, NULL);
+        if (this->xim != NULL) {
+          this->xic = XCreateIC(this->xim, XNInputStyle, XIMStatusNothing | XIMPreeditNothing,
+                                XNClientWindow, this->xwindow, XNFocusWindow, this->xwindow, NULL);
+          if (this->xic == NULL) {
+            XCloseIM(this->xim);
+            this->xim = NULL;
           }
         } else {
-          xic = NULL;
+          this->xic = NULL;
         }
 #endif
-        XSYM(FillWindowTitle)(title, sizeof(title));
-        XStoreName(xdisplay, xwindow, title);
+        FillWindowTitle(title, sizeof(title));
+        XStoreName(this->xdisplay, this->xwindow, title);
 
-        if (!(xUTF_32_to_charset = XSYM(UTF_32_to_charset_function)(charset)))
-          xUTF_32_to_charset = XSYM(UTF_32_to_UCS_2);
+        if (!(this->xUTF_32_to_charset = UTF_32_to_charset_function(charset))) {
+          this->xUTF_32_to_charset = &XDRIVER::UTF_32_to_UCS_2;
+        }
         /*
          * ask ICCCM-compliant window manager to tell us when close window
          * has been chosen, rather than just killing us
          */
-        xCOMPOUND_TEXT = XInternAtom(xdisplay, "COMPOUND_TEXT", False);
-        xTARGETS = XInternAtom(xdisplay, "TARGETS", False);
-        xTEXT = XInternAtom(xdisplay, "TEXT", False);
-        xUTF8_STRING = XInternAtom(xdisplay, "UTF8_STRING", False);
-        xWM_DELETE_WINDOW = XInternAtom(xdisplay, "WM_DELETE_WINDOW", False);
-        xWM_PROTOCOLS = XInternAtom(xdisplay, "WM_PROTOCOLS", False);
+        this->xCOMPOUND_TEXT = XInternAtom(this->xdisplay, "COMPOUND_TEXT", False);
+        this->xTARGETS = XInternAtom(this->xdisplay, "TARGETS", False);
+        this->xTEXT = XInternAtom(this->xdisplay, "TEXT", False);
+        this->xUTF8_STRING = XInternAtom(this->xdisplay, "UTF8_STRING", False);
+        this->xWM_DELETE_WINDOW = XInternAtom(this->xdisplay, "WM_DELETE_WINDOW", False);
+        this->xWM_PROTOCOLS = XInternAtom(this->xdisplay, "WM_PROTOCOLS", False);
 
-        XChangeProperty(xdisplay, xwindow, xWM_PROTOCOLS, XA_ATOM, 32, PropModeReplace,
-                        (unsigned char *)&xWM_DELETE_WINDOW, 1);
+        XChangeProperty(this->xdisplay, this->xwindow, this->xWM_PROTOCOLS, XA_ATOM, 32,
+                        PropModeReplace, (unsigned char *)&this->xWM_DELETE_WINDOW, 1);
 
-        if (xhw_view) {
-          xhints->flags = PMinSize | PMaxSize;
-          xhints->min_width = xhints->max_width = xwidth;
-          xhints->min_height = xhints->max_height = xheight;
+        if (this->xhw_view) {
+          hints->flags = PMinSize | PMaxSize;
+          hints->min_width = hints->max_width = this->xwidth;
+          hints->min_height = hints->max_height = this->xheight;
         } else {
-          xhints->flags = PResizeInc;
-          xhints->width_inc = xwfont;
-          xhints->height_inc = xhfont;
+          hints->flags = PResizeInc;
+          hints->width_inc = this->xwfont;
+          hints->height_inc = this->xhfont;
         }
-        XSetWMNormalHints(xdisplay, xwindow, xhints);
+        XSetWMNormalHints(this->xdisplay, this->xwindow, hints);
 
-        XMapWindow(xdisplay, xwindow);
+        XMapWindow(this->xdisplay, this->xwindow);
 
         do {
-          XNextEvent(xdisplay, &event);
+          XNextEvent(this->xdisplay, &event);
         } while (event.type != MapNotify);
 
-        XFree(xhints);
-        xhints = NULL;
+        XFree(hints);
+        hints = NULL;
 
-        HW->mouse_slot = NOSLOT;
-        HW->keyboard_slot = RegisterRemote(i = XConnectionNumber(xdisplay), (Tobj)HW,
-                                           (void (*)(int, Tobj))XSYM(KeyboardEvent));
-        if (HW->keyboard_slot == NOSLOT)
+        hw->mouse_slot = NOSLOT;
+        hw->keyboard_slot = RegisterRemote(i = XConnectionNumber(this->xdisplay), (Tobj)hw,
+                                           (void (*)(int, Tobj))&XDRIVER::KeyboardEvent);
+        if (hw->keyboard_slot == NOSLOT)
           break;
         fcntl(i, F_SETFD, FD_CLOEXEC);
 
-        HW->FlushVideo = XSYM(FlushVideo);
-        HW->FlushHW = XSYM(FlushHW);
+        hw->fnFlushVideo = &XDRIVER::FlushVideo;
+        hw->fnFlushHW = &XDRIVER::FlushHW;
 
-        HW->KeyboardEvent = XSYM(KeyboardEvent);
+        hw->fnKeyboardEvent = &XDRIVER::KeyboardEvent;
         /* mouse events handled by XSYM(KeyboardEvent) */
-        HW->MouseEvent = (void (*)(int, Tdisplay))NoOp;
+        hw->fnMouseEvent = NULL;
 
-        HW->XY[0] = HW->XY[1] = 0;
-        HW->TT = NOCURSOR;
+        hw->XY[0] = hw->XY[1] = 0;
+        hw->TT = NOCURSOR;
 
-        HW->ShowMouse = NoOp;
-        HW->HideMouse = NoOp;
-        HW->UpdateMouseAndCursor = NoOp;
-        HW->MouseState.x = HW->MouseState.y = HW->MouseState.keys = 0;
+        hw->fnShowMouse = NULL;
+        hw->fnHideMouse = NULL;
+        hw->fnUpdateMouseAndCursor = NULL;
+        hw->MouseState.x = hw->MouseState.y = hw->MouseState.keys = 0;
 
-        HW->DetectSize = XSYM(DetectSize);
-        HW->CheckResize = XSYM(CheckResize);
-        HW->Resize = XSYM(Resize);
+        hw->fnDetectSize = &XDRIVER::DetectSize;
+        hw->fnCheckResize = &XDRIVER::CheckResize;
+        hw->fnResize = &XDRIVER::Resize;
 
-        HW->HWSelectionImport = XSYM(SelectionImport_X11);
-        HW->HWSelectionExport = XSYM(SelectionExport_X11);
-        HW->HWSelectionRequest = XSYM(SelectionRequest_X11);
-        HW->HWSelectionNotify = XSYM(SelectionNotify_X11);
-        HW->HWSelectionPrivate = 0;
+        hw->fnSelectionImport = &XDRIVER::SelectionImport_X11;
+        hw->fnSelectionExport = &XDRIVER::SelectionExport_X11;
+        hw->fnSelectionRequest = &XDRIVER::SelectionRequest_X11;
+        hw->fnSelectionNotify = &XDRIVER::SelectionNotify_X11;
+        hw->SelectionPrivate = 0;
 
         if (drag) {
-          HW->CanDragArea = XSYM(CanDragArea);
-          HW->DragArea = XSYM(DragArea);
+          hw->fnCanDragArea = &XDRIVER::CanDragArea;
+          hw->fnDragArea = &XDRIVER::DragArea;
         } else
-          HW->CanDragArea = NULL;
+          hw->fnCanDragArea = NULL;
 
-        HW->Beep = XSYM(Beep);
-        HW->Configure = XSYM(Configure);
-        HW->SetPalette = (void (*)(udat, udat, udat, udat))NoOp;
-        HW->ResetPalette = NoOp;
+        hw->fnBeep = &XDRIVER::Beep;
+        hw->fnConfigure = &XDRIVER::Configure;
+        hw->fnSetPalette = (void (*)(Tdisplay, udat, udat, udat, udat))NoOp;
+        hw->fnResetPalette = NULL;
 
-        HW->QuitHW = XSYM(QuitHW);
-        HW->QuitKeyboard = NoOp;
-        HW->QuitMouse = NoOp;
-        HW->QuitVideo = NoOp;
+        hw->fnQuitHW = &XDRIVER::QuitHW;
+        hw->fnQuitKeyboard = NULL;
+        hw->fnQuitMouse = NULL;
+        hw->fnQuitVideo = NULL;
 
-        HW->DisplayIsCTTY = tfalse;
-        HW->FlagsHW &= ~FlHWSoftMouse; /* mouse pointer handled by X11 server */
+        hw->DisplayIsCTTY = tfalse;
+        hw->FlagsHW &= ~FlHWSoftMouse; /* mouse pointer handled by X11 server */
 
-        HW->FlagsHW |= FlHWNeedOldVideo;
-        HW->FlagsHW |= FlHWExpensiveFlushVideo;
+        hw->FlagsHW |= FlHWNeedOldVideo;
+        hw->FlagsHW |= FlHWExpensiveFlushVideo;
         if (noinput)
-          HW->FlagsHW |= FlHWNoInput;
+          hw->FlagsHW |= FlHWNoInput;
 
-        HW->NeedHW = 0;
-        HW->CanResize = ttrue;
-        HW->merge_Threshold = 0;
+        hw->NeedHW = 0;
+        hw->CanResize = ttrue;
+        hw->merge_Threshold = 0;
 
         /*
          * we must draw everything on our new shiny window
          * without forcing all other displays
          * to redraw everything too.
          */
-        HW->RedrawVideo = tfalse;
-        NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
+        hw->RedrawVideo = tfalse;
+        NeedRedrawVideo(hw, 0, 0, hw->X - 1, hw->Y - 1);
 
-        if (xdisplay0)
-          *xdisplay0 = ',';
-        if (fontname0)
+        if (display0) {
+          *display0 = ',';
+        }
+        if (fontname0) {
           *fontname0 = ',';
-        if (charset0)
+        }
+        if (charset0) {
           *charset0 = ',';
-
-        XSYM(init_keys)();
+        }
+        InitKeys();
 
         return true;
       }
     } while (0);
   } else {
-    if (xdisplay_ || (xdisplay_ = getenv("DISPLAY"))) {
-      log(ERROR) << "      " XSYM_STR(InitHW) "() failed to open display " << HW->Name << "\n";
+    if (display || (display = getenv("DISPLAY"))) {
+      log(ERROR) << "      " XSTR(XDRIVER) ".InitHW() failed to open display " << hw->Name << "\n";
     } else {
-      log(ERROR) << "      " XSYM_STR(InitHW) "() failed: DISPLAY is not set\n";
+      log(ERROR) << "      " XSTR(XDRIVER) ".InitHW() failed: DISPLAY is not set\n";
     }
   }
 
 fail:
-  if (xdisplay0)
-    *xdisplay0 = ',';
-  if (fontname0)
-    *fontname0 = ',';
-  if (charset0)
-    *charset0 = ',';
-
-  if (xdisplay) {
-    XSYM(QuitHW)();
+  if (display0) {
+    *display0 = ',';
   }
-  FreeMem(HW->Private);
-  HW->Private = NULL;
-
+  if (fontname0) {
+    *fontname0 = ',';
+  }
+  if (charset0) {
+    *charset0 = ',';
+  }
   return false;
 }
 
+void XDRIVER::QuitHW(Tdisplay hw) {
+  XDRIVER *self = xdriver(hw);
+  if (self) {
+    self->QuitHW();
+
+    FreeMem(hw->Private);
+    hw->Private = NULL;
+  }
+}
+
+void XDRIVER::QuitHW() {
+#ifdef TW_FEATURE_X11_XIM_XIC
+  if (this->xic) {
+    XDestroyIC(this->xic);
+  }
+  if (this->xim) {
+    XCloseIM(this->xim);
+  }
+#endif
+
+#if HW_X_DRIVER == HW_X11
+  if (this->xsfont) {
+    XFreeFont(this->xdisplay, this->xsfont);
+    this->xsfont = NULL;
+  }
+#elif HW_X_DRIVER == HW_XFT
+  Visual *visual = NULL;
+  Colormap colormap = (Colormap)0;
+  int screen = 0;
+
+  if (this->xdisplay) {
+    if (this->xsfont) {
+      XftFontClose(this->xdisplay, this->xsfont);
+      this->xsfont = NULL;
+    }
+    screen = DefaultScreen(this->xdisplay);
+    colormap = DefaultColormap(this->xdisplay, screen);
+    visual = DefaultVisual(this->xdisplay, screen);
+  }
+  if (this->xtdraw) {
+    XftDrawDestroy(this->xtdraw);
+    this->xtdraw = NULL;
+  }
+  for (int i = 0; i < tpalette_n; i++) {
+    if (this->xtpalette[i] == NULL) {
+      break;
+    }
+    if (this->xdisplay) {
+      XftColorFree(this->xdisplay, visual, colormap, this->xtpalette[i]);
+    }
+    FreeMem(this->xtpalette[i]);
+    this->xtpalette[i] = NULL;
+  }
+#endif
+
+  if (this->xgc != None) {
+    XFreeGC(this->xdisplay, this->xgc);
+  }
+  if (this->xwindow != None) {
+    XUnmapWindow(this->xdisplay, this->xwindow);
+    XDestroyWindow(this->xdisplay, this->xwindow);
+  }
+  XCloseDisplay(this->xdisplay);
+  this->xdisplay = NULL;
+
+  if (hw->keyboard_slot != NOSLOT)
+    UnRegisterRemote(hw->keyboard_slot);
+  hw->keyboard_slot = NOSLOT;
+  hw->fnKeyboardEvent = NULL;
+
+  hw->fnQuitHW = NULL;
+}
+
 EXTERN_C byte InitModule(Tmodule mod) {
-  mod->DoInit = XSYM(InitHW);
+  mod->DoInit = &XDRIVER::InitHW;
   return ttrue;
 }
 

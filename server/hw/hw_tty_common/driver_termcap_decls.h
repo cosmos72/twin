@@ -15,7 +15,8 @@
 
 #ifdef __sun__
 /*  Someone forgot a few prototypes!  ugh  (Solaris7, bwitt) */
-extern char *tgoto(), *tgetstr();
+extern char *tgoto(const char *cap, int col, int row);
+extern char *tgetstr(char *id, char **area);
 #endif
 
 #else /* rest of the world */
@@ -37,19 +38,6 @@ extern char *tgoto(), *tgetstr();
 #endif
 
 #endif /* rest of the world */
-
-static void termcap_QuitVideo(void);
-static void termcap_ShowMouse(void);
-static void termcap_HideMouse(void);
-static void termcap_FlushVideo(void);
-static void termcap_UpdateMouseAndCursor(void);
-
-static void termcap_Beep(void);
-static void termcap_Configure(udat resource, byte todefault, udat value);
-static void termcap_ConfigureKeyboard(udat resource, byte todefault, udat value);
-
-static byte termcap_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
-static void termcap_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
 
 /*
  * termcap names for special keys:
@@ -85,7 +73,7 @@ struct tc_init_node {
 };
 
 enum {
-  tc_seq_first,
+  tc_seq_first = 0,
 
   tc_seq_scr_clear = tc_seq_first,
   tc_seq_cursor_goto,
@@ -117,7 +105,7 @@ enum {
   tc_key_Down,
 
   tc_key_last,
-  tc_cap_N = tc_key_last
+  tc_seq_N = tc_key_last
 };
 
 #endif /* TWIN_HW_TTY_TERMCAP_H */

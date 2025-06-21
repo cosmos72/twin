@@ -7,55 +7,38 @@
 
 #include <signal.h>
 
-#include "kbd_raw1.h"
-
 /* only one display at time can be in raw-keyboard mode... results in much simpler code */
-static Tdisplay lrawkbd_HW;
+static Tdisplay lrawkbd_hw;
+
+#include "kbd_raw1.h"
 
 static int lrawkbd_mode_save;
 
-static void lrawkbd_QuitKeyboard(void);
-static void lrawkbd_ConfigureKeyboard(udat resource, byte todefault, udat value);
-
-static udat lrawkbd_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen, char **ret);
-static void lrawkbd_KeyboardEvent(int fd, Tdisplay hw);
-
-static bool lrawkbd_GetKeyboard(void);
-static bool lrawkbd_SetKeyboard(void);
-static void lrawkbd_RestoreKeyboard(void);
-
-static bool lrawkbd_LoadKeymaps(void);
-static void lrawkbd_FreeKeymaps(void);
-
-static bool lrawkbd_GrabConsole(void);
-static void lrawkbd_ReleaseConsole(void);
-
-static void lrawkbd_InitSignals(void);
-static void lrawkbd_QuitSignals(void);
-
 /* return tfalse if failed */
-static byte lrawkbd_InitKeyboard(void) {
+bool tty_driver::lrawkbd_InitKeyboard(Tdisplay hw) {
   struct termios ttyb;
 
-  if (lrawkbd_HW) {
+  if (lrawkbd_hw) {
     log(ERROR) << "      lrawkbd_InitKeyboard(): error: another display is already using "
                   "raw-keyboard mode.\n";
-    return tfalse;
-  } else if (!lrawkbd_GetKeyboard()) {
+    return false;
+  } else if (!lrawkbd_GetKeyboard(hw)) {
     log(ERROR) << "      lrawkbd_InitKeyboard(): error: tty is not a Linux console: "
                   "ioctl(KDGKBMODE) failed!\n";
-    return tfalse;
+    return false;
+  }
+  lrawkbd_hw = hw;
+
+  tty_driver *self = ttydriver(hw);
+  hw->keyboard_slot = RegisterRemote(self->tty_fd, (Tobj)hw,
+                                     (void (*)(int, Tobj))&tty_driver::lrawkbd_KeyboardEvent);
+  if (hw->keyboard_slot == NOSLOT) {
+    return false;
   }
 
-  lrawkbd_HW = HW;
-
-  HW->keyboard_slot = RegisterRemote(tty_fd, (Tobj)HW, (void (*)(int, Tobj))lrawkbd_KeyboardEvent);
-  if (HW->keyboard_slot == NOSLOT)
-    return tfalse;
-
-  HW->KeyboardEvent = lrawkbd_KeyboardEvent;
-  HW->ConfigureKeyboard = lrawkbd_ConfigureKeyboard;
-  HW->QuitKeyboard = lrawkbd_QuitKeyboard;
+  hw->fnKeyboardEvent = &tty_driver::lrawkbd_KeyboardEvent;
+  hw->fnConfigureKeyboard = &tty_driver::lrawkbd_ConfigureKeyboard;
+  hw->fnQuitKeyboard = &tty_driver::lrawkbd_QuitKeyboard;
 
   ttyb = ttysave;
   /* NL=='\n'==^J; CR=='\r'==^M */
@@ -71,8 +54,8 @@ static byte lrawkbd_InitKeyboard(void) {
   ttyb.c_cc[VQUIT] = 0;
   ttyb.c_cc[VINTR] = 0;
 
-  if (tty_setioctl(tty_fd, &ttyb) < 0) {
-    log(ERROR) << "      lrawkbd_InitKeyboard() error setting console tty flags: "
+  if (tty_setioctl(self->tty_fd, &ttyb) < 0) {
+    log(ERROR) << "      tty_driver.lrawkbd_InitKeyboard() error setting console tty flags: "
 #if defined(TCSETS)
                   "ioctl(TCSETS)"
 #else
@@ -84,59 +67,60 @@ static byte lrawkbd_InitKeyboard(void) {
   }
 
   lrawkbd_InitSignals();
-  if (!lrawkbd_GrabConsole()) {
-    log(ERROR) << "      lrawkbd_InitKeyboard() error grabbing console: "
+  if (!lrawkbd_GrabConsole(hw)) {
+    log(ERROR) << "      tty_driver.lrawkbd_InitKeyboard() error grabbing console: "
                   "ioctl(VT_SETMODE, VT_PROCESS) failed\n";
     goto failed_grabconsole;
   }
   if (!lrawkbd_LoadKeymaps()) {
-    log(ERROR) << "      lrawkbd_InitKeyboard() error setting unicode keyboard mode: "
-                  "ioctl(tty_fd, KDSKBMODE, K_UNICODE) failed\n";
+    log(ERROR) << "      tty_driver.lrawkbd_InitKeyboard() error setting unicode keyboard mode: "
+                  "ioctl(self->tty_fd, KDSKBMODE, K_UNICODE) failed\n";
     goto failed_loadkeymaps;
   }
-  if (!lrawkbd_SetKeyboard()) {
-    log(ERROR) << "      lrawkbd_InitKeyboard() error setting raw keyboard mode: "
+  if (!lrawkbd_SetKeyboard(hw)) {
+    log(ERROR) << "      tty_driver.lrawkbd_InitKeyboard() error setting raw keyboard mode: "
                   "ioctl(KDSKBMODE, K_MEDIUMRAW) failed\n";
     goto failed_setkeyboard;
   }
   log(INFO) << "      enabled Linux console raw keyboard mode\n";
-  return ttrue;
+  return true;
 
 failed_setkeyboard:
   lrawkbd_FreeKeymaps();
 
 failed_loadkeymaps:
-  lrawkbd_ReleaseConsole();
+  lrawkbd_ReleaseConsole(hw);
 
 failed_grabconsole:
   lrawkbd_QuitSignals();
 
 failed_ttyioctl:
-  UnRegisterRemote(HW->keyboard_slot);
-  HW->keyboard_slot = NOSLOT;
-  HW->QuitKeyboard = NoOp;
-  lrawkbd_HW = NULL;
-  return tfalse;
+  UnRegisterRemote(hw->keyboard_slot);
+  hw->keyboard_slot = NOSLOT;
+  hw->fnQuitKeyboard = NULL;
+  lrawkbd_hw = NULL;
+  return false;
 }
 
-static void lrawkbd_QuitKeyboard(void) {
+void tty_driver::lrawkbd_QuitKeyboard(Tdisplay hw) {
 
-  lrawkbd_RestoreKeyboard();
+  lrawkbd_RestoreKeyboard(hw);
   lrawkbd_FreeKeymaps();
-  lrawkbd_ReleaseConsole();
+  lrawkbd_ReleaseConsole(hw);
   lrawkbd_QuitSignals();
 
-  (void)tty_setioctl(tty_fd, &ttysave);
+  tty_driver *self = ttydriver(hw);
+  (void)tty_setioctl(self->tty_fd, &ttysave);
 
-  UnRegisterRemote(HW->keyboard_slot);
-  HW->keyboard_slot = NOSLOT;
+  UnRegisterRemote(hw->keyboard_slot);
+  hw->keyboard_slot = NOSLOT;
+  hw->fnQuitKeyboard = NULL;
 
-  HW->QuitKeyboard = NoOp;
-
-  lrawkbd_HW = NULL;
+  lrawkbd_hw = NULL;
 }
 
-static void lrawkbd_ConfigureKeyboard(udat resource, byte todefault, udat value) {
+void tty_driver::lrawkbd_ConfigureKeyboard(Tdisplay /*hw*/, udat resource, byte todefault,
+                                           udat value) {
   uldat flag = 0;
 
   switch (resource) {
@@ -173,7 +157,7 @@ static void dump_bytes(byte *s, uldat len) {
 }
 #endif // DEBUG_HW_TTY_LRAWKBD
 
-static void lrawkbd_KeyboardEvent(int fd, Tdisplay hw) {
+void tty_driver::lrawkbd_KeyboardEvent(int fd, Tdisplay hw) {
   char buf[16], *s, *ret;
   udat Code, ShiftFlags;
   byte got, chunk, retlen;
@@ -185,7 +169,7 @@ static void lrawkbd_KeyboardEvent(int fd, Tdisplay hw) {
 
   if (got == 0 || (got == (byte)-1 && errno != EINTR && errno != EWOULDBLOCK)) {
     /* BIG troubles */
-    HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+    hw->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
     return;
   }
 
@@ -201,7 +185,7 @@ static void lrawkbd_KeyboardEvent(int fd, Tdisplay hw) {
     Code = lrawkbd_LookupKey(&ShiftFlags, &chunk, s, &retlen, &ret);
 
     if (Code != TW_Null)
-      KeyboardEventCommon(Code, ShiftFlags, retlen, ret);
+      KeyboardEventCommon(hw, Code, ShiftFlags, retlen, ret);
 
     s += chunk, got -= chunk;
   }
@@ -209,57 +193,59 @@ static void lrawkbd_KeyboardEvent(int fd, Tdisplay hw) {
   RestoreHW;
 }
 
-static bool lrawkbd_GetKeyboard(void) {
+bool tty_driver::lrawkbd_GetKeyboard(Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
   /* get original (probably XLATE) mode */
-  return ioctl(tty_fd, KDGKBMODE, &lrawkbd_mode_save) >= 0;
+  return ioctl(self->tty_fd, KDGKBMODE, &lrawkbd_mode_save) >= 0;
 }
 
-static bool lrawkbd_SetKeyboard(void) {
+bool tty_driver::lrawkbd_SetKeyboard(Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
   /* set LED mode */
   char leds = 0;
-  (void)ioctl(tty_fd, KDGETLED, &leds);
-  (void)ioctl(tty_fd, KDSETLED, lrawkbd_leds = leds & 7);
+  (void)ioctl(self->tty_fd, KDGETLED, &leds);
+  (void)ioctl(self->tty_fd, KDSETLED, lrawkbd_leds = leds & 7);
 
   /* set MEDIUMRAW mode */
-  return ioctl(tty_fd, KDSKBMODE, K_MEDIUMRAW) >= 0;
+  return ioctl(self->tty_fd, KDSKBMODE, K_MEDIUMRAW) >= 0;
 }
 
-static void lrawkbd_RestoreKeyboard(void) {
+void tty_driver::lrawkbd_RestoreKeyboard(Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
   /* restore LED mode */
-  (void)ioctl(tty_fd, KDSETLED, lrawkbd_leds | 8);
+  (void)ioctl(self->tty_fd, KDSETLED, lrawkbd_leds | 8);
 
   /* restore original (probably XLATE) mode */
-  (void)ioctl(tty_fd, KDSKBMODE, lrawkbd_mode_save);
+  (void)ioctl(self->tty_fd, KDSKBMODE, lrawkbd_mode_save);
 }
 
-static bool lrawkbd_GrabConsole(void) {
+bool tty_driver::lrawkbd_GrabConsole(Tdisplay hw) {
   struct vt_mode vt;
-
 #if 0
-    struct vt_mode {
-        char mode;                /* vt mode */
-        char waitv;                /* if set, hang on writes if not active */
-        short relsig;                /* signal to raise on release req */
-        short acqsig;                /* signal to raise on acquisition */
-        short frsig;                /* unused (set to 0) */
-    };
+  struct vt_mode {
+    char mode;    /* vt mode */
+    char waitv;   /* if set, hang on writes if not active */
+    short relsig; /* signal to raise on release req */
+    short acqsig; /* signal to raise on acquisition */
+    short frsig;  /* unused (set to 0) */
+  };
 #define VT_GETMODE 0x5601 /* get mode of active vt */
 #define VT_SETMODE 0x5602 /* set mode of active vt */
 #define VT_AUTO 0x00      /* auto vt switching */
 #define VT_PROCESS 0x01   /* process controls switching */
 #define VT_ACKACQ 0x02    /* acknowledge switch */
 #endif                    /* 0 */
-
   vt.mode = VT_PROCESS;
   vt.waitv = 0;
   vt.relsig = SIGUSR2;
   vt.acqsig = SIGUSR1;
   vt.frsig = 0;
 
-  return ioctl(tty_fd, VT_SETMODE, &vt) >= 0;
+  tty_driver *self = ttydriver(hw);
+  return ioctl(self->tty_fd, VT_SETMODE, &vt) >= 0;
 }
 
-static void lrawkbd_ReleaseConsole(void) {
+void tty_driver::lrawkbd_ReleaseConsole(Tdisplay hw) {
   struct vt_mode vt;
 
   vt.mode = VT_AUTO;
@@ -268,51 +254,56 @@ static void lrawkbd_ReleaseConsole(void) {
   vt.acqsig = 0;
   vt.frsig = 0;
 
-  (void)ioctl(tty_fd, VT_SETMODE, &vt);
+  tty_driver *self = ttydriver(hw);
+  (void)ioctl(self->tty_fd, VT_SETMODE, &vt);
 }
 
-static void lrawkbd_ReactSignalOut(int sig) {
-  /* HW may not be set here... use lrawkbd_HW */
+void tty_driver::lrawkbd_ReactSignalOut(int sig) {
+  /* HW may not be set here... use lrawkbd_hw */
+  Tdisplay hw = lrawkbd_hw;
   SaveHW;
-  SetHW(lrawkbd_HW);
+  SetHW(hw);
 
   /* we just got SIGUSR1. restore settings and tell kernel we allow the switch */
 
-  signal(sig, lrawkbd_ReactSignalOut);
+  signal(sig, &tty_driver::lrawkbd_ReactSignalOut);
 
-  lrawkbd_RestoreKeyboard();
+  lrawkbd_RestoreKeyboard(hw);
 
-  ioctl(tty_fd, VT_RELDISP, 1);
+  tty_driver *self = ttydriver(hw);
+  ioctl(self->tty_fd, VT_RELDISP, 1);
 
   RestoreHW;
 
   TW_RETFROMSIGNAL(0);
 }
 
-static void lrawkbd_ReactSignalIn(int sig) {
-  /* HW may not be set here... use lrawkbd_HW */
+void tty_driver::lrawkbd_ReactSignalIn(int sig) {
+  /* HW may not be set here... use lrawkbd_hw */
+  Tdisplay hw = lrawkbd_hw;
   SaveHW;
-  SetHW(lrawkbd_HW);
+  SetHW(hw);
 
   /* we just got SIGUSR2. tell kernel we allow the switch and initialize settings */
 
   (void)signal(sig, lrawkbd_ReactSignalIn);
 
-  (void)ioctl(tty_fd, VT_RELDISP, 2);
+  tty_driver *self = ttydriver(hw);
+  (void)ioctl(self->tty_fd, VT_RELDISP, 2);
 
-  lrawkbd_SetKeyboard();
+  lrawkbd_SetKeyboard(hw);
 
   RestoreHW;
 
   TW_RETFROMSIGNAL(0);
 }
 
-static void lrawkbd_InitSignals(void) {
-  (void)signal(SIGUSR1, lrawkbd_ReactSignalIn);
-  (void)signal(SIGUSR2, lrawkbd_ReactSignalOut);
+void tty_driver::lrawkbd_InitSignals() {
+  (void)signal(SIGUSR1, &tty_driver::lrawkbd_ReactSignalIn);
+  (void)signal(SIGUSR2, &tty_driver::lrawkbd_ReactSignalOut);
 }
 
-static void lrawkbd_QuitSignals(void) {
+void tty_driver::lrawkbd_QuitSignals() {
   (void)signal(SIGUSR1, SIG_DFL);
   (void)signal(SIGUSR2, SIG_DFL);
 }

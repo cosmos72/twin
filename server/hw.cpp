@@ -249,18 +249,18 @@ void SetCursorType(uldat type) NOTHROW {
   CursorType = type;
 }
 
-void NeedRedrawVideo(dat Left, dat Up, dat Right, dat Down) NOTHROW {
-  if (HW->RedrawVideo) {
-    HW->RedrawLeft = Min2(HW->RedrawLeft, Left);
-    HW->RedrawUp = Min2(HW->RedrawUp, Up);
-    HW->RedrawRight = Max2(HW->RedrawRight, Right);
-    HW->RedrawDown = Max2(HW->RedrawDown, Down);
+void NeedRedrawVideo(Tdisplay hw, dat Left, dat Up, dat Right, dat Down) NOTHROW {
+  if (hw->RedrawVideo) {
+    hw->RedrawLeft = Min2(hw->RedrawLeft, Left);
+    hw->RedrawUp = Min2(hw->RedrawUp, Up);
+    hw->RedrawRight = Max2(hw->RedrawRight, Right);
+    hw->RedrawDown = Max2(hw->RedrawDown, Down);
   } else {
-    HW->RedrawVideo = ttrue;
-    HW->RedrawLeft = Left;
-    HW->RedrawUp = Up;
-    HW->RedrawRight = Right;
-    HW->RedrawDown = Down;
+    hw->RedrawVideo = ttrue;
+    hw->RedrawLeft = Left;
+    hw->RedrawUp = Up;
+    hw->RedrawRight = Right;
+    hw->RedrawDown = Down;
   }
 }
 

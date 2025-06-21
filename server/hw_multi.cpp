@@ -83,7 +83,7 @@ void UpdateFlagsHW(void) NOTHROW {
     if (!HW->Quitted) {
       NeedOldVideo |= HW->FlagsHW & FlHWNeedOldVideo;
       ExpensiveFlushVideo |= HW->FlagsHW & FlHWExpensiveFlushVideo;
-      CanDragArea &= !!HW->CanDragArea;
+      CanDragArea &= !!HW->fnCanDragArea;
     }
   }
 }
@@ -129,7 +129,7 @@ void RunNoHW(byte print_info) {
   (void)DlLoad(SocketSo);
 }
 
-static bool module_InitHW(Chars arg) {
+static bool module_InitHW(Tdisplay hw, Chars arg) {
 
   if (!arg) {
     return tfalse;
@@ -155,10 +155,10 @@ static bool module_InitHW(Chars arg) {
 
     if (Module) {
       log(INFO) << "twin: starting display driver module `" << name << "'...\n";
-      bool (*InitD)(void);
-      if ((InitD = Module->DoInit) && InitD()) {
+      bool (*InitD)(Tdisplay);
+      if ((InitD = Module->DoInit) && InitD(hw)) {
         log(INFO) << "twin: ...module `" << name << "' successfully started.\n";
-        HW->Module = Module;
+        hw->Module = Module;
         Module->Used++;
         return true;
       }
@@ -175,10 +175,10 @@ static bool module_InitHW(Chars arg) {
   return false;
 }
 
-static byte set_hw_name(Tdisplay display, const Chars name) {
+static byte set_hw_name(Tdisplay hw, const Chars name) {
   String alloc_name;
-  if (display && alloc_name.format(name)) {
-    display->Name.swap(alloc_name);
+  if (hw && alloc_name.format(name)) {
+    hw->Name.swap(alloc_name);
   }
   return ttrue;
 }
@@ -196,22 +196,22 @@ static void warn_NoHW(const char *arg, uldat len) {
  * and falling back in case some of them fails.
  */
 bool Sdisplay::DoInit() {
-  Tdisplay display = this;
-  Chars arg = display->Name;
+  Tdisplay hw = this;
+  Chars arg = hw->Name;
   byte success;
 
   SaveHW;
-  SetHW(display);
+  SetHW(hw);
 
-  display->DisplayIsCTTY = display->NeedHW = display->FlagsHW = tfalse;
+  hw->DisplayIsCTTY = hw->NeedHW = hw->FlagsHW = tfalse;
 
-#define AUTOTRY4(hw_name) (module_InitHW(Chars(hw_name)) && set_hw_name(display, Chars(hw_name)))
+#define AUTOTRY4(hw_name) (module_InitHW(hw, Chars(hw_name)) && set_hw_name(hw, Chars(hw_name)))
 
   if (!arg) {
     success =
         AUTOTRY4("-hw=xft") || AUTOTRY4("-hw=X11") || AUTOTRY4("-hw=twin") || AUTOTRY4("-hw=tty");
   } else {
-    success = module_InitHW(arg);
+    success = module_InitHW(hw, arg);
   }
 
 #undef AUTOTRY4
@@ -219,16 +219,16 @@ bool Sdisplay::DoInit() {
   if (success) {
     udat tried;
 
-    display->Quitted = tfalse;
+    hw->Quitted = tfalse;
 
     /* configure correctly the new HW */
     for (tried = 0; tried < HW_CONFIGURE_MAX; tried++) {
       if (!(ConfigureHWDefault[tried]))
-        display->Configure(tried, tfalse, ConfigureHWValue[tried]);
+        hw->Configure(tried, tfalse, ConfigureHWValue[tried]);
     }
 
-    if (!DisplayHWCTTY && display->DisplayIsCTTY)
-      DisplayHWCTTY = display;
+    if (!DisplayHWCTTY && hw->DisplayIsCTTY)
+      DisplayHWCTTY = hw;
     All->HookDisplay();
     UpdateFlagsHW(); /* this garbles HW... not a problem here */
   } else {
@@ -241,28 +241,29 @@ bool Sdisplay::DoInit() {
 }
 
 void Sdisplay::DoQuit() {
-  Tdisplay display = this;
+  Tdisplay hw = this;
   Tmsgport msgport;
   uldat slot;
   SaveHW;
 
-  if (display) {
-    if (display->QuitHW)
-      HW = display, display->QuitHW();
+  if (hw) {
+    if (hw->fnQuitHW) {
+      HW = hw, hw->QuitHW();
+    }
 
-    display->Quitted = ttrue;
+    hw->Quitted = ttrue;
 
-    if ((slot = display->AttachSlot) != NOSLOT) {
+    if ((slot = hw->AttachSlot) != NOSLOT) {
       /* avoid KillSlot <-> DeleteDisplayHW infinite recursion */
       if ((msgport = RemoteGetMsgPort(slot)))
         msgport->AttachHW = (Tdisplay)0;
       Ext(Remote, KillSlot)(slot);
     }
 
-    if (display->Module) {
-      display->Module->Used--;
-      display->Module->Delete();
-      display->Module = (Tmodule)0;
+    if (hw->Module) {
+      hw->Module->Used--;
+      hw->Module->Delete();
+      hw->Module = (Tmodule)0;
     }
     UpdateFlagsHW(); /* this garbles HW... not a problem here */
   }
@@ -280,7 +281,7 @@ static byte IsValidHW(Chars carg) {
   for (i = 0; i < len; i++) {
     b = arg[i];
     if (b == '@' || b == ',')
-      /* the rest are options - validated by each display HW */
+      /* the rest are options - validated by each hw HW */
       break;
     if ((b < '0' || b > '9') && (b < 'A' || b > 'Z') && (b < 'a' || b > 'z') && b != '_') {
       log(ERROR) << "twin: invalid non-alphanumeric character 0x" << hex(b)
@@ -292,33 +293,33 @@ static byte IsValidHW(Chars carg) {
 }
 
 Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
-  Tdisplay display = NULL;
+  Tdisplay hw = NULL;
 
   if (arg && !arg.starts_with(Chars("-hw="))) {
     log(ERROR) << "twin: specified `" << arg
                << "' is not a known option.\n"
                   "      try `twin --help' for usage summary.\n";
-    return display;
+    return hw;
   }
 
   if (All->ExclusiveDisplay) {
     log(ERROR) << "twin: exclusive display in use, permission to display denied!\n";
-    return display;
+    return hw;
   }
 
-  if (IsValidHW(arg) && (display = New(display)(arg))) {
-    display->AttachSlot = slot;
-    if (display->DoInit()) {
+  if (IsValidHW(arg) && (hw = New(display)(arg))) {
+    hw->AttachSlot = slot;
+    if (hw->DoInit()) {
 
       if (flags & TW_ATTACH_HW_EXCLUSIVE) {
         /* started exclusive display, kill all others */
         Tdisplay s_HW, n_HW;
 
-        All->ExclusiveDisplay = display;
+        All->ExclusiveDisplay = hw;
 
         for (s_HW = All->FirstDisplay; s_HW; s_HW = n_HW) {
           n_HW = s_HW->Next;
-          if (s_HW != display) {
+          if (s_HW != hw) {
             s_HW->Delete();
           }
         }
@@ -327,16 +328,16 @@ Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
       if (ResizeDisplay()) {
         QueuedDrawArea2FullScreen = true;
       }
-      return display;
+      return hw;
     }
     /* failed, clean up without calling RunNoHW() or KillSlot() */
-    display->Quitted = ttrue;
-    display->AttachSlot = NOSLOT;
-    display->QuitHW = NoOp;
-    display->Delete();
-    display = NULL;
+    hw->Quitted = ttrue;
+    hw->AttachSlot = NOSLOT;
+    hw->fnQuitHW = NULL;
+    hw->Delete();
+    hw = NULL;
   }
-  return display;
+  return hw;
 }
 
 bool DetachDisplayHW(Chars arg, byte flags) {
@@ -691,7 +692,7 @@ void TwinSelectionNotify(Tobj requestor, uldat reqprivate, e_id magic, Chars mim
   } else if (requestor->Id >> class_byte_shift == Tdisplay_class_byte) {
     SaveHW;
     SetHW((Tdisplay)requestor);
-    HW->HWSelectionNotify(reqprivate, magic, mime, data);
+    HW->SelectionNotify(reqprivate, magic, mime, data);
     RestoreHW;
   }
 }
@@ -718,7 +719,7 @@ void TwinSelectionRequest(Tobj requestor, uldat reqprivate, Tobj Owner) {
     } else if (Owner->Id >> class_byte_shift == Tdisplay_class_byte) {
       SaveHW;
       SetHW((Tdisplay)Owner);
-      HW->HWSelectionRequest(requestor, reqprivate);
+      HW->SelectionRequest(requestor, reqprivate);
       RestoreHW;
     }
   } else {
@@ -729,14 +730,14 @@ void TwinSelectionRequest(Tobj requestor, uldat reqprivate, Tobj Owner) {
 
 void SelectionExport(void) {
   forHW {
-    HW->HWSelectionExport();
+    HW->SelectionExport();
   }
   NeedHW &= ~NEEDSelectionExport;
 }
 
 void SelectionImport(void) {
   if ((HW = All->MouseDisplay)) {
-    if (HW->HWSelectionImport())
+    if (HW->SelectionImport())
       All->Selection->OwnerOnce = HW;
     else
       All->Selection->OwnerOnce = NULL;
@@ -1055,16 +1056,16 @@ byte AllHWCanDragAreaNow(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat Ds
   if (CanDragArea && Strategy4Video(DstLeft, DstUp, DstRgt, DstDwn) == HW_ACCEL) {
     Accel = ttrue;
     forHW {
-      if (HW->CanDragArea && HW->CanDragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp))
-        ;
-      else {
+      if (HW->fnCanDragArea && HW->CanDragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp)) {
+        // nop
+      } else {
         Accel = tfalse;
         break;
       }
     }
-  } else
+  } else {
     Accel = tfalse;
-
+  }
   return Accel;
 }
 
@@ -1078,7 +1079,7 @@ void EnableMouseMotionEvents(byte enable) {
   ConfigureHW(HW_MOUSEMOTIONEVENTS, tfalse, enable);
 }
 
-byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
+byte MouseEventCommon(Tdisplay hw, dat x, dat y, dat dx, dat dy, udat Buttons) {
   dat prev_x, prev_y;
   udat OldButtons, i;
   mouse_state *OldState;
@@ -1086,7 +1087,7 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
   byte ret = ttrue;
   byte alsoMotionEvents = All->MouseMotionN > 0;
 
-  OldState = &HW->MouseState;
+  OldState = &hw->MouseState;
   OldButtons = OldState->keys;
   prev_x = OldState->x;
   prev_y = OldState->y;
@@ -1100,7 +1101,7 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
   OldState->delta_y = y == 0 ? Min2(dy, 0) : y == DisplayHeight - 1 ? Max2(dy, 0) : 0;
 
   if (x != prev_x || y != prev_y)
-    HW->FlagsHW |= FlHWChangedMouseFlag;
+    hw->FlagsHW |= FlHWChangedMouseFlag;
 
   OldState->x = x;
   OldState->y = y;
@@ -1108,32 +1109,32 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
   OldState->keys = Buttons &= HOLD_ANY;
 
   /* keep it available */
-  All->MouseDisplay = HW;
+  All->MouseDisplay = hw;
 
   if (Buttons != OldButtons || ((alsoMotionEvents || OldButtons) && (x != prev_x || y != prev_y))) {
 
     if ((alsoMotionEvents || OldButtons) && (x != prev_x || y != prev_y)) {
-      ret = StdAddMouseEvent(MOVE_MOUSE | OldButtons, x, y);
+      ret = StdAddMouseEvent(hw, MOVE_MOUSE | OldButtons, x, y);
     }
     for (i = 0; i < BUTTON_N_MAX && ret; i++) {
       if ((Buttons & HOLD_CODE(i)) != (OldButtons & HOLD_CODE(i))) {
         result = (Buttons & HOLD_CODE(i) ? PRESS_CODE(i) : RELEASE_CODE(i)) |
                  (OldButtons &= ~HOLD_CODE(i));
         OldButtons |= Buttons & HOLD_CODE(i);
-        ret = StdAddMouseEvent(result, x, y);
+        ret = StdAddMouseEvent(hw, result, x, y);
       }
     }
   }
   return ret;
 }
 
-byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
+byte StdAddMouseEvent(Tdisplay hw, udat Code, dat MouseX, dat MouseY) {
   Tmsg msg;
   event_mouse *event;
 
-  if (HW && HW == All->MouseDisplay && HW->FlagsHW & FlHWNoInput)
+  if (hw && hw == All->MouseDisplay && hw->FlagsHW & FlHWNoInput) {
     return ttrue;
-
+  }
   if ((Code & MOUSE_ACTION_ANY) == MOVE_MOUSE && (msg = Ext(WM, MsgPort)->LastMsg) &&
       msg->Type == msg_mouse && (event = &msg->Event.EventMouse) && event->Code == Code) {
     /* merge the two events */
@@ -1153,14 +1154,14 @@ byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
   return tfalse;
 }
 
-byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) {
+bool KeyboardEventCommon(Tdisplay hw, udat Code, udat ShiftFlags, udat Len, const char *Seq) {
   event_keyboard *event;
   Tmsg msg;
 
-  if (HW->FlagsHW & FlHWNoInput)
-    return ttrue;
-
-  if ((msg = New(msg)(msg_key, Len))) {
+  if (hw->FlagsHW & FlHWNoInput) {
+    return true;
+  }
+  if ((msg = Smsg::Create(msg_key, Len))) {
     event = &msg->Event.EventKeyboard;
 
     event->Code = Code;
@@ -1169,9 +1170,9 @@ byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) 
     CopyMem(Seq, event->AsciiSeq, Len);
     event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
     SendMsg(Ext(WM, MsgPort), msg);
-    return ttrue;
+    return true;
   }
-  return tfalse;
+  return false;
 }
 
 #ifdef __linux__

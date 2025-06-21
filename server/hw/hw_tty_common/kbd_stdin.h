@@ -5,16 +5,12 @@
 
 #include "util.h" /* for SetAlarm(), AlarmReceived */
 
-static void stdin_QuitKeyboard(void);
-static void stdin_KeyboardEvent(int fd, Tdisplay hw);
-static udat linux_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen, const char **ret);
-static void xterm_MouseEvent(int, Tdisplay);
-
-static byte stdin_TestTty(void) {
+static bool stdin_TestTty(Tdisplay hw) {
   struct termios ttyb;
+  tty_driver *self = ttydriver(hw);
   byte buf[16], *s = buf + 3, c;
   int i, alarmReceived;
-  byte ok = ttrue;
+  bool ok = true;
 
   ttyb = ttysave;
   /* NL=='\n'==^J; CR=='\r'==^M */
@@ -27,17 +23,17 @@ static byte stdin_TestTty(void) {
   ttyb.c_cc[VSUSP] = 0;
   ttyb.c_cc[VQUIT] = 0;
   ttyb.c_cc[VINTR] = 0;
-  tty_setioctl(tty_fd, &ttyb);
+  tty_setioctl(self->tty_fd, &ttyb);
 
   /* request ID */
-  if (write(tty_fd, "\033[c", 3) != 3) {
+  if (write(self->tty_fd, "\033[c", 3) != 3) {
     Errstr = Chars("write() to tty failed");
-    ok = tfalse;
+    ok = false;
   } else {
     /* ensure we CAN read from the tty */
     SetAlarm(5);
     do {
-      i = read(tty_fd, buf, 15);
+      i = read(self->tty_fd, buf, 15);
     } while ((alarmReceived = AlarmReceived) == 0 && i < 0 &&
              (errno == EWOULDBLOCK || errno == EINTR));
     SetAlarm(0);
@@ -51,17 +47,17 @@ static byte stdin_TestTty(void) {
     }
   }
   if (!ok) {
-    tty_setioctl(tty_fd, &ttysave);
+    tty_setioctl(self->tty_fd, &ttysave);
     return ok;
   }
 
   buf[i] = '\0';
-  ttypar[0] = ttypar[1] = ttypar[2] = i = 0;
+  self->ttypar[0] = self->ttypar[1] = self->ttypar[2] = i = 0;
 
   while (i < 3 && (c = *s)) {
     if (c >= '0' && c <= '9') {
-      ttypar[i] *= 10;
-      ttypar[i] += c - '0';
+      self->ttypar[i] *= 10;
+      self->ttypar[i] += c - '0';
     } else if (*s == ';')
       i++;
     else
@@ -72,40 +68,44 @@ static byte stdin_TestTty(void) {
 }
 
 /* return tfalse if failed */
-static byte stdin_InitKeyboard(void) {
+bool tty_driver::stdin_InitKeyboard(Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
 
-  if (LookupKey == NULL
+  if (self->fnLookupKey == NULL
 #if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
-      && tty_TERM != Chars("linux") && tty_TERM != Chars("twterm")
+      && self->tty_term != Chars("linux") && self->tty_term != Chars("twterm")
 #endif
   )
-    return tfalse;
+    return false;
 
-  HW->keyboard_slot = RegisterRemote(tty_fd, (Tobj)HW, (void (*)(int, Tobj))stdin_KeyboardEvent);
-  if (HW->keyboard_slot == NOSLOT) {
-    stdin_QuitKeyboard();
-    return tfalse;
+  hw->keyboard_slot =
+      RegisterRemote(self->tty_fd, (Tobj)hw, (void (*)(int, Tobj))&tty_driver::stdin_KeyboardEvent);
+  if (hw->keyboard_slot == NOSLOT) {
+    stdin_QuitKeyboard(hw);
+    return false;
   }
-  HW->KeyboardEvent = stdin_KeyboardEvent;
-  HW->QuitKeyboard = stdin_QuitKeyboard;
+  hw->fnKeyboardEvent = &tty_driver::stdin_KeyboardEvent;
+  hw->fnQuitKeyboard = &tty_driver::stdin_QuitKeyboard;
 
-  if (LookupKey == NULL)
-    LookupKey = linux_LookupKey;
-
-  return ttrue;
+  if (self->fnLookupKey == NULL) {
+    self->fnLookupKey = linux_LookupKey;
+  }
+  return true;
 }
 
-static void stdin_QuitKeyboard(void) {
-  tty_setioctl(tty_fd, &ttysave);
+void tty_driver::stdin_QuitKeyboard(Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
 
-  UnRegisterRemote(HW->keyboard_slot);
-  HW->keyboard_slot = NOSLOT;
+  tty_setioctl(self->tty_fd, &ttysave);
 
-  HW->QuitKeyboard = NoOp;
+  UnRegisterRemote(hw->keyboard_slot);
+  hw->keyboard_slot = NOSLOT;
+  hw->fnQuitKeyboard = NULL;
 }
 
 /* kludge! this is ok for linux terminals only... */
-static udat linux_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen, const char **ret) {
+udat tty_driver::linux_LookupKey(Tdisplay hw, udat *ShiftFlags, byte *slen, char *s, byte *retlen,
+                                 const char **ret) {
   byte used = 0, len = *slen;
 
   *ShiftFlags = 0;
@@ -300,12 +300,13 @@ static udat linux_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen,
   return TW_Null;
 }
 
-static void stdin_KeyboardEvent(int fd, Tdisplay hw) {
+void tty_driver::stdin_KeyboardEvent(int fd, Tdisplay hw) {
   static char buf[TW_SMALLBUFF];
   static fd_set rfds;
   static struct timeval t;
   char *s = buf, *end = buf + sizeof(buf) - 1;
   const char *ret;
+  tty_driver *self = ttydriver(hw);
   udat Code, ShiftFlags;
   byte got, chunk, retlen;
   SaveHW;
@@ -324,7 +325,7 @@ static void stdin_KeyboardEvent(int fd, Tdisplay hw) {
 
   if (got == (byte)-1 && errno != EINTR && errno != EWOULDBLOCK) {
     /* BIG troubles */
-    HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+    hw->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
     return;
   }
 
@@ -332,14 +333,14 @@ static void stdin_KeyboardEvent(int fd, Tdisplay hw) {
   s = buf;
 
   while (got > 0) {
-    if (HW->MouseEvent == xterm_MouseEvent) {
+    if (hw->fnMouseEvent == &tty_driver::xterm_MouseEvent) {
       while (got) {
         if (got >= 9 && !memcmp(s, "\033[5M", 4)) {
           /* twterm-style mouse reporting: twin specs */
-          CopyMem(s, xterm_mouse_seq, xterm_mouse_len = chunk = 9);
+          CopyMem(s, self->xterm_mouse_seq, self->xterm_mouse_len = chunk = 9);
         } else if (got >= 6 && !memcmp(s, "\033[M", 3)) {
           /* classic xterm mouse reporting: X11 specs, ESC [?1002h */
-          CopyMem(s, xterm_mouse_seq, xterm_mouse_len = chunk = 6);
+          CopyMem(s, self->xterm_mouse_seq, self->xterm_mouse_len = chunk = 6);
         } else if (got >= 9 && !memcmp(s, "\033[<", 3)) {
           /* enhanced xterm-style reporting: xterm specs, ESC [?1002h ESC [?1006h */
           const char *m = (const char *)memchr(s + 8, 'M', got - 8);
@@ -350,28 +351,28 @@ static void stdin_KeyboardEvent(int fd, Tdisplay hw) {
             }
           }
           chunk = (m - s) + 1;
-          if (chunk > sizeof(xterm_mouse_seq)) {
+          if (chunk > sizeof(self->xterm_mouse_seq)) {
             break; // sequence too long
           }
-          CopyMem(s, xterm_mouse_seq, xterm_mouse_len = chunk);
+          CopyMem(s, self->xterm_mouse_seq, self->xterm_mouse_len = chunk);
         } else {
           break;
         }
         s += chunk, got -= chunk;
-        xterm_MouseEvent(fd, HW);
+        xterm_MouseEvent(fd, hw);
       }
     }
 
     /* ok, now try to find out the correct KeyCode for the ASCII sequence we got */
 
-    if (!(chunk = got))
+    if (!(chunk = got)) {
       break;
-
+    }
     ret = end;
-    Code = LookupKey(&ShiftFlags, &chunk, s, &retlen, &ret);
+    Code = self->fnLookupKey(hw, &ShiftFlags, &chunk, s, &retlen, &ret);
     s += chunk, got -= chunk;
 
-    KeyboardEventCommon(Code, ShiftFlags, retlen, ret);
+    KeyboardEventCommon(hw, Code, ShiftFlags, retlen, ret);
   }
 
   RestoreHW;

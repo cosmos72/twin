@@ -76,7 +76,8 @@ enum ttystate /*: udat*/ {
   ESques = 0x100
 };
 
-struct ttydata {
+class ttydata {
+public:
   ttystate State;
   uldat Flags;
   udat Effects;

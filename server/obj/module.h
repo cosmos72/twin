@@ -37,7 +37,7 @@ public:
   uldat Used;
   String Name;
   void *Handle;
-  bool (*DoInit)(void);
+  bool (*DoInit)(Tdisplay);
 
   static Tmodule Create(Chars name);
   Tmodule Init(Chars name);

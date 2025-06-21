@@ -839,7 +839,7 @@ static byte RCSleep(timevalue *_t) {
  */
 static void RCReload(void) {
   Tmodule M;
-  bool (*mod_rcload)(void) = NULL;
+  bool (*mod_rcload)(Tdisplay) = NULL;
   byte success;
 
   if ((M = DlLoad(RCParseSo))) {
@@ -851,7 +851,7 @@ static void RCReload(void) {
   }
 #endif
 
-  success = mod_rcload && mod_rcload();
+  success = mod_rcload && mod_rcload(NULL);
 
   if (M)
     DlUnload(RCParseSo);

@@ -50,7 +50,7 @@
 #define VC_CRLF 3   /* 0 - enter sends CR, 1 - enter sends CRLF */
 #define VC_META 4   /* 0 - meta, 1 - meta=prefix with ESC */
 
-#define vc_kbd_mode(kbd, bit) (lrawkbd_config >> (bit)&1)
+#define vc_kbd_mode(kbd, bit) (lrawkbd_config >> (bit) & 1)
 #define set_vc_kbd_mode(kbd, bit) (lrawkbd_config |= 1L << (bit))
 #define clr_vc_kbd_mode(kbd, bit) (lrawkbd_config &= ~(1L << (bit)))
 #define chg_vc_kbd_mode(kbd, bit) (lrawkbd_config ^= 1L << (bit))
@@ -59,7 +59,7 @@
 #define VC_NUMLOCK 1   /* numeric lock led mode */
 #define VC_CAPSLOCK 2  /* capslock led mode */
 
-#define vc_kbd_led(kbd, bit) (lrawkbd_leds >> (bit)&1)
+#define vc_kbd_led(kbd, bit) (lrawkbd_leds >> (bit) & 1)
 #define set_vc_kbd_led(kbd, bit) set_lights(lrawkbd_leds |= 1L << (bit))
 #define clr_vc_kbd_led(kbd, bit) set_lights(lrawkbd_leds &= ~(1L << (bit)))
 #define chg_vc_kbd_led(kbd, bit) set_lights(lrawkbd_leds ^= 1L << (bit))
@@ -120,10 +120,10 @@ static void applkey(char key, byte mode) {
   puts_queue(buf);
 }
 
-static void noop_fn(void) {
+static void noop_fn() {
 }
 
-static void enter(void) {
+static void enter() {
   if (diacr) {
     put_queue(diacr);
     diacr = 0;
@@ -133,17 +133,17 @@ static void enter(void) {
     put_queue(10);
 }
 
-static void caps_toggle(void) {
+static void caps_toggle() {
   if (!rep)
     chg_vc_kbd_led(kbd, VC_CAPSLOCK);
 }
 
-static void caps_on(void) {
+static void caps_on() {
   if (!rep)
     set_vc_kbd_led(kbd, VC_CAPSLOCK);
 }
 
-static void hold(void) {
+static void hold() {
 #if 1
   if (!rep)
     chg_vc_kbd_led(kbd, VC_SCROLLOCK);
@@ -169,66 +169,64 @@ static void hold(void) {
  * Bind this to NumLock if you prefer that the NumLock key always
  * changes the NumLock flag.
  */
-static void bare_num(void) {
-  if (!rep)
+static void bare_num() {
+  if (!rep) {
     chg_vc_kbd_led(kbd, VC_NUMLOCK);
+  }
 }
 
-static void num(void) {
-  if (vc_kbd_mode(kbd, VC_APPLIC))
+static void num() {
+  if (vc_kbd_mode(kbd, VC_APPLIC)) {
     applkey('P', 1);
-  else
+  } else {
     bare_num();
+  }
 }
 
 static void set_console(byte nr) {
-  ioctl(tty_fd, VT_ACTIVATE, nr & 63);
+  tty_driver *self = ttydriver(lrawkbd_hw);
+  ioctl(self->tty_fd, VT_ACTIVATE, nr & 63);
 
   /* we will receive SIGUSR1 if kernel needs our permission to switch */
 }
 
-static udat get_console_bitmap(void) {
+static udat get_console_bitmap() {
   struct vt_stat vs;
-#if 0
-    struct vt_stat {
-        udat v_active;        /* active vt */
-        udat v_signal;        /* signal to send */
-        udat v_state;                /* vt bitmask */
-    };
-#endif
+  tty_driver *self = ttydriver(lrawkbd_hw);
 
-  if (ioctl(tty_fd, VT_GETSTATE, &vs) >= 0)
+  if (ioctl(self->tty_fd, VT_GETSTATE, &vs) >= 0) {
     return vs.v_state & ~1; /* skip tty0 */
+  }
   return 0xFFFE;
 }
 
 #define b16 (sizeof(udat) * 8)
 
 static void set_console_ifthere(uldat k) {
-  if (k >= b16 /* get_console_bitmap() cannot tell beyond b16 */ || get_console_bitmap() >> k & 1) {
-
+  if (k >= b16 /* get_console_bitmap() cannot tell beyond b16 */
+      || get_console_bitmap() >> k & 1) {
     set_console(k);
   }
 }
 
 /* get the last used console */
-static uldat get_console_last(void) {
+uldat get_console_last() {
   uldat b = get_console_bitmap();
   uldat k = 0;
-
-  while (b >>= 1)
+  while (b >>= 1) {
     k++;
-
+  }
   return k;
 }
 
-static void set_console_last(void) {
+static void set_console_last() {
   /* switch to the last used console, ChN */
   set_console(get_console_last());
 }
 
-static void decr_console(void) {
-  uldat k = tty_number - 1;
+static void decr_console() {
+  tty_driver *self = ttydriver(lrawkbd_hw);
+  uldat k = self->tty_number - 1;
   udat b;
 
   if (k >= b16) /* get_console_bitmap() cannot tell beyond b16 */
@@ -239,16 +237,19 @@ static void decr_console(void) {
 
   while (b && !(b & 1 << (b16 - 1))) {
     b <<= 1;
-    if (--k >= b16)
+    if (--k >= b16) {
       k = b16 - 1;
+    }
   }
 
-  if (b)
+  if (b) {
     set_console(k);
+  }
 }
 
-static void incr_console(void) {
-  uldat k = tty_number + 1;
+static void incr_console() {
+  tty_driver *self = ttydriver(lrawkbd_hw);
+  uldat k = self->tty_number + 1;
   udat b;
 
   k &= (udat)~0; /* get_console_bitmap() cannot tell beyond b16 */
@@ -261,33 +262,35 @@ static void incr_console(void) {
     k = (k + 1) & (udat)~0;
   }
 
-  if (b)
+  if (b) {
     set_console(k);
+  }
 }
 
-static void send_intr(void) {
+static void send_intr() {
 #if 0
-    tty_break();
+  tty_break();
 #endif
 }
 
-static void scroll_forw(void) { /* FIXME: finish this! */
+static void scroll_forw() { /* FIXME: finish this! */
 }
 
-static void scroll_back(void) { /* FIXME: finish this! */
+static void scroll_back() { /* FIXME: finish this! */
 }
 
-static void boot_it(void) { /* HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW; */
+static void boot_it() { /* HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW; */
 }
 
-static void compose(void) {
+static void compose() {
   dead_key_next = 1;
 }
 
-static void spawn_console(void) { /* no way to reproduce this from user level */
+static void spawn_console() {
+  /* no way to reproduce this from user level */
 }
 
-static void SAK(void) {
+static void SAK() {
   /*
    * SAK should also work in all raw modes and reset
    * them properly.
@@ -300,7 +303,7 @@ static udat do_ignore(byte value, byte up_flag) {
   return TW_Null;
 }
 
-static void do_null(void) {
+static void do_null() {
   compute_shiftstate();
 }
 
@@ -321,6 +324,7 @@ static char handle_diacr(char ch) {
   static struct kbdiacrs accent_tables;
   static byte accent_tables_init;
 
+  tty_driver *self = ttydriver(lrawkbd_hw);
   struct kbdiacr *accent_table;
   char d = diacr;
   unsigned i;
@@ -329,7 +333,7 @@ static char handle_diacr(char ch) {
 
   if (!accent_tables_init) {
     accent_tables_init = ttrue;
-    ioctl(tty_fd, KDGKBDIACR, &accent_tables);
+    ioctl(self->tty_fd, KDGKBDIACR, &accent_tables);
   }
 
   accent_table = accent_tables.kbdiacr;
@@ -342,7 +346,7 @@ static char handle_diacr(char ch) {
   if (ch == ' ' || ch == d)
     return d;
 
-  KeyboardEventCommon(d, get_shiftstate_tw(), 1, &d);
+  KeyboardEventCommon(lrawkbd_hw, d, get_shiftstate_tw(), 1, &d);
 
   return ch;
 }
@@ -587,7 +591,7 @@ static udat do_shift(byte value, byte up_flag) {
   /* kludge */
   if (up_flag && lrawkbd_shiftstate != old_state && npadch != -1) {
     char ch = npadch & 0xff;
-    KeyboardEventCommon(ch, get_shiftstate_tw(), 1, &ch);
+    KeyboardEventCommon(lrawkbd_hw, ch, get_shiftstate_tw(), 1, &ch);
     npadch = -1;
   }
 
@@ -597,7 +601,7 @@ static udat do_shift(byte value, byte up_flag) {
 /* called after returning from RAW mode or when changing consoles -
  recompute k_down[] and shift_state from key_down[] */
 /* maybe called when keymap is undefined, so that shiftkey release is seen */
-static int compute_shiftstate(void) {
+static int compute_shiftstate() {
   uldat i, j, k;
   udat sym, val;
 
@@ -625,7 +629,7 @@ static int compute_shiftstate(void) {
   return lrawkbd_shiftstate;
 }
 
-static udat get_shiftstate_tw(void) {
+static udat get_shiftstate_tw() {
   return (lrawkbd_shiftstate & (1 << KG_SHIFT | 1 << KG_SHIFTL | 1 << KG_SHIFTR) ? KBD_SHIFT_FL
                                                                                  : 0) |
          (lrawkbd_shiftstate & (1 << KG_CTRL | 1 << KG_CTRLL | 1 << KG_CTRLR) ? KBD_CTRL_FL : 0) |
@@ -785,14 +789,16 @@ static void set_lights(int lights) {
         (lights & 1<<VC_NUMLOCK   ? LED_NUM : 0) |
         (lights & 1<<VC_CAPSLOCK  ? LED_CAP : 0);
 #endif
-  ioctl(tty_fd, KDSETLED, lights);
+  tty_driver *self = ttydriver(lrawkbd_hw);
+
+  ioctl(self->tty_fd, KDSETLED, lights);
 }
 
 #define lrawkbd_KEYMAPS_N (1 << (NR_SHIFT <= 8 * sizeof(byte) ? NR_SHIFT : 8 * sizeof(byte)))
 
 static udat *lrawkbd_keymaps[lrawkbd_KEYMAPS_N];
 
-static void lrawkbd_FreeKeymaps(void) {
+void tty_driver::lrawkbd_FreeKeymaps() {
   udat *keymap;
   ldat table;
   for (table = 0; table < lrawkbd_KEYMAPS_N; table++) {
@@ -803,8 +809,9 @@ static void lrawkbd_FreeKeymaps(void) {
   }
 }
 
-static bool lrawkbd_LoadKeymaps(void) {
+bool tty_driver::lrawkbd_LoadKeymaps() {
   struct kbentry ke;
+  tty_driver *self = ttydriver(lrawkbd_hw);
   ldat table, keycode;
 
   /*
@@ -814,7 +821,7 @@ static bool lrawkbd_LoadKeymaps(void) {
    * keyboard mode will be overridden in lrawkbd_SetKeyboard(),
    * no need to restore it here.
    */
-  if (ioctl(tty_fd, KDSKBMODE, K_UNICODE) < 0) {
+  if (ioctl(self->tty_fd, KDSKBMODE, K_UNICODE) < 0) {
     return false;
   }
 
@@ -825,7 +832,7 @@ static bool lrawkbd_LoadKeymaps(void) {
       ke.kb_index = keycode;
       ke.kb_value = 0;
 
-      if (ioctl(tty_fd, KDGKBENT, &ke) == 0) {
+      if (ioctl(self->tty_fd, KDGKBENT, &ke) == 0) {
 
 #ifdef DEBUG_HW_TTY_LRAWKBD
         log(INFO) << "\t... ioctl(tty_fd = " << (int)tty_fd << ", KDGKBENT, {table = 0x"
@@ -866,6 +873,8 @@ static udat get_kbentry(byte keycode, byte table) {
 
 static const char *get_kbsentry(byte keysym) {
   static struct kbsentry ks;
+  tty_driver *self = ttydriver(lrawkbd_hw);
+
   /*
    struct kbsentry {
       unsigned char kb_func;
@@ -876,7 +885,7 @@ static const char *get_kbsentry(byte keysym) {
   ks.kb_func = keysym;
   ks.kb_string[0] = '\0';
 
-  ioctl(tty_fd, KDGKBSENT, &ks);
+  ioctl(self->tty_fd, KDGKBSENT, &ks);
 
   return (const char *)ks.kb_string;
 }
@@ -942,7 +951,8 @@ static udat handle_keycode(byte keycode, byte up) {
   return twk;
 }
 
-static udat lrawkbd_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen, char **ret) {
+udat tty_driver::lrawkbd_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen,
+                                   char **ret) {
   udat twk;
   byte k = (byte)*s;
 

@@ -213,18 +213,18 @@ void Quit(int status) {
   exit(status);
 }
 
-void NoOp(void) {
+void NoOp() {
 }
 
-byte AlwaysTrue(void) {
-  return ttrue;
+bool AlwaysTrue() {
+  return true;
 }
 
-byte AlwaysFalse(void) {
-  return tfalse;
+bool AlwaysFalse() {
+  return false;
 }
 
-void *AlwaysNull(void) {
+void *AlwaysNull() {
   return NULL;
 }
 

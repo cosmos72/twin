@@ -37,78 +37,75 @@
 #define HW_X_DRIVER HW_X11
 
 #include "hw_x/features.h"
-#include "hw_x/x11_data.h"
+#include "hw_x/driver.h"
 #include "hw_x/keyboard.h"
-#include "hw_x/xchar16.h"
-#include "hw_x/flavor_protos.h"
-#include "hw_x/util_protos.h"
-#include "hw_x/common_protos.h"
-
-#define myXDrawImageString XDrawImageString16
 
 #define XDRAW(col, buf, buflen)                                                                    \
   do {                                                                                             \
-    XSYM(SetColors)(col);                                                                          \
-    myXDrawImageString(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen);             \
+    SetColors(col);                                                                                \
+    XDrawImageString16(this->xdisplay, this->xwindow, this->xgc, xbegin, ybegin + this->xupfont,   \
+                       buf, buflen);                                                               \
   } while (0)
 
 #include "hw_x/util.h"
 #include "hw_x/common.h"
 
 /* manage foreground/background colors */
-static void XSYM(SetFg)(const trgb fg) {
-  if (xrgb_fg != fg) {
-    xrgb_fg = fg;
-    XSetForeground(xdisplay, xgc, xsgc.foreground = XSYM(ColorToPixel)(fg));
+void XDRIVER::SetFg(const trgb fg) {
+  if (this->xrgb_fg != fg) {
+    this->xrgb_fg = fg;
+    XSetForeground(this->xdisplay, this->xgc, this->xsgc.foreground = ColorToPixel(fg));
   }
 }
 
-static void XSYM(SetBg)(const trgb bg) {
-  if (xrgb_bg != bg) {
-    xrgb_bg = bg;
-    XSetBackground(xdisplay, xgc, xsgc.background = XSYM(ColorToPixel)(bg));
+void XDRIVER::SetBg(const trgb bg) {
+  if (this->xrgb_bg != bg) {
+    this->xrgb_bg = bg;
+    XSetBackground(this->xdisplay, this->xgc, this->xsgc.background = ColorToPixel(bg));
   }
 }
 
-static void XSYM(SetColors)(tcolor col) {
-  XSYM(SetFg)(TCOLFG(col));
-  XSYM(SetBg)(TCOLBG(col));
+void XDRIVER::SetColors(tcolor col) {
+  SetFg(TCOLFG(col));
+  SetBg(TCOLBG(col));
 }
 
 /*
  * return ttrue if each font glyph is either 'narrow' (latin, etc.) or 'wide' (CJK...)
  * with 'wide' characters exactly twice as wide as 'narrow' ones
  */
-static tbool XSYM(FontIsDualWidth)(const XFontStruct *info) {
-  XCharStruct *p = info->per_char;
+bool XDRIVER::FontIsDualWidth(const XFontStruct *info) {
+  XCharStruct *pc = info->per_char;
   ldat wide = info->max_bounds.width, narrow = info->min_bounds.width, i, n_chars, w;
-  if (wide != narrow * 2)
-    return tfalse;
-  if (p == NULL)
+  if (wide != narrow * 2) {
+    return false;
+  }
+  if (pc == NULL) {
     /*
      * no way to check per-character bounding box. hope for the best...
      * at least GNU unifont falls in this case.
      */
-    return ttrue;
-
+    return true;
+  }
   n_chars = (ldat)(info->max_byte1 - info->min_byte1 + 1) *
             (info->max_char_or_byte2 - info->min_char_or_byte2 + 1);
   for (i = 0; i < n_chars; i++) {
-    w = p[i].width;
-    if (w != 0 && w != narrow && w != wide)
-      return tfalse;
+    w = pc[i].width;
+    if (w != 0 && w != narrow && w != wide) {
+      return false;
+    }
   }
-  return ttrue;
+  return true;
 }
 
 /* if font is monospaced, return its score. otherwise return MINLDAT */
-static ldat XSYM(MonospaceFontScore)(const XFontStruct *info, udat fontwidth, udat fontheight,
-                                     ldat best_score) {
+ldat XDRIVER::MonospaceFontScore(const XFontStruct *info, udat fontwidth, udat fontheight,
+                                 ldat best_score) {
   ldat score = TW_MINLDAT, width = info->min_bounds.width,
        height = (ldat)info->ascent + info->descent, max_width = info->max_bounds.width;
 
-  if (width == max_width || XSYM(FontIsDualWidth)(info)) {
-    score = XSYM(FontScoreOf)(fontwidth, fontheight, width, height);
+  if (width == max_width || FontIsDualWidth(info)) {
+    score = FontScoreOf(fontwidth, fontheight, width, height);
     if (score > best_score)
       log(INFO) << "      candidate font " << width << "x" << height << " score " << score << "\n";
   }
@@ -116,7 +113,7 @@ static ldat XSYM(MonospaceFontScore)(const XFontStruct *info, udat fontwidth, ud
 }
 
 /* return name of selected font in allocated (char *) */
-static char *XSYM(AutodetectFont)(const char *family, udat fontwidth, udat fontheight) {
+char *XDRIVER::AutodetectFont(const char *family, udat fontwidth, udat fontheight) {
   struct {
     const char *wildcard;
     ldat score_adj;
@@ -160,7 +157,7 @@ static char *XSYM(AutodetectFont)(const char *family, udat fontwidth, udat fonth
       info = NULL;
       sprintf(digits, "%u", (unsigned)(fontheight / 10 + (j != 0 ? look_up ? 1 : -1 : 0)));
       sprintf(pattern, patterns[i].wildcard, digits + (digits[0] == '0'));
-      names = XListFontsWithInfo(xdisplay, pattern, max_fonts, &n_fonts, &info);
+      names = XListFontsWithInfo(this->xdisplay, pattern, max_fonts, &n_fonts, &info);
 
       /* printk("%4d fonts match '%s'\n", names ? n_fonts : 0, pattern); */
       if (names == NULL)
@@ -175,9 +172,8 @@ static char *XSYM(AutodetectFont)(const char *family, udat fontwidth, udat fonth
 
         if (info[k].direction == FontLeftToRight && info[k].min_byte1 == 0 &&
             info[k].min_char_or_byte2 <= 32) {
-          score =
-              XSYM(MonospaceFontScore)(&info[k], fontwidth, fontheight, best_score - score_adj) +
-              score_adj;
+          score = MonospaceFontScore(&info[k], fontwidth, fontheight, best_score - score_adj) +
+                  score_adj;
           if (score <= best_score)
             continue;
 
@@ -195,16 +191,67 @@ static char *XSYM(AutodetectFont)(const char *family, udat fontwidth, udat fonth
   return best;
 }
 
-static int XSYM(AllocColor)(Display *display, Visual *xvisual, Colormap colormap, XColor *xcolor,
-                            unsigned long *pixel, int color_num) {
-  if (!XAllocColor(display, colormap, xcolor)) {
-    return -1;
+bool XDRIVER::AllocColor(Visual *xvisual, Colormap colormap, XColor *color, unsigned long *pixel,
+                         int color_num) {
+  if (XAllocColor(this->xdisplay, colormap, color)) {
+    *pixel = color->pixel;
+    return true;
   }
-  *pixel = xcolor->pixel;
-  return 1;
+  return false;
 }
 
-static void XSYM(FlavorQuitHW)(void) {
-  if (xsfont)
-    XFreeFont(xdisplay, xsfont);
+Tutf_function XDRIVER::UTF_32_to_charset_function(const char *charset) {
+  const char *s, *fontname = NULL;
+  unsigned long prop;
+  uldat i;
+
+  if (!charset) {
+    /* attempt to autodetect encoding from fontname */
+    if (XGetFontProperty(this->xsfont, XA_FONT, &prop))
+      fontname = XGetAtomName(this->xdisplay, (Atom)prop);
+
+    if (fontname && !strcmp(fontname, "vga")) {
+      charset = T_NAME_CP437;
+    } else if (fontname) {
+      i = 2;
+      for (s = fontname + strlen(fontname) - 1; i && s >= fontname; s--) {
+        if (*s == '-') {
+          i--;
+        }
+      }
+      if (!i) {
+        charset = s + 2; /* skip current char and '-' */
+      }
+    }
+
+    if (!charset) {
+      if (this->xsfont->min_byte1 < this->xsfont->max_byte1) {
+        /* font is more than just 8-bit. For now, assume it's unicode */
+        log(WARNING) << "    " XSTR(XDRIVER) ".InitHW(): font `" << Chars::from_c(fontname)
+                     << "\' has unknown charset encoding,\n"
+                        "                assuming Unicode.\n";
+        return NULL;
+      }
+      /* else assume codepage437. gross. */
+      log(WARNING) << "    " XSTR(XDRIVER) ".InitHW(): font `" << Chars::from_c(fontname)
+                   << "\' has unknown charset encoding,\n"
+                      "                assuming charset `CP437' i.e. `VGA'.\n";
+      return Tutf_UTF_32_to_CP437;
+    }
+  }
+
+  i = Tutf_charset_id(charset);
+  s = Tutf_charset_name(i);
+  if (s && !strcmp(s, T_NAME_UTF_32)) {
+    /* this is an Unicode font. good. */
+    return NULL;
+  }
+
+  if (i == (uldat)-1) {
+    log(WARNING) << "      " XSTR(XDRIVER) ".InitHW(): libtutf warning: unknown charset `"
+                 << Chars::from_c(charset) << "', assuming charset `CP437' i.e. `VGA'.\n";
+    return Tutf_UTF_32_to_CP437;
+  }
+
+  return Tutf_UTF_32_to_charset_function(i);
 }

@@ -1417,7 +1417,7 @@ static byte ReadGlobals(void) {
 
 static byte rcparse(cstr path);
 
-static bool rcload(void) {
+static bool rcload(Tdisplay hw) {
   str path;
   uldat len;
 #ifndef DEBUG_FORK

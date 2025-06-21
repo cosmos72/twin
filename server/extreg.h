@@ -25,7 +25,7 @@ struct exts {
   } Remote;
   struct {
     void (*SendMsg)(Tmsgport MsgPort, Tmsg msg);
-    byte (*InitAuth)(void);
+    bool (*InitAuth)(void);
     void (*MultiplexS)(uldat order, Span<s_tsfield> args);
   } Socket;
   struct {

@@ -2,11 +2,9 @@
 
 #include "log.h"
 
-static void XSYM(SetFg)(const trgb fg);
-
 #define X_TITLE_MAXLEN 80
 
-static void XSYM(FillWindowTitle)(char *title, int maxlen) {
+void XDRIVER::FillWindowTitle(char *title, int maxlen) {
   int left = maxlen;
   int chunk = 0;
 
@@ -40,28 +38,28 @@ static void XSYM(FillWindowTitle)(char *title, int maxlen) {
   title[0] = '\0';
 }
 
-static void XSYM(HideCursor)(dat x, dat y) {
-  int xbegin = (x - xhw_startx) * xwfont;
-  int ybegin = (y - xhw_starty) * xhfont; /* needed by XDRAW */
+void XDRIVER::HideCursor(dat x, dat y) {
+  int xbegin = (x - this->xhw_startx) * this->xwfont;
+  int ybegin = (y - this->xhw_starty) * this->xhfont; /* needed by XDRAW */
 
   tcell cell = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
                    ? Video[x + y * (ldat)DisplayWidth]
                    : TCELL(TCOL(tWHITE, tblack), ' ');
   tcolor col = TCOLOR(cell);
-  trune f = xUTF_32_to_charset(TRUNE(cell));
+  trune f = this->xUTF_32_to_charset(TRUNE(cell));
 
   XChar16 c = RawToXChar16(f);
 
   XDRAW(col, &c, 1);
 }
 
-static void XSYM(ShowCursor)(uldat type, dat x, dat y) {
+void XDRIVER::ShowCursor(uldat type, dat x, dat y) {
   tcell cell = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
                    ? Video[x + y * (ldat)DisplayWidth]
                    : TCELL(TCOL(tWHITE, tblack), ' ');
   tcolor color = TCOLOR(cell);
-  ldat xbegin = (x - xhw_startx) * xwfont;
-  ldat ybegin = (y - xhw_starty) * xhfont;
+  ldat xbegin = (x - this->xhw_startx) * this->xwfont;
+  ldat ybegin = (y - this->xhw_starty) * this->xhfont;
 
   if (type & 0x10) {
     /* soft cursor */
@@ -72,31 +70,33 @@ static void XSYM(ShowCursor)(uldat type, dat x, dat y) {
       v ^= TCOL(0, twhite);
     if ((type & 0x40) && ((TCOLFG(v) & twhite) == (TCOLBG(v) & twhite)))
       v ^= TCOL(twhite, 0);
-    f = xUTF_32_to_charset(TRUNE(cell));
+    f = this->xUTF_32_to_charset(TRUNE(cell));
     c = RawToXChar16(f);
     XDRAW(v, &c, 1);
   } else if (type & 0xF) {
     /* VGA hw-like cursor */
 
     /* doesn't work as expected on paletted visuals... */
-    XSYM(SetFg)(TCOLFG(color) ^ TCOLBG(color));
+    SetFg(TCOLFG(color) ^ TCOLBG(color));
 
-    udat i = xhfont * ((type & 0xF) - NOCURSOR) / (SOLIDCURSOR - NOCURSOR);
+    udat i = this->xhfont * ((type & 0xF) - NOCURSOR) / (SOLIDCURSOR - NOCURSOR);
 
-    XSetFunction(xdisplay, xgc, xsgc.function = GXxor);
-    XFillRectangle(xdisplay, xwindow, xgc, xbegin, ybegin + xhfont - i, xwfont, i);
-    XSetFunction(xdisplay, xgc, xsgc.function = GXcopy);
+    XSetFunction(this->xdisplay, this->xgc, this->xsgc.function = GXxor);
+    XFillRectangle(this->xdisplay, this->xwindow, this->xgc, xbegin, ybegin + this->xhfont - i,
+                   this->xwfont, i);
+    XSetFunction(this->xdisplay, this->xgc, this->xsgc.function = GXcopy);
   }
 }
 
-static void XSYM(FlushVideo)(void) {
+void XDRIVER::FlushVideo(Tdisplay hw) {
+  XDRIVER *self = xdriver(hw);
   uldat i;
   dat start, end;
   byte iff = tfalse;
 
   if (ValidOldVideo) {
-    iff = ChangedVideoFlag && Video[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth] !=
-                                  OldVideo[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth];
+    iff = ChangedVideoFlag && Video[hw->XY[0] + hw->XY[1] * (ldat)DisplayWidth] !=
+                                  OldVideo[hw->XY[0] + hw->XY[1] * (ldat)DisplayWidth];
     /* ttrue if and only if the cursor will be erased by burst */
   }
 
@@ -107,76 +107,80 @@ static void XSYM(FlushVideo)(void) {
       end = ChangedVideo[i >> 1][i & 1][1];
 
       if (start != -1)
-        XSYM(DrawSome)(start, i >> 1, end - start + 1);
+        self->DrawSome(start, i >> 1, end - start + 1);
     }
-    setFlush();
+    hw->setFlush();
   }
   /* then, we may have to erase the old cursor */
-  if (!ValidOldVideo || (!iff && HW->TT != NOCURSOR &&
-                         (CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
+  if (!ValidOldVideo || (!iff && hw->TT != NOCURSOR &&
+                         (CursorType != hw->TT || CursorX != hw->XY[0] || CursorY != hw->XY[1]))) {
 
-    HW->TT = NOCURSOR;
-    XSYM(HideCursor)(HW->XY[0], HW->XY[1]);
-    setFlush();
+    hw->TT = NOCURSOR;
+    self->HideCursor(hw->XY[0], hw->XY[1]);
+    hw->setFlush();
   }
   /* finally, redraw the cursor if forced to redraw or */
   /* (we want a cursor and (the burst erased the cursor or the cursor changed)) */
   if (!ValidOldVideo ||
       (CursorType != NOCURSOR &&
-       (iff || CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
+       (iff || CursorType != hw->TT || CursorX != hw->XY[0] || CursorY != hw->XY[1]))) {
 
-    XSYM(ShowCursor)(HW->TT = CursorType, HW->XY[0] = CursorX, HW->XY[1] = CursorY);
-    setFlush();
+    self->ShowCursor(hw->TT = CursorType, hw->XY[0] = CursorX, hw->XY[1] = CursorY);
+    hw->setFlush();
   }
 
-  HW->FlagsHW &= ~FlHWChangedMouseFlag;
+  hw->FlagsHW &= ~FlHWChangedMouseFlag;
 }
 
-static void XSYM(FlushHW)(void) {
-  XFlush(xdisplay);
-  clrFlush();
+void XDRIVER::FlushHW(Tdisplay hw) {
+  XFlush(xdriver(hw)->xdisplay);
+  hw->clrFlush();
 }
 
-static void XSYM(DetectSize)(dat *x, dat *y) {
-  if (!xhw_view) {
-    *x = HW->X = xwidth / xwfont;
-    *y = HW->Y = xheight / xhfont;
+void XDRIVER::DetectSize(Tdisplay hw, dat *x, dat *y) {
+  XDRIVER *self = xdriver(hw);
+  if (!self->xhw_view) {
+    *x = hw->X = self->xwidth / self->xwfont;
+    *y = hw->Y = self->xheight / self->xhfont;
   }
 }
 
-static void XSYM(CheckResize)(dat * /*x*/, dat * /*y*/) {
+void XDRIVER::CheckResize(Tdisplay /*hw*/, dat * /*x*/, dat * /*y*/) {
   /* always ok */
 }
 
-static void XSYM(Resize)(dat x, dat y) {
-  if (x != HW->X || y != HW->Y) {
-    if (!xhw_view) {
-      XResizeWindow(xdisplay, xwindow, xwidth = xwfont * (HW->X = xhw_endx = x),
-                    xheight = xhfont * (HW->Y = xhw_endy = y));
+void XDRIVER::Resize(Tdisplay hw, dat x, dat y) {
+  XDRIVER *self = xdriver(hw);
+  if (x != hw->X || y != hw->Y) {
+    if (!self->xhw_view) {
+      XResizeWindow(self->xdisplay, self->xwindow,
+                    self->xwidth = self->xwfont * (hw->X = self->xhw_endx = x),
+                    self->xheight = self->xhfont * (hw->Y = self->xhw_endy = y));
     }
-    setFlush();
+    hw->setFlush();
   }
 }
 
 /*
  * import X11 Selection
  */
-static byte XSYM(SelectionImport_X11)(void) {
-  return !HW->HWSelectionPrivate;
+bool XDRIVER::SelectionImport_X11(Tdisplay hw) {
+  return !hw->SelectionPrivate;
 }
 
 /*
  * export our Selection to X11
  */
-static void XSYM(SelectionExport_X11)(void) {
-  if (!HW->HWSelectionPrivate) {
-    XSetSelectionOwner(xdisplay, XA_PRIMARY, xwindow, CurrentTime);
-    HW->HWSelectionPrivate = (tany)xwindow;
-    setFlush();
+void XDRIVER::SelectionExport_X11(Tdisplay hw) {
+  XDRIVER *self = xdriver(hw);
+  if (!hw->SelectionPrivate) {
+    XSetSelectionOwner(self->xdisplay, XA_PRIMARY, self->xwindow, CurrentTime);
+    hw->SelectionPrivate = (tany)self->xwindow;
+    hw->setFlush();
   }
 }
 
-static void XSYM(utf8_to_wchar)(Chars src, Vector<wchar_t> &dst) {
+void XDRIVER::utf8_to_wchar(Chars src, Vector<wchar_t> &dst) {
   dst.reserve(src.size());
   Utf8 seq;
   while (src) {
@@ -188,24 +192,26 @@ static void XSYM(utf8_to_wchar)(Chars src, Vector<wchar_t> &dst) {
 /*
  * notify our Selection to X11
  */
-static void XSYM(SelectionNotify_X11)(uldat reqprivate, e_id Magic, Chars /*mime*/, Chars data) {
+void XDRIVER::SelectionNotify_X11(Tdisplay hw, uldat reqprivate, e_id Magic, Chars /*mime*/,
+                                  Chars data) {
   XEvent ev;
+  XDRIVER *self = xdriver(hw);
   Atom target;
 
-  if (XReqCount == 0) {
+  if (self->XReqCount == 0) {
     log(ERROR) << THIS
-        ".c: " XSYM_STR(SelectionNotify_X11) "(): unexpected Twin Selection Notify event!\n";
+        ".c: " XSTR(XDRIVER) ".SelectionNotify_X11(): unexpected Twin Selection Notify event!\n";
     return;
   }
 #if 0
   else {
-    log(ERROR) << THIS ".c: " XSYM_STR(SelectionNotify_X11) "(): " << XReqCount
+    log(ERROR) << THIS ".c: " XSTR(XDRIVER) ".SelectionNotify_X11(): " << self->XReqCount
                << " nested Twin Selection Notify events\n";
   }
 #endif
 
-  XReqCount--;
-  XSelectionRequestEvent &req = XReq(XReqCount);
+  self->XReqCount--;
+  XSelectionRequestEvent &req = self->xReq[self->XReqCount];
 
   ev.xselection.type = SelectionNotify;
   ev.xselection.property = None;
@@ -215,7 +221,7 @@ static void XSYM(SelectionNotify_X11)(uldat reqprivate, e_id Magic, Chars /*mime
   ev.xselection.target = target = req.target;
   ev.xselection.time = req.time;
 
-  if (target == xTARGETS) {
+  if (target == self->xTARGETS) {
     /*
      * On some systems, the Atom typedef is 64 bits wide.
      * We need a type that is exactly 32 bits wide,
@@ -224,37 +230,37 @@ static void XSYM(SelectionNotify_X11)(uldat reqprivate, e_id Magic, Chars /*mime
     typedef CARD32 Atom32;
     Atom32 target_list[5];
 
-    target_list[0] = (Atom32)xTARGETS;
+    target_list[0] = (Atom32)self->xTARGETS;
     target_list[1] = (Atom32)XA_STRING;
-    target_list[2] = (Atom32)xUTF8_STRING;
-    target_list[3] = (Atom32)xTEXT;
-    target_list[4] = (Atom32)xCOMPOUND_TEXT;
-    XChangeProperty(xdisplay, req.requestor, req.property, xTARGETS, 32, PropModeReplace,
-                    (const byte *)target_list, sizeof(target_list));
+    target_list[2] = (Atom32)self->xUTF8_STRING;
+    target_list[3] = (Atom32)self->xTEXT;
+    target_list[4] = (Atom32)self->xCOMPOUND_TEXT;
+    XChangeProperty(self->xdisplay, req.requestor, req.property, self->xTARGETS, 32,
+                    PropModeReplace, (const byte *)target_list, sizeof(target_list));
 
-  } else if (target == xUTF8_STRING) {
+  } else if (target == self->xUTF8_STRING) {
 
     /* notify X11 selection as UTF-8 */
-    XChangeProperty(xdisplay, req.requestor, req.property, xUTF8_STRING, 8, PropModeReplace,
-                    (const byte *)data.data(), data.size());
+    XChangeProperty(self->xdisplay, req.requestor, req.property, self->xUTF8_STRING, 8,
+                    PropModeReplace, (const byte *)data.data(), data.size());
 
   } else {
     XICCEncodingStyle style;
     if (target == XA_STRING) {
       style = XStringStyle;
-    } else if (target == xTEXT) {
+    } else if (target == self->xTEXT) {
       style = XStdICCTextStyle;
     } else /*if (target == xCOMPOUND_TEXT)*/ {
       style = XCompoundTextStyle;
     }
     Vector<wchar_t> wtext;
-    XSYM(utf8_to_wchar)(data, wtext);
+    utf8_to_wchar(data, wtext);
     wtext.append('\0');
     wchar_t *waddr = wtext.data();
 
     XTextProperty ct = {};
     bool freect = false;
-    if (XwcTextListToTextProperty(xdisplay, &waddr, 1, style, &ct) >= 0) {
+    if (XwcTextListToTextProperty(self->xdisplay, &waddr, 1, style, &ct) >= 0) {
       freect = true;
     } else {
       ct.value = (byte *)const_cast<char *>(data.data());
@@ -262,21 +268,21 @@ static void XSYM(SelectionNotify_X11)(uldat reqprivate, e_id Magic, Chars /*mime
       ct.encoding = target;
     }
 
-    XChangeProperty(xdisplay, req.requestor, req.property, ct.encoding, 8, PropModeReplace,
+    XChangeProperty(self->xdisplay, req.requestor, req.property, ct.encoding, 8, PropModeReplace,
                     ct.value, (int)ct.nitems);
     if (freect) {
       XFree(ct.value);
     }
   }
   ev.xselection.property = req.property;
-  XSendEvent(xdisplay, req.requestor, False, 0, &ev);
-  setFlush();
+  XSendEvent(self->xdisplay, req.requestor, False, 0, &ev);
+  hw->setFlush();
 }
 
 /*
  * notify the X11 Selection to twin upper layer
  */
-static void XSYM(SelectionNotify_up)(Window win, Atom prop) {
+void XDRIVER::SelectionNotify_up(Window win, Atom prop) {
   long nread = 0;
   unsigned long i, nitems, bytes_after = TW_BIGBUFF;
   Atom actual_type;
@@ -285,14 +291,14 @@ static void XSYM(SelectionNotify_up)(Window win, Atom prop) {
   String buff;
   bool ok = true;
 
-  if (xReqCount == 0) {
+  if (this->xReqCount == 0) {
     log(WARNING) << THIS
-        ".c: " XSYM_STR(SelectionNotify_up) "(): unexpected X Selection Notify event!\n";
+        ".c: " XSTR(XDRIVER) ".SelectionNotify_up(): unexpected X Selection Notify event!\n";
     return;
   }
 #if 0
   else {
-    log(INFO) << THIS ".c: " XSYM_STR(SelectionNotify_up) "(): " << xReqCount
+    log(INFO) << THIS ".c: " XSTR(XDRIVER)  ".SelectionNotify_up(): " << xReqCount
               << " nested X Selection Notify event\n";
   }
 #endif
@@ -300,21 +306,21 @@ static void XSYM(SelectionNotify_up)(Window win, Atom prop) {
     return;
   }
 
-  xReqCount--;
+  this->xReqCount--;
 
   do {
     data = NULL;
     if (bytes_after > TW_BIGBUFF) {
       bytes_after = TW_BIGBUFF;
     }
-    ok = XGetWindowProperty(xdisplay, win, prop, (nread + 3) / 4, (bytes_after + 3) / 4, False,
-                            AnyPropertyType, &actual_type, &actual_fmt, &nitems, &bytes_after,
-                            &data) == Success;
+    ok = XGetWindowProperty(this->xdisplay, win, prop, (nread + 3) / 4, (bytes_after + 3) / 4,
+                            False, AnyPropertyType, &actual_type, &actual_fmt, &nitems,
+                            &bytes_after, &data) == Success;
     if (ok) {
       nread += nitems * (actual_fmt / 8);
     }
 
-    if (actual_type == xUTF8_STRING) {
+    if (actual_type == this->xUTF8_STRING) {
       /* X11 selection contains UTF-8 */
       ok = buff.append((const char *)data, nitems);
     } else if (actual_type == XA_STRING) {
@@ -331,43 +337,45 @@ static void XSYM(SelectionNotify_up)(Window win, Atom prop) {
   } while (ok && bytes_after > 0);
 
   /* Signal the selection owner that we have successfully read the data. */
-  XDeleteProperty(xdisplay, win, prop);
+  XDeleteProperty(this->xdisplay, win, prop);
 
   if (buff) {
-    TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_UTF8MAGIC, Chars(),
-                        buff);
+    TwinSelectionNotify(this->xRequestor[this->xReqCount], this->xReqPrivate[this->xReqCount],
+                        SEL_UTF8MAGIC, Chars(), buff);
   }
 }
 
 /*
  * request X11 Selection
  */
-static void XSYM(SelectionRequest_X11)(Tobj requestor, uldat reqprivate) {
-  if (!HW->HWSelectionPrivate) {
+void XDRIVER::SelectionRequest_X11(Tdisplay hw, Tobj requestor, uldat reqprivate) {
 
-    if (xReqCount == NEST) {
-      log(ERROR) << THIS ".c: " XSYM_STR(
-          SelectionRequest_X11) "(): too many nested Twin Selection Request events!\n";
+  if (!hw->SelectionPrivate) {
+    XDRIVER *self = xdriver(hw);
+    if (self->xReqCount == NEST) {
+      log(ERROR) << THIS ".c: " XSTR(
+          XDRIVER) ".SelectionRequest_X11(): too many nested Twin Selection Request events!\n";
       return;
     }
 #if 0
     else {
-      log(INFO) << THIS ".c: " XSYM_STR(SelectionRequest_X11) "(): " << (xReqCount + 1)
+      log(INFO) << THIS ".c: " XSTR(XDRIVER) ".SelectionRequest_X11(): " << (self->xReqCount + 1)
                 << " nested Twin Selection Request events\n";
     }
 #endif
-    xRequestor(xReqCount) = requestor;
-    xReqPrivate(xReqCount) = reqprivate;
-    xReqCount++;
+    self->xRequestor[self->xReqCount] = requestor;
+    self->xReqPrivate[self->xReqCount] = reqprivate;
+    self->xReqCount++;
 
-    if (XGetSelectionOwner(xdisplay, XA_PRIMARY) == None) {
-      XSYM(SelectionNotify_up)(DefaultRootWindow(xdisplay), XA_CUT_BUFFER0);
+    if (XGetSelectionOwner(self->xdisplay, XA_PRIMARY) == None) {
+      self->SelectionNotify_up(DefaultRootWindow(self->xdisplay), XA_CUT_BUFFER0);
     } else {
-      Atom prop = XInternAtom(xdisplay, "VT_SELECTION", False);
+      Atom prop = XInternAtom(self->xdisplay, "VT_SELECTION", False);
       /* Request conversion to UTF-8. Not all owners will be able to fulfill that request. */
-      XConvertSelection(xdisplay, XA_PRIMARY, xUTF8_STRING, prop, xwindow, CurrentTime);
+      XConvertSelection(self->xdisplay, XA_PRIMARY, self->xUTF8_STRING, prop, self->xwindow,
+                        CurrentTime);
 
-      setFlush();
+      hw->setFlush();
       /* we will get an X11 SelectionNotify event */
     }
   }
@@ -377,67 +385,70 @@ static void XSYM(SelectionRequest_X11)(Tobj requestor, uldat reqprivate) {
 /*
  * request twin Selection
  */
-static void XSYM(SelectionRequest_up)(XSelectionRequestEvent *req) {
-  if (XReqCount == NEST) {
-    log(ERROR) << THIS
-        ".c: " XSYM_STR(SelectionRequest_up) "(): too many nested X Selection Request events!\n";
+void XDRIVER::SelectionRequest_up(XSelectionRequestEvent *req) {
+  if (this->XReqCount == NEST) {
+    log(ERROR) << THIS ".c: " XSTR(
+        XDRIVER) ".SelectionRequest_up(): too many nested X Selection Request events!\n";
     return;
   }
 #if 0
   else {
-    log(INFO) << THIS ".c: " XSYM_STR(SelectionRequest_up) "(): " << (XReqCount + 1)
+    log(INFO) << THIS ".c: " XSTR(XDRIVER) ".SelectionRequest_up(): " << (this->XReqCount + 1)
               << " nested X Selection Request events\n";
   }
 #endif
-  CopyMem(req, &XReq(XReqCount), sizeof(XSelectionRequestEvent));
-  TwinSelectionRequest((Tobj)HW, XReqCount++, TwinSelectionGetOwner());
-  /* we will get a call to HW->HWSelectionNotify i.e. XSYM(SelectionNotify_X11) */
+  CopyMem(req, &this->xReq[this->XReqCount], sizeof(XSelectionRequestEvent));
+  TwinSelectionRequest((Tobj)hw, this->XReqCount++, TwinSelectionGetOwner());
+  /* we will get a call to hw->fnSelectionNotify i.e. XDRIVER::SelectionNotify_X11() */
   /* the call **CAN** arrive while we are still inside TwinSelectionRequest() !!! */
 }
 
-static byte XSYM(CanDragArea)(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-  return xwindow_AllVisible  /* if window is partially covered, XCopyArea() cannot work */
-         && !HW->RedrawVideo /* if window is not up-to-date, XCopyArea() is unusable */
+bool XDRIVER::CanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
+  return !hw->RedrawVideo /* if window is not up-to-date, XCopyArea() is unusable */
+         /* if window is partially covered, XCopyArea() cannot work */
+         && xdriver(hw)->xwindow_AllVisible         /**/
          && (Rgt - Left + 1) * (Dwn - Up + 1) > 20; /* avoid XCopyArea() for very small areas */
 }
 
-static void XSYM(DragArea)(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
+void XDRIVER::DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
+  XDRIVER *self = xdriver(hw);
   dat DstRgt = (Rgt - Left) + DstLeft;
   dat DstDwn = (Dwn - Up) + DstUp;
 
-  if (HW->TT != NOCURSOR) {
-    if (HW->XY[0] >= Left && HW->XY[0] <= Rgt && HW->XY[1] >= Up && HW->XY[1] <= Dwn) {
+  if (hw->TT != NOCURSOR) {
+    if (hw->XY[0] >= Left && hw->XY[0] <= Rgt && hw->XY[1] >= Up && hw->XY[1] <= Dwn) {
       /* must hide the cursor before dragging */
-      XSYM(HideCursor)(HW->XY[0], HW->XY[1]);
+      self->HideCursor(hw->XY[0], hw->XY[1]);
       /* and remember to redraw it */
-      HW->TT = (uldat)-1;
-    } else if (HW->XY[0] >= DstLeft && HW->XY[0] <= DstRgt && HW->XY[1] >= DstUp &&
-               HW->XY[1] <= DstDwn) {
+      hw->TT = (uldat)-1;
+    } else if (hw->XY[0] >= DstLeft && hw->XY[0] <= DstRgt && hw->XY[1] >= DstUp &&
+               hw->XY[1] <= DstDwn) {
       /* cursor will be overwritten by drag, remember to redraw it */
-      HW->TT = (uldat)-1;
+      hw->TT = (uldat)-1;
     }
   }
-  XCopyArea(xdisplay, xwindow, xwindow, xgc, Left * xwfont, Up * xhfont, (Rgt - Left + 1) * xwfont,
-            (Dwn - Up + 1) * xhfont, DstLeft * xwfont, DstUp * xhfont);
-  setFlush();
+  XCopyArea(self->xdisplay, self->xwindow, self->xwindow, self->xgc, Left * self->xwfont,
+            Up * self->xhfont, (Rgt - Left + 1) * self->xwfont, (Dwn - Up + 1) * self->xhfont,
+            DstLeft * self->xwfont, DstUp * self->xhfont);
+  hw->setFlush();
 }
 
 #if 0
 /* does NOT work... libX11 insists on doing exit(1) */
-static int XSYM(Die)(Display *d) {
+ int XDRIVER::Die(Display *d) {
     /*
      * this is not exactly trivial:
-     * find our HW, shut it down
-     * and quit if it was the last HW.
+     * find our hw, shut it down
+     * and quit if it was the last hw.
      *
-     * don't rely on HW->Private only, as non-X11 displays
+     * don't rely on hw->Private only, as non-X11 displays
      * may use it differently and have by chance the same value for it.
      */
     forallHW {
-        if (HW->QuitHW == XSYM(QuitHW) && HW->Private
-            && d == xdisplay) { /* expands to HW->Private->xdisplay */
+        if (hw->QuitHW == &XDRIVER::QuitHW && hw->Private
+            && d == this->xdisplay) {
 
-            HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+            hw->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
 
             break;
         }
@@ -445,74 +456,20 @@ static int XSYM(Die)(Display *d) {
     return 0;
 }
 #else
-static int XSYM(Die)(Display *d) {
+int XDRIVER::Die(Display * /*d*/) {
   Quit(0);
   return 0;
 }
 #endif
 
-#if HW_X_DRIVER != HW_XFT
-static Tutf_function XSYM(UTF_32_to_charset_function)(const char *charset) {
-  unsigned long prop;
-  const char *s, *fontname = NULL;
-  uldat i;
-
-  if (!charset) {
-    /* attempt to autodetect encoding from fontname */
-    if (XGetFontProperty(xsfont, XA_FONT, &prop))
-      fontname = XGetAtomName(xdisplay, (Atom)prop);
-
-    if (fontname && !strcmp(fontname, "vga")) {
-      charset = T_NAME_CP437;
-    } else if (fontname) {
-      i = 2;
-      for (s = fontname + strlen(fontname) - 1; i && s >= fontname; s--) {
-        if (*s == '-')
-          i--;
-      }
-      if (!i)
-        charset = s + 2; /* skip current char and '-' */
-    }
-
-    if (!charset) {
-      if (xsfont->min_byte1 < xsfont->max_byte1) {
-        /* font is more than just 8-bit. For now, assume it's unicode */
-        log(WARNING) << "    " XSYM_STR(InitHW) ": font `" << Chars::from_c(fontname)
-                     << "\' has unknown charset encoding,\n"
-                        "                assuming Unicode.\n";
-        return NULL;
-      }
-      /* else assume codepage437. gross. */
-      log(WARNING) << "    " XSYM_STR(InitHW) ": font `" << Chars::from_c(fontname)
-                   << "\' has unknown charset encoding,\n"
-                      "                assuming charset `CP437' i.e. `VGA'.\n";
-      return Tutf_UTF_32_to_CP437;
-    }
-  }
-
-  i = Tutf_charset_id(charset);
-  s = Tutf_charset_name(i);
-  if (s && !strcmp(s, T_NAME_UTF_32)) {
-    /* this is an Unicode font. good. */
-    return NULL;
-  }
-
-  if (i == (uldat)-1) {
-    log(WARNING) << "      " XSYM_STR(InitHW) ": libtutf warning: unknown charset `"
-                 << Chars::from_c(charset) << "', assuming charset `CP437' i.e. `VGA'.\n";
-    return Tutf_UTF_32_to_CP437;
-  }
-
-  return Tutf_UTF_32_to_charset_function(i);
-}
-#endif
-
-static trune XSYM(UTF_32_to_UCS_2)(trune c) {
-  if ((c & 0x1FFE00) == 0xF000)
+trune XDRIVER::UTF_32_to_UCS_2(trune c) {
+  if ((c & 0x1FFE00) == 0xF000) {
     /* private use codepoints. for compatibility, treat as "direct-to-font" zone */
     c &= 0x01FF;
-  if (c > 0x10FFFF)
-    /* not representable in two bytes */
+  }
+  if (c >= 0x110000) {
+    /* invalid Unicode codepoint, set to "replacement character" */
     c = 0xFFFD;
+  }
   return c;
 }
