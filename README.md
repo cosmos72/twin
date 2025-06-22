@@ -2,7 +2,7 @@
 Twin - a Textmode WINdow environment
 --------------------------------------------------------------
 
-Version 0.9.0
+Version 0.9.1
 
 Twin is text-based windowing environment with mouse support, window manager,
 terminal emulator, networked clients and the ability to attach/detach
@@ -17,7 +17,7 @@ It supports a variety of displays:
   to attach/detach more displays on-the-fly.
 
 Currently, twin is tested on Linux (i386, x86_64, arm, arm64, PowerPC, Alpha, Sparc),
-on Mac OS (x86_64, arm64), on FreeBSD (i386, x86_64) and on Android (arm64 both on termux and UserLand).
+on macOS (x86_64, arm64), on FreeBSD (i386, x86_64) and on Android (arm64 both on termux and UserLand).
 I had yet no chance to seriously test it on other systems.
 
 The following screenshot shows an example of twin with various clients:
