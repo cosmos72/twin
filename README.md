@@ -16,8 +16,8 @@ It supports a variety of displays:
 * twdisplay, a general network-transparent display client, used
   to attach/detach more displays on-the-fly.
 
-Currently, twin is tested on Linux (i386, x86_64, ARM, ARM64, PowerPC, Alpha, Sparc),
-on Mac OS X (x86_64) and on FreeBSD (i386, x86_64).
+Currently, twin is tested on Linux (i386, x86_64, arm, arm64, PowerPC, Alpha, Sparc),
+on Mac OS (x86_64, arm64), on FreeBSD (i386, x86_64) and on Android (arm64 both on termux and UserLand).
 I had yet no chance to seriously test it on other systems.
 
 The following screenshot shows an example of twin with various clients:
