@@ -100,29 +100,43 @@ TW_ATTR_HIDDEN void tty_driver::linux_DrawStart(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
 
   fputs(self->tty_use_utf8 ? "\033[3l\033%G\033[m" : "\033%@\033[3h\033[m", self->out);
-  _col = TCOL(twhite, tblack);
+  self->col = TCOL(twhite, tblack);
+  self->fg = 7; // TrueColorToPalette16(twhite);
+  self->bg = 0; // TrueColorToPalette16(tblack);
 }
 
 #define linux_DrawFinish(hw) ((void)0)
 
 TW_ATTR_HIDDEN void tty_driver::linux_SetColor(Tdisplay hw, tcolor col) {
-  const byte fg = TrueColorToPalette16(TCOLFG(col));
-  const byte bg = TrueColorToPalette16(TCOLBG(col));
-  const byte _fg = TrueColorToPalette16(TCOLFG(_col));
-  const byte _bg = TrueColorToPalette16(TCOLBG(_col));
+  tty_driver *self = ttydriver(hw);
+  byte fg = TrueColorToPalette16(TCOLFG(col));
+  byte bg = TrueColorToPalette16(TCOLBG(col));
+  byte fg_ = self->fg;
+  byte bg_ = self->bg;
 
-  _col = col;
+  self->col = col;
+  self->fg = fg;
+  self->bg = bg;
 
-  if (fg == _fg && bg == _bg) {
+  if (fg == fg_ && bg == bg_) {
     return;
   }
   char colbuf[] = "\033[2x;2x;3x;4xm";
   char *colp = colbuf + 2;
+  const byte fg_high = fg & 8;
+  const byte bg_high = bg & 8;
+  const byte fg_high_ = fg_ & 8;
+  const byte bg_high_ = bg_ & 8;
 
-  if ((fg & 8) != (_fg & 8)) {
+  fg &= 7;
+  bg &= 7;
+  fg_ &= 7;
+  bg_ &= 7;
+
+  if (fg_high != fg_high_) {
     /* ESC[1m  is bold/high intensity */
     /* ESC[22m is normal intensity */
-    if (fg & 8) {
+    if (fg_high) {
       *colp++ = '1';
     } else {
       *colp++ = '2';
@@ -130,101 +144,101 @@ TW_ATTR_HIDDEN void tty_driver::linux_SetColor(Tdisplay hw, tcolor col) {
     }
     *colp++ = ';';
   }
-  if ((bg & 8) != (_bg & 8)) {
+  if (bg_high != bg_high_) {
     /* ESC[25m is blink */
     /* ESC[5m  is don't blink */
-    if (_bg & 8) {
+    if (bg_high_) {
       *colp++ = '2';
     }
     *colp++ = '5';
     *colp++ = ';';
   }
-  if ((fg & 7) != (_fg & 7)) {
+  if (fg != fg_) {
     *colp++ = '3';
-    *colp++ = (fg & 7) + '0';
+    *colp++ = fg + '0';
     *colp++ = ';';
   }
-  if ((bg & 7) != (_bg & 7)) {
+  if (bg != bg_) {
     *colp++ = '4';
-    *colp++ = (bg & 7) + '0';
+    *colp++ = bg + '0';
     *colp++ = ';';
   }
-
-  if (colp[-1] == ';')
+  if (colp[-1] == ';') {
     --colp;
+  }
   *colp++ = 'm';
 
-  tty_driver *self = ttydriver(hw);
   fwrite(colbuf, 1, colp - colbuf, self->out);
 }
 
 TW_ATTR_HIDDEN void tty_driver::linux_DrawSome(Tdisplay hw, dat x, dat y, uldat len) {
   tty_driver *self = ttydriver(hw);
-  tcell *V, *oV;
+  const tcell *V = Video + x + y * (ldat)DisplayWidth;
+  const tcell *oV = OldVideo + x + y * (ldat)DisplayWidth;
   tcolor col;
-  trune r, _r;
-  byte sending = tfalse;
-
-  V = Video + x + y * (ldat)DisplayWidth;
-  oV = OldVideo + x + y * (ldat)DisplayWidth;
+  trune r, r_;
+  bool sending = false;
 
   for (; len; V++, oV++, x++, len--) {
     if (!ValidOldVideo || *V != *oV) {
-      if (!sending)
-        sending = ttrue, linux_MoveToXY(hw, x, y);
+      if (!sending) {
+        sending = true;
+        linux_MoveToXY(hw, x, y);
+      }
 
       col = TCOLOR(*V);
 
-      if (col != _col)
+      if (col != self->col)
         linux_SetColor(hw, col);
 
-      r = _r = TRUNE(*V);
+      r = r_ = TRUNE(*V);
       if (r >= 128) {
         if (self->tty_use_utf8) {
           /* use utf-8 to output this non-ASCII char. */
           DrawRune(hw, r);
           continue;
         } else if (self->tty_charset_to_UTF_32[r] != r) {
-          r = self->tty_UTF_32_to_charset(_r);
+          r = self->tty_UTF_32_to_charset(r_);
         }
       }
       if (self->tty_use_utf8 ? (r < 32 || r == 127)
                              : (r < 32 && ((CTRL_ALWAYS >> r) & 1)) || r == 127 || r == 128 + 27) {
         /* can't display it */
-        r = Tutf_UTF_32_to_ASCII(_r);
+        r = Tutf_UTF_32_to_ASCII(r_);
         if (r < 32 || r >= 127)
           r = 32;
       }
       putc((char)r, self->out);
-    } else
-      sending = tfalse;
+    } else {
+      sending = false;
+    }
   }
 }
 
 TW_ATTR_HIDDEN void tty_driver::linux_DrawTCell(Tdisplay hw, dat x, dat y, tcell V) {
-  trune r, _r;
+  tty_driver *self = ttydriver(hw);
+  trune r, r_;
+  const tcolor c = TCOLOR(V);
 
   linux_MoveToXY(hw, x, y);
 
-  if (TCOLOR(V) != _col) {
-    linux_SetColor(hw, TCOLOR(V));
+  if (c != self->col) {
+    linux_SetColor(hw, c);
   }
-
-  tty_driver *self = ttydriver(hw);
-  r = _r = TRUNE(V);
+  r = r_ = TRUNE(V);
   if (r >= 128) {
     if (self->tty_use_utf8) {
       /* use utf-8 to output this non-ASCII char. */
       DrawRune(hw, r);
       return;
     } else if (self->tty_charset_to_UTF_32[r] != r) {
-      r = self->tty_UTF_32_to_charset(_r);
+      r = self->tty_UTF_32_to_charset(r_);
     }
   }
   if (self->tty_use_utf8 ? (r < 32 || r == 127)
                          : (r < 32 && ((CTRL_ALWAYS >> r) & 1)) || r == 127 || r == 128 + 27) {
     /* can't display it */
-    r = Tutf_UTF_32_to_ASCII(_r);
+    r = Tutf_UTF_32_to_ASCII(r_);
     if (r < 32 || r >= 127)
       r = 32;
   }

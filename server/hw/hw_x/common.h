@@ -4,9 +4,6 @@
 #include "log.h"
 #include "palette.h"
 
-/** FIXME: refactor as XDRIVER field */
-static tcolor _col;
-
 TW_ATTR_HIDDEN unsigned long XDRIVER::ColorToPixel(trgb rgb) {
   if (this->xtruecolor) {
     return this->xrgb_info.pixel(rgb);
@@ -45,23 +42,23 @@ TW_ATTR_HIDDEN void XDRIVER::DrawSome(dat x, dat y, ldat len) {
   V = Video + x + y * (ldat)DisplayWidth;
   oV = OldVideo + x + y * (ldat)DisplayWidth;
 
-  for (_col = ~TCOLOR(*V); len; x++, V++, oV++, len--) {
+  for (; len; x++, V++, oV++, len--) {
     col = TCOLOR(*V);
-    if (buflen && (col != _col || (ValidOldVideo && *V == *oV) || buflen == TW_SMALLBUFF)) {
-      XDRAW(_col, buf, buflen);
+    if (buflen && (col != xcol || (ValidOldVideo && *V == *oV) || buflen == TW_SMALLBUFF)) {
+      XDRAW(xcol, buf, buflen);
       buflen = 0;
     }
     if (!ValidOldVideo || *V != *oV) {
       if (!buflen) {
         xbegin = (x - this->xhw_startx) * (ldat)this->xwfont;
-        _col = col;
+        xcol = col;
       }
       f = this->xUTF_32_to_charset(TRUNE(*V));
       buf[buflen++] = RawToXChar16(f);
     }
   }
   if (buflen) {
-    XDRAW(_col, buf, buflen);
+    XDRAW(xcol, buf, buflen);
     buflen = 0;
   }
 }
@@ -148,9 +145,8 @@ TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
   char *arg = hw->Name.data(); // guaranteed to be '\0' terminated
 
   XSetWindowAttributes attr;
-  XSizeHints *hints;
+  XSizeHints *hints = NULL;
   XEvent event;
-  XDRIVER *p;
   char *s, *display = NULL, *display0 = NULL, *fontname = NULL, *fontname0 = NULL, *charset = NULL,
            *charset0 = NULL, title[X_TITLE_MAXLEN];
   unsigned long creategc_mask = GCForeground | GCBackground | GCGraphicsExposures;
@@ -247,20 +243,25 @@ TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
   }
 
   this->xsfont = NULL;
-  hints = NULL;
   this->xwindow = None;
   this->xgc = None;
   this->xReqCount = this->XReqCount = 0;
   hw->keyboard_slot = NOSLOT;
 
   if ((this->xdisplay = XOpenDisplay(display))) {
+
+    hw->fnQuitHW = &XDRIVER::QuitHW;
+    hw->fnQuitKeyboard = NULL;
+    hw->fnQuitMouse = NULL;
+    hw->fnQuitVideo = NULL;
+
+    (void)XSetIOErrorHandler(&XDRIVER::Die);
+
+    const int screen = DefaultScreen(this->xdisplay);
+    const unsigned depth = DefaultDepth(this->xdisplay, screen);
+    Visual *visual = DefaultVisual(this->xdisplay, screen);
+
     do {
-      (void)XSetIOErrorHandler(&XDRIVER::Die);
-
-      const int screen = DefaultScreen(this->xdisplay);
-      const unsigned depth = DefaultDepth(this->xdisplay, screen);
-      Visual *visual = DefaultVisual(this->xdisplay, screen);
-
       if (!palette) {
         XVisualInfo vistemplate;
         XVisualInfo *visinfo = NULL;
@@ -322,6 +323,7 @@ TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
 
           (this->xrgb_fg = this->xrgb_bg = tblack,                            /**/
            this->xsgc.foreground = this->xsgc.background = this->xpalette[0], /**/
+           this->xcol = TCOL(Palette[0], Palette[0]),                         /**/
            this->xsgc.graphics_exposures = False,
 #if HW_X_DRIVER == HW_X11
            this->xsgc.font = this->xsfont->fid, creategc_mask = creategc_mask | GCFont,
@@ -442,11 +444,6 @@ TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
         hw->fnSetPalette = (void (*)(Tdisplay, udat, udat, udat, udat))NoOp;
         hw->fnResetPalette = NULL;
 
-        hw->fnQuitHW = &XDRIVER::QuitHW;
-        hw->fnQuitKeyboard = NULL;
-        hw->fnQuitMouse = NULL;
-        hw->fnQuitVideo = NULL;
-
         hw->DisplayIsCTTY = tfalse;
         hw->FlagsHW &= ~FlHWSoftMouse; /* mouse pointer handled by X11 server */
 
@@ -523,7 +520,7 @@ TW_ATTR_HIDDEN void XDRIVER::QuitHW() {
 #endif
 
 #if HW_X_DRIVER == HW_X11
-  if (this->xsfont) {
+  if (this->xdisplay && this->xsfont) {
     XFreeFont(this->xdisplay, this->xsfont);
     this->xsfont = NULL;
   }
@@ -557,21 +554,22 @@ TW_ATTR_HIDDEN void XDRIVER::QuitHW() {
   }
 #endif
 
-  if (this->xgc != None) {
-    XFreeGC(this->xdisplay, this->xgc);
+  if (this->xdisplay) {
+    if (this->xgc != None) {
+      XFreeGC(this->xdisplay, this->xgc);
+    }
+    if (this->xwindow != None) {
+      XUnmapWindow(this->xdisplay, this->xwindow);
+      XDestroyWindow(this->xdisplay, this->xwindow);
+    }
+    XCloseDisplay(this->xdisplay);
+    this->xdisplay = NULL;
   }
-  if (this->xwindow != None) {
-    XUnmapWindow(this->xdisplay, this->xwindow);
-    XDestroyWindow(this->xdisplay, this->xwindow);
-  }
-  XCloseDisplay(this->xdisplay);
-  this->xdisplay = NULL;
-
-  if (hw->keyboard_slot != NOSLOT)
+  if (hw->keyboard_slot != NOSLOT) {
     UnRegisterRemote(hw->keyboard_slot);
+  }
   hw->keyboard_slot = NOSLOT;
   hw->fnKeyboardEvent = NULL;
-
   hw->fnQuitHW = NULL;
 }
 

@@ -61,7 +61,7 @@ enum tty_colormode {
   tty_color_autodetect = 0,
   tty_color8 = 1,
   tty_color256 = 2,
-  tty_color16M = 3,
+  tty_color16m = 3,
 };
 
 class tty_driver {
@@ -71,6 +71,8 @@ public:
   Tutf_function tty_UTF_32_to_charset;
   Tutf_array tty_charset_to_UTF_32;
   Tdisplay hw;
+  tcolor col;  /* current color */
+  trgb fg, bg; /* current fg, bg colors */
   int tty_fd, tty_number;
   uldat tty_charset;
   dat ttypar[3];
@@ -93,7 +95,7 @@ public:
   char *tc_scr_clear;
 #ifdef CONF_HW_TTY_TERMCAP
   char *tc[tc_seq_N];
-  byte colorbug, wrapglitch, colormode;
+  byte wrapglitch, colormode;
 #endif
 
   static void DrawRune(Tdisplay hw, trune h);
@@ -167,7 +169,6 @@ public:
                                dat DstUp);
   static void termcap_DrawSome(Tdisplay hw, dat x, dat y, uldat len);
   static void termcap_DrawTCell(Tdisplay hw, dat x, dat y, tcell V);
-  static void termcap_FixColorBug(Tdisplay hw);
   static void termcap_HideMouse(Tdisplay hw);
   static bool termcap_InitVideo(Tdisplay hw);
   static udat termcap_LookupKey(Tdisplay hw, udat *ShiftFlags, byte *slen, char *s, byte *retlen,
@@ -178,7 +179,7 @@ public:
   static void termcap_SetColor(Tdisplay hw, tcolor col);
   static void termcap_SetColor8(Tdisplay hw, tcolor col);
   static void termcap_SetColor256(Tdisplay hw, tcolor col);
-  static void termcap_SetColor16M(Tdisplay hw, tcolor col);
+  static void termcap_SetColor16m(Tdisplay hw, tcolor col);
   static void termcap_SetCursorType(Tdisplay hw, uldat type);
   static void termcap_ShowMouse(Tdisplay hw);
   static void termcap_UpdateCursor(Tdisplay hw);
@@ -191,9 +192,6 @@ public:
 };
 
 #define ttydriver(hw) ((tty_driver *)(hw)->Private)
-
-/* this can stay static, as it's used only as temporary storage */
-static tcolor _col;
 
 #include "hw_tty_common/kbd_stdin.h"
 
@@ -321,8 +319,8 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
   enum /*: byte*/ { NEVER = 0, MAYBE = 1, ALWAYS = 2 };
   byte autotry_video = MAYBE, try_stdout = MAYBE, try_termcap = MAYBE, autotry_kbd = MAYBE,
        try_lrawkbd = MAYBE;
-  bool force_mouse = false, have_colorbug = false, need_persistent_slot = false, try_ctty = false,
-       is_ctty = false, term_override = false;
+  bool force_mouse = false, need_persistent_slot = false, try_ctty = false, is_ctty = false,
+       term_override = false;
 
   if (!(hw->Private = self = (tty_driver *)AllocMem0(sizeof(tty_driver)))) {
     log(ERROR) << "      tty.InitHW(): Out of memory!\n";
@@ -331,6 +329,8 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
   self->hw = hw;
   self->tty_charset = (uldat)-1;
   self->out = NULL;
+  self->col = ~TCOL0; // i.e. unknown
+  self->fg = self->bg = ~(trgb)0;
   /*
    * nowadays almost all terminals support UTF-8
    * => enable it by default, can be disabled with option "utf8=no"
@@ -395,19 +395,17 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
         try_lrawkbd = !(autotry_kbd = arg0.view(4, comma) == Chars("=no")) << 1;
       } else if (arg0 == Chars(",ctty")) {
         try_ctty = true;
-      } else if (arg0 == Chars(",colorbug")) {
-        have_colorbug = true;
       } else if (arg0.starts_with(Chars(",colors="))) {
         arg0 = arg0.view(8, comma);
         if (arg0 == Chars("8")) {
           self->colormode = tty_color8;
         } else if (arg0 == Chars("256")) {
           self->colormode = tty_color256;
-        } else if (arg0 == Chars("16M")) {
-          self->colormode = tty_color16M;
+        } else if (arg0 == Chars("16m")) {
+          self->colormode = tty_color16m;
         } else {
           log(ERROR) << "      tty.InitHW(): unsupported 'colors=" << arg0
-                     << "', expecting one of: 8, 256 or 16M\n";
+                     << "', expecting one of: 8, 256 or 16m\n";
           return false;
         }
       } else if (arg0.starts_with(Chars(",mouse="))) {
@@ -433,8 +431,7 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
                "      @/dev/SOME_TTY_NAME   attach to specified tty device (must be first option)\n"
                "      ,charset=CHARSET_NAME use specified charset encoding\n"
                "      ,ctty[=no]            set tty device as the controlling tty\n"
-               "      ,colorbug             assume terminal has colorbug\n"
-               "      ,colors=[8|256|16M]   assume terminal supports this many colors\n"
+               "      ,colors=[8|256|16m]   assume terminal supports this many colors\n"
                "      ,help                 show this help\n"
                "      ,mouse=[xterm|twterm] assume specified mouse reporting protocol\n"
                "      ,noinput              open a view-only display on tty - ignore input\n"
@@ -443,7 +440,7 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
                "      ,stdout[=no]          use hard-coded escape sequences\n"
                "      ,TERM=TERM_NAME       assume terminal type is TERM_NAME\n"
                "      ,termcap[=no]         use libtermcap escape sequences\n"
-               "      ,truecolor            same as colors=16M\n"
+               "      ,truecolor            same as colors=16m\n"
                "      ,utf8[=no]            assume terminal supports UTF-8\n";
         return false;
       }
@@ -533,10 +530,6 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
     }
   }
 
-#ifdef CONF_HW_TTY_TERMCAP
-  self->colorbug = have_colorbug;
-#endif
-
   if (charset) {
     /* honor user-specified charset */
     if ((self->tty_charset = Tutf_charset_id(charset.data())) == (uldat)-1) {
@@ -612,7 +605,7 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
           if (!term_override &&
               ((env_colorterm = Chars::from_c(getenv("COLORTERM"))) == Chars("truecolor") ||
                env_colorterm == Chars("24bit"))) {
-            self->colormode = tty_color16M;
+            self->colormode = tty_color16m;
           } else if (self->tty_term.ends_with(Chars("256")) ||
                      self->tty_term.ends_with(Chars("256color"))) {
             self->colormode = tty_color256;

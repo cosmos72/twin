@@ -173,7 +173,7 @@ private:
   GC xgc;
   XGCValues xsgc;
   XSYM(rgb_info) xrgb_info;
-
+  tcolor xcol; // current fg, bg colors
   int xwidth, xheight;
   int xwfont, xhfont, xupfont;
   /* we support showing only a portion of the whole twin display */

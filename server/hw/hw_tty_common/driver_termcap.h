@@ -123,19 +123,6 @@ TW_ATTR_HIDDEN void tty_driver::termcap_Cleanup(Tdisplay hw) {
   }
 }
 
-TW_ATTR_HIDDEN void tty_driver::termcap_FixColorBug(Tdisplay hw) {
-  tty_driver *self = ttydriver(hw);
-  char *attr_off = self->tc[tc_seq_attr_off];
-  uldat len = strlen(attr_off);
-  char *s = (char *)AllocMem(len + 9);
-  if (s) {
-    CopyMem(attr_off, s, len);
-    CopyMem("\033[37;40m", s + len, 9);
-    FreeMem(attr_off);
-    self->tc[tc_seq_attr_off] = s;
-  }
-}
-
 TW_ATTR_HIDDEN bool tty_driver::termcap_InitVideo(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
   const char *term = self->tty_term.data(); // guaranteed to be '\0' terminated
@@ -197,13 +184,10 @@ TW_ATTR_HIDDEN bool tty_driver::termcap_InitVideo(Tdisplay hw) {
   }
 
   if (self->colormode == tty_color_autodetect && tgetflag("RGB") != 0) {
-    self->colormode == tty_color16M;
+    self->colormode == tty_color16m;
   }
 
   self->wrapglitch = tgetflag("xn");
-  if (self->colorbug) {
-    termcap_FixColorBug(hw);
-  }
   fputs(self->tc[tc_seq_attr_off], self->out);
   if (self->tc[tc_seq_charset_start]) {
     fputs(self->tc[tc_seq_charset_start], self->out);
@@ -276,8 +260,9 @@ TW_ATTR_HIDDEN void tty_driver::termcap_QuitVideo(Tdisplay hw) {
 
 inline void termcap_DrawStart(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
-  fputs(self->tc[tc_seq_attr_off], self->out);
-  _col = TCOL(twhite, tblack);
+  self->col = ~TCOL0; // i.e. unknown
+  self->fg = ~(trgb)0;
+  self->bg = ~(trgb)0;
 }
 
 #define termcap_DrawFinish(hw) ((void)0)
@@ -291,49 +276,54 @@ inline char *termcap_CopyAttr(const char *src, char *dst) {
 }
 
 TW_ATTR_HIDDEN void tty_driver::termcap_SetColor8(Tdisplay hw, tcolor col) {
-  char colbuf[80];
-  char *colp = colbuf;
   tty_driver *self = ttydriver(hw);
   byte fg = TrueColorToPalette16(TCOLFG(col));
-  byte bg = TrueColorToPalette16(TCOLBG(col));
-  byte _fg = TrueColorToPalette16(TCOLFG(_col));
-  byte _bg = TrueColorToPalette16(TCOLBG(_col));
-  byte fg_high = fg & 8;
-  byte _fg_high = _fg & 8;
+  byte bg = TrueColorToPalette8(TCOLBG(col));
+  // (byte)~(trgb)0 & 7 may accidentally match fg or bg
+  // => check for ~TCOL0
+  byte fg_ = self->col == ~TCOL0 ? ~fg : self->fg;
+  byte bg_ = self->col == ~TCOL0 ? ~bg : self->bg;
 
-  _col = col;
-  if (fg == _fg && bg == _bg) {
+  self->col = col;
+  self->fg = fg;
+  self->bg = bg;
+  if (fg == fg_ && bg == bg_) {
     return;
   }
+  char colbuf[80];
+  char *colp = colbuf;
+  byte fg_high = fg & 8;
+  byte fg_high_ = fg_ & 8;
 
   /* ignore high-intensity background: rendering it as blinking is visually annoying */
-  if (fg_high != _fg_high) {
-    if ((_fg_high && !fg_high)) {
-      /* cannot turn off standout, reset everything */
-      colp = termcap_CopyAttr(self->tc[tc_seq_attr_off], colp);
-      _fg = 7;
-      _bg = 0;
-    }
-    if (fg_high && !_fg_high) {
+  if (fg_high != fg_high_) {
+    if (fg_high) {
       colp = termcap_CopyAttr(self->tc[tc_seq_bold_on], colp);
+    } else {
+      /*
+       * cannot turn off standout, reset everything.
+       * it may or may not set fg_ = twhite, bg_ = tblack
+       * => assume unknown fg, bg
+       */
+      colp = termcap_CopyAttr(self->tc[tc_seq_attr_off], colp);
+      fg_ = ~fg;
+      bg_ = ~bg;
     }
   }
   fg &= 7;
-  bg &= 7;
-  _fg &= 7;
-  _bg &= 7;
+  fg_ &= 7;
 
-  if (fg != _fg || bg != _bg) {
+  if (fg != fg_ || bg != bg_) {
     *colp++ = '\033';
     *colp++ = '[';
 
-    if (fg != _fg) {
+    if (fg != fg_) {
       *colp++ = '3';
       *colp++ = fg + '0';
       *colp++ = ';';
     }
 
-    if (bg != _bg) {
+    if (bg != bg_) {
       *colp++ = '4';
       *colp++ = bg + '0';
       *colp++ = 'm';
@@ -349,9 +339,9 @@ inline byte termcap_div10(byte value) {
   return ((udat)value * 205) / 2048;
 }
 
-static char *termcap_print_colon_number(char *dst, byte value) {
+static char *termcap_print_sep_number(char *dst, char sep, byte value) {
   byte hundreds;
-  *dst++ = ';';
+  *dst++ = sep;
   if (value >= 200) {
     hundreds = 2;
     *dst++ = '2';
@@ -372,80 +362,88 @@ static char *termcap_print_colon_number(char *dst, byte value) {
   return dst;
 }
 
-static char *termcap_print_colon_rgb(char *dst, trgb rgb) {
-  dst = termcap_print_colon_number(dst, TRED(rgb));
-  dst = termcap_print_colon_number(dst, TGREEN(rgb));
-  dst = termcap_print_colon_number(dst, TBLUE(rgb));
+static char *termcap_print_sep_rgb(char *dst, char sep, trgb rgb) {
+  dst = termcap_print_sep_number(dst, sep, TRED(rgb));
+  dst = termcap_print_sep_number(dst, sep, TGREEN(rgb));
+  dst = termcap_print_sep_number(dst, sep, TBLUE(rgb));
   return dst;
 }
 
 TW_ATTR_HIDDEN void tty_driver::termcap_SetColor256(Tdisplay hw, tcolor col) {
-  char colbuf[] = "\033[38;5;xxx;48;5;xxxm";
-  char *colp = colbuf + 2;
+  tty_driver *self = ttydriver(hw);
   byte fg = TrueColorToPalette256(TCOLFG(col));
   byte bg = TrueColorToPalette256(TCOLBG(col));
-  byte _fg = TrueColorToPalette256(TCOLFG(_col));
-  byte _bg = TrueColorToPalette256(TCOLBG(_col));
+  // (byte)~(trgb)0 may accidentally match fg or bg
+  // => check for ~TCOL0
+  byte fg_ = self->col == ~TCOL0 ? ~fg : self->fg;
+  byte bg_ = self->col == ~TCOL0 ? ~bg : self->bg;
 
-  _col = col;
-  if (fg == _fg && bg == _bg) {
+  self->col = col;
+  self->fg = fg;
+  self->bg = bg;
+  if (fg == fg_ && bg == bg_) {
     return;
   }
-  if (fg != _fg) {
+  char colbuf[] = "\033[38;5;xxx;48;5;xxxm";
+  char *colp = colbuf + 2;
+  if (fg != fg_) {
     /* colp + 4 skips "38;5" */
-    colp = termcap_print_colon_number(colp + 4, fg);
+    colp = termcap_print_sep_number(colp + 4, ';', fg);
   }
-  if (bg != _bg) {
-    if (fg != _fg) {
+  if (bg != bg_) {
+    if (fg != fg_) {
       *colp++ = ';';
     }
     *colp++ = '4';
     *colp++ = '8';
     *colp++ = ';';
     *colp++ = '5';
-    colp = termcap_print_colon_number(colp, bg);
+    colp = termcap_print_sep_number(colp, ';', bg);
   }
   *colp++ = 'm';
-  tty_driver *self = ttydriver(hw);
   fwrite(colbuf, 1, colp - colbuf, self->out);
 }
 
-TW_ATTR_HIDDEN void tty_driver::termcap_SetColor16M(Tdisplay hw, tcolor col) {
-  char colbuf[] = "\033[38;2;xxx;xxx;xxx;48;2;xxx;xxx;xxxm";
-  char *colp = colbuf + 2;
+TW_ATTR_HIDDEN void tty_driver::termcap_SetColor16m(Tdisplay hw, tcolor col) {
+  tty_driver *self = ttydriver(hw);
   trgb fg = TCOLFG(col);
   trgb bg = TCOLBG(col);
-  trgb _fg = TCOLFG(_col);
-  trgb _bg = TCOLBG(_col);
+  // ~(trgb)0 is intentionally an invalid color
+  // it cannot match fg or bg
+  trgb fg_ = self->fg;
+  trgb bg_ = self->bg;
 
-  _col = col;
-  if (fg == _fg && bg == _bg) {
+  self->col = col;
+  self->fg = fg;
+  self->bg = bg;
+  if (fg == fg_ && bg == bg_) {
     return;
   }
-  if (fg != _fg) {
+  char colbuf[] = "\033[38;2;xxx;xxx;xxx;48;2;xxx;xxx;xxxm";
+  char *colp = colbuf + 2;
+  if (fg != fg_) {
     /* colp + 4 skips "38;2" */
-    colp = termcap_print_colon_rgb(colp + 4, fg);
+    colp = termcap_print_sep_rgb(colp + 4, ';', fg);
   }
-  if (bg != _bg) {
-    if (fg != _fg) {
+  if (bg != bg_) {
+    if (fg != fg_) {
       *colp++ = ';';
     }
     *colp++ = '4';
     *colp++ = '8';
     *colp++ = ';';
     *colp++ = '2';
-    colp = termcap_print_colon_rgb(colp, bg);
+    colp = termcap_print_sep_rgb(colp, ';', bg);
   }
   *colp++ = 'm';
-  tty_driver *self = ttydriver(hw);
   fwrite(colbuf, 1, colp - colbuf, self->out);
 }
 
 TW_ATTR_HIDDEN void tty_driver::termcap_SetColor(Tdisplay hw, tcolor col) {
   tty_driver *self = ttydriver(hw);
   switch (tty_colormode(self->colormode)) {
-  case tty_color16M:
-    termcap_SetColor16M(hw, col);
+  case tty_color16m:
+    termcap_SetColor16m(hw, col);
     break;
   case tty_color256:
     termcap_SetColor256(hw, col);
@@ -458,15 +456,15 @@ TW_ATTR_HIDDEN void tty_driver::termcap_SetColor(Tdisplay hw, tcolor col) {
 
 TW_ATTR_HIDDEN void tty_driver::termcap_DrawSome(Tdisplay hw, dat x, dat y, uldat len) {
   tty_driver *self = ttydriver(hw);
-  tcell *V, *oV;
+  const tcell *V, *oV;
   tcolor col;
   trune c, _c;
   uldat delta = x + y * (uldat)DisplayWidth;
   bool sending = false;
 
-  if (!self->wrapglitch && delta + len >= (uldat)DisplayWidth * DisplayHeight)
+  if (!self->wrapglitch && delta + len >= (uldat)DisplayWidth * DisplayHeight) {
     len = (uldat)DisplayWidth * DisplayHeight - delta - 1;
-
+  }
   V = Video + delta;
   oV = OldVideo + delta;
 
@@ -477,7 +475,7 @@ TW_ATTR_HIDDEN void tty_driver::termcap_DrawSome(Tdisplay hw, dat x, dat y, ulda
         termcap_MoveToXY(hw, x, y);
       }
       col = TCOLOR(*V);
-      if (col != _col) {
+      if (col != self->col) {
         termcap_SetColor(hw, col);
       }
       c = _c = TRUNE(*V);
@@ -514,7 +512,7 @@ TW_ATTR_HIDDEN void tty_driver::termcap_DrawTCell(Tdisplay hw, dat x, dat y, tce
   }
   termcap_MoveToXY(hw, x, y);
 
-  if (TCOLOR(V) != _col) {
+  if (TCOLOR(V) != self->col) {
     termcap_SetColor(hw, TCOLOR(V));
   }
   c = _c = TRUNE(V);
