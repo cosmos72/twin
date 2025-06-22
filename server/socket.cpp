@@ -2125,10 +2125,9 @@ static byte Check4MagicTranslation(uldat slot, const byte *magic, byte len) {
   if (len1 > TWS_tcell && len == magic[0] &&
       magic[TWS_byte] == 1 && /* sizeof(byte) MUST be 1, or passing byte[] vectors would fail */
       magic[TWS_udat] >= 2 && magic[TWS_uldat] >= 4 && len - len1 == magic[TWS_uldat] + 1 &&
-      magic[TWS_tcolor] ==
-          1 && /* sizeof(tcolor) MUST be 1, or passing tcolor[] vectors would fail */
-      magic[TWS_topaque] >= 4 &&
-      magic[TWS_tany] >= 4 && magic[TWS_trune] >= 1 && magic[TWS_tcell] >= 2) {
+      /* sizeof(tcolor) MUST match, or passing tcolor[] vectors would fail */
+      magic[TWS_tcolor] == sizeof(tcolor) && magic[TWS_topaque] >= 4 && magic[TWS_tany] >= 4 &&
+      magic[TWS_trune] >= 1 && magic[TWS_tcell] >= 2) {
 
     /* store client magic numbers */
     CopyMem(magic, AlienMagic(slot), Min2(len1, TWS_highest));

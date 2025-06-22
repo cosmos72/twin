@@ -30,6 +30,7 @@
 #include "twin.h"
 #include "alloc.h"
 #include "algo.h"
+#include "builtin.h"
 #include "data.h"
 #include "draw.h"
 #include "log.h"
@@ -294,20 +295,21 @@ bool RowWriteCharsetWindow(Twindow w, uldat len, const char *charset_bytes) {
       for (uldat i = (uldat)Max2(0, -x); i < row_len; i++) {
         row->Text[x + i] = to_UTF_32[(byte)charset_bytes[i]];
       }
-      if (x >= 0 && (uldat)x > row->Len)
+      if (x >= 0 && (uldat)x > row->Len) {
         for (uldat i = row->Len; i < (uldat)x; i++) {
           row->Text[i] = (trune)' ';
         }
-
+      }
       if (!(w->Flags & WINDOWFL_ROWS_DEFCOL)) {
-        memset(row->ColText + x, w->ColText, sizeof(tcolor) * row_len);
-        if (x >= 0 && (uldat)x > row->Len)
-          memset(row->ColText + row->Len, w->ColText, sizeof(tcolor) * (x - row->Len));
+        ColorFill(row->ColText + x, row_len, w->ColText);
+        if (x >= 0 && (uldat)x > row->Len) {
+          ColorFill(row->ColText + row->Len, x - row->Len, w->ColText);
+        }
       }
 
-      if (row->Len < x + row_len)
+      if (row->Len < x + row_len) {
         row->Len = x + row_len;
-
+      }
       DrawLogicWidget(w, x, y, x + row_len - (ldat)1, y);
 
       charset_bytes += row_len;
@@ -322,9 +324,9 @@ bool RowWriteCharsetWindow(Twindow w, uldat len, const char *charset_bytes) {
       w->CurX = x += row_len;
   }
 
-  if (w == FindCursorWindow())
+  if (w == FindCursorWindow()) {
     UpdateCursor();
-
+  }
   return true;
 }
 
@@ -402,12 +404,12 @@ bool RowWriteTRuneWindow(Twindow w, uldat len, const trune *runes) {
 
       if (!(w->Flags & WINDOWFL_ROWS_DEFCOL)) {
         if (x >= 0) {
-          memset(row->ColText + x, w->ColText, sizeof(tcolor) * row_len);
+          ColorFill(row->ColText + x, row_len, w->ColText);
         } else if ((uldat)-x < row_len) {
-          memset(row->ColText, w->ColText - x, sizeof(tcolor) * (row_len + x));
+          ColorFill(row->ColText, row_len + x, w->ColText - x);
         }
         if (x >= 0 && (uldat)x > row->Len) {
-          memset(row->ColText + row->Len, w->ColText, sizeof(tcolor) * (x - row->Len));
+          ColorFill(row->ColText + row->Len, x - row->Len, w->ColText);
         }
       }
 

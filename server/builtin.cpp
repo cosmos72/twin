@@ -783,7 +783,7 @@ void FullUpdateWinList(Twidget listWin) {
 #ifdef CONF_PRINTK
 static byte InitMessagesWin(void) {
   MessagesWin = Swindow::Create(
-      Builtin_MsgPort, 8, "Messages", NULL, Builtin_Menu, TCOL(twhite, tblack), LINECURSOR,
+      Builtin_MsgPort, 8, "Messages", NULL, Builtin_Menu, TCOL(tblack, twhite), LINECURSOR,
       WINDOW_DRAG | WINDOW_RESIZE | WINDOW_X_BAR | WINDOW_Y_BAR | WINDOW_CLOSE, WINDOWFL_CURSOR_ON,
       60, 20, 200);
   if (MessagesWin) {

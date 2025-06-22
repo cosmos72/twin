@@ -34,8 +34,9 @@ void printk_str(const char *s, size_t len) {
         MessagesWin->USE.R.FirstRow->Delete();
         MessagesWin->CurY--;
       }
-      if (MessagesWin->Parent)
+      if (MessagesWin->Parent) {
         DrawFullWindow2(MessagesWin);
+      }
     }
     MessagesWin->RowWriteCharset(len, s);
   }
