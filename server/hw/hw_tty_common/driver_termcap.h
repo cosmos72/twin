@@ -184,7 +184,7 @@ TW_ATTR_HIDDEN bool tty_driver::termcap_InitVideo(Tdisplay hw) {
   }
 
   if (self->colormode == tty_color_autodetect && tgetflag("RGB") != 0) {
-    self->colormode == tty_color16m;
+    self->colormode = tty_color16m;
   }
 
   self->wrapglitch = tgetflag("xn");

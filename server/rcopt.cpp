@@ -13,31 +13,6 @@
 #include "twin.h"
 #include "data.h"
 
-static byte strfuzzy_ends_with(const char *s1, const char *s2) {
-  const char *p1 = s1 + strlen(s1), *p2 = s2 + strlen(s2);
-  char c1, c2;
-
-  while (p1 != s1 && p2 != s2) {
-    do {
-      c1 = *--p1;
-    } while (p1 != s1 && (c1 == ' ' || c1 == '-' || c1 == '_' || c1 == '.' || c1 == ':'));
-
-    do {
-      c2 = *--p2;
-    } while (p2 != s2 && (c2 == ' ' || c2 == '-' || c2 == '_' || c2 == '.' || c2 == ':'));
-
-    if (c1 >= 'A' && c1 <= 'Z')
-      c1 += 'a' - 'A';
-
-    if (c2 >= 'A' && c2 <= 'Z')
-      c2 += 'a' - 'A';
-
-    if (c1 != c2)
-      return tfalse;
-  }
-  return p2 == s2;
-}
-
 byte InitRCOptions(void) {
   /*
    * by default, new terminals start in UTF-8 mode.
