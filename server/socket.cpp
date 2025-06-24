@@ -624,11 +624,10 @@ inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, ulda
     fail = -fail;                                                                                  \
     break
 
-    case TWS_tcolor:
-      /*FALLTHROUGH*/
       CASE_(byte);
       CASE_(dat);
       CASE_(ldat);
+      CASE_(tcolor);
       CASE_(topaque);
       CASE_(tany);
       CASE_(trune);
