@@ -71,8 +71,8 @@ static byte linux_InitVideo(Tdisplay hw) {
 
   hw->fnQuitVideo = &tty_driver::linux_QuitVideo;
 
-  hw->FlagsHW |= FlHWNeedOldVideo;
-  hw->FlagsHW &= ~FlHWExpensiveFlushVideo;
+  hw->FlagsHW |= FlagNeedOldVideoHW;
+  hw->FlagsHW &= ~FlagExpensiveFlushVideoHW;
   hw->NeedHW = 0;
 
   return ttrue;
@@ -292,10 +292,10 @@ TW_ATTR_HIDDEN void tty_driver::linux_UpdateCursor(Tdisplay hw) {
 }
 
 TW_ATTR_HIDDEN void tty_driver::linux_UpdateMouseAndCursor(Tdisplay hw) {
-  if ((hw->FlagsHW & FlHWSoftMouse) && (hw->FlagsHW & FlHWChangedMouseFlag)) {
+  if ((hw->FlagsHW & FlagSoftMouseHW) && (hw->FlagsHW & FlagChangedMouseFlagHW)) {
     hw->HideMouse();
     hw->ShowMouse();
-    hw->FlagsHW &= ~FlHWChangedMouseFlag;
+    hw->FlagsHW &= ~FlagChangedMouseFlagHW;
   }
 
   linux_UpdateCursor(hw);
@@ -315,8 +315,8 @@ TW_ATTR_HIDDEN void tty_driver::linux_FlushVideo(Tdisplay hw) {
   /* hide the mouse if needed */
 
   /* first, check the old mouse position */
-  if (hw->FlagsHW & FlHWSoftMouse) {
-    if (hw->FlagsHW & FlHWChangedMouseFlag) {
+  if (hw->FlagsHW & FlagSoftMouseHW) {
+    if (hw->FlagsHW & FlagChangedMouseFlagHW) {
       /* dirty the old mouse position, so that it will be overwritten */
 
       /*
@@ -338,11 +338,11 @@ TW_ATTR_HIDDEN void tty_driver::linux_FlushVideo(Tdisplay hw) {
      * instead of calling ShowMouse(),
      * we flip the new mouse position in Video[] and dirty it if necessary.
      */
-    if ((hw->FlagsHW & FlHWChangedMouseFlag) || (flippedVideo = Plain_isDirtyVideo(i, j))) {
+    if ((hw->FlagsHW & FlagChangedMouseFlagHW) || (flippedVideo = Plain_isDirtyVideo(i, j))) {
       VideoFlip(i, j);
       if (!flippedVideo)
         DirtyVideo(i, j, i, j);
-      hw->FlagsHW &= ~FlHWChangedMouseFlag;
+      hw->FlagsHW &= ~FlagChangedMouseFlagHW;
       flippedVideo = true;
     } else {
       flippedVideo = false;
@@ -370,13 +370,13 @@ TW_ATTR_HIDDEN void tty_driver::linux_FlushVideo(Tdisplay hw) {
   hw->setFlush();
 
   /* ... and this redraws the mouse */
-  if (hw->FlagsHW & FlHWSoftMouse) {
+  if (hw->FlagsHW & FlagSoftMouseHW) {
     if (flippedOldVideo) {
       OldVideo[hw->Last_x + hw->Last_y * (ldat)DisplayWidth] = savedOldVideo;
     }
     if (flippedVideo) {
       VideoFlip(hw->Last_x = hw->MouseState.x, hw->Last_y = hw->MouseState.y);
-    } else if (hw->FlagsHW & FlHWChangedMouseFlag) {
+    } else if (hw->FlagsHW & FlagChangedMouseFlagHW) {
       hw->ShowMouse();
     }
   }
@@ -384,7 +384,7 @@ TW_ATTR_HIDDEN void tty_driver::linux_FlushVideo(Tdisplay hw) {
 
   linux_DrawFinish(hw);
 
-  hw->FlagsHW &= ~FlHWChangedMouseFlag;
+  hw->FlagsHW &= ~FlagChangedMouseFlagHW;
 }
 
 TW_ATTR_HIDDEN void tty_driver::linux_Beep(Tdisplay hw) {
@@ -469,7 +469,7 @@ TW_ATTR_HIDDEN void tty_driver::linux_DragArea(Tdisplay hw, dat Left, dat Up, da
   udat delta = Up - DstUp;
 
   hw->HideMouse();
-  hw->FlagsHW |= FlHWChangedMouseFlag;
+  hw->FlagsHW |= FlagChangedMouseFlagHW;
 
   fprintf(out, "%s\033[m\033[%d;1H", /* hide cursor, reset color, go to last line */
           hw->TT == NOCURSOR ? "" : "\033[?1c", hw->Y);

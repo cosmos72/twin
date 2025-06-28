@@ -926,7 +926,7 @@ void Sdraw::Draw() {
 
 #ifdef DEBUG_DRAW
     FillVideo(x1, y1, x2, y2, TCELL(TCOL(twhite, tyellow), ' '));
-    FlushHW(HW);
+    FlushHW();
     usleep(300000);
     FillVideo(x1, y1, x2, y2, TCELL(TCOL(twhite, tblack), ' '));
 #endif

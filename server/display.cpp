@@ -342,9 +342,9 @@ void warn_NoHW(uldat len, const char *arg, uldat tried) {
 
 static void UpdateFlagsHW(Tdisplay hw) NOTHROW {
   if (!hw->Quitted) {
-    NeedOldVideo = hw->FlagsHW & FlHWNeedOldVideo;
-    ExpensiveFlushVideo = hw->FlagsHW & FlHWExpensiveFlushVideo;
-    CanDragArea = !!hw->fnCanDragArea;
+    NeedOldVideo = (hw->FlagsHW & FlagNeedOldVideoHW) != 0;
+    ExpensiveFlushVideo = (hw->FlagsHW & FlagExpensiveFlushVideoHW) != 0;
+    CanDragArea = hw->fnCanDragArea != 0;
   }
 }
 
@@ -359,9 +359,6 @@ static bool InitDisplay(Tdisplay hw) {
   Chars arg = hw->Name;
   uldat tried = 0;
   bool success;
-
-  SaveHW;
-  SetHW(hw);
 
   hw->DisplayIsCTTY = false;
   hw->NeedHW = hw->FlagsHW = 0;
@@ -391,14 +388,11 @@ static bool InitDisplay(Tdisplay hw) {
   } else {
     warn_NoHW(hw->Name.size(), hw->Name.data(), tried);
   }
-  RestoreHW;
-
   return success;
 }
 
 static void QuitDisplay(Tdisplay hw) {
   if (hw && hw->fnQuitHW) {
-    HW = hw;
     hw->QuitHW();
   }
 }
@@ -412,7 +406,7 @@ void Sdisplay::DoQuit() {
 }
 
 static Tdisplay CreateDisplayHW(Chars name) {
-  return HW = _HW.Init(name);
+  return _HW.Init(name);
 }
 
 static bool IsValidNameHW(Chars carg) NOTHROW {
@@ -525,7 +519,7 @@ void FlushHW(void) {
   if (!ValidVideo) {
     return;
   }
-  Tdisplay hw = HW;
+  Tdisplay hw = &_HW;
 
   if (QueuedDrawArea2FullScreen) {
     QueuedDrawArea2FullScreen = false;
@@ -541,11 +535,11 @@ void FlushHW(void) {
 
   hw->RedrawVideo = false;
 
-  if (hw->NeedHW & NEEDFlushHW) {
+  if (hw->NeedHW & NeedFlushHW) {
     hw->FlushHW();
   }
-  if (NeedHW & NEEDFlushStdout) {
-    fflush(stdout), NeedHW &= ~NEEDFlushStdout;
+  if (NeedHW & NeedFlushStdout) {
+    fflush(stdout), NeedHW &= ~NeedFlushStdout;
   }
   SyncOldVideo();
 
@@ -553,12 +547,9 @@ void FlushHW(void) {
   ValidOldVideo = true;
 }
 
-void ResizeDisplayPrefer(Tdisplay display) {
-  SaveHW;
-  SetHW(display);
-  display->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
-  NeedHW |= NEEDResizeDisplay;
-  RestoreHW;
+void ResizeDisplayPrefer(Tdisplay hw) {
+  hw->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
+  NeedHW |= NeedResizeDisplay;
 }
 
 static byte ReAllocVideo(dat Width, dat Height) {
@@ -599,18 +590,19 @@ static byte ReAllocVideo(dat Width, dat Height) {
  * return ttrue if DisplayWidth or DisplayHeight were changed
  */
 static byte ResizeDisplay(void) {
-  byte change = tfalse;
+  Tdisplay hw = &_HW;
   tmsg tw_msg;
+  byte change = tfalse;
 
   if (!TryDisplayWidth || !TryDisplayHeight)
-    HW->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
+    hw->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
 
-  HW->CheckResize(&TryDisplayWidth, &TryDisplayHeight);
-  HW->Resize(TryDisplayWidth, TryDisplayHeight);
+  hw->CheckResize(&TryDisplayWidth, &TryDisplayHeight);
+  hw->Resize(TryDisplayWidth, TryDisplayHeight);
 
   change = ReAllocVideo(TryDisplayWidth, TryDisplayHeight);
 
-  NeedHW &= ~NEEDResizeDisplay;
+  NeedHW &= ~NeedResizeDisplay;
 
   TryDisplayWidth = TryDisplayHeight = 0;
 
@@ -625,11 +617,13 @@ static byte ResizeDisplay(void) {
 }
 
 byte AllHWCanDragAreaNow(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-  return (CanDragArea && HW->fnCanDragArea && HW->CanDragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp));
+  Tdisplay hw = &_HW;
+  return (CanDragArea && hw->fnCanDragArea && hw->CanDragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp));
 }
 
 void DragAreaHW(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-  HW->DragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp);
+  Tdisplay hw = &_HW;
+  hw->DragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp);
 }
 
 void SetPaletteHW(udat N, udat R, udat G, udat B) {
@@ -637,11 +631,13 @@ void SetPaletteHW(udat N, udat R, udat G, udat B) {
 }
 
 void ResetPaletteHW(void) {
-  HW->ResetPalette();
+  Tdisplay hw = &_HW;
+  hw->ResetPalette();
 }
 
 static void HandleMsg(tmsg msg) {
   tevent_display EventD;
+  Tdisplay hw = &_HW;
 
   switch (msg->Type) {
   case TW_MSG_SELECTION:
@@ -661,7 +657,7 @@ static void HandleMsg(tmsg msg) {
      * Cast it to (Tobj) as expected by HW displays...
      * we will cast it back when needed
      */
-    HW->SelectionRequest((Tobj)(topaque)msg->Event.EventSelectionRequest.Requestor,
+    hw->SelectionRequest((Tobj)(topaque)msg->Event.EventSelectionRequest.Requestor,
                          msg->Event.EventSelectionRequest.ReqPrivate);
     break;
   case TW_MSG_SELECTIONNOTIFY:
@@ -670,7 +666,7 @@ static void HandleMsg(tmsg msg) {
 #endif
     /* notify selection to underlying HW */
 
-    HW->SelectionNotify(
+    hw->SelectionNotify(
         msg->Event.EventSelectionNotify.ReqPrivate,                                 //
         e_id(msg->Event.EventSelectionNotify.Magic),                                //
         Chars::from_c_maxlen(msg->Event.EventSelectionNotify.MIME, TW_MAX_MIMELEN), //
@@ -716,12 +712,12 @@ static void HandleMsg(tmsg msg) {
        * (if it is meaningful and different from current)
        */
       if (EventD->X != DisplayWidth || EventD->Y != DisplayHeight) {
-        HW->Resize(EventD->X, EventD->Y);
+        hw->Resize(EventD->X, EventD->Y);
         ReAllocVideo(EventD->X, EventD->Y);
       }
       break;
     case TW_EV_DPY_SelectionExport:
-      NeedHW |= NEEDSelectionExport;
+      NeedHW |= NeedSelectionExport;
       break;
     case TW_EV_DPY_DragArea:
 #define c(index) (deserialize<udat>(EventD->Data, (index) * sizeof(udat)))
@@ -730,21 +726,21 @@ static void HandleMsg(tmsg msg) {
 #undef c
       break;
     case TW_EV_DPY_Beep:
-      HW->Beep();
+      hw->Beep();
       break;
     case TW_EV_DPY_Configure:
       if (EventD->X == HW_MOUSEMOTIONEVENTS)
         MouseMotionN = EventD->Y > 0;
-      HW->Configure(EventD->X, EventD->Y == -1, EventD->Y);
+      hw->Configure(EventD->X, EventD->Y == -1, EventD->Y);
       break;
     case TW_EV_DPY_SetPalette:
 #define c(index) (deserialize<udat>(EventD->Data, (index) * sizeof(udat)))
       if (EventD->Len == 3 * sizeof(udat))
-        HW->SetPalette(EventD->X, c(0), c(1), c(2));
+        hw->SetPalette(EventD->X, c(0), c(1), c(2));
 #undef c
       break;
     case TW_EV_DPY_ResetPalette:
-      HW->ResetPalette();
+      hw->ResetPalette();
       break;
     case TW_EV_DPY_Helper:
       tw_helper = deserialize<uldat>(EventD->Data);
@@ -760,13 +756,15 @@ static void HandleMsg(tmsg msg) {
 
 static void SocketIO(void) {
   tmsg msg;
-  while ((msg = TwReadMsg(tfalse)))
+  while ((msg = TwReadMsg(tfalse))) {
     HandleMsg(msg);
+  }
 }
 
 void SelectionExport(void) {
-  HW->SelectionExport();
-  NeedHW &= ~NEEDSelectionExport;
+  Tdisplay hw = &_HW;
+  hw->SelectionExport();
+  NeedHW &= ~NeedSelectionExport;
 }
 
 /* HW back-end function: get selection owner */
@@ -816,7 +814,7 @@ static byte StdAddMouseEvent(Tdisplay hw, udat Code, dat MouseX, dat MouseY) {
   tevent_mouse Event;
   tmsg msg;
 
-  if (hw && (hw->FlagsHW & FlHWNoInput)) {
+  if (hw && (hw->FlagsHW & FlagNoInputHW)) {
     return ttrue;
   }
   if ((msg = TwCreateMsg(TW_MSG_WIDGET_MOUSE, sizeof(event_mouse)))) {
@@ -854,7 +852,7 @@ byte MouseEventCommon(Tdisplay hw, dat x, dat y, dat dx, dat dy, udat Buttons) {
   OldState->delta_y = y == 0 ? Min2(dy, 0) : y == DisplayHeight - 1 ? Max2(dy, 0) : 0;
 
   if (x != prev_x || y != prev_y) {
-    hw->FlagsHW |= FlHWChangedMouseFlag;
+    hw->FlagsHW |= FlagChangedMouseFlagHW;
   }
   OldState->x = x;
   OldState->y = y;
@@ -882,7 +880,7 @@ bool KeyboardEventCommon(Tdisplay hw, udat Code, udat ShiftFlags, udat Len, cons
   tevent_keyboard Event;
   tmsg msg;
 
-  if (hw->FlagsHW & FlHWNoInput) {
+  if (hw->FlagsHW & FlagNoInputHW) {
     return true;
   }
   if ((msg = TwCreateMsg(TW_MSG_WIDGET_KEY, Len + 1 + sizeof(s_tevent_keyboard)))) {
@@ -910,10 +908,10 @@ static void MainLoop(Tdisplay hw, int fd) {
     if (GotSignals) {
       HandleSignals();
     }
-    if (NeedHW & NEEDResizeDisplay) {
+    if (NeedHW & NeedResizeDisplay) {
       ResizeDisplay();
     }
-    if (NeedHW & NEEDSelectionExport) {
+    if (NeedHW & NeedSelectionExport) {
       SelectionExport();
     }
     /*
@@ -926,11 +924,11 @@ static void MainLoop(Tdisplay hw, int fd) {
       FlushHW();
     } else {
       hw->UpdateMouseAndCursor();
-      if (hw->NeedHW & NEEDFlushHW) {
+      if (hw->NeedHW & NeedFlushHW) {
         hw->FlushHW();
       }
-      if (NeedHW & NEEDFlushStdout) {
-        fflush(stdout), NeedHW &= ~NEEDFlushStdout;
+      if (NeedHW & NeedFlushStdout) {
+        fflush(stdout), NeedHW &= ~NeedFlushStdout;
       }
     }
 
@@ -954,7 +952,7 @@ static void MainLoop(Tdisplay hw, int fd) {
     sel_timeout.tv_sec = TwPendingMsg() ? 0 : 120;
     sel_timeout.tv_usec = 0;
 
-    if (NeedHW & NEEDPanicHW) {
+    if (NeedHW & NeedPanicHW) {
       break;
     }
     num_fds = OverrideSelect(max_fds + 1, &read_fds, pwrite_fds, NULL, &sel_timeout);
@@ -970,7 +968,7 @@ static void MainLoop(Tdisplay hw, int fd) {
        * however, if width <= 0 : means we lost connection, so exit..
        */
       if (TwGetDisplayWidth() <= 0) {
-        QuitDisplay(HW);
+        QuitDisplay(hw);
         log(ERROR) << "twdisplay: lost connection to TWIN.. \n";
         exit(1);
       }
@@ -992,7 +990,7 @@ static void MainLoop(Tdisplay hw, int fd) {
     }
   }
 
-  if (NeedHW & NEEDPanicHW) {
+  if (NeedHW & NeedPanicHW) {
     Quit(0);
   }
   if (num_fds < 0 && errno != EINTR) {
@@ -1264,10 +1262,10 @@ int main(int argc, char *argv[]) {
       DisplayWidth = TryDisplayWidth = TwGetDisplayWidth();
       DisplayHeight = TryDisplayHeight = TwGetDisplayHeight();
 
-      Tdisplay hw = NULL;
+      Tdisplay hw;
 
       /* if user did not specify any `--hw=<dpy>', autoprobe */
-      if (!(HW = hw = AttachDisplayHW(Chars::from_c(arg_hw), NOSLOT, 0))) {
+      if (!(hw = AttachDisplayHW(Chars::from_c(arg_hw), NOSLOT, 0))) {
         TwClose();
         return 1;
       }
@@ -1346,8 +1344,10 @@ int main(int argc, char *argv[]) {
 }
 
 void Quit(int status) {
-  QuitDisplay(HW);
-  if (status < 0)
+  Tdisplay hw = &_HW;
+  QuitDisplay(hw);
+  if (status < 0) {
     return; /* give control back to signal handler */
+  }
   exit(status);
 }

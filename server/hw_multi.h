@@ -28,8 +28,8 @@ byte Strategy4Video(dat Xstart, dat Ystart, dat Xend, dat Yend) NOTHROW;
 byte InitHW(void);
 void QuitHW(void);
 
-byte RestartHW(byte verbose);
-void SuspendHW(byte verbose);
+bool RestartHW(bool verbose);
+void SuspendHW(bool verbose);
 
 Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags);
 bool DetachDisplayHW(Chars arg, byte flags);

@@ -129,7 +129,7 @@ TW_ATTR_HIDDEN void XDRIVER::FlushVideo(Tdisplay hw) {
     hw->setFlush();
   }
 
-  hw->FlagsHW &= ~FlHWChangedMouseFlag;
+  hw->FlagsHW &= ~FlagChangedMouseFlagHW;
 }
 
 TW_ATTR_HIDDEN void XDRIVER::FlushHW(Tdisplay hw) {
@@ -449,7 +449,7 @@ TW_ATTR_HIDDEN int XDRIVER::Die(Display *d) {
   forallHW {
     if (hw->QuitHW == &XDRIVER::QuitHW && hw->Private && d == this->xdisplay) {
 
-      hw->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+      hw->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW;
 
       break;
     }

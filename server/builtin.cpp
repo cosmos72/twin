@@ -571,12 +571,12 @@ static void BuiltinH(Tmsgport MsgPort) {
           break;
 
         case COD_SUSPEND:
-          SuspendHW(ttrue);
+          SuspendHW(true);
           flushk();
 
           kill(getpid(), SIGSTOP);
 
-          (void)RestartHW(ttrue);
+          (void)RestartHW(true);
           break;
 
         case COD_DETACH:

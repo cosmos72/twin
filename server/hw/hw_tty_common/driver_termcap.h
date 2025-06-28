@@ -227,8 +227,8 @@ TW_ATTR_HIDDEN bool tty_driver::termcap_InitVideo(Tdisplay hw) {
 
   hw->fnQuitVideo = termcap_QuitVideo;
 
-  hw->FlagsHW |= FlHWNeedOldVideo;
-  hw->FlagsHW &= ~FlHWExpensiveFlushVideo;
+  hw->FlagsHW |= FlagNeedOldVideoHW;
+  hw->FlagsHW &= ~FlagExpensiveFlushVideoHW;
   hw->NeedHW = 0;
 
   self->fnLookupKey = &tty_driver::termcap_LookupKey;
@@ -577,10 +577,10 @@ TW_ATTR_HIDDEN void tty_driver::termcap_UpdateCursor(Tdisplay hw) {
 }
 
 TW_ATTR_HIDDEN void tty_driver::termcap_UpdateMouseAndCursor(Tdisplay hw) {
-  if ((hw->FlagsHW & FlHWSoftMouse) && (hw->FlagsHW & FlHWChangedMouseFlag)) {
+  if ((hw->FlagsHW & FlagSoftMouseHW) && (hw->FlagsHW & FlagChangedMouseFlagHW)) {
     hw->HideMouse();
     hw->ShowMouse();
-    hw->FlagsHW &= ~FlHWChangedMouseFlag;
+    hw->FlagsHW &= ~FlagChangedMouseFlagHW;
   }
   termcap_UpdateCursor(hw);
 }
@@ -640,7 +640,7 @@ TW_ATTR_HIDDEN void tty_driver::termcap_DragArea(Tdisplay hw, dat Left, dat Up, 
   udat delta = Up - DstUp;
 
   hw->HideMouse();
-  hw->FlagsHW |= FlHWChangedMouseFlag;
+  hw->FlagsHW |= FlagChangedMouseFlagHW;
 
   fprintf(self->out, "%s\033[0m%s", /* hide cursor, reset color */
           self->tc[tc_seq_cursor_off],
@@ -675,8 +675,8 @@ TW_ATTR_HIDDEN void tty_driver::termcap_FlushVideo(Tdisplay hw) {
   /* hide the mouse if needed */
 
   /* first, check the old mouse position */
-  if (hw->FlagsHW & FlHWSoftMouse) {
-    if (hw->FlagsHW & FlHWChangedMouseFlag) {
+  if (hw->FlagsHW & FlagSoftMouseHW) {
+    if (hw->FlagsHW & FlagChangedMouseFlagHW) {
       /* dirty the old mouse position, so that it will be overwritten */
 
       /*
@@ -698,11 +698,11 @@ TW_ATTR_HIDDEN void tty_driver::termcap_FlushVideo(Tdisplay hw) {
      * instead of calling ShowMouse(),
      * we flip the new mouse position in Video[] and dirty it if necessary.
      */
-    if ((hw->FlagsHW & FlHWChangedMouseFlag) || (flippedVideo = Plain_isDirtyVideo(i, j))) {
+    if ((hw->FlagsHW & FlagChangedMouseFlagHW) || (flippedVideo = Plain_isDirtyVideo(i, j))) {
       VideoFlip(i, j);
       if (!flippedVideo)
         DirtyVideo(i, j, i, j);
-      hw->FlagsHW &= ~FlHWChangedMouseFlag;
+      hw->FlagsHW &= ~FlagChangedMouseFlagHW;
       flippedVideo = true;
     } else
       flippedVideo = false;
@@ -726,13 +726,13 @@ TW_ATTR_HIDDEN void tty_driver::termcap_FlushVideo(Tdisplay hw) {
   hw->setFlush();
 
   /* ... and this redraws the mouse */
-  if (hw->FlagsHW & FlHWSoftMouse) {
+  if (hw->FlagsHW & FlagSoftMouseHW) {
     if (flippedOldVideo) {
       OldVideo[hw->Last_x + hw->Last_y * (ldat)DisplayWidth] = savedOldVideo;
     }
     if (flippedVideo) {
       VideoFlip(hw->Last_x = hw->MouseState.x, hw->Last_y = hw->MouseState.y);
-    } else if (hw->FlagsHW & FlHWChangedMouseFlag) {
+    } else if (hw->FlagsHW & FlagChangedMouseFlagHW) {
       hw->ShowMouse();
     }
   }
@@ -740,7 +740,7 @@ TW_ATTR_HIDDEN void tty_driver::termcap_FlushVideo(Tdisplay hw) {
   termcap_UpdateCursor(hw);
   termcap_DrawFinish(hw);
 
-  hw->FlagsHW &= ~FlHWChangedMouseFlag;
+  hw->FlagsHW &= ~FlagChangedMouseFlagHW;
 }
 
 #endif /* CONF_HW_TTY_TERMCAP */

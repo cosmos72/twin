@@ -445,12 +445,12 @@ TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
         hw->fnResetPalette = NULL;
 
         hw->DisplayIsCTTY = false;
-        hw->FlagsHW &= ~FlHWSoftMouse; /* mouse pointer handled by X11 server */
+        hw->FlagsHW &= ~FlagSoftMouseHW; /* mouse pointer handled by X11 server */
 
-        hw->FlagsHW |= FlHWNeedOldVideo;
-        hw->FlagsHW |= FlHWExpensiveFlushVideo;
+        hw->FlagsHW |= FlagNeedOldVideoHW;
+        hw->FlagsHW |= FlagExpensiveFlushVideoHW;
         if (noinput)
-          hw->FlagsHW |= FlHWNoInput;
+          hw->FlagsHW |= FlagNoInputHW;
 
         hw->NeedHW = 0;
         hw->CanResize = true;

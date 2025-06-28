@@ -161,15 +161,12 @@ TW_ATTR_HIDDEN void tty_driver::lrawkbd_KeyboardEvent(int fd, Tdisplay hw) {
   char buf[16], *s, *ret;
   udat Code, ShiftFlags;
   byte got, chunk, retlen;
-  SaveHW;
-
-  SetHW(hw);
 
   got = read(fd, s = buf, 16);
 
   if (got == 0 || (got == (byte)-1 && errno != EINTR && errno != EWOULDBLOCK)) {
     /* BIG troubles */
-    hw->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+    hw->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW;
     return;
   }
 
@@ -189,8 +186,6 @@ TW_ATTR_HIDDEN void tty_driver::lrawkbd_KeyboardEvent(int fd, Tdisplay hw) {
 
     s += chunk, got -= chunk;
   }
-
-  RestoreHW;
 }
 
 TW_ATTR_HIDDEN bool tty_driver::lrawkbd_GetKeyboard(Tdisplay hw) {
@@ -259,10 +254,7 @@ TW_ATTR_HIDDEN void tty_driver::lrawkbd_ReleaseConsole(Tdisplay hw) {
 }
 
 TW_ATTR_HIDDEN void tty_driver::lrawkbd_ReactSignalOut(int sig) {
-  /* HW may not be set here... use lrawkbd_hw */
   Tdisplay hw = lrawkbd_hw;
-  SaveHW;
-  SetHW(hw);
 
   /* we just got SIGUSR1. restore settings and tell kernel we allow the switch */
 
@@ -273,16 +265,11 @@ TW_ATTR_HIDDEN void tty_driver::lrawkbd_ReactSignalOut(int sig) {
   tty_driver *self = ttydriver(hw);
   ioctl(self->tty_fd, VT_RELDISP, 1);
 
-  RestoreHW;
-
   TW_RETFROMSIGNAL(0);
 }
 
 TW_ATTR_HIDDEN void tty_driver::lrawkbd_ReactSignalIn(int sig) {
-  /* HW may not be set here... use lrawkbd_hw */
   Tdisplay hw = lrawkbd_hw;
-  SaveHW;
-  SetHW(hw);
 
   /* we just got SIGUSR2. tell kernel we allow the switch and initialize settings */
 
@@ -292,8 +279,6 @@ TW_ATTR_HIDDEN void tty_driver::lrawkbd_ReactSignalIn(int sig) {
   (void)ioctl(self->tty_fd, VT_RELDISP, 2);
 
   lrawkbd_SetKeyboard(hw);
-
-  RestoreHW;
 
   TW_RETFROMSIGNAL(0);
 }

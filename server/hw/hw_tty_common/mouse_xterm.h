@@ -68,8 +68,8 @@ TW_ATTR_HIDDEN bool tty_driver::xterm_InitMouse(Tdisplay hw, byte force) {
   hw->fnMouseEvent = &tty_driver::xterm_MouseEvent;
   hw->fnConfigureMouse = &tty_driver::xterm_ConfigureMouse;
   hw->fnQuitMouse = &tty_driver::xterm_QuitMouse;
-  hw->FlagsHW &= ~FlHWSoftMouse; /* no need to Hide/Show it */
-                                 /* override the ones set by InitVideo() */
+  hw->FlagsHW &= ~FlagSoftMouseHW; /* no need to Hide/Show it */
+                                   /* override the ones set by InitVideo() */
   hw->fnShowMouse = hw->fnHideMouse = NULL;
 
   return true;

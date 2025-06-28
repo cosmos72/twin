@@ -944,7 +944,7 @@ static void sockAttachHW(uldat len, const char *arg, byte flags) {
     verbose = RegisterPrintkFd(realFd);
 
   if ((D_HW = AttachDisplayHW(Chars(arg, len), Slot, flags & TW_ATTACH_HW_EXCLUSIVE))) {
-    if (D_HW->NeedHW & NEEDPersistentSlot)
+    if (D_HW->NeedHW & NeedPersistentSlot)
       LS.MsgPort->AttachHW = D_HW;
     else
       D_HW->AttachSlot = NOSLOT; /* we don't need it => forget it */
@@ -952,7 +952,7 @@ static void sockAttachHW(uldat len, const char *arg, byte flags) {
 
   if (D_HW) {
     buf[1]++;
-    if (D_HW->NeedHW & NEEDPersistentSlot)
+    if (D_HW->NeedHW & NeedPersistentSlot)
       buf[1]++;
   }
   write(realFd, buf, 2);

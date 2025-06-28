@@ -386,7 +386,7 @@ bool SetSelectionFromWindow(Twindow w) {
 
     ok = SelectionStore(SEL_UTF8MAGIC, Chars(), Chars());
     if (ok) {
-      NeedHW |= NEEDSelectionExport;
+      NeedHW |= NeedSelectionExport;
     }
     return ok;
   }
@@ -476,7 +476,7 @@ bool SetSelectionFromWindow(Twindow w) {
       if (ok) {
         ok = appender.flush();
         if (ok) {
-          NeedHW |= NEEDSelectionExport;
+          NeedHW |= NeedSelectionExport;
         }
       }
     } while (false);
@@ -529,7 +529,7 @@ bool SetSelectionFromWindow(Twindow w) {
     }
   }
   if (ok) {
-    NeedHW |= NEEDSelectionExport;
+    NeedHW |= NeedSelectionExport;
   }
   return ok;
 }

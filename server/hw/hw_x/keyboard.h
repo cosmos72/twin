@@ -382,7 +382,7 @@ TW_ATTR_HIDDEN void XDRIVER::HandleEvent(XEvent *event) {
           (Atom)event->xclient.data.l[0] == this->xWM_DELETE_WINDOW) {
 
         /* going to close this display */
-        hw->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+        hw->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW;
       }
       break;
     default:
@@ -393,13 +393,9 @@ TW_ATTR_HIDDEN void XDRIVER::HandleEvent(XEvent *event) {
 TW_ATTR_HIDDEN void XDRIVER::KeyboardEvent(int fd, Tdisplay hw) {
   XEvent event;
   XDRIVER *self = xdriver(hw);
-  SaveHW;
-  SetHW(hw);
 
   while (XPending(self->xdisplay) > 0) {
     XNextEvent(self->xdisplay, &event);
     self->HandleEvent(&event);
   }
-
-  RestoreHW;
 }

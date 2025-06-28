@@ -72,7 +72,7 @@ TW_ATTR_HIDDEN bool tty_driver::gpm_InitMouse(Tdisplay hw) {
     return false;
   }
 
-  hw->FlagsHW |= FlHWSoftMouse; /* _we_ Hide/Show it */
+  hw->FlagsHW |= FlagSoftMouseHW; /* _we_ Hide/Show it */
 
   hw->fnMouseEvent = gpm_MouseEvent;
   hw->fnConfigureMouse = gpm_ConfigureMouse;
@@ -84,7 +84,6 @@ TW_ATTR_HIDDEN bool tty_driver::gpm_InitMouse(Tdisplay hw) {
 }
 
 TW_ATTR_HIDDEN void tty_driver::gpm_QuitMouse(Tdisplay hw) {
-  /* we cannot be sure that some InitVideo() initialized HW->HideMouse */
 #if 0
   hw->HideMouse();
 #endif
@@ -115,16 +114,12 @@ TW_ATTR_HIDDEN void tty_driver::gpm_MouseEvent(int fd, Tdisplay hw) {
   int left = 0;
   udat IdButtons, Buttons = 0;
 
-  SaveHW;
-
   /*
    * All other parts of twin read and parse data from fds in big chunks,
    * while Gpm_GetEvent() reads and parses only a single event at time.
    * To compensate this and avoid mouse to lag behind, we do a small loop.
    */
   byte loopN = 30;
-
-  SetHW(hw);
 
   do {
     if ((left = Gpm_GetEvent(&ev)) <= 0) {
@@ -186,6 +181,4 @@ TW_ATTR_HIDDEN void tty_driver::gpm_MouseEvent(int fd, Tdisplay hw) {
       MouseEventCommon(hw, ev.x, ev.y, ev.dx, ev.dy, Buttons);
 
   } while (loopN-- && ioctl(self->gpm_fd, FIONREAD, &left) >= 0 && left > 0);
-
-  RestoreHW;
 }

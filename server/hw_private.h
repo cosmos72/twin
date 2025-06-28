@@ -30,12 +30,4 @@ void saveDisplaySize(void);
 
 void NeedRedrawVideo(Tdisplay hw, dat Left, dat Up, dat Right, dat Down);
 
-extern Tdisplay HW;
-
-#define SaveHW Tdisplay s_hw = HW
-
-#define SetHW(hw) (HW = (hw))
-
-#define RestoreHW (HW = s_hw)
-
 #endif /* TWIN_HW_PRIVATE_H */

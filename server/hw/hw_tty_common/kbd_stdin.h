@@ -301,17 +301,14 @@ TW_ATTR_HIDDEN udat tty_driver::linux_LookupKey(Tdisplay hw, udat *ShiftFlags, b
 }
 
 TW_ATTR_HIDDEN void tty_driver::stdin_KeyboardEvent(int fd, Tdisplay hw) {
-  static char buf[TW_SMALLBUFF];
-  static fd_set rfds;
-  static struct timeval t;
+  char buf[TW_SMALLBUFF];
+  fd_set rfds;
+  struct timeval t;
   char *s = buf, *end = buf + sizeof(buf) - 1;
   const char *ret;
   tty_driver *self = ttydriver(hw);
   udat Code, ShiftFlags;
   byte got, chunk, retlen;
-  SaveHW;
-
-  SetHW(hw);
 
   FD_ZERO(&rfds);
   FD_SET(fd, &rfds);
@@ -325,7 +322,7 @@ TW_ATTR_HIDDEN void tty_driver::stdin_KeyboardEvent(int fd, Tdisplay hw) {
 
   if (got == (byte)-1 && errno != EINTR && errno != EWOULDBLOCK) {
     /* BIG troubles */
-    hw->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+    hw->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW;
     return;
   }
 
@@ -374,6 +371,4 @@ TW_ATTR_HIDDEN void tty_driver::stdin_KeyboardEvent(int fd, Tdisplay hw) {
 
     KeyboardEventCommon(hw, Code, ShiftFlags, retlen, ret);
   }
-
-  RestoreHW;
 }

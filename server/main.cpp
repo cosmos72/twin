@@ -202,14 +202,15 @@ static byte Init(void) {
 void Quit(int status) {
   RemoteFlushAll();
 
-  if (All->AtQuit)
+  if (All->AtQuit) {
     All->AtQuit();
-
-  SuspendHW(tfalse);
+  }
+  SuspendHW(false);
   /* not QuitHW() as it would fire up socket.so and maybe fork() in bg */
 
-  if (status < 0)
+  if (status < 0) {
     return; /* give control back to signal handler */
+  }
   exit(status);
 }
 
@@ -317,12 +318,12 @@ int main(int argc, char *argv[]) {
       if (GotSignals)
         HandleSignals();
 
-      if (NeedHW & NEEDResizeDisplay) {
+      if (NeedHW & NeedResizeDisplay) {
         ResizeDisplay();
         QueuedDrawArea2FullScreen = true;
       }
 
-      if (NeedHW & NEEDSelectionExport)
+      if (NeedHW & NeedSelectionExport)
         SelectionExport();
 
       /*
@@ -335,13 +336,13 @@ int main(int argc, char *argv[]) {
        *
        * So first call PanicHW(), then FlushHW()
        */
-      if (NeedHW & NEEDPanicHW)
+      if (NeedHW & NeedPanicHW)
         PanicHW();
 
       if (StrategyFlag != HW_DELAY)
         FlushHW();
 
-      if (NeedHW & NEEDPanicHW || All->FirstMsgPort->FirstMsg) {
+      if (NeedHW & NeedPanicHW || All->FirstMsgPort->FirstMsg) {
         /*
          * hmm... displays are rotting quickly today!
          * we called PanicHW() just above, so don't call again,

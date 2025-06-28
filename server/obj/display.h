@@ -19,24 +19,24 @@
 #include "stl_types.h"
 
 /* Sdisplay::FlagsHW */
-enum {
-  FlHWSoftMouse = 0x01,
-  FlHWChangedMouseFlag = 0x02,
-  FlHWNeedOldVideo = 0x04,
-  FlHWExpensiveFlushVideo = 0x08,
-  FlHWNoInput = 0x10,
+enum FlagHW {
+  FlagSoftMouseHW = 0x01,
+  FlagChangedMouseFlagHW = 0x02,
+  FlagNeedOldVideoHW = 0x04,
+  FlagExpensiveFlushVideoHW = 0x08,
+  FlagNoInputHW = 0x10,
 };
 
 /* Sdisplay::NeedHW and global NeedHW */
-enum {
-  NEEDFlushStdout = 0x01,
-  NEEDFlushHW = 0x02,
-  NEEDResizeDisplay = 0x04,
-  NEEDSelectionExport = 0x08,
-  NEEDPanicHW = 0x10,
-  NEEDPersistentSlot = 0x20,
-  NEEDFromPreviousFlushHW = 0x40,
-  NEEDBeepHW = 0x80,
+enum NeedHW {
+  NeedFlushStdout = 0x01,
+  NeedFlushHW = 0x02,
+  NeedResizeDisplay = 0x04,
+  NeedSelectionExport = 0x08,
+  NeedPanicHW = 0x10,
+  NeedPersistentSlot = 0x20,
+  NeedFromPreviousFlushHW = 0x40,
+  NeedBeepHW = 0x80,
 };
 
 class mouse_state {
@@ -108,11 +108,11 @@ public:
   void (*fnQuitVideo)(Tdisplay hw);
 
   void setFlush() {
-    NeedHW |= NEEDFlushHW;
+    NeedHW |= NeedFlushHW;
   }
 
   void clrFlush() {
-    NeedHW &= ~NEEDFlushHW;
+    NeedHW &= ~NeedFlushHW;
   }
 
   void FlushVideo() {
@@ -273,15 +273,15 @@ public:
   /*
    * various display HW flags:
    *
-   * FlHWSoftMouse         : set if display HW has to manually hide/show the mouse pointer
-   * FlHWChangedMouseFlag  : set after a mouse event that requires redrawing mouse pointer
-   * FlHWNeedOldVideo      : set if FlushVideo() is a bit expensive, and it's better to cache the
+   * FlagSoftMouseHW         : set if display HW has to manually hide/show the mouse pointer
+   * FlagChangedMouseFlagHW  : set after a mouse event that requires redrawing mouse pointer
+   * FlagNeedOldVideoHW      : set if FlushVideo() is a bit expensive, and it's better to cache the
    *                         actual display contents in OldVideo[] and send only what effectively
    *                         changed, instead of all the dirty areas.
-   * FlHWExpensiveFlushVideo : set if FlushVideo() is SO expensive that it's better to sleep
+   * FlagExpensiveFlushVideoHW : set if FlushVideo() is SO expensive that it's better to sleep
    *                         a little before flushing, hoping to receive more data in the meantime,
    *                         in order to merge the flush operations.
-   * FlHWNoInput           : set if the display HW should be used as view-only, ignoring all input
+   * FlagNoInputHW           : set if the display HW should be used as view-only, ignoring all input
    *                         from it.
    */
   byte FlagsHW;

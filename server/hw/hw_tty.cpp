@@ -211,7 +211,7 @@ TW_ATTR_HIDDEN void tty_driver::null_InitMouse(Tdisplay hw) {
   hw->fnMouseEvent = NULL;
   hw->fnQuitMouse = NULL;
 
-  hw->FlagsHW &= ~FlHWSoftMouse; /* no need to Hide/Show it */
+  hw->FlagsHW &= ~FlagSoftMouseHW; /* no need to Hide/Show it */
 
   /* override the ones set by *_InitVideo() */
   hw->fnShowMouse = hw->fnHideMouse = NULL;
@@ -280,7 +280,7 @@ TW_ATTR_HIDDEN void tty_driver::stdin_Resize(Tdisplay hw, dat x, dat y) {
 TW_ATTR_HIDDEN void tty_driver::FlushHW(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
   if (fflush(self->out) != 0)
-    hw->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+    hw->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW;
   hw->clrFlush();
 }
 
@@ -420,9 +420,9 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
           return false;
         }
       } else if (arg0 == Chars(",noinput")) {
-        hw->FlagsHW |= FlHWNoInput;
+        hw->FlagsHW |= FlagNoInputHW;
       } else if (arg0 == Chars(",slow")) {
-        hw->FlagsHW |= FlHWExpensiveFlushVideo;
+        hw->FlagsHW |= FlagExpensiveFlushVideoHW;
       } else if (arg0.starts_with(Chars(",utf8"))) {
         self->tty_use_utf8 = arg0.view(5, comma) != Chars("=no");
       } else {
@@ -619,7 +619,7 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
          * can clobber hw->NeedHW
          */
         if (need_persistent_slot) {
-          hw->NeedHW |= NEEDPersistentSlot;
+          hw->NeedHW |= NeedPersistentSlot;
         }
         if (is_ctty) {
           hw->DisplayIsCTTY = true;

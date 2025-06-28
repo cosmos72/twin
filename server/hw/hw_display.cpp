@@ -67,9 +67,6 @@ static void display_HandleEvent(Tdisplay hw) {
   dat x, y, dx, dy;
   udat keys;
 
-  SaveHW;
-  SetHW(hw);
-
   while ((msg = helper->FirstMsg)) {
 
     msg->Remove();
@@ -93,7 +90,7 @@ static void display_HandleEvent(Tdisplay hw) {
     case msg_widget_gadget:
       if (!Event->EventGadget.Code)
         /* 0 == Close Code */
-        hw->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+        hw->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW;
       break;
     case msg_selection_clear:
       /* selection now owned by some other client on the same display hw as twdisplay */
@@ -163,7 +160,6 @@ static void display_HandleEvent(Tdisplay hw) {
     }
     msg->Delete();
   }
-  RestoreHW;
 }
 
 static void display_HelperH(Tmsgport Port) {
@@ -244,7 +240,7 @@ static void display_FlushVideo(Tdisplay hw) {
     display_SetCursorType(hw, hw->TT = CursorType);
     hw->setFlush();
   }
-  hw->FlagsHW &= ~FlHWChangedMouseFlag;
+  hw->FlagsHW &= ~FlagChangedMouseFlagHW;
 }
 
 static void display_FlushHW(Tdisplay hw) {
@@ -512,15 +508,15 @@ static bool display_InitHW(Tdisplay hw) {
   hw->fnQuitVideo = NULL;
 
   hw->DisplayIsCTTY = false;
-  hw->FlagsHW &= ~FlHWSoftMouse;
+  hw->FlagsHW &= ~FlagSoftMouseHW;
 
-  hw->FlagsHW |= FlHWNeedOldVideo;
+  hw->FlagsHW |= FlagNeedOldVideoHW;
   if (arg.contains(Chars(",slow"))) {
-    hw->FlagsHW |= FlHWExpensiveFlushVideo;
+    hw->FlagsHW |= FlagExpensiveFlushVideoHW;
   } else {
-    hw->FlagsHW &= ~FlHWExpensiveFlushVideo;
+    hw->FlagsHW &= ~FlagExpensiveFlushVideoHW;
   }
-  hw->NeedHW = NEEDPersistentSlot;
+  hw->NeedHW = NeedPersistentSlot;
   hw->CanResize = arg.contains(Chars(",resize"));
 
   display_CreateMsg(hw, ev_dpy_Helper, sizeof(dpydriver(hw)->Helper->Id));

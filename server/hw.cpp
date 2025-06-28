@@ -119,7 +119,7 @@ static void HandleSignalHangup(void) {
   GotSignalHangup = false;
   if (DisplayHWCTTY && DisplayHWCTTY != HWCTTY_DETACHED && DisplayHWCTTY->DisplayIsCTTY) {
 
-    DisplayHWCTTY->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+    DisplayHWCTTY->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW;
   }
 }
 

@@ -176,7 +176,7 @@ TW_ATTR_HIDDEN void tw_driver::HandleMsg(Tdisplay hw, tmsg msg) {
     case TW_MSG_WIDGET_GADGET:
       if (!event->EventGadget.Code)
         /* 0 == Close Code */
-        hw->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+        hw->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW;
       break;
     default:
       break;
@@ -187,8 +187,6 @@ TW_ATTR_HIDDEN void tw_driver::HandleMsg(Tdisplay hw, tmsg msg) {
 TW_ATTR_HIDDEN void tw_driver::KeyboardEvent(int fd, Tdisplay hw) {
   tw_driver *self = twdriver(hw);
   tmsg msg;
-  SaveHW;
-  SetHW(hw);
   bool firstloop = true;
 
   /*
@@ -203,9 +201,8 @@ TW_ATTR_HIDDEN void tw_driver::KeyboardEvent(int fd, Tdisplay hw) {
   }
 
   if (Tw_InPanic(self->dpy)) {
-    hw->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+    hw->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW;
   }
-  RestoreHW;
 }
 
 TW_ATTR_HIDDEN void tw_driver::DrawSome(Tdisplay hw, dat x, dat y, uldat len) {
@@ -268,7 +265,7 @@ TW_ATTR_HIDDEN void tw_driver::FlushVideo(Tdisplay hw) {
     hw->setFlush();
   }
 
-  hw->FlagsHW &= ~FlHWChangedMouseFlag;
+  hw->FlagsHW &= ~FlagChangedMouseFlagHW;
   hw->RedrawVideo = false;
 }
 
@@ -276,16 +273,16 @@ TW_ATTR_HIDDEN void tw_driver::FlushHW(Tdisplay hw) {
   tw_driver *self = twdriver(hw);
   byte ret = Tw_TimidFlush(self->dpy);
   if (ret == tfalse) {
-    hw->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+    hw->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW;
   } else if (ret == ttrue) {
-    if (hw->NeedHW & NEEDFromPreviousFlushHW) {
-      hw->NeedHW &= ~NEEDFromPreviousFlushHW;
+    if (hw->NeedHW & NeedFromPreviousFlushHW) {
+      hw->NeedHW &= ~NeedFromPreviousFlushHW;
       RemoteCouldWrite(hw->keyboard_slot);
     }
     hw->clrFlush();
   } else { /* ret == ttrue+ttrue */
-    if (!(hw->NeedHW & NEEDFromPreviousFlushHW)) {
-      hw->NeedHW |= NEEDFromPreviousFlushHW;
+    if (!(hw->NeedHW & NeedFromPreviousFlushHW)) {
+      hw->NeedHW |= NeedFromPreviousFlushHW;
       RemoteCouldntWrite(hw->keyboard_slot);
     }
   }
@@ -466,10 +463,10 @@ TW_ATTR_HIDDEN bool tw_driver::InitHW(Tdisplay hw) {
     arg = arg.view(4, arg.size());
 
     if (arg.contains(Chars(",noinput"))) {
-      hw->FlagsHW |= FlHWNoInput;
+      hw->FlagsHW |= FlagNoInputHW;
     }
     if (arg.contains(Chars(",slow"))) {
-      hw->FlagsHW |= FlHWExpensiveFlushVideo;
+      hw->FlagsHW |= FlagExpensiveFlushVideoHW;
     }
     if (arg.contains(Chars(",help"))) {
       log(INFO)
@@ -607,10 +604,10 @@ TW_ATTR_HIDDEN bool tw_driver::InitHW(Tdisplay hw) {
       hw->fnQuitVideo = NULL;
 
       hw->DisplayIsCTTY = false;
-      hw->FlagsHW &= ~FlHWSoftMouse; /* mouse pointer handled by X11 server */
+      hw->FlagsHW &= ~FlagSoftMouseHW; /* mouse pointer handled by X11 server */
 
-      hw->FlagsHW |= FlHWNeedOldVideo;
-      hw->FlagsHW &= ~FlHWExpensiveFlushVideo;
+      hw->FlagsHW |= FlagNeedOldVideoHW;
+      hw->FlagsHW &= ~FlagExpensiveFlushVideoHW;
       hw->NeedHW = 0;
       hw->CanResize = true;
 

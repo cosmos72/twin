@@ -279,7 +279,7 @@ static void scroll_forw() { /* FIXME: finish this! */
 static void scroll_back() { /* FIXME: finish this! */
 }
 
-static void boot_it() { /* HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW; */
+static void boot_it() { /* hw->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW; */
 }
 
 static void compose() {
