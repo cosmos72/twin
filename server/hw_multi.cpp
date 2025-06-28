@@ -730,24 +730,6 @@ void SelectionImport(void) {
   }
 }
 
-inline void DiscardBlinkVideo(void) {
-  ldat i;
-  uldat start, len;
-  tcell *V;
-
-  for (i = 0; i < (ldat)DisplayHeight * 2; i++) {
-    start = (uldat)ChangedVideo[i >> 1][i & 1][0];
-
-    if (start != (uldat)-1) {
-      len = (uldat)ChangedVideo[i >> 1][i & 1][1] + 1 - start;
-      start += (i >> 1) * (ldat)DisplayWidth;
-
-      for (V = &Video[start]; len; V++, len--)
-        *V &= ~TCELL(TCOL(0, thigh), (byte)0);
-    }
-  }
-}
-
 inline void OptimizeChangedVideo(void) {
   uldat _start, start, _end, end;
   ldat i;
@@ -847,9 +829,6 @@ void FlushHW(void) {
 
   if (NeedUpdateCursor) {
     FlushCursor();
-  }
-  if (!(All->SetUp->Flags & setup_blink)) {
-    DiscardBlinkVideo();
   }
   if (NeedOldVideo && ValidOldVideo) {
     OptimizeChangedVideo();

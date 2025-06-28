@@ -76,7 +76,6 @@
 #define COD_O_Xn_SHADE (udat)42
 #define COD_O_Yp_SHADE (udat)43
 #define COD_O_Yn_SHADE (udat)44
-#define COD_O_BLINK (udat)45
 #define COD_O_CURSOR_ALWAYS (udat)46
 #define COD_O_MENU_HIDE (udat)47
 #define COD_O_MENU_INFO (udat)48
@@ -234,8 +233,6 @@ void UpdateOptionWin(void) {
   }
   if ((G = OptionWin->FindGadgetByCode(COD_O_SHADOWS)))
     G->USE.T.Text[0][1] = Flags & setup_shadows ? _CHECK : ' ';
-  if ((G = OptionWin->FindGadgetByCode(COD_O_BLINK)))
-    G->USE.T.Text[0][1] = Flags & setup_blink ? _CHECK : ' ';
   if ((G = OptionWin->FindGadgetByCode(COD_O_CURSOR_ALWAYS)))
     G->USE.T.Text[0][1] = Flags & setup_cursor_always ? _CHECK : ' ';
   if ((G = OptionWin->FindGadgetByCode(COD_O_MENU_HIDE)))
@@ -283,9 +280,6 @@ static void OptionH(Tmsg msg) {
   case COD_O_Yn_SHADE:
     if (YShade > 1)
       YShade--;
-    break;
-  case COD_O_BLINK:
-    Flags ^= setup_blink;
     break;
   case COD_O_CURSOR_ALWAYS:
     Flags ^= setup_cursor_always;
@@ -883,7 +877,7 @@ bool InitBuiltin(void) {
       (OptionWin = Swindow::Create(
            Builtin_MsgPort, 7, "Options", NULL, Builtin_Menu, TCOL(tBLACK, tblack), NOCURSOR,
            WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE,
-           WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 40, 18, 0)) &&
+           WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 40, 16, 0)) &&
 
       (ButtonWin = Swindow::Create(
            Builtin_MsgPort, 7, "Buttons", NULL, Builtin_Menu, TCOL(tWHITE, twhite), NOCURSOR,
@@ -923,20 +917,16 @@ bool InitBuiltin(void) {
 
       Sgadget::Create(Builtin_MsgPort, (Twidget)OptionWin, 27, 1, "[ ] Enable screen Scrolling", 0,
                       GADGETFL_TEXT_DEFCOL, COD_O_SCREEN_SCROLL, TCOL(tblack, twhite),
-                      TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 16) &&
+                      TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 14) &&
       Sgadget::Create(Builtin_MsgPort, (Twidget)OptionWin, 23, 1, "[ ] Menu Relaxed Arrows", 0,
                       GADGETFL_TEXT_DEFCOL, COD_O_MENU_RELAX, TCOL(tblack, twhite),
-                      TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 14) &&
+                      TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 12) &&
       Sgadget::Create(Builtin_MsgPort, (Twidget)OptionWin, 25, 1, "[ ] Menu Information Line", 0,
                       GADGETFL_TEXT_DEFCOL, COD_O_MENU_INFO, TCOL(tblack, twhite),
-                      TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 12) &&
+                      TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 10) &&
       Sgadget::Create(Builtin_MsgPort, (Twidget)OptionWin, 15, 1, "[ ] Hidden Menu", 0,
                       GADGETFL_TEXT_DEFCOL, COD_O_MENU_HIDE, TCOL(tblack, twhite),
-                      TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 10) &&
-      Sgadget::Create(Builtin_MsgPort, (Twidget)OptionWin, 32, 1,
-                      "[ ] Enable Blink/High Background", 0, GADGETFL_TEXT_DEFCOL, COD_O_BLINK,
-                      TCOL(tblack, twhite), TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite),
-                      TCOL(tBLACK, tblack), 2, 8) &&
+                      TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 8) &&
       Sgadget::Create(Builtin_MsgPort, (Twidget)OptionWin, 22, 1, "[ ] Always Show Cursor", 0,
                       GADGETFL_TEXT_DEFCOL, COD_O_CURSOR_ALWAYS, TCOL(tblack, twhite),
                       TCOL(tWHITE, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), 2, 6) &&
