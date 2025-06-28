@@ -33,7 +33,6 @@ CONF_HW_X11_HELP="HW support: X11"
 CONF_HW_TWIN_HELP="HW support: twin, native"
 CONF_HW_DISPLAY_HELP="HW support: twdisplay client as display"
 CONF_OPT_SHADOWS_HELP="Runtime option: enable shadows"
-CONF_OPT_BLINK_HELP="Runtime option: enable blink/high background"
 CONF_OPT_CURSOR_ALWAYS_HELP="Runtime option: force always visible cursor"
 CONF_OPT_MENU_HIDE_HELP="Runtime option: autohide menu"
 CONF_OPT_MENU_INFO_HELP="Runtime option: enable menu information line"
@@ -78,7 +77,6 @@ menu CONF_OPT
   msg "Warning: settings in ~/.config/twin/twinrc or in system-wide twinrc"
   msg "will always override the following options!"
   yesno CONF_OPT_SHADOWS
-  yesno CONF_OPT_BLINK
   yesno CONF_OPT_CURSOR_ALWAYS
   yesno CONF_OPT_MENU_HIDE
   yesno CONF_OPT_MENU_INFO

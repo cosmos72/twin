@@ -25,9 +25,6 @@ byte InitRCOptions(void) {
 #ifdef CONF_OPT_SHADOWS
                       | setup_shadows
 #endif
-#ifdef CONF_OPT_BLINK
-                      | setup_blink
-#endif
 #ifdef CONF_OPT_CURSOR_ALWAYS
                       | setup_cursor_always
 #endif

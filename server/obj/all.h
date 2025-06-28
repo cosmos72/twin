@@ -33,7 +33,7 @@ public:
 /* All->Setup->Flags */
 enum e_setup_flag {
   setup_shadows = 0x01,
-  setup_blink = 0x02,
+  /* setup_blink = 0x02, no longer used */
   setup_cursor_always = 0x04,
   setup_menu_hide = 0x08,
   setup_menu_info = 0x10,

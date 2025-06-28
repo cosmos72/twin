@@ -369,13 +369,12 @@ static byte ImmDeleteScreen(str name) {
 static byte ImmGlobalFlags(node l) {
   ldat i, j;
 
-  while (l) {
+  for (; l; l = l->next) {
     switch (l->id) {
     case ALTFONT: /*ignored for compatibility*/
       return ttrue;
-    case BLINK:
-      i = setup_blink;
-      break;
+    case BLINK: /*ignored for compatibility*/
+      continue;
     case CURSOR_ALWAYS:
       i = setup_cursor_always;
       break;
@@ -406,7 +405,7 @@ static byte ImmGlobalFlags(node l) {
     default:
       return tfalse;
     }
-    if (i > 0)
+    if (i > 0) {
       switch (l->x.f.flag) {
       case FL_ON:
       case '+':
@@ -434,16 +433,16 @@ static byte ImmGlobalFlags(node l) {
       default:
         return tfalse;
       }
-    else {
+    } else {
       /* ButtonSelection or ButtonPaste */
 
       j = l->x.f.flag;
-      if (j >= 1 && j <= BUTTON_N_MAX)
+      if (j >= 1 && j <= BUTTON_N_MAX) {
         GlobalFlags[i + 3] = HOLD_CODE(j - 1);
-      else
+      } else {
         GlobalFlags[i + 3] = HOLD_LEFT;
+      }
     }
-    l = l->next;
   }
   return ttrue;
 }
