@@ -127,7 +127,7 @@ inline uldat FdListGet(void) {
   return NOSLOT;
 }
 
-uldat RegisterRemote(int Fd, Tobj HandlerData, handler_io_d HandlerIO) {
+uldat RegisterRemote(int fd, Tobj HandlerData, handler_io_d HandlerIO) {
   uldat Slot, j;
 
   if ((Slot = FdListGet()) == NOSLOT)
@@ -135,7 +135,7 @@ uldat RegisterRemote(int Fd, Tobj HandlerData, handler_io_d HandlerIO) {
 
   memset(&LS, 0, sizeof(fdlist));
 
-  LS.Fd = Fd;
+  LS.Fd = fd;
   LS.pairSlot = NOSLOT;
   if ((LS.HandlerData = HandlerData))
     LS.HandlerIO.D = HandlerIO;
@@ -150,10 +150,10 @@ uldat RegisterRemote(int Fd, Tobj HandlerData, handler_io_d HandlerIO) {
       break;
   FdBottom = j;
 
-  if (Fd >= 0) {
-    FD_SET(Fd, &save_rfds);
-    if (max_fds < Fd)
-      max_fds = Fd;
+  if (fd >= 0) {
+    FD_SET(fd, &save_rfds);
+    if (max_fds < fd)
+      max_fds = fd;
   }
   return Slot;
 }
@@ -316,10 +316,10 @@ Tdisplay Sdisplay::Init(Chars name) {
   }
   Module = NULL;
   /*
-   * ->Quitted will be set to tfalse only
+   * ->Quitted will be set to false only
    * after DisplayHW->InitHW() has succeeded.
    */
-  Quitted = ttrue;
+  Quitted = true;
   AttachSlot = NOSLOT;
   return this;
 }
@@ -363,7 +363,8 @@ static bool InitDisplay(Tdisplay hw) {
   SaveHW;
   SetHW(hw);
 
-  hw->DisplayIsCTTY = hw->NeedHW = hw->FlagsHW = tfalse;
+  hw->DisplayIsCTTY = false;
+  hw->NeedHW = hw->FlagsHW = 0;
 
   if (arg.starts_with(Chars("-hw="))) {
     arg = arg.view(4, arg.size());
@@ -382,13 +383,13 @@ static bool InitDisplay(Tdisplay hw) {
               TRY4("-hw=tty");
   }
   if (success) {
-    hw->Quitted = tfalse;
+    hw->Quitted = false;
     if (!DisplayHWCTTY && hw->DisplayIsCTTY) {
       DisplayHWCTTY = hw;
     }
     UpdateFlagsHW(hw);
   } else {
-    warn_NoHW(hw->Name.size(), HW->Name.data(), tried);
+    warn_NoHW(hw->Name.size(), hw->Name.data(), tried);
   }
   RestoreHW;
 
@@ -414,14 +415,14 @@ static Tdisplay CreateDisplayHW(Chars name) {
   return HW = _HW.Init(name);
 }
 
-static byte IsValidHW(Chars carg) NOTHROW {
+static bool IsValidNameHW(Chars carg) NOTHROW {
   const char *arg = carg.data();
   size_t len = carg.size();
   uldat i;
   byte b;
-  if (len >= 4 && !memcmp(arg, "-hw=", 4))
+  if (len >= 4 && !memcmp(arg, "-hw=", 4)) {
     arg += 4, len -= 4;
-
+  }
   for (i = 0; i < len; i++) {
     b = arg[i];
     if (b == '@' || b == ',')
@@ -430,10 +431,10 @@ static byte IsValidHW(Chars carg) NOTHROW {
     if ((b < '0' || b > '9') && (b < 'A' || b > 'Z') && (b < 'a' || b > 'z') && b != '_') {
       log(ERROR) << "twdisplay: invalid non-alphanumeric character 0x" << hex(b)
                  << " in display HW name: `" << Chars(arg, len) << "'\n";
-      return tfalse;
+      return false;
     }
   }
-  return ttrue;
+  return true;
 }
 
 static Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
@@ -441,10 +442,12 @@ static Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
     log(ERROR) << "twdisplay: specified `" << arg << "' is not `--hw=<display>'\n";
     return NULL;
   }
-  if (IsValidHW(arg) && CreateDisplayHW(arg)) {
-    HW->AttachSlot = slot;
-    if (HW->DoInit())
-      return HW;
+  Tdisplay hw;
+  if (IsValidNameHW(arg) && (hw = CreateDisplayHW(arg))) {
+    hw->AttachSlot = slot;
+    if (hw->DoInit()) {
+      return hw;
+    }
   }
   return NULL;
 }
@@ -519,34 +522,35 @@ inline void SyncOldVideo(void) NOTHROW {
 }
 
 void FlushHW(void) {
-
-  if (!ValidVideo)
+  if (!ValidVideo) {
     return;
+  }
+  Tdisplay hw = HW;
 
   if (QueuedDrawArea2FullScreen) {
     QueuedDrawArea2FullScreen = false;
     DirtyVideo(0, 0, DisplayWidth - 1, DisplayHeight - 1);
-    ValidOldVideo = tfalse;
-  } else if (HW->RedrawVideo) {
-    DirtyVideo(HW->RedrawLeft, HW->RedrawUp, HW->RedrawRight, HW->RedrawDown);
-    ValidOldVideo = tfalse;
-  } else if (NeedOldVideo && ValidOldVideo)
+    ValidOldVideo = false;
+  } else if (hw->RedrawVideo) {
+    DirtyVideo(hw->RedrawLeft, hw->RedrawUp, hw->RedrawRight, hw->RedrawDown);
+    ValidOldVideo = false;
+  } else if (NeedOldVideo && ValidOldVideo) {
     OptimizeChangedVideo();
+  }
+  hw->FlushVideo();
 
-  HW->FlushVideo();
+  hw->RedrawVideo = false;
 
-  HW->RedrawVideo = tfalse;
-
-  if (HW->NeedHW & NEEDFlushHW)
-    HW->FlushHW();
-
-  if (NeedHW & NEEDFlushStdout)
+  if (hw->NeedHW & NEEDFlushHW) {
+    hw->FlushHW();
+  }
+  if (NeedHW & NEEDFlushStdout) {
     fflush(stdout), NeedHW &= ~NEEDFlushStdout;
-
+  }
   SyncOldVideo();
 
-  ChangedVideoFlag = tfalse;
-  ValidOldVideo = ttrue;
+  ChangedVideoFlag = false;
+  ValidOldVideo = true;
 }
 
 void ResizeDisplayPrefer(Tdisplay display) {
@@ -896,51 +900,52 @@ bool KeyboardEventCommon(Tdisplay hw, udat Code, udat ShiftFlags, udat Len, cons
   return false;
 }
 
-static void MainLoop(int Fd) {
+static void MainLoop(Tdisplay hw, int fd) {
   struct timeval sel_timeout;
   fd_set read_fds, write_fds, *pwrite_fds;
   uldat err, detail;
   int sys_errno, num_fds = 0;
 
   for (;;) {
-    if (GotSignals)
+    if (GotSignals) {
       HandleSignals();
-
-    if (NeedHW & NEEDResizeDisplay)
+    }
+    if (NeedHW & NEEDResizeDisplay) {
       ResizeDisplay();
-
-    if (NeedHW & NEEDSelectionExport)
+    }
+    if (NeedHW & NEEDSelectionExport) {
       SelectionExport();
-
+    }
     /*
      * don't FlushHW() unconditionalluy here,
      * as it gets called syncronously
      * with the main twin from HandleEvent()...
      * just update what is needed.
      */
-    if (HW->RedrawVideo)
+    if (hw->RedrawVideo) {
       FlushHW();
-    else {
-      HW->UpdateMouseAndCursor();
-
-      if (HW->NeedHW & NEEDFlushHW)
-        HW->FlushHW();
-      if (NeedHW & NEEDFlushStdout)
+    } else {
+      hw->UpdateMouseAndCursor();
+      if (hw->NeedHW & NEEDFlushHW) {
+        hw->FlushHW();
+      }
+      if (NeedHW & NEEDFlushStdout) {
         fflush(stdout), NeedHW &= ~NEEDFlushStdout;
+      }
     }
 
     read_fds = save_rfds;
 
-    if (!FdWQueued)
+    if (!FdWQueued) {
       pwrite_fds = NULL;
-    else {
+    } else {
       write_fds = save_wfds;
       pwrite_fds = &write_fds;
     }
 
-    if (!TwFlush())
+    if (!TwFlush()) {
       break;
-
+    }
     /*
      * messages can arrive during Tw* function calls,
      * so the FD_ISSET() test alone does not suffice.
@@ -949,15 +954,15 @@ static void MainLoop(int Fd) {
     sel_timeout.tv_sec = TwPendingMsg() ? 0 : 120;
     sel_timeout.tv_usec = 0;
 
-    if (NeedHW & NEEDPanicHW)
+    if (NeedHW & NEEDPanicHW) {
       break;
-
+    }
     num_fds = OverrideSelect(max_fds + 1, &read_fds, pwrite_fds, NULL, &sel_timeout);
 
-    if (num_fds < 0 && errno != EINTR)
+    if (num_fds < 0 && errno != EINTR) {
       /* ach, problem. */
       break;
-
+    }
     if (num_fds == 0 && !TwPendingMsg()) {
       /*
        * no activity during timeout delay && no pending messages..
@@ -971,33 +976,34 @@ static void MainLoop(int Fd) {
       }
     }
 
-    if ((num_fds > 0 && FD_ISSET(Fd, &read_fds)) || TwPendingMsg()) {
+    if ((num_fds > 0 && FD_ISSET(fd, &read_fds)) || TwPendingMsg()) {
       /*
        * messages can arrive during Tw* function calls,
        * so the FD_ISSET() test alone does not suffice.
        */
-      if (FD_ISSET(Fd, &read_fds)) {
+      if (FD_ISSET(fd, &read_fds)) {
         num_fds--;
-        FD_CLR(Fd, &read_fds);
+        FD_CLR(fd, &read_fds);
       }
       SocketIO();
     }
-    if (num_fds > 0)
+    if (num_fds > 0) {
       RemoteEvent(num_fds, &read_fds);
+    }
   }
 
-  if (NeedHW & NEEDPanicHW)
+  if (NeedHW & NEEDPanicHW) {
     Quit(0);
-
+  }
   if (num_fds < 0 && errno != EINTR) {
-    QuitDisplay(HW);
+    QuitDisplay(hw);
     log(ERROR) << "twdisplay: select(): " << Chars::from_c(strerror(errno)) << "\n";
     exit(1);
   }
   if (TwInPanic()) {
     err = TwErrno;
     detail = TwErrnoDetail;
-    QuitDisplay(HW);
+    QuitDisplay(hw);
     printk("" SS ": libtw error: " SS "" SS "\n", MYname, TwStrError(err),
            TwStrErrorDetail(err, detail));
     exit(1);
@@ -1005,7 +1011,7 @@ static void MainLoop(int Fd) {
   err = TwErrno;
   detail = TwErrnoDetail;
   sys_errno = errno;
-  QuitDisplay(HW);
+  QuitDisplay(hw);
   printk("" SS ": shouldn't happen! Please report:\n"
          "\tlibtw TwErrno: %d(%d),\t" SS "" SS "\n"
          "\tsystem  errno: %d,\t" SS "\n",
@@ -1093,7 +1099,7 @@ int main(int argc, char *argv[]) {
   const char *tty = ttyname(0);
   const char *dpy = NULL, *client_dpy = NULL;
   char *arg_hw = NULL;
-  int Fd;
+  int fd;
   byte flags = TW_ATTACH_HW_REDIRECT;
   byte ret = 0, ourtty = 0;
   bool force = false;
@@ -1233,7 +1239,7 @@ int main(int argc, char *argv[]) {
   TwConfigMalloc(AllocMem, ReAllocMem, free);
 #endif
 
-  if (TwCheckMagic(display_magic) && TwOpen(TWDisplay))
+  if (TwCheckMagic(display_magic) && TwOpen(TWDisplay)) {
     do {
       char *buf;
 
@@ -1245,32 +1251,35 @@ int main(int argc, char *argv[]) {
         }
       }
 
-      if (RegisterRemote(Fd = TwConnectionFd(), NULL, (handler_io_d)NoOp) == NOSLOT) {
+      if (RegisterRemote(fd = TwConnectionFd(), NULL, (handler_io_d)NoOp) == NOSLOT) {
         TwClose();
         OutOfMemory();
         return 1;
       }
 
-      if (!(TMsgPort = TwCreateMsgPort(9, "twdisplay")))
+      if (!(TMsgPort = TwCreateMsgPort(9, "twdisplay"))) {
         break;
+      }
 
       DisplayWidth = TryDisplayWidth = TwGetDisplayWidth();
       DisplayHeight = TryDisplayHeight = TwGetDisplayHeight();
 
+      Tdisplay hw = NULL;
+
       /* if user did not specify any `--hw=<dpy>', autoprobe */
-      if (!(HW = AttachDisplayHW(Chars::from_c(arg_hw), NOSLOT, 0))) {
+      if (!(HW = hw = AttachDisplayHW(Chars::from_c(arg_hw), NOSLOT, 0))) {
         TwClose();
         return 1;
       }
-      if (!(buf = (char *)AllocMem(HW->Name.size() + 80))) {
-        QuitDisplay(HW);
+      if (!(buf = (char *)AllocMem(hw->Name.size() + 80))) {
+        QuitDisplay(hw);
         TwClose();
         OutOfMemory();
         return 1;
       }
 
-      sprintf(buf, "-hw=display@(%.*s),x=%d,y=%d%s%s%s", (int)HW->Name.size(), HW->Name.data(),
-              (int)HW->X, (int)HW->Y, HW->CanResize ? ",resize" : "",
+      sprintf(buf, "-hw=display@(%.*s),x=%d,y=%d%s%s%s", (int)hw->Name.size(), hw->Name.data(),
+              (int)hw->X, (int)hw->Y, hw->CanResize ? ",resize" : "",
               /* CanDragArea */ ttrue ? ",drag" : "", ExpensiveFlushVideo ? ",slow" : "");
 
       TwAttachHW(strlen(buf), buf, flags);
@@ -1324,13 +1333,13 @@ int main(int argc, char *argv[]) {
          * twin told us to stay and sit on the display
          * until it is quitted.
          */
-        MainLoop(Fd);
+        MainLoop(hw, fd);
       else if (ret)
         log(WARNING) << Chars::from_c(MYname) << ": twin said we can quit... strange!\n";
 
       Quit(!ret);
     } while (0);
-
+  }
   log(ERROR) << Chars::from_c(MYname) << ": libtw error: " << Chars::from_c(TwStrError(TwErrno))
              << " " << Chars::from_c(TwStrErrorDetail(TwErrno, TwErrnoDetail)) << "\n";
   return 1;

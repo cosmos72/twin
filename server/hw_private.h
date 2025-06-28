@@ -16,7 +16,7 @@
  */
 
 extern dat (*ChangedVideo)[2][2];
-extern byte ChangedVideoFlag;
+extern bool ChangedVideoFlag;
 
 extern dat CursorX, CursorY;
 extern uldat CursorType;

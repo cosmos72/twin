@@ -269,7 +269,7 @@ TW_ATTR_HIDDEN void tw_driver::FlushVideo(Tdisplay hw) {
   }
 
   hw->FlagsHW &= ~FlHWChangedMouseFlag;
-  hw->RedrawVideo = tfalse;
+  hw->RedrawVideo = false;
 }
 
 TW_ATTR_HIDDEN void tw_driver::FlushHW(Tdisplay hw) {
@@ -606,20 +606,20 @@ TW_ATTR_HIDDEN bool tw_driver::InitHW(Tdisplay hw) {
       hw->fnQuitMouse = NULL;
       hw->fnQuitVideo = NULL;
 
-      hw->DisplayIsCTTY = tfalse;
+      hw->DisplayIsCTTY = false;
       hw->FlagsHW &= ~FlHWSoftMouse; /* mouse pointer handled by X11 server */
 
       hw->FlagsHW |= FlHWNeedOldVideo;
       hw->FlagsHW &= ~FlHWExpensiveFlushVideo;
       hw->NeedHW = 0;
-      hw->CanResize = ttrue;
+      hw->CanResize = true;
 
       /*
        * we must draw everything on our new shiny window
        * without forcing all other displays
        * to redraw everything too.
        */
-      hw->RedrawVideo = tfalse;
+      hw->RedrawVideo = false;
       NeedRedrawVideo(hw, 0, 0, hw->X - 1, hw->Y - 1);
 
       return true;

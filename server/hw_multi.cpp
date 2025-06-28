@@ -46,8 +46,8 @@
 
 #define forHW for (HW = All->FirstDisplay; HW; HW = HW->Next)
 
-#define safeforHW(s_HW)                                                                            \
-  for (HW = All->FirstDisplay; HW && (((s_HW) = HW->Next), ttrue); HW = (s_HW))
+#define safeforHW(iter_hw)                                                                         \
+  for (HW = All->FirstDisplay; HW && (((iter_hw) = HW->Next), ttrue); HW = (iter_hw))
 
 /* common data */
 
@@ -203,7 +203,8 @@ bool Sdisplay::DoInit() {
   SaveHW;
   SetHW(hw);
 
-  hw->DisplayIsCTTY = hw->NeedHW = hw->FlagsHW = tfalse;
+  hw->DisplayIsCTTY = false;
+  hw->NeedHW = hw->FlagsHW = 0;
 
 #define AUTOTRY4(hw_name) (module_InitHW(hw, Chars(hw_name)) && set_hw_name(hw, Chars(hw_name)))
 
@@ -219,7 +220,7 @@ bool Sdisplay::DoInit() {
   if (success) {
     udat tried;
 
-    hw->Quitted = tfalse;
+    hw->Quitted = false;
 
     /* configure correctly the new HW */
     for (tried = 0; tried < HW_CONFIGURE_MAX; tried++) {
@@ -227,8 +228,9 @@ bool Sdisplay::DoInit() {
         hw->Configure(tried, tfalse, ConfigureHWValue[tried]);
     }
 
-    if (!DisplayHWCTTY && hw->DisplayIsCTTY)
+    if (!DisplayHWCTTY && hw->DisplayIsCTTY) {
       DisplayHWCTTY = hw;
+    }
     All->HookDisplay();
     UpdateFlagsHW(); /* this garbles HW... not a problem here */
   } else {
@@ -251,7 +253,7 @@ void Sdisplay::DoQuit() {
       HW = hw, hw->QuitHW();
     }
 
-    hw->Quitted = ttrue;
+    hw->Quitted = true;
 
     if ((slot = hw->AttachSlot) != NOSLOT) {
       /* avoid KillSlot <-> DeleteDisplayHW infinite recursion */
@@ -270,14 +272,14 @@ void Sdisplay::DoQuit() {
   RestoreHW;
 }
 
-static byte IsValidHW(Chars carg) {
+static bool IsValidNameHW(Chars carg) {
   const char *arg = carg.data();
   size_t len = carg.size();
   uldat i;
   byte b;
-  if (len >= 4 && !memcmp(arg, "-hw=", 4))
+  if (len >= 4 && !memcmp(arg, "-hw=", 4)) {
     arg += 4, len -= 4;
-
+  }
   for (i = 0; i < len; i++) {
     b = arg[i];
     if (b == '@' || b == ',')
@@ -286,10 +288,10 @@ static byte IsValidHW(Chars carg) {
     if ((b < '0' || b > '9') && (b < 'A' || b > 'Z') && (b < 'a' || b > 'z') && b != '_') {
       log(ERROR) << "twin: invalid non-alphanumeric character 0x" << hex(b)
                  << " in display HW name `" << Chars(arg, len) << "'\n";
-      return tfalse;
+      return false;
     }
   }
-  return ttrue;
+  return true;
 }
 
 Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
@@ -307,20 +309,20 @@ Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
     return hw;
   }
 
-  if (IsValidHW(arg) && (hw = New(display)(arg))) {
+  if (IsValidNameHW(arg) && (hw = Sdisplay::Create(arg))) {
     hw->AttachSlot = slot;
     if (hw->DoInit()) {
 
       if (flags & TW_ATTACH_HW_EXCLUSIVE) {
         /* started exclusive display, kill all others */
-        Tdisplay s_HW, n_HW;
+        Tdisplay iter_hw, next_hw;
 
         All->ExclusiveDisplay = hw;
 
-        for (s_HW = All->FirstDisplay; s_HW; s_HW = n_HW) {
-          n_HW = s_HW->Next;
-          if (s_HW != hw) {
-            s_HW->Delete();
+        for (iter_hw = All->FirstDisplay; iter_hw; iter_hw = next_hw) {
+          next_hw = iter_hw->Next;
+          if (iter_hw != hw) {
+            iter_hw->Delete();
           }
         }
       }
@@ -331,7 +333,7 @@ Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
       return hw;
     }
     /* failed, clean up without calling RunNoHW() or KillSlot() */
-    hw->Quitted = ttrue;
+    hw->Quitted = true;
     hw->AttachSlot = NOSLOT;
     hw->fnQuitHW = NULL;
     hw->Delete();
@@ -344,10 +346,10 @@ bool DetachDisplayHW(Chars arg, byte flags) {
   if (All->ExclusiveDisplay && !(flags & TW_ATTACH_HW_EXCLUSIVE))
     return false;
 
-  Tdisplay s_HW;
+  Tdisplay iter_hw;
   bool done = false;
   if (arg) {
-    safeforHW(s_HW) {
+    safeforHW(iter_hw) {
       if (HW->Name == arg) {
         HW->Delete();
         done = true;
@@ -434,11 +436,11 @@ void QuitHW(void) {
 }
 
 byte RestartHW(byte verbose) {
-  Tdisplay s_HW;
+  Tdisplay iter_hw;
   byte ret = tfalse;
 
   if (All->FirstDisplay) {
-    safeforHW(s_HW) {
+    safeforHW(iter_hw) {
       if (HW->DoInit())
         ret = ttrue;
       else
@@ -460,8 +462,8 @@ byte RestartHW(byte verbose) {
 }
 
 void SuspendHW(byte verbose) {
-  Tdisplay s_HW;
-  safeforHW(s_HW) {
+  Tdisplay iter_hw;
+  safeforHW(iter_hw) {
     if (HW->AttachSlot != NOSLOT && HW->NeedHW & NEEDPersistentSlot)
       /* we will not be able to restart it */
       HW->Delete();
@@ -476,10 +478,10 @@ void SuspendHW(byte verbose) {
 }
 
 void PanicHW(void) {
-  Tdisplay s_HW;
+  Tdisplay iter_hw;
 
   if (NeedHW & NEEDPanicHW) {
-    safeforHW(s_HW) {
+    safeforHW(iter_hw) {
       if (HW->NeedHW & NEEDPanicHW)
         HW->Delete();
     }
@@ -832,10 +834,10 @@ inline void SyncOldVideo(void) {
 void FlushHW(void) {
   static timevalue LastBeep = {(tany)0, (tany)0};
   timevalue tmp = {(tany)0, 100 MilliSECs};
-  byte doBeep = tfalse, saved = tfalse, mangled = tfalse;
-  byte saveChangedVideoFlag, saveValidOldVideo;
+  bool doBeep = false, saved = false, mangled = false;
+  bool saveChangedVideoFlag, saveValidOldVideo;
   /*
-   * we can NEVER get (saved == tfalse && mangled == ttrue)
+   * we can NEVER get (saved == false && mangled == true)
    * as it would mean we have irreversibly lost ChangedVideo[]
    */
 
@@ -859,16 +861,17 @@ void FlushHW(void) {
     UpdateCursor();
   }
 
-  if (NeedUpdateCursor)
+  if (NeedUpdateCursor) {
     FlushCursor();
-
-  if (!(All->SetUp->Flags & setup_blink))
+  }
+  if (!(All->SetUp->Flags & setup_blink)) {
     DiscardBlinkVideo();
-
-  if (NeedOldVideo && ValidOldVideo)
+  }
+  if (NeedOldVideo && ValidOldVideo) {
     OptimizeChangedVideo();
-
+  }
   forHW {
+    Tdisplay hw = HW;
     /*
      * adjust ChangedVideoFlag and ChangedVideo[]
      * to include HW supplied area HW->Redraw*
@@ -881,41 +884,42 @@ void FlushHW(void) {
       ValidOldVideo = saveValidOldVideo;
       ChangedVideoFlag = saveChangedVideoFlag;
       CopyMem(saveChangedVideo, ChangedVideo, (ldat)DisplayHeight * sizeof(dat) * 4);
-      mangled = tfalse;
+      mangled = false;
     }
-    if (HW->RedrawVideo ||
-        ((HW->FlagsHW & FlHWSoftMouse) && (HW->FlagsHW & FlHWChangedMouseFlag))) {
+    if (hw->RedrawVideo ||
+        ((hw->FlagsHW & FlHWSoftMouse) && (hw->FlagsHW & FlHWChangedMouseFlag))) {
       if (!saved) {
         saveValidOldVideo = ValidOldVideo;
         saveChangedVideoFlag = ChangedVideoFlag;
         CopyMem(ChangedVideo, saveChangedVideo, (ldat)DisplayHeight * sizeof(dat) * 4);
-        saved = ttrue;
+        saved = true;
       }
-      if (HW->RedrawVideo) {
-        DirtyVideo(HW->RedrawLeft, HW->RedrawUp, HW->RedrawRight, HW->RedrawDown);
-        ValidOldVideo = tfalse;
+      if (hw->RedrawVideo) {
+        DirtyVideo(hw->RedrawLeft, hw->RedrawUp, hw->RedrawRight, hw->RedrawDown);
+        ValidOldVideo = false;
         /* the OldVideo[] caching would make all this stuff useless otherwise */
       }
-      mangled = ttrue;
+      mangled = true;
     }
-    if (doBeep)
-      HW->Beep();
+    if (doBeep) {
+      hw->Beep();
+    }
+    hw->FlushVideo();
 
-    HW->FlushVideo();
+    hw->RedrawVideo = false;
 
-    HW->RedrawVideo = tfalse;
-
-    if (HW->NeedHW & NEEDFlushHW)
-      HW->FlushHW();
+    if (hw->NeedHW & NEEDFlushHW) {
+      hw->FlushHW();
+    }
   }
-  if (NeedHW & NEEDFlushStdout)
+  if (NeedHW & NEEDFlushStdout) {
     fflush(stdout), NeedHW &= ~NEEDFlushStdout;
-
-  if (ChangedVideoFlag && NeedOldVideo)
+  }
+  if (ChangedVideoFlag && NeedOldVideo) {
     SyncOldVideo();
-
-  ChangedVideoFlag = tfalse;
-  ValidOldVideo = ttrue;
+  }
+  ChangedVideoFlag = false;
+  ValidOldVideo = true;
 }
 
 void SyntheticKey(Twidget w, udat Code, udat ShiftFlags, byte Len, const char *Seq) {

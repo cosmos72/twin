@@ -39,7 +39,7 @@ Tdisplay Sdisplay::Init(Chars name) {
     return NULL;
   }
   Module = NULL;
-  Quitted = ttrue;
+  Quitted = true;
   AttachSlot = NOSLOT;
   /*
    * ->Quitted will be set to tfalse only
@@ -51,7 +51,7 @@ Tdisplay Sdisplay::Init(Chars name) {
 
 void Sdisplay::Delete() {
   byte isCTTY = DisplayIsCTTY && this == DisplayHWCTTY;
-  byte quitted = Quitted;
+  bool quitted = Quitted;
 
   if (!quitted) {
     DoQuit();

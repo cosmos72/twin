@@ -256,7 +256,7 @@ void NeedRedrawVideo(Tdisplay hw, dat Left, dat Up, dat Right, dat Down) NOTHROW
     hw->RedrawRight = Max2(hw->RedrawRight, Right);
     hw->RedrawDown = Max2(hw->RedrawDown, Down);
   } else {
-    hw->RedrawVideo = ttrue;
+    hw->RedrawVideo = true;
     hw->RedrawLeft = Left;
     hw->RedrawUp = Up;
     hw->RedrawRight = Right;

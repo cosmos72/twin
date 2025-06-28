@@ -267,8 +267,8 @@ public:
     }
   }
 
-  byte DisplayIsCTTY; /* set to ttrue if display is the controlling terminal */
-  byte Quitted;       /* used internally: set to ttrue before InitHW() and after QuitHW() */
+  bool DisplayIsCTTY; /* set to true if display is the controlling terminal */
+  bool Quitted;       /* used internally: set to true before InitHW() and after QuitHW() */
 
   /*
    * various display HW flags:
@@ -292,13 +292,13 @@ public:
    * set to ttrue if the display can actually resize itself (example: X11)
    * set to tfalse if it can only live with the externally set size (example: ttys)
    */
-  byte CanResize;
+  bool CanResize;
 
   /*
    * set to ttrue if the display was corrupted by some external event
    * example: hw_X11.c sets this when its window gets Expose events
    */
-  byte RedrawVideo;
+  bool RedrawVideo;
 
   /*
    * the dirty area that needs to be redrawn.

@@ -444,7 +444,7 @@ TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
         hw->fnSetPalette = (void (*)(Tdisplay, udat, udat, udat, udat))NoOp;
         hw->fnResetPalette = NULL;
 
-        hw->DisplayIsCTTY = tfalse;
+        hw->DisplayIsCTTY = false;
         hw->FlagsHW &= ~FlHWSoftMouse; /* mouse pointer handled by X11 server */
 
         hw->FlagsHW |= FlHWNeedOldVideo;
@@ -453,14 +453,14 @@ TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
           hw->FlagsHW |= FlHWNoInput;
 
         hw->NeedHW = 0;
-        hw->CanResize = ttrue;
+        hw->CanResize = true;
 
         /*
          * we must draw everything on our new shiny window
          * without forcing all other displays
          * to redraw everything too.
          */
-        hw->RedrawVideo = tfalse;
+        hw->RedrawVideo = false;
         NeedRedrawVideo(hw, 0, 0, hw->X - 1, hw->Y - 1);
 
         if (display0) {

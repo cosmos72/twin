@@ -511,7 +511,7 @@ static bool display_InitHW(Tdisplay hw) {
   hw->fnQuitMouse = NULL;
   hw->fnQuitVideo = NULL;
 
-  hw->DisplayIsCTTY = tfalse;
+  hw->DisplayIsCTTY = false;
   hw->FlagsHW &= ~FlHWSoftMouse;
 
   hw->FlagsHW |= FlHWNeedOldVideo;
@@ -545,7 +545,7 @@ static bool display_InitHW(Tdisplay hw) {
    * without forcing all other displays
    * to redraw everything too.
    */
-  hw->RedrawVideo = tfalse;
+  hw->RedrawVideo = false;
   NeedRedrawVideo(hw, 0, 0, hw->X - 1, hw->Y - 1);
 
   hw->setFlush();

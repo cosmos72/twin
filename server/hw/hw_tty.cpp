@@ -622,7 +622,7 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
           hw->NeedHW |= NEEDPersistentSlot;
         }
         if (is_ctty) {
-          hw->DisplayIsCTTY = ttrue;
+          hw->DisplayIsCTTY = true;
           DisplayHWCTTY = hw;
         }
         hw->MouseState.x = hw->MouseState.y = hw->MouseState.keys = hw->Last_x = hw->Last_y = 0;
@@ -636,7 +636,7 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
         hw->usedX = GetDisplayWidth();
         hw->usedY = GetDisplayHeight();
 
-        hw->RedrawVideo = tfalse;
+        hw->RedrawVideo = false;
         NeedRedrawVideo(hw, 0, 0, hw->X - 1, hw->Y - 1);
 
         if (self->tc_scr_clear) {
