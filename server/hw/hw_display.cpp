@@ -522,7 +522,6 @@ static bool display_InitHW(Tdisplay hw) {
   }
   hw->NeedHW = NEEDPersistentSlot;
   hw->CanResize = arg.contains(Chars(",resize"));
-  hw->merge_Threshold = 0;
 
   display_CreateMsg(hw, ev_dpy_Helper, sizeof(dpydriver(hw)->Helper->Id));
   ev->Len = sizeof(uldat);

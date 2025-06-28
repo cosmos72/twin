@@ -315,18 +315,6 @@ public:
   dat usedX, usedY;   /* used display size (i.e. ScreenWidth, ScreenHeight) */
   dat Last_x, Last_y; /* position of last mouse event */
 
-  /*
-   * if sending many small draw commands to the HW is more expensive
-   * than sending fewer, bigger ones even considering you will also send
-   * intermediate, clean areas, set merge_Threshold to a reasonable value
-   * for merge: dirty areas less far than this will be considered as merged
-   * by Threshold_isDirtyVideo().
-   * Anyway, it's up to your FlushVideo() to actually merge them.
-   *
-   * Otherwise, set this to zero.
-   */
-  dat merge_Threshold;
-
   uldat AttachSlot; /* slot of client that told us to attach to this display */
 
   dat XY[2]; /* hw-dependent cursor position */

@@ -613,7 +613,6 @@ TW_ATTR_HIDDEN bool tw_driver::InitHW(Tdisplay hw) {
       hw->FlagsHW &= ~FlHWExpensiveFlushVideo;
       hw->NeedHW = 0;
       hw->CanResize = ttrue;
-      hw->merge_Threshold = 0;
 
       /*
        * we must draw everything on our new shiny window

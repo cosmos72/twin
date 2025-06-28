@@ -230,7 +230,6 @@ TW_ATTR_HIDDEN bool tty_driver::termcap_InitVideo(Tdisplay hw) {
   hw->FlagsHW |= FlHWNeedOldVideo;
   hw->FlagsHW &= ~FlHWExpensiveFlushVideo;
   hw->NeedHW = 0;
-  hw->merge_Threshold = 0;
 
   self->fnLookupKey = &tty_driver::termcap_LookupKey;
 
@@ -663,10 +662,10 @@ TW_ATTR_HIDDEN void tty_driver::termcap_DragArea(Tdisplay hw, dat Left, dat Up, 
 }
 
 TW_ATTR_HIDDEN void tty_driver::termcap_FlushVideo(Tdisplay hw) {
+  tcell savedOldVideo;
   dat i, j;
   dat start, end;
-  byte FlippedVideo = tfalse, FlippedOldVideo = tfalse;
-  tcell savedOldVideo;
+  bool flippedVideo = false, flippedOldVideo = false;
 
   if (!ChangedVideoFlag) {
     hw->UpdateMouseAndCursor();
@@ -686,7 +685,7 @@ TW_ATTR_HIDDEN void tty_driver::termcap_FlushVideo(Tdisplay hw) {
        */
       DirtyVideo(hw->Last_x, hw->Last_y, hw->Last_x, hw->Last_y);
       if (ValidOldVideo) {
-        FlippedOldVideo = ttrue;
+        flippedOldVideo = true;
         savedOldVideo = OldVideo[hw->Last_x + hw->Last_y * (ldat)DisplayWidth];
         OldVideo[hw->Last_x + hw->Last_y * (ldat)DisplayWidth] =
             ~Video[hw->Last_x + hw->Last_y * (ldat)DisplayWidth];
@@ -699,14 +698,14 @@ TW_ATTR_HIDDEN void tty_driver::termcap_FlushVideo(Tdisplay hw) {
      * instead of calling ShowMouse(),
      * we flip the new mouse position in Video[] and dirty it if necessary.
      */
-    if ((hw->FlagsHW & FlHWChangedMouseFlag) || (FlippedVideo = Plain_isDirtyVideo(i, j))) {
+    if ((hw->FlagsHW & FlHWChangedMouseFlag) || (flippedVideo = Plain_isDirtyVideo(i, j))) {
       VideoFlip(i, j);
-      if (!FlippedVideo)
+      if (!flippedVideo)
         DirtyVideo(i, j, i, j);
       hw->FlagsHW &= ~FlHWChangedMouseFlag;
-      FlippedVideo = ttrue;
+      flippedVideo = true;
     } else
-      FlippedVideo = tfalse;
+      flippedVideo = false;
   }
   termcap_DrawStart(hw);
 
@@ -728,12 +727,14 @@ TW_ATTR_HIDDEN void tty_driver::termcap_FlushVideo(Tdisplay hw) {
 
   /* ... and this redraws the mouse */
   if (hw->FlagsHW & FlHWSoftMouse) {
-    if (FlippedOldVideo)
+    if (flippedOldVideo) {
       OldVideo[hw->Last_x + hw->Last_y * (ldat)DisplayWidth] = savedOldVideo;
-    if (FlippedVideo)
+    }
+    if (flippedVideo) {
       VideoFlip(hw->Last_x = hw->MouseState.x, hw->Last_y = hw->MouseState.y);
-    else if (hw->FlagsHW & FlHWChangedMouseFlag)
+    } else if (hw->FlagsHW & FlHWChangedMouseFlag) {
       hw->ShowMouse();
+    }
   }
 
   termcap_UpdateCursor(hw);
