@@ -11,7 +11,7 @@
 
 #include <Tw/datatypes.h>
 
-/* ttydata->Flags */
+/* tty_data->Flags */
 enum tty_flag /*: uldat*/ {
   TTY_STOPPED = 0x0001,
   TTY_AUTOWRAP = 0x0002,
@@ -32,7 +32,7 @@ enum tty_flag /*: uldat*/ {
   TTY_NEEDREFOCUS = 0x10000,
 };
 
-/* ttydata->Effects */
+/* tty_data->Effects */
 enum tty_effect /*: udat*/ {
   EFF_INTENSITY = 0x0001,
   EFF_HALFINTENS = 0x0002,
@@ -41,12 +41,12 @@ enum tty_effect /*: udat*/ {
   EFF_REVERSE = 0x0010,
 };
 
-/* ttydata->nPar */
+/* tty_data->nPar */
 enum tty_par /*: byte*/ {
   NPAR = 16,
 };
 
-/* ttydata->*G? */
+/* tty_data->*G? */
 enum tty_charmap /*: byte*/ {
   VT100GR_MAP = 0,
   LATIN1_MAP = 1,
@@ -54,7 +54,7 @@ enum tty_charmap /*: byte*/ {
   USER_MAP = 3,
 };
 
-enum ttystate /*: udat*/ {
+enum tty_state /*: udat*/ {
   ESnormal = 0,
   ESesc,
   ESsquare,
@@ -76,9 +76,10 @@ enum ttystate /*: udat*/ {
   ESques = 0x100
 };
 
-class ttydata {
+class tty_data {
 public:
-  ttystate State;
+  Twindow Win;
+  tty_state State;
   uldat Flags;
   udat Effects;
   dat ScrollBack;   /* Number of scrollback lines */

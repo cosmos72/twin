@@ -84,7 +84,7 @@ public:
   dat MinXWidth, MinYWidth;
   dat MaxXWidth, MaxYWidth;
   ldat WLogic, HLogic;  /* Twindow interior logic size */
-  trune const *Charset; /* the byte -> trune translation to use */
+  const trune *Charset; /* the byte -> trune translation to use */
 
 private:
   Twindow Init(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle, Tmenu menu,

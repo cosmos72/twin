@@ -145,14 +145,14 @@ Twindow Swindow::Init(Tmsgport owner, dat titlelen, const char *title, const tco
   return this;
 }
 
-/* ttydata */
+/* tty_data */
 
 static bool InitTtyDataWindow(Twindow window, dat scrollbacklines) {
-  ttydata *Data = window->USE.C.TtyData;
+  tty_data *Data = window->USE.C.TtyData;
   ldat count = window->WLogic * window->HLogic;
   tcell *p = window->USE.C.Contents, h;
 
-  if (!Data && !(window->USE.C.TtyData = Data = (ttydata *)AllocMem(sizeof(ttydata))))
+  if (!Data && !(window->USE.C.TtyData = Data = (tty_data *)AllocMem(sizeof(tty_data))))
     return false;
 
   if (!p && !(window->USE.C.Contents = p = (tcell *)AllocMem(count * sizeof(tcell))))
@@ -361,7 +361,7 @@ void Swindow::Expose(dat xwidth, dat ywidth, dat left, dat up, dat pitch, const 
 
 void Swindow::GotoXY(ldat x, ldat y) {
   if (W_USE(this, USECONTENTS)) {
-    ttydata *tt = USE.C.TtyData;
+    tty_data *tt = USE.C.TtyData;
 
     x = Max2(x, 0);
     y = Max2(y, 0);

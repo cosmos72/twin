@@ -116,7 +116,7 @@ bool CheckResizeWindowContents(Twindow w) {
 bool ResizeWindowContents(Twindow w) {
   tcell *NewCont, *saveNewCont, *OldCont, *max, h;
   ldat count, common, left;
-  ttydata *Data = w->USE.C.TtyData;
+  tty_data *Data = w->USE.C.TtyData;
   dat x = w->XWidth, y = w->YWidth + Data->ScrollBack;
 
   if (!(w->Flags & WINDOWFL_BORDERLESS))

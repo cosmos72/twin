@@ -52,7 +52,7 @@ struct s_SB { /* for SCREENFL_USEBG screens */
 
 struct s_WC { /* for WINDOWFL_USECONTENTS windows */
   tcell *Contents;
-  ttydata *TtyData;
+  tty_data *TtyData;
   ldat HSplit;
 };
 

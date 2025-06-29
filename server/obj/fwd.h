@@ -15,7 +15,7 @@
 
 class SobjList;
 class SobjEntry;
-class ttydata;
+class tty_data;
 class Sremotedata;
 
 class Sobj;

@@ -194,7 +194,7 @@ static void setupPtyError(const char *f, const char *arg) {
  * do it before the fork() and NOT in the child to avoid
  * races with future tty resizes performed by the parent!
  */
-static byte setupTty(ttydata *Data) {
+static byte setupTty(tty_data *Data) {
   struct winsize wsiz;
 
   if (All->SetUp->Flags & setup_terminals_utf8) {
