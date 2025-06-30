@@ -13,7 +13,7 @@
 #include "obj/all.h" // extern All
 #include "obj/display.h"
 #include "alloc.h"    // AllocMem0(), CloneStrL()
-#include "methods.h"  // InsertGeneric(), InsertLast(), RemoveGeneric()
+#include "methods.h"  // InsertT(), InsertLast(), RemoveT()
 #include "twin.h"     // NOSLOT
 #include "hw.h"       // DisplayHWCTTY
 #include "hw_multi.h" // ResizeDisplay(), RunNoHW()
@@ -78,8 +78,7 @@ void Sdisplay::Delete() {
 
 void Sdisplay::Insert(Tall parent, Tdisplay prev, Tdisplay next) {
   if (parent && !All) {
-    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstDisplay, //
-                  (TobjEntry)prev, (TobjEntry)next, NULL);
+    InsertT(this, &parent->FirstDisplay, prev, next, NULL);
     All = parent;
 #if 0
     /*
@@ -93,7 +92,7 @@ void Sdisplay::Insert(Tall parent, Tdisplay prev, Tdisplay next) {
 
 void Sdisplay::Remove() {
   if (All) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstDisplay, NULL);
+    RemoveT(this, &All->FirstDisplay, NULL);
     All = (Tall)0;
 
     ::All->HookDisplay();

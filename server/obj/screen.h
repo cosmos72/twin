@@ -50,17 +50,17 @@ public:
     SelectW = focusW;
   }
 
-  Tscreen Prev() const {
+  Tscreen PrevScreen() const {
     return (Tscreen)Swidget::Prev;
   }
-  void Prev(Tscreen prev) {
+  void PrevScreen(Tscreen prev) {
     Swidget::Prev = prev;
   }
 
-  Tscreen Next() const {
+  Tscreen NextScreen() const {
     return (Tscreen)Swidget::Next;
   }
-  void Next(Tscreen next) {
+  void SetNextScreen(Tscreen next) {
     Swidget::Next = next;
   }
 

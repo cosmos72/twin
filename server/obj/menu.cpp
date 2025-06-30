@@ -108,15 +108,14 @@ void Smenu::Delete() {
 
 void Smenu::Insert(Tmsgport parent, Tmenu prev, Tmenu next) {
   if (!MsgPort && parent) {
-    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstMenu, (TobjEntry)prev, (TobjEntry)next,
-                  NULL);
+    InsertT(this, &parent->FirstMenu, prev, next, NULL);
     MsgPort = parent;
   }
 }
 
 void Smenu::Remove() {
   if (MsgPort) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&MsgPort->FirstMenu, NULL);
+    RemoveT(this, &MsgPort->FirstMenu, NULL);
     MsgPort = (Tmsgport)0;
   }
 }
@@ -143,9 +142,10 @@ Tmenuitem Smenu::FindItem(dat i) const {
   Tmenuitem item = (Tmenuitem)0;
 
   if (menu) {
-    for (item = menu->FirstI; item; item = item->Next()) {
-      if (i >= item->Left && (uldat)(i - item->Left) < item->Len)
+    for (item = menu->FirstI; item; item = item->NextItem()) {
+      if (i >= item->Left && (uldat)(i - item->Left) < item->Len) {
         break;
+      }
     }
 
     if (!item && menu->CommonItems && All->CommonMenu) {
@@ -156,12 +156,14 @@ Tmenuitem Smenu::FindItem(dat i) const {
         /* search in All->CommonMenu */
         if (item)
           i -= item->Left + (dat)item->Len;
-        for (item = All->CommonMenu->FirstI; item; item = item->Next()) {
-          if (i >= item->Left && (uldat)(i - item->Left) < item->Len)
+        for (item = All->CommonMenu->FirstI; item; item = item->NextItem()) {
+          if (i >= item->Left && (uldat)(i - item->Left) < item->Len) {
             break;
+          }
         }
-      } else
+      } else {
         item = (Tmenuitem)0;
+      }
     }
   }
   return item;

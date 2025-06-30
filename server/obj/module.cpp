@@ -13,7 +13,7 @@
 #include "obj/all.h" // extern All
 #include "obj/module.h"
 #include "alloc.h"   // CloneStrL()
-#include "methods.h" // InsertLast(), RemoveGeneric()
+#include "methods.h" // InsertLast(), RemoveT()
 #include "twin.h"    // IS_ALL(), IS_MODULE()
 
 #include <new>
@@ -56,15 +56,14 @@ void Smodule::Delete() {
 
 void Smodule::Insert(Tall parent, Tmodule prev, Tmodule next) {
   if (parent && !All) {
-    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstModule, //
-                  (TobjEntry)prev, (TobjEntry)next, NULL);
+    InsertT(this, &parent->FirstModule, prev, next, NULL);
     All = parent;
   }
 }
 
 void Smodule::Remove() {
   if (All) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstModule, NULL);
+    RemoveT(this, &All->FirstModule, NULL);
     All = (Tall)0;
   }
 }

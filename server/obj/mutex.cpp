@@ -76,15 +76,14 @@ void Smutex::Delete() {
 
 void Smutex::Insert(Tall parent, Tmutex prev, Tmutex next) {
   if (parent && !All) {
-    InsertGeneric((TobjEntry)this, (TobjList)&All->FirstMutex, //
-                  (TobjEntry)prev, (TobjEntry)next, NULL);
+    InsertT(this, &All->FirstMutex, prev, next, NULL);
     All = parent;
   }
 }
 
 void Smutex::Remove() {
   if (All) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstMutex, NULL);
+    RemoveT(this, &All->FirstMutex, NULL);
     All = (Tall)0;
   }
 }

@@ -13,7 +13,7 @@
 #include "alloc.h" // AllocMem()
 #include "log.h"
 #include "fn.h"      // Fn_Tobj
-#include "methods.h" // RemoveGeneric()
+#include "methods.h" // RemoveT()
 #include "obj/all.h"
 #include "obj/id.h" // AssignId()
 #include "obj/msg.h"
@@ -68,15 +68,14 @@ void Smsg::Insert(Tmsgport parent, Tmsg prev, Tmsg next) {
       MoveFirst(MsgPort, all, parent);
     }
 
-    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstMsg, (TobjEntry)prev, (TobjEntry)next,
-                  NULL);
+    InsertT(this, &parent->FirstMsg, prev, next, NULL);
     MsgPort = parent;
   }
 }
 
 void Smsg::Remove() {
   if (MsgPort) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&MsgPort->FirstMsg, NULL);
+    RemoveT(this, &MsgPort->FirstMsg, NULL);
     MsgPort = (Tmsgport)0;
   }
 }

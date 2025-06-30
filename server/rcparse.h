@@ -1118,9 +1118,10 @@ static void WriteGlobals(void) {
 
 static Tscreen FindNameInScreens(dat len, const char *name, Tscreen screen) {
   while (screen) {
-    if (len == screen->NameLen && !memcmp(name, screen->Name, len))
+    if (len == screen->NameLen && !memcmp(name, screen->Name, len)) {
       return screen;
-    screen = screen->Next();
+    }
+    screen = screen->NextScreen();
   }
   return NULL;
 }
@@ -1137,7 +1138,7 @@ static node FindNameInList(uldat len, const char *name, node list) {
 static void DeleteScreens(Tscreen first) {
   Tscreen s = first, next;
   while (s) {
-    next = s->Next();
+    next = s->NextScreen();
     s->Delete();
     s = next;
   }
@@ -1191,12 +1192,13 @@ static byte CreateNeededScreens(node list, Tscreen *res_Screens) {
       DeleteScreens(top);
       return tfalse;
     }
-    if (prev)
-      prev->Next(s);
+    if (prev) {
+      prev->SetNextScreen(s);
+    }
     prev = s;
-    if (!top)
+    if (!top) {
       top = s;
-
+    }
     list = list->next;
   }
   *res_Screens = top;
@@ -1210,20 +1212,21 @@ static byte CreateNeededScreens(node list, Tscreen *res_Screens) {
 static void UpdateVisibleScreens(Tscreen new_Screens) {
   Tscreen screen, next, orig;
   for (screen = new_Screens; screen; screen = next) {
-    next = screen->Next();
-    screen->Next((Tscreen)0);
+    next = screen->NextScreen();
+    screen->SetNextScreen((Tscreen)0);
 
     if ((orig = FindNameInScreens(screen->NameLen, screen->Name, All->FirstScreen))) {
       orig->USE.B.BgWidth = screen->USE.B.BgWidth;
       orig->USE.B.BgHeight = screen->USE.B.BgHeight;
-      if (orig->USE.B.Bg)
+      if (orig->USE.B.Bg) {
         FreeMem(orig->USE.B.Bg);
+      }
       orig->USE.B.Bg = screen->USE.B.Bg;
       screen->USE.B.Bg = NULL;
       screen->Delete();
-    } else
+    } else {
       InsertLast(Screen, screen, All);
-
+    }
     screen = next;
   }
 }
@@ -1234,7 +1237,7 @@ static void UpdateVisibleScreens(Tscreen new_Screens) {
 static void DeleteUnneededScreens(node list) {
   Tscreen screen, next;
   for (screen = All->FirstScreen; screen; screen = next) {
-    next = screen->Next();
+    next = screen->NextScreen();
     if ((screen->NameLen != 1 || screen->Name[0] != '1') &&
         !FindNameInList(screen->NameLen, screen->Name, list)) {
       screen->Delete();
@@ -1295,9 +1298,9 @@ static byte NewCommonMenu(void *const *shm_M, Tmenu *res_CommonMenu, node **res_
   for (M = new_MenuList; M; M = M->next) {
     if ((w = Win4Menu(Menu)) && (item = Item4Menu(Menu, w, ttrue, strlen(M->name), M->name))) {
 
-      if (!item->Prev())
+      if (!item->PrevItem()) {
         item->Left = 0; /* remove padding */
-
+      }
       maxlen = 0;
 
       for (N = M->body; N; N = N->next) {

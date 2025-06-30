@@ -14,7 +14,7 @@
 
 #include "alloc.h"   // AllocMem0(), CloneStrL()
 #include "hw.h"      // QueuedDrawArea2FullScreen
-#include "methods.h" // InsertMiddle()
+#include "methods.h" // InsertMiddle(), RemoveT()
 #include "obj/all.h" // extern All
 #include "util.h"    // SumTime()
 #include "twin.h"    // NOFD, NOPID, NOSLOT
@@ -113,8 +113,7 @@ void Smsgport::Delete() {
 
 void Smsgport::Insert(Tall parent, Tmsgport prev, Tmsgport next) {
   if (parent && !All) {
-    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstMsgPort, (TobjEntry)prev,
-                  (TobjEntry)next, NULL);
+    InsertT(this, &parent->FirstMsgPort, prev, next, NULL);
     All = parent;
   }
 }
@@ -124,7 +123,7 @@ void Smsgport::Remove() {
     ::All->RunMsgPort = Next;
   }
   if (All) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstMsgPort, NULL);
+    RemoveT(this, &All->FirstMsgPort, NULL);
     All = (Tall)0;
   }
 }

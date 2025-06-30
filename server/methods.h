@@ -24,8 +24,48 @@ tpos FakeFindBorderWindow(Twindow w, dat u, dat v, byte border, tcell *ptr_cell)
 void IncMouseMotionN(void);
 void DecMouseMotionN(void);
 
-void InsertGeneric(TobjEntry obj, TobjList parent, TobjEntry prev, TobjEntry next, ldat *objcount);
-void RemoveGeneric(TobjEntry obj, TobjList parent, ldat *objcount);
+template <class OBJ, class LIST>
+void InsertT(OBJ *obj, LIST *list[2], OBJ *prev, OBJ *next, ldat *objcount) {
+  if (obj->Prev || obj->Next) {
+    return;
+  }
+  if (prev) {
+    next = (OBJ *)prev->Next;
+  } else if (next) {
+    prev = (OBJ *)next->Prev;
+  }
+  if ((obj->Prev = prev) != NULL) {
+    prev->Next = obj;
+  } else {
+    list[0] = obj;
+  }
+  if ((obj->Next = next) != NULL) {
+    next->Prev = obj;
+  } else {
+    list[1] = obj;
+  }
+  if (objcount) {
+    ++(*objcount);
+  }
+}
+
+template <class OBJ, class LIST> //
+void RemoveT(OBJ *obj, LIST *list[2], ldat *objcount) {
+  if (obj->Prev) {
+    obj->Prev->Next = obj->Next;
+  } else if (list[0] == obj) {
+    list[0] = (LIST *)obj->Next;
+  }
+  if (obj->Next) {
+    obj->Next->Prev = obj->Prev;
+  } else if (list[1] == obj) {
+    list[1] = (LIST *)obj->Prev;
+  }
+  obj->Prev = obj->Next = NULL;
+  if (objcount) {
+    --(*objcount);
+  }
+}
 
 #define Do(command, objtype) (S##objtype::command)
 

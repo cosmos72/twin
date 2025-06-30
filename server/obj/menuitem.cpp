@@ -13,7 +13,7 @@
 #include "algo.h"    // Max2()
 #include "alloc.h"   // AllocMem0(), CloneStr2TRune()
 #include "fn.h"      // Fn_Tmenuitem
-#include "methods.h" // RemoveGeneric()
+#include "methods.h" // RemoveT()
 #include "obj/menuitem.h"
 #include "resize.h" // SyncMenu()
 #include "twin.h"   // IS_WINDOW()
@@ -88,12 +88,12 @@ void Smenuitem::Delete() {
   Srow::Delete();
 }
 
-Tmenuitem Smenuitem::Prev() const {
+Tmenuitem Smenuitem::PrevItem() const {
   Trow prev = Srow::Prev;
   return prev && IS_MENUITEM(prev) ? (Tmenuitem)prev : (Tmenuitem)0;
 }
 
-Tmenuitem Smenuitem::Next() const {
+Tmenuitem Smenuitem::NextItem() const {
   Trow next = Srow::Next;
   return next && IS_MENUITEM(next) ? (Tmenuitem)next : (Tmenuitem)0;
 }
@@ -101,8 +101,7 @@ Tmenuitem Smenuitem::Next() const {
 void Smenuitem::Insert(Tobj parent, Tmenuitem prev, Tmenuitem next) {
   if (parent && !Parent) {
     if (IS_MENU(parent)) {
-      InsertGeneric((TobjEntry)this, (TobjList) & ((Tmenu)parent)->FirstI, (TobjEntry)prev,
-                    (TobjEntry)next, NULL);
+      InsertT(this, &((Tmenu)parent)->FirstI, prev, next, NULL);
       Parent = parent;
     } else if (IS_WINDOW(parent)) {
       // call superclass implementation
@@ -114,7 +113,7 @@ void Smenuitem::Insert(Tobj parent, Tmenuitem prev, Tmenuitem next) {
 void Smenuitem::Remove() {
   if (Parent) {
     if (IS_MENU(Parent)) {
-      RemoveGeneric((TobjEntry)this, (TobjList) & ((Tmenu)Parent)->FirstI, NULL);
+      RemoveT(this, &((Tmenu)Parent)->FirstI, NULL);
       Parent = (Tobj)0;
     } else {
       Srow::Remove();

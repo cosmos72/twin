@@ -45,15 +45,14 @@ Tgroup Sgroup::Init(Tmsgport owner) {
 
 void Sgroup::Insert(Tmsgport parent, Tgroup prev, Tgroup next) {
   if (parent && !MsgPort) {
-    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstGroup, //
-                  (TobjEntry)prev, (TobjEntry)next, NULL);
+    InsertT(this, &parent->FirstGroup, prev, next, NULL);
     MsgPort = parent;
   }
 }
 
 void Sgroup::Remove() {
   if (MsgPort) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&MsgPort->FirstGroup, NULL);
+    RemoveT(this, &MsgPort->FirstGroup, NULL);
     MsgPort = NULL;
   }
 }

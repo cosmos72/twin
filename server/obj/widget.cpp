@@ -16,7 +16,7 @@
 #include "alloc.h"   // AllocMem0()
 #include "extreg.h"  // Ext()
 #include "fn.h"      // Fn_Twidget
-#include "methods.h" // InsertGeneric(), RemoveGeneric()
+#include "methods.h" // InsertT(), RemoveT()
 #include "resize.h"  // UpdateCursor()
 #include "twin.h"    // IS_WIDGET()
 #include "draw.h"    // DrawAreaWidget()
@@ -84,8 +84,7 @@ void Swidget::InsertWidget(Tobj parent, Twidget prev, Twidget next) {
      * don't check this->Parent here, because Raise() and Lower() call Swidget::Remove()
      * then calls Swidget::Insert() but Swidget::Remove() does not reset w->Parent
      */
-    InsertGeneric((TobjEntry)this, (TobjList) & ((Twidget)parent)->FirstW, //
-                  (TobjEntry)prev, (TobjEntry)next, NULL);
+    InsertT(this, &((Twidget)parent)->FirstW, prev, next, NULL);
   }
 }
 
@@ -96,7 +95,7 @@ void Swidget::Insert(Twidget parent, Twidget prev, Twidget next) {
 
 void Swidget::Remove() {
   if (Parent) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&Parent->FirstW, NULL);
+    RemoveT(this, &Parent->FirstW, NULL);
   }
 }
 

@@ -362,7 +362,7 @@ static Twindow RCFindWindowName(cstr name) {
         return w;
       w = (Twindow)w->Next;
     }
-    screen = screen->Next();
+    screen = screen->NextScreen();
   }
   return NULL;
 }
@@ -619,7 +619,7 @@ static byte RCSteps(run *r) {
                 screen = ScreenOf(w);
                 w = NULL;
                 if (screen)
-                  while ((screen = screen->Next()) && !(w = ForwardWindow(screen->FirstW)))
+                  while ((screen = screen->NextScreen()) && !(w = ForwardWindow(screen->FirstW)))
                     ;
               }
             }
@@ -631,7 +631,7 @@ static byte RCSteps(run *r) {
                 screen = ScreenOf(w);
                 w = NULL;
                 if (screen)
-                  while ((screen = screen->Prev()) && !(w = BackwardWindow(screen->LastW)))
+                  while ((screen = screen->PrevScreen()) && !(w = BackwardWindow(screen->LastW)))
                     ;
               }
             }

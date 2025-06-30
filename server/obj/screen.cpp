@@ -17,7 +17,7 @@
 #include "builtin.h" // Builtin_MsgPort
 #include "draw.h"    // DrawArea2()
 #include "fn.h"      // Fn_Tscreen
-#include "methods.h" // RemoveGeneric()
+#include "methods.h" // RemoveT()
 #include "obj/all.h" // All
 #include "resize.h"  // ResizeFirstScreen()
 #include "twin.h"    // IS_ALL(), IS_SCREEN()
@@ -88,15 +88,14 @@ void Sscreen::InsertWidget(Tobj parent, Twidget prev, Twidget next) {
 
 void Sscreen::Insert(Tall parent, Tscreen prev, Tscreen next) {
   if (parent && !All) {
-    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstScreen, (TobjEntry)prev, (TobjEntry)next,
-                  NULL);
+    InsertT(this, &parent->FirstScreen, prev, next, NULL);
     All = parent;
   }
 }
 
 void Sscreen::Remove() {
   if (All) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstScreen, NULL);
+    RemoveT(this, &All->FirstScreen, NULL);
     All = (Tall)0;
   }
 }
@@ -129,7 +128,7 @@ Twidget Sscreen::Focus() {
 }
 
 Tscreen Sscreen::Find(dat j) {
-  for (Tscreen screen = ::All->FirstScreen; screen; screen = screen->Next()) {
+  for (Tscreen screen = ::All->FirstScreen; screen; screen = screen->NextScreen()) {
     if (j >= (dat)screen->Up) {
       return screen;
     }

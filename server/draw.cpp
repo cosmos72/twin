@@ -1205,36 +1205,40 @@ void Sdraw::DrawArea() {
     y2 = Min2(y2, dheight - 1);
 
     if (w) {
-      if (IS_SCREEN(w->Parent))
+      if (IS_SCREEN(w->Parent)) {
         FirstScreen = (Tscreen)w->Parent;
-      else
+      } else {
         continue;
+      }
     }
-    if (!FirstScreen)
+    if (!FirstScreen) {
       FirstScreen = All->FirstScreen;
-
+    }
     /* calculate visible part of this Tscreen */
-    for (screen = All->FirstScreen; screen && screen != FirstScreen; screen = screen->Next()) {
+    for (screen = All->FirstScreen; screen && screen != FirstScreen;
+         screen = screen->NextScreen()) {
       ylimit = screen->Up;
       if (y2 >= ylimit)
         y2 = ylimit - 1;
     }
-    if (y1 > y2)
+    if (y1 > y2) {
       continue;
-
-    screen = FirstScreen->Next();
+    }
+    screen = FirstScreen->NextScreen();
     ylimit = FirstScreen->Up; /* FIXED +1 */
 
     if (!onlyW || (onlyW && ScreenParent(onlyW->Parent) != FirstScreen)) {
       if (y1 < ylimit) {
-        if (screen)
+        if (screen) {
           _DrawAreaCtx_(&FirstD, screen, w, onlyW, x1, y1, x2, Min2(y2, ylimit - 1), shaded,
                         &lError);
-        else if (!onlyW)
+        } else if (!onlyW) {
           DrawDesktop((Tscreen)0, x1, y1, x2, y2, shaded);
+        }
       }
-      if (onlyW)
+      if (onlyW) {
         continue;
+      }
     }
 
     if (y2 < ylimit)
@@ -1761,13 +1765,14 @@ void DrawMenuScreen(Tscreen screen, dat Xstart, dat Xend) {
   if (j < 0 || j >= dheight || Xstart >= dwidth || Xstart > Xend)
     return;
 
-  for (fScreen = All->FirstScreen; fScreen && fScreen != screen; fScreen = fScreen->Next()) {
-    if (fScreen->Up <= j)
+  for (fScreen = All->FirstScreen; fScreen && fScreen != screen; fScreen = fScreen->NextScreen()) {
+    if (fScreen->Up <= j) {
       return;
+    }
   }
-  if (fScreen != screen)
+  if (fScreen != screen) {
     return;
-
+  }
   State = All->State & state_any;
   Menu = screen->FindMenu();
 
@@ -1826,8 +1831,9 @@ void DrawMenuScreen(Tscreen screen, dat Xstart, dat Xend) {
         font = ' ';
       }
     }
-    if (screen != All->FirstScreen)
+    if (screen != All->FirstScreen) {
       color = Menu->ColDisabled;
+    }
     Video[i + j * (ldat)dwidth] = TCELL(color, font);
   }
   DirtyVideo(Xstart, j, Xend, j);

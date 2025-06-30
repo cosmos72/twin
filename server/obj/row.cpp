@@ -14,7 +14,7 @@
 #include "builtin.h"      // ColorFill()
 #include "draw.h"         // DrawAreaWidget()
 #include "fn.h"           // Fn_Tobj
-#include "methods.h"      // RemoveGeneric()
+#include "methods.h"      // RemoveT()
 #include "obj/menuitem.h" // COD_RESERVED
 #include "obj/row.h"
 #include "obj/window.h"
@@ -59,8 +59,7 @@ Twindow Srow::Window() const {
 
 void Srow::Insert(Twindow parent, Trow prev, Trow next) {
   if (parent && W_USE(parent, USEROWS) && !Parent) {
-    InsertGeneric((TobjEntry)this, (TobjList)&parent->USE.R.FirstRow, (TobjEntry)prev,
-                  (TobjEntry)next, &parent->HLogic);
+    InsertT(this, &parent->USE.R.FirstRow, prev, next, &parent->HLogic);
     Parent = parent;
     parent->USE.R.NumRowOne = parent->USE.R.NumRowSplit = (ldat)0;
   }
@@ -70,7 +69,7 @@ void Srow::Remove() {
   Twindow w = Window();
   if (w && W_USE(w, USEROWS)) {
     w->USE.R.NumRowOne = w->USE.R.NumRowSplit = (ldat)0;
-    RemoveGeneric((TobjEntry)this, (TobjList)&w->USE.R.FirstRow, &w->HLogic);
+    RemoveT(this, &w->USE.R.FirstRow, &w->HLogic);
   }
   Parent = NULL;
 }

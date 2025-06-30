@@ -40,8 +40,8 @@ public:
   /* Tmenuitem */
   void Insert(Tobj parent, Tmenuitem prev, Tmenuitem next);
 
-  Tmenuitem Prev() const; // cast this->Prev to Tmenuitem
-  Tmenuitem Next() const; // cast this->Next to Tmenuitem
+  Tmenuitem PrevItem() const; // cast this->Prev to Tmenuitem
+  Tmenuitem NextItem() const; // cast this->Next to Tmenuitem
 };
 
 /* Some common Tmenuitem codes: */

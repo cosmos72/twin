@@ -1609,41 +1609,44 @@ static void OpenMenu(Tmenuitem item, bool by_mouse) {
  * do NOT use to close the Tmenu, CloseMenu() does that
  */
 static Tmenuitem CloseMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
-  Twindow P = (Twindow)item->Parent, w = item->Window;
+  Tobj parent = item->Parent;
+  Twindow w = item->Window;
 
-  if (w)
+  if (w) {
     w->UnMap();
-
-  if (P && IS_WINDOW(P)) {
+  }
+  if (parent && IS_WINDOW(parent)) {
+    Twindow wparent = (Twindow)parent;
     if (by_mouse) {
-      ldat y = P->CurY;
-      P->CurY = TW_MAXLDAT;
+      ldat y = wparent->CurY;
+      wparent->CurY = TW_MAXLDAT;
 
-      if (y != TW_MAXLDAT)
-        DrawLogicWidget((Twidget)P, 0, y, TW_MAXLDAT, y);
+      if (y != TW_MAXLDAT) {
+        DrawLogicWidget(wparent, 0, y, TW_MAXLDAT, y);
+      }
     }
-    item = P->MenuItem;
+    item = wparent->MenuItem;
     if (item) {
-      w = (Twindow)item->Parent;
-      if (w && IS_WINDOW(w))
-        w->Focus();
-      else
-        P->Focus();
+      Tobj item_parent = item->Parent;
+      if (item_parent && IS_WINDOW(item_parent)) {
+        ((Twindow)item_parent)->Focus();
+      } else {
+        wparent->Focus();
+      }
     }
-    return item;
   } else {
     item = (Tmenuitem)0;
     M->SetSelectedItem(item);
-    return item;
   }
+  return item;
 }
 
-static dat DepthOfMenuItem(Tmenuitem I) {
-  Twindow w;
+static dat DepthOfMenuItem(Tmenuitem item) {
+  Tobj parent;
   dat d = 0;
 
-  while (I && (w = (Twindow)I->Parent) && IS_WINDOW(w)) {
-    I = w->MenuItem;
+  while (item && (parent = item->Parent) && IS_WINDOW(parent)) {
+    item = ((Twindow)parent)->MenuItem;
     d++;
   }
   return d;
@@ -2063,20 +2066,22 @@ void Sgadget::WriteTRunes(byte bitmap, dat t_width, dat t_height, //
 }
 
 void SyncMenu(Tmenu Menu) {
-  Tmenuitem I, PrevI = (Tmenuitem)0;
+  Tmenuitem item, prev = (Tmenuitem)0;
   Tscreen screen;
 
   if (Menu) {
-    for (I = Menu->FirstI; I; I = I->Next()) {
-      if (PrevI)
-        I->Left = PrevI->Left + PrevI->Len;
-      else
-        I->Left = 1;
-      PrevI = I;
+    for (item = Menu->FirstI; item; item = item->NextItem()) {
+      if (prev) {
+        item->Left = prev->Left + prev->Len;
+      } else {
+        item->Left = 1;
+      }
+      prev = item;
     }
-    for (screen = All->FirstScreen; screen; screen = screen->Next()) {
-      if (screen->FindMenu() == Menu)
+    for (screen = All->FirstScreen; screen; screen = screen->NextScreen()) {
+      if (screen->FindMenu() == Menu) {
         screen->DrawMenu(0, TW_MAXDAT);
+      }
     }
   }
 }

@@ -57,45 +57,6 @@ inline void DeletePartialList(Tobj obj) {
 }
 #endif
 
-void InsertGeneric(TobjEntry obj, TobjList parent, TobjEntry prev, TobjEntry next, ldat *objcount) {
-  if (obj->Prev || obj->Next)
-    return;
-
-  if (prev)
-    next = prev->Next;
-  else if (next)
-    prev = next->Prev;
-
-  if ((obj->Prev = prev))
-    prev->Next = obj;
-  else
-    parent->First = obj;
-
-  if ((obj->Next = next))
-    next->Prev = obj;
-  else
-    parent->Last = obj;
-
-  if (objcount)
-    ++(*objcount);
-}
-
-void RemoveGeneric(TobjEntry obj, TobjList parent, ldat *objcount) {
-  if (obj->Prev)
-    obj->Prev->Next = obj->Next;
-  else if (parent->First == obj)
-    parent->First = obj->Next;
-
-  if (obj->Next)
-    obj->Next->Prev = obj->Prev;
-  else if (parent->Last == obj)
-    parent->Last = obj->Prev;
-
-  obj->Prev = obj->Next = NULL;
-  if (objcount)
-    --(*objcount);
-}
-
 /* TobjFn and others fn_XXX functions */
 
 /* Tobj */

@@ -1426,23 +1426,22 @@ static void ContinueReleaseMouseState(wm_ctx *C, byte State) {
 static Tmenuitem PrevItem(Tmenuitem item, Tmenu menu) {
   Tmenuitem prev;
 
-  if (!(prev = item->Prev())) {
+  if (!(prev = item->PrevItem())) {
     if (item->Parent == menu) {
-      if (menu->CommonItems && All->CommonMenu)
+      if (menu->CommonItems && All->CommonMenu) {
         prev = All->CommonMenu->LastI;
-    } else
+      }
+    } else {
       prev = menu->LastI;
+    }
   }
-
-  if (prev)
-    return prev;
-  return item;
+  return prev ? prev : item;
 }
 
 static Tmenuitem NextItem(Tmenuitem item, Tmenu menu) {
   Tmenuitem next;
 
-  if (!(next = item->Next())) {
+  if (!(next = item->NextItem())) {
     if (item->Parent == (Tobj)menu) {
       if (menu->CommonItems && All->CommonMenu) {
         next = All->CommonMenu->FirstI;
