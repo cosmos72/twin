@@ -69,7 +69,7 @@ static void ScrollerH(Tmsgport MsgPort) {
   byte State, FlagDeskScroll, FlagWinScroll, WinScrolled = tfalse;
   Twindow FocusWindow;
 
-  while ((msg = Scroller_MsgPort->FirstMsg)) {
+  while ((msg = Scroller_MsgPort->Msgs.First)) {
     msg->Remove();
     if (msg == Do_Scroll || msg == Dont_Scroll)
       saved_msg = msg;
@@ -84,7 +84,7 @@ static void ScrollerH(Tmsgport MsgPort) {
 
   Mouse = &All->MouseDisplay->MouseState;
 
-  FocusWindow = (Twindow)All->FirstScreen->FocusW();
+  FocusWindow = (Twindow)All->Screens.First->FocusW();
   if (FocusWindow && !IS_WINDOW(FocusWindow))
     FocusWindow = (Twindow)0;
 

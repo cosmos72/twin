@@ -352,14 +352,16 @@ static ldat applyflagy(node n) {
 static Twindow RCFindWindowName(cstr name) {
   uldat len = strlen(name);
   Twindow w;
-  Tscreen screen = All->FirstScreen;
+  Tscreen screen = All->Screens.First;
 
   while (screen) {
     /* search among mapped windows */
-    w = (Twindow)screen->FirstW;
+    w = (Twindow)screen->Widgets.First;
     while (w) {
-      if (IS_WINDOW(w) && w->NameLen >= 0 && (udat)w->NameLen == len && !memcmp(w->Name, name, len))
+      if (IS_WINDOW(w) && w->NameLen >= 0 && (udat)w->NameLen == len &&
+          !memcmp(w->Name, name, len)) {
         return w;
+      }
       w = (Twindow)w->Next;
     }
     screen = screen->NextScreen();
@@ -369,7 +371,7 @@ static Twindow RCFindWindowName(cstr name) {
 
 static Tscreen RCFindScreenName(cstr name) {
   uldat len = strlen(name);
-  Tscreen screen = All->FirstScreen;
+  Tscreen screen = All->Screens.First;
   while (screen) {
     if (screen->NameLen >= 0 && (udat)screen->NameLen == len && !memcmp(screen->Name, name, len))
       break;
@@ -476,7 +478,7 @@ static byte RCSteps(run *r) {
       case INTERACTIVE:
         C->W = w;
         if (!C->Screen && !(C->Screen = screen))
-          C->Screen = All->FirstScreen;
+          C->Screen = All->Screens.First;
 
         ret = tfalse;
         switch (n->x.f.flag) {
@@ -519,7 +521,7 @@ static byte RCSteps(run *r) {
           DragWindow((Twindow)w, applyflagx(n), applyflagy(n));
         break;
       case MOVESCREEN:
-        if (screen && screen != All->FirstScreen)
+        if (screen && screen != All->Screens.First)
           screen->Focus();
         DragFirstScreen(applyflagx(n), applyflagy(n));
         break;
@@ -541,7 +543,7 @@ static byte RCSteps(run *r) {
         }
         break;
       case RESIZESCREEN:
-        if (screen && screen != All->FirstScreen)
+        if (screen && screen != All->Screens.First)
           screen->Focus();
         ResizeFirstScreen(applyflagx(n));
         break;
@@ -600,39 +602,42 @@ static byte RCSteps(run *r) {
 
           if (flag == 0) {
             if (i == 0) {
-              w = All->FirstScreen->FocusW();
+              w = All->Screens.First->FocusW();
               if (w && !IS_WINDOW(w))
                 w = (Twidget)0;
             } else {
               if (i > 0)
                 i--;
-              w = ForwardWindow(All->FirstScreen->FirstW);
+              w = ForwardWindow(All->Screens.First->Widgets.First);
             }
           }
 
           if (w) {
             while (i > 0 && w) {
               i--;
-              if ((SkipW = ForwardWindow(w->Next)))
+              if ((SkipW = ForwardWindow(w->Next))) {
                 w = SkipW;
-              else {
+              } else {
                 screen = ScreenOf(w);
                 w = NULL;
                 if (screen)
-                  while ((screen = screen->NextScreen()) && !(w = ForwardWindow(screen->FirstW)))
+                  while ((screen = screen->NextScreen()) &&
+                         !(w = ForwardWindow(screen->Widgets.First)))
                     ;
               }
             }
             while (i < 0 && w) {
               i++;
-              if ((SkipW = BackwardWindow(w->Prev)))
+              if ((SkipW = BackwardWindow(w->Prev))) {
                 w = SkipW;
-              else {
+              } else {
                 screen = ScreenOf(w);
                 w = NULL;
-                if (screen)
-                  while ((screen = screen->PrevScreen()) && !(w = BackwardWindow(screen->LastW)))
-                    ;
+                if (screen) {
+                  while ((screen = screen->PrevScreen()) &&
+                         !(w = BackwardWindow(screen->Widgets.Last))) {
+                  }
+                }
               }
             }
           }
@@ -691,7 +696,7 @@ static byte RCSteps(run *r) {
           if (flag == FL_TOGGLE)
             flag = (screen->FocusW() == (Twidget)w) ? FL_OFF : FL_ON;
 
-          if (flag == FL_ON && screen != All->FirstScreen)
+          if (flag == FL_ON && screen != All->Screens.First)
             screen->Focus();
 
           if (flag == FL_ON) {
@@ -708,34 +713,39 @@ static byte RCSteps(run *r) {
         break;
       case LOWER:
         if (w && screen)
-          LowerWidget(w, tfalse);
+          LowerWidget(w, false);
         break;
       case RAISE:
-        if (w && screen)
-          RaiseWidget(w, tfalse);
+        if (w && screen) {
+          RaiseWidget(w, false);
+        }
         break;
       case RAISELOWER:
         if (w && screen) {
-          if ((Twidget)w == screen->FirstW)
-            LowerWidget(w, ttrue);
-          else
-            RaiseWidget(w, ttrue);
+          if ((Twidget)w == screen->Widgets.First) {
+            LowerWidget(w, true);
+          } else {
+            RaiseWidget(w, true);
+          }
         }
         break;
       case ROLL:
         if (w && IS_WINDOW(w)) {
           flag = n->x.f.flag;
-          if (flag == FL_TOGGLE)
+          if (flag == FL_TOGGLE) {
             flag = w->Attr & WINDOW_ROLLED_UP ? FL_OFF : FL_ON;
+          }
           RollUpWindow((Twindow)w, flag == FL_ON);
         }
         break;
       case USERFUNC:
-        if (n->x.func || ((f = LookupNodeName(n->name, FuncList)) && (n->x.func = f->body)))
+        if (n->x.func || ((f = LookupNodeName(n->name, FuncList)) && (n->x.func = f->body))) {
           /* stored into n->f.func to speedup future references */
           state = Sfunc;
-        else /* user function not found. abort. */
+        } else {
+          /* user function not found. abort. */
           state = Serr;
+        }
         break;
       default:
         /* unknown command. abort. */
@@ -747,18 +757,20 @@ static byte RCSteps(run *r) {
       /* next instruction */
       if (!n || !(n = n->next)) {
         /* end of function. pop the stack. */
-        if (r->depth)
+        if (r->depth) {
           n = r->stack[--r->depth];
-        else /* stack empty. exit. */
-          break;
+        } else {
+          break; /* stack empty. exit. */
+        }
       }
     } else if (state == Sfunc || state == Sbody) {
       /* enter f or n->body */
       if (r->depth < MAX_RUNSTACK) {
         r->stack[r->depth++] = n->next;
         n = (state == Sfunc) ? n->x.func : n->body;
-      } else /* stack overflow */
-        break;
+      } else {
+        break; /* stack overflow */
+      }
     } else if (state == Ssleep || state == Swait || state == Sinter) {
       /* prepare to resume from next instruction after sleeping */
       r->stack[r->depth] = n->next;
@@ -920,7 +932,7 @@ static byte MouseClickReleaseSameCtx(uldat W1, uldat W2, ldat clickCtx, ldat rel
 
 /* handle incoming messages */
 byte RC_VMQueue(const wm_ctx *C) {
-  uldat ClickWinId = All->FirstScreen->ClickWindow ? All->FirstScreen->ClickWindow->Id : NOID;
+  uldat ClickWinId = All->Screens.First->ClickWindow ? All->Screens.First->ClickWindow->Id : NOID;
   Twidget w;
   ldat ctx;
   node n;
@@ -988,7 +1000,7 @@ byte RC_VMQueue(const wm_ctx *C) {
       if (n && (r = RCNew(n))) {
         used = ttrue;
         CopyMem(C, &r->C, sizeof(wm_ctx));
-        w = All->FirstScreen->FocusW();
+        w = All->Screens.First->FocusW();
         r->W = w ? w->Id : NOID;
         r->C.ByMouse = false;
         /* to preserve execution orded, run it right now ! */
@@ -1373,7 +1385,7 @@ byte InitRC(void) {
     UpdateOptionWin();
     FillButtonWin();
     HideMenu(!!(All->SetUp->Flags & setup_menu_hide));
-    All->FirstScreen->DrawMenu(0, TW_MAXDAT);
+    All->Screens.First->DrawMenu(0, TW_MAXDAT);
 
     return ttrue;
   }

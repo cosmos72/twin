@@ -79,7 +79,7 @@ inline struct timeval *CalcSleepTime(struct timeval *sleeptime, Tmsgport Port, t
 
   if (got != 2)
     while (Port) {
-      if (Port->FirstMsg) {
+      if (Port->Msgs.First) {
         sleeptime->tv_sec = (time_t)0;
         sleeptime->tv_usec = 0;
         got = 2;
@@ -91,33 +91,34 @@ inline struct timeval *CalcSleepTime(struct timeval *sleeptime, Tmsgport Port, t
   return got ? sleeptime : (struct timeval *)0;
 }
 
-static Tmsgport RunMsgPort(Tmsgport CurrPort) {
-  Tmsgport NextPort;
+static Tmsgport RunMsgPort(Tmsgport curr) {
+  Tmsgport next;
 
-  if ((CurrPort->WakeUp & (TIMER_ALWAYS | TIMER_ONCE)) && CmpTime(&CurrPort->CallTime, Now) <= 0)
-    CurrPort->WakeUp &= ~TIMER_ONCE;
-  else if (!CurrPort->FirstMsg)
+  if ((curr->WakeUp & (TIMER_ALWAYS | TIMER_ONCE)) && CmpTime(&curr->CallTime, Now) <= 0)
+    curr->WakeUp &= ~TIMER_ONCE;
+  else if (!curr->Msgs.First)
     return NULL;
 
-  All->RunMsgPort = CurrPort;
+  All->RunMsgPort = curr;
 
-  if (CurrPort->Handler) {
-    CurrPort->Handler(CurrPort);
+  if (curr->Handler) {
+    curr->Handler(curr);
 
-    if (All->RunMsgPort == CurrPort) {
-      if (CurrPort->WakeUp & (TIMER_ALWAYS | TIMER_ONCE))
-        SumTime(&CurrPort->CallTime, Now, &CurrPort->PauseDuration);
-
+    if (All->RunMsgPort == curr) {
+      if (curr->WakeUp & (TIMER_ALWAYS | TIMER_ONCE)) {
+        SumTime(&curr->CallTime, Now, &curr->PauseDuration);
+      }
       /* get ->Next *BEFORE* re-sorting!!! */
-      NextPort = CurrPort->Next;
-      SortMsgPortByCallTime(CurrPort);
-    } else
-      NextPort = All->RunMsgPort;
+      next = curr->Next;
+      SortMsgPortByCallTime(curr);
+    } else {
+      next = All->RunMsgPort;
+    }
   } else {
-    DeleteList(CurrPort->FirstMsg);
-    NextPort = CurrPort->Next;
+    DeleteList(curr->Msgs.First);
+    next = curr->Next;
   }
-  return NextPort;
+  return next;
 }
 
 static void Usage(void) {
@@ -242,7 +243,7 @@ static void MergeHyphensArgv(int argc, char **argv) {
 #define MINDELAY 10000
 
 int main(int argc, char *argv[]) {
-  Tmsgport CurrPort;
+  Tmsgport curr;
   timevalue Old, Cut;
   fd_set read_fds, write_fds, *pwrite_fds;
   struct timeval sel_timeout, *this_timeout;
@@ -293,7 +294,7 @@ int main(int argc, char *argv[]) {
      * the system is very heavily loaded and our 'more accurate sleep time'
      * would just further increase the load
      */
-    this_timeout = CalcSleepTime(&sel_timeout, All->FirstMsgPort, Now);
+    this_timeout = CalcSleepTime(&sel_timeout, All->MsgPorts.First, Now);
 
     if (ExpensiveFlushVideo) {
       /* decide what to do... sleep a little if we can (HW_DELAY),
@@ -342,7 +343,7 @@ int main(int argc, char *argv[]) {
       if (StrategyFlag != HW_DELAY)
         FlushHW();
 
-      if (NeedHW & NeedPanicHW || All->FirstMsgPort->FirstMsg) {
+      if (NeedHW & NeedPanicHW || All->MsgPorts.First->Msgs.First) {
         /*
          * hmm... displays are rotting quickly today!
          * we called PanicHW() just above, so don't call again,
@@ -404,11 +405,11 @@ int main(int argc, char *argv[]) {
      * MsgPorts are ordered: runnable ones first, then non-runnable ones.
      * So bail out at the first non-runnable port.
      */
-    CurrPort = All->FirstMsgPort;
+    curr = All->MsgPorts.First;
 
-    while (CurrPort)
-      CurrPort = RunMsgPort(CurrPort);
-
+    while (curr) {
+      curr = RunMsgPort(curr);
+    }
     All->RunMsgPort = (Tmsgport)0;
   }
   /* NOTREACHED */

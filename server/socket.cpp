@@ -1094,11 +1094,11 @@ static void sockResizeWidget(Twidget w, dat X, dat Y) {
 static void sockCirculateChildrenWidget(Twidget w, byte up_or_down) {
   if (w) {
     if (up_or_down == TW_CIRCULATE_RAISE_LAST) {
-      if ((w = w->LastW)) {
+      if ((w = w->Widgets.Last)) {
         w->Raise();
       }
     } else if (up_or_down == TW_CIRCULATE_LOWER_FIRST) {
-      if ((w = w->FirstW)) {
+      if ((w = w->Widgets.First)) {
         w->Lower();
       }
     }
@@ -1111,16 +1111,16 @@ static void sockCirculateChildrenRow(Tobj obj, byte up_or_down) {
     if (IS_WINDOW(obj) && W_USE((Twindow)obj, USEROWS)) {
 
       if (up_or_down == TW_CIRCULATE_RAISE_LAST)
-        row = ((Twindow)obj)->USE.R.LastRow;
+        row = ((Twindow)obj)->USE.R.Rows.Last;
       else if (up_or_down == TW_CIRCULATE_LOWER_FIRST)
-        row = ((Twindow)obj)->USE.R.FirstRow;
+        row = ((Twindow)obj)->USE.R.Rows.First;
 
     } else if (IS_MENU(obj)) {
 
       if (up_or_down == TW_CIRCULATE_RAISE_LAST)
-        row = ((Tmenu)obj)->LastI;
+        row = ((Tmenu)obj)->Items.Last;
       else if (up_or_down == TW_CIRCULATE_LOWER_FIRST)
-        row = ((Tmenu)obj)->FirstI;
+        row = ((Tmenu)obj)->Items.First;
     }
 
     if (row) {
@@ -1233,7 +1233,7 @@ static Tmsgport sockCreateMsgPort(byte NameLen, const char *Name) {
 static Tmsgport sockFindMsgPort(Tmsgport Prev, byte NameLen, const char *Name) {
   Tmsgport M;
   if (!(M = Prev))
-    M = All->FirstMsgPort;
+    M = All->MsgPorts.First;
   while (M) {
     if (M->NameLen == NameLen && !memcmp(M->Name, Name, NameLen))
       break;
@@ -1263,31 +1263,31 @@ static Tobj sockParentObj(Tobj o) {
 }
 
 static Tscreen sockFirstScreen(void) {
-  return All->FirstScreen;
+  return All->Screens.First;
 }
 static Twidget sockFirstWidget(Twidget w) {
-  return w ? w->FirstW : w;
+  return w ? w->Widgets.First : (Twidget)0;
 }
 static Tmsgport sockFirstMsgPort(void) {
-  return All->FirstMsgPort;
+  return All->MsgPorts.First;
 }
 static Tmenu sockFirstMenu(Tmsgport MsgPort) {
-  return MsgPort ? MsgPort->FirstMenu : (Tmenu)0;
+  return MsgPort ? MsgPort->Menus.First : (Tmenu)0;
 }
 static Twidget sockFirstW(Tmsgport MsgPort) {
-  return MsgPort ? MsgPort->FirstW : (Twidget)0;
+  return MsgPort ? MsgPort->Widgets.First : (Twidget)0;
 }
 static Tgroup sockFirstGroup(Tmsgport MsgPort) {
-  return MsgPort ? MsgPort->FirstGroup : (Tgroup)0;
+  return MsgPort ? MsgPort->Groups.First : (Tgroup)0;
 }
 static Tmutex sockFirstMutex(Tmsgport MsgPort) {
-  return MsgPort ? MsgPort->FirstMutex : (Tmutex)0;
+  return MsgPort ? MsgPort->Mutexes.First : (Tmutex)0;
 }
 static Tmenuitem sockFirstMenuItem(Tmenu Menu) {
-  return Menu ? Menu->FirstI : (Tmenuitem)0;
+  return Menu ? Menu->Items.First : (Tmenuitem)0;
 }
 static Tgadget sockFirstGadget(Tgroup group) {
-  return group ? group->FirstG : (Tgadget)0;
+  return group ? group->Gadgets.First : (Tgadget)0;
 }
 
 static Tall sockGetAll(void) {
@@ -2403,7 +2403,7 @@ static void SocketH(Tmsgport MsgPort) {
   char buf[10];
   byte len;
 
-  while ((msg = MsgPort->FirstMsg)) {
+  while ((msg = MsgPort->Msgs.First)) {
     msg->Remove();
 
     if (msg->Type == msg_widget_mouse && (w = msg->Event.EventMouse.W) && IS_WINDOW(w) &&

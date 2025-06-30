@@ -1215,7 +1215,7 @@ static void UpdateVisibleScreens(Tscreen new_Screens) {
     next = screen->NextScreen();
     screen->SetNextScreen((Tscreen)0);
 
-    if ((orig = FindNameInScreens(screen->NameLen, screen->Name, All->FirstScreen))) {
+    if ((orig = FindNameInScreens(screen->NameLen, screen->Name, All->Screens.First))) {
       orig->USE.B.BgWidth = screen->USE.B.BgWidth;
       orig->USE.B.BgHeight = screen->USE.B.BgHeight;
       if (orig->USE.B.Bg) {
@@ -1225,7 +1225,7 @@ static void UpdateVisibleScreens(Tscreen new_Screens) {
       screen->USE.B.Bg = NULL;
       screen->Delete();
     } else {
-      InsertLast(Screen, screen, All);
+      InsertLast(Screens, screen, All);
     }
     screen = next;
   }
@@ -1236,7 +1236,7 @@ static void UpdateVisibleScreens(Tscreen new_Screens) {
  */
 static void DeleteUnneededScreens(node list) {
   Tscreen screen, next;
-  for (screen = All->FirstScreen; screen; screen = next) {
+  for (screen = All->Screens.First; screen; screen = next) {
     next = screen->NextScreen();
     if ((screen->NameLen != 1 || screen->Name[0] != '1') &&
         !FindNameInList(screen->NameLen, screen->Name, list)) {

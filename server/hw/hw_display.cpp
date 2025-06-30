@@ -67,7 +67,7 @@ static void display_HandleEvent(Tdisplay hw) {
   dat x, y, dx, dy;
   udat keys;
 
-  while ((msg = helper->FirstMsg)) {
+  while ((msg = helper->Msgs.First)) {
 
     msg->Remove();
     Event = &msg->Event;

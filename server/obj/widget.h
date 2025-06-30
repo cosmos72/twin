@@ -15,6 +15,7 @@
 
 #include "obj/obj.h"
 #include "stl/macros.h" // OVERRIDE
+#include "stl/list.h"
 
 /* WIDGET_USEEXPOSE  USE.E.Flags: */
 #define WIDGET_USEEXPOSE_TEXT 1
@@ -67,7 +68,7 @@ struct s_WE { /* for WIDGET_USEEXPOSE widgets */
 };
 
 struct s_WR { /* for WINDOWFL_USEROWS windows */
-  Trow FirstRow, LastRow;
+  List<Trow> Rows;
   Trow RowOne, RowSplit;       /*RESERVED: used to optimize the drawing on Tscreen */
   ldat NumRowOne, NumRowSplit; /*RESERVED: updated automatically by WriteRow. To insert */
                                /*or remove manually rows, you must zero out NumRowOne */
@@ -113,7 +114,7 @@ public:
   Twidget Prev, Next; /* list in the same parent */
   Twidget Parent;     /* where this Twidget sits */
   /* Twidget */
-  Twidget FirstW, LastW; /* list of children */
+  List<Twidget> Widgets; /* list of children */
   Twidget SelectW;       /* selected child */
   dat Left, Up, XWidth, YWidth;
   uldat Attr;

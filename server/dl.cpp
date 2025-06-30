@@ -81,7 +81,7 @@ void DlClose(Tmodule Module) {
 Tmodule DlLoadAny(Chars name) {
   Tmodule Module;
 
-  for (Module = All->FirstModule; Module; Module = Module->Next) {
+  for (Module = All->Modules.First; Module; Module = Module->Next) {
     if (name == Module->Name) {
       return Module; // already loaded!
     }

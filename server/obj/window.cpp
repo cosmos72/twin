@@ -217,7 +217,7 @@ void Swindow::Delete() {
     if (USE.C.Contents)
       FreeMem(USE.C.Contents);
   } else if (W_USE(this, USEROWS)) {
-    DeleteList(USE.R.FirstRow);
+    DeleteList(USE.R.Rows.First);
   }
   Swidget::Delete();
 }
@@ -491,7 +491,7 @@ void Swindow::Configure(byte bitmap, dat left, dat up, //
     YWidth = Min2(maxywidth, YWidth);
   }
   if (Parent) {
-    InsertMiddle(window, this, Parent, prev, next);
+    InsertMiddle(Widgets, this, Parent, prev, next);
     DrawAreaWindow2(this);
   }
 }
@@ -503,8 +503,8 @@ Trow Swindow::FindRow(ldat row_i) const {
 
   el_possible[0] = USE.R.RowOne;
   el_possible[1] = USE.R.RowSplit;
-  el_possible[2] = USE.R.FirstRow;
-  el_possible[3] = USE.R.LastRow;
+  el_possible[2] = USE.R.Rows.First;
+  el_possible[3] = USE.R.Rows.Last;
   el_row_n[0] = USE.R.NumRowOne;
   el_row_n[1] = USE.R.NumRowSplit;
   el_row_n[2] = (ldat)0;
@@ -535,13 +535,13 @@ Trow Swindow::FindRowByCode(udat Code, ldat *row_i) const {
   Trow row;
   ldat i = 0;
 
-  if ((row = USE.R.FirstRow))
+  if ((row = USE.R.Rows.First))
     while (row && row->Code != Code) {
       row = row->Next;
       i++;
     }
-  if (row && row_i)
+  if (row && row_i) {
     *row_i = i;
-
+  }
   return row;
 }

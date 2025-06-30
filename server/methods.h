@@ -24,49 +24,6 @@ tpos FakeFindBorderWindow(Twindow w, dat u, dat v, byte border, tcell *ptr_cell)
 void IncMouseMotionN(void);
 void DecMouseMotionN(void);
 
-template <class OBJ, class LIST>
-void InsertT(OBJ *obj, LIST *list[2], OBJ *prev, OBJ *next, ldat *objcount) {
-  if (obj->Prev || obj->Next) {
-    return;
-  }
-  if (prev) {
-    next = (OBJ *)prev->Next;
-  } else if (next) {
-    prev = (OBJ *)next->Prev;
-  }
-  if ((obj->Prev = prev) != NULL) {
-    prev->Next = obj;
-  } else {
-    list[0] = obj;
-  }
-  if ((obj->Next = next) != NULL) {
-    next->Prev = obj;
-  } else {
-    list[1] = obj;
-  }
-  if (objcount) {
-    ++(*objcount);
-  }
-}
-
-template <class OBJ, class LIST> //
-void RemoveT(OBJ *obj, LIST *list[2], ldat *objcount) {
-  if (obj->Prev) {
-    obj->Prev->Next = obj->Next;
-  } else if (list[0] == obj) {
-    list[0] = (LIST *)obj->Next;
-  }
-  if (obj->Next) {
-    obj->Next->Prev = obj->Prev;
-  } else if (list[1] == obj) {
-    list[1] = (LIST *)obj->Prev;
-  }
-  obj->Prev = obj->Next = NULL;
-  if (objcount) {
-    --(*objcount);
-  }
-}
-
 #define Do(command, objtype) (S##objtype::command)
 
 #define New(objtype) S##objtype::Create
@@ -81,20 +38,20 @@ void RemoveT(OBJ *obj, LIST *list[2], ldat *objcount) {
     }                                                                                              \
   } while (0)
 
-#define InsertOnly(obj_name, obj, parent) (obj)->Insert((parent), NULL, NULL)
+#define InsertOnly(list, obj, parent) (obj)->Insert((parent), NULL, NULL)
 
-#define InsertFirst(obj_name, obj, parent) (obj)->Insert((parent), NULL, (parent)->First##obj_name)
+#define InsertFirst(list, obj, parent) (obj)->Insert((parent), NULL, (parent)->list.First)
 
-#define InsertMiddle(obj_name, obj, parent, prev_obj, next_obj)                                    \
+#define InsertMiddle(list, obj, parent, prev_obj, next_obj)                                        \
   (obj)->Insert((parent), (prev_obj), (next_obj))
 
-#define InsertLast(obj_name, obj, parent) (obj)->Insert((parent), (parent)->Last##obj_name, NULL)
+#define InsertLast(list, obj, parent) (obj)->Insert((parent), (parent)->list.Last, NULL)
 
-#define MoveFirst(obj_name, parent, obj) ((obj)->Remove(), InsertFirst(obj_name, obj, parent))
+#define MoveFirst(list, parent, obj) ((obj)->Remove(), InsertFirst(list, obj, parent))
 
-#define MoveLast(obj_name, parent, obj) ((obj)->Remove(), InsertLast(obj_name, obj, parent))
+#define MoveLast(list, parent, obj) ((obj)->Remove(), InsertLast(list, obj, parent))
 
-#define SendMsg(msgport, whichmsg) (InsertLast(Msg, (whichmsg), (msgport)))
+#define SendMsg(msgport, whichmsg) InsertLast(Msgs, (whichmsg), (msgport))
 
 #define Info4Menu(menu, flags, len, text, coltext) (menu)->SetInfo(flags, len, text, coltext)
 

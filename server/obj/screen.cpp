@@ -17,7 +17,7 @@
 #include "builtin.h" // Builtin_MsgPort
 #include "draw.h"    // DrawArea2()
 #include "fn.h"      // Fn_Tscreen
-#include "methods.h" // RemoveT()
+#include "methods.h" // MoveFirst()
 #include "obj/all.h" // All
 #include "resize.h"  // ResizeFirstScreen()
 #include "twin.h"    // IS_ALL(), IS_SCREEN()
@@ -69,8 +69,8 @@ Tscreen Sscreen::Init(dat namelen, const char *name, dat bgwidth, dat bgheight, 
 }
 
 void Sscreen::Delete() {
-  while (FirstW) {
-    FirstW->UnMap();
+  while (Widgets.First) {
+    Widgets.First->UnMap();
   }
   Remove();
   if (S_USE(this, USEBG) && USE.B.Bg) {
@@ -88,14 +88,14 @@ void Sscreen::InsertWidget(Tobj parent, Twidget prev, Twidget next) {
 
 void Sscreen::Insert(Tall parent, Tscreen prev, Tscreen next) {
   if (parent && !All) {
-    InsertT(this, &parent->FirstScreen, prev, next, NULL);
+    parent->Screens.Insert(this, prev, next);
     All = parent;
   }
 }
 
 void Sscreen::Remove() {
   if (All) {
-    RemoveT(this, &All->FirstScreen, NULL);
+    All->Screens.Remove(this);
     All = (Tall)0;
   }
 }
@@ -109,7 +109,7 @@ void Sscreen::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
 }
 
 void Sscreen::SetXY(dat x, dat y) {
-  if (this == ::All->FirstScreen) {
+  if (this == ::All->Screens.First) {
     y = Max2(y, -1);
     y = Min2(y, ::All->DisplayHeight - 1);
     ResizeFirstScreen(y - Up);
@@ -117,9 +117,9 @@ void Sscreen::SetXY(dat x, dat y) {
 }
 
 Twidget Sscreen::Focus() {
-  Tscreen old = ::All->FirstScreen;
+  Tscreen old = ::All->Screens.First;
   if (old != this) {
-    MoveFirst(Screen, ::All, this);
+    MoveFirst(Screens, ::All, this);
     DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, 0, Min2(old->Up, this->Up), //
               TW_MAXDAT, TW_MAXDAT, false);
     UpdateCursor();
@@ -128,7 +128,7 @@ Twidget Sscreen::Focus() {
 }
 
 Tscreen Sscreen::Find(dat j) {
-  for (Tscreen screen = ::All->FirstScreen; screen; screen = screen->NextScreen()) {
+  for (Tscreen screen = ::All->Screens.First; screen; screen = screen->NextScreen()) {
     if (j >= (dat)screen->Up) {
       return screen;
     }
@@ -174,14 +174,14 @@ void Sscreen::DrawMenu(dat xstart, dat xend) {
 void Sscreen::ActivateMenu(Tmenuitem item, bool by_mouse) {
   if ((::All->State & state_any) != state_default) {
     return;
-  } else if (this != ::All->FirstScreen) {
+  } else if (this != ::All->Screens.First) {
     Focus();
   }
   SetMenuState(item, by_mouse);
 }
 
 void Sscreen::DeActivateMenu() {
-  if (this == ::All->FirstScreen && (::All->State & state_any) == state_menu) {
+  if (this == ::All->Screens.First && (::All->State & state_any) == state_menu) {
     CloseMenu();
   }
 }

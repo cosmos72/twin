@@ -80,7 +80,7 @@ Twidget FakeKbdFocus(Twidget w) {
   Twidget oldW;
   Twidget parent;
   Tscreen screen =
-      w && (parent = w->Parent) && IS_SCREEN(parent) ? (Tscreen)parent : All->FirstScreen;
+      w && (parent = w->Parent) && IS_SCREEN(parent) ? (Tscreen)parent : All->Screens.First;
 
   if (screen) {
     oldW = screen->FocusW();

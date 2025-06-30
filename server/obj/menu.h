@@ -25,7 +25,8 @@ public:
   byte CommonItems;
   byte FlagDefColInfo;
   Trow Info;
-  Tmenuitem FirstI, LastI, SelectI;
+  List<Tmenuitem> Items;
+  Tmenuitem SelectI;
 
   static Tmenu Create(Tmsgport port, tcolor colitem, tcolor colselect, tcolor coldisabled,
                       tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,

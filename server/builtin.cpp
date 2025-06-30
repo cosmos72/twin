@@ -143,21 +143,25 @@ static void UpdateMenuRows(Twidget dummy) {
 }
 
 static void SelectWinList(void) {
-  Tscreen screen = All->FirstScreen;
+  Tscreen screen = All->Screens.First;
   uldat n = WinList->CurY;
   Twidget w;
+  Twindow win = (Twindow)0;
 
-  for (w = screen->FirstW; w; w = w->Next) {
+  for (w = screen->Widgets.First; w; w = w->Next) {
     if (w == (Twidget)WinList || !IS_WINDOW(w) ||
-        (((Twindow)w)->Flags & (WINDOWFL_NOTVISIBLE | WINDOWFL_MENU)))
+        (((Twindow)w)->Flags & (WINDOWFL_NOTVISIBLE | WINDOWFL_MENU))) {
       continue;
-    if (!n)
+    }
+    win = (Twindow)w;
+    if (!n) {
       break;
+    }
     n--;
   }
-  if (!n && w) {
-    RaiseWidget(w, ttrue);
-    CenterWindow((Twindow)w);
+  if (!n && win) {
+    RaiseWidget(win, true);
+    CenterWindow(win);
   }
 }
 
@@ -330,7 +334,7 @@ void FillButtonWin(void) {
   char b[] = "      ";
   const char *s;
 
-  DeleteList(ButtonWin->FirstW);
+  DeleteList(ButtonWin->Widgets.First);
 
   for (i = j = 0; j < BUTTON_MAX; j++) {
     if (All->ButtonVec[j].exists)
@@ -424,9 +428,9 @@ static void UpdateDisplayWin(Twidget displayWin) {
   uldat x = 12, y = 0;
 
   if (displayWin == (Twidget)DisplayWin) {
-    DeleteList(DisplayWin->USE.R.FirstRow);
+    DeleteList(DisplayWin->USE.R.Rows.First);
 
-    for (hw = All->FirstDisplay; hw; hw = hw->Next) {
+    for (hw = All->Displays.First; hw; hw = hw->Next) {
       DisplayWin->GotoXY(x, y++);
       if (!hw->Name)
         DisplayWin->RowWriteCharset(9, "(no name)");
@@ -456,7 +460,7 @@ static void DisplayGadgetH(Tmsg msg) {
   switch (msg->Event.EventGadget.Code) {
   case COD_D_REMOVE:
     if ((i = DisplayWin->CurY) < DisplayWin->HLogic) {
-      for (hw = All->FirstDisplay; hw && i; hw = hw->Next, i--) {
+      for (hw = All->Displays.First; hw && i; hw = hw->Next, i--) {
       }
       if (hw && !i) {
         hw->Delete();
@@ -465,7 +469,7 @@ static void DisplayGadgetH(Tmsg msg) {
     break;
   case COD_D_THIS:
     if (All->MouseDisplay) {
-      for (i = 0, hw = All->FirstDisplay; hw; hw = hw->Next, i++) {
+      for (i = 0, hw = All->Displays.First; hw; hw = hw->Next, i++) {
         if (hw == All->MouseDisplay)
           break;
       }
@@ -486,9 +490,9 @@ static void BuiltinH(Tmsgport MsgPort) {
   Trow row;
   udat Code;
 
-  screen = All->FirstScreen;
+  screen = All->Screens.First;
 
-  while ((msg = Builtin_MsgPort->FirstMsg)) {
+  while ((msg = Builtin_MsgPort->Msgs.First)) {
     msg->Remove();
     Event = &msg->Event;
 
@@ -604,7 +608,7 @@ static void BuiltinH(Tmsgport MsgPort) {
 
         case COD_SOCKET_OFF:
           DlUnload(SocketSo);
-          if (All->FirstDisplay)
+          if (All->Displays.First)
             break;
           /* hmm... better to fire it up again */
           /* FALLTHROUGH */
@@ -745,17 +749,17 @@ void InstallRemoveWinListHook(Twidget listWin) {
 }
 
 void UpdateWinList(void) {
-  Tscreen screen = All->FirstScreen;
+  Tscreen screen = All->Screens.First;
   Twidget w;
 
-  DeleteList(WinList->USE.R.FirstRow);
+  DeleteList(WinList->USE.R.Rows.First);
   WinList->CurX = WinList->CurY = 0;
 
   WinList->XLogic = WinList->YLogic = 0;
   WinList->XWidth = WinList->MinXWidth;
   WinList->YWidth = WinList->MinYWidth;
 
-  for (w = screen->FirstW; w; w = w->Next) {
+  for (w = screen->Widgets.First; w; w = w->Next) {
     if (w == (Twidget)WinList || !IS_WINDOW(w) ||
         (((Twindow)w)->Flags & (WINDOWFL_NOTVISIBLE | WINDOWFL_MENU)))
       continue;
@@ -794,7 +798,7 @@ static bool InitScreens(void) {
 
   if ((oneScreen = Sscreen::CreateSimple(1, "1", TCELL(TCOL(tBLACK, tblue), _MEDIUM_SHADE)))) {
 
-    InsertLast(Screen, oneScreen, All);
+    InsertLast(Screens, oneScreen, All);
     return true;
   }
   Error(NOMEMORY);

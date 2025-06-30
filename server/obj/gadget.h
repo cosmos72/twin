@@ -20,7 +20,7 @@ public:
   /* Tgadget */
   tcolor ColText, ColSelect, ColDisabled, ColSelectDisabled;
   udat Code;
-  Tgadget G_Prev, G_Next; /* list in the same Tgroup */
+  Tgadget G_Prev, G_Next; /* siblings in the same Tgroup */
   Tgroup Group;
 
   static Tgadget Create(Tmsgport owner, Twidget Parent, dat xwidth, dat ywidth,

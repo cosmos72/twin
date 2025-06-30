@@ -138,14 +138,17 @@ dat CmpTime(timevalue *T1, timevalue *T2) {
 }
 
 static dat CmpCallTime(Tmsgport m1, Tmsgport m2) {
-  if ((!m1->FirstMsg) != (!m2->FirstMsg))
+  if ((!m1->Msgs.First) != (!m2->Msgs.First)) {
     /* one of the two doesn't have msgs */
-    return m1->FirstMsg ? (dat)-1 : (dat)1;
-  if ((!m1->WakeUp) != (!m2->WakeUp))
+    return m1->Msgs.First ? (dat)-1 : (dat)1;
+  }
+  if ((!m1->WakeUp) != (!m2->WakeUp)) {
     /* one doesn't need to be called */
     return m1->WakeUp ? (dat)-1 : (dat)1;
-  if ((!m1->WakeUp) && (!m2->WakeUp))
+  }
+  if ((!m1->WakeUp) && (!m2->WakeUp)) {
     return 0;
+  }
   return CmpTime(&m1->CallTime, &m2->CallTime);
 }
 
@@ -234,19 +237,21 @@ void SortMsgPortByCallTime(Tmsgport Port) {
     do {
       other = other->Next;
     } while (other && CmpCallTime(Port, other) > 0);
-    if (other)
-      InsertMiddle(MsgPort, Port, All, other->Prev, other);
-    else
-      InsertLast(MsgPort, Port, All);
+    if (other) {
+      InsertMiddle(MsgPorts, Port, All, other->Prev, other);
+    } else {
+      InsertLast(MsgPorts, Port, All);
+    }
   } else if ((other = Port->Prev) && CmpCallTime(Port, other) < 0) {
     Port->Remove();
     do {
       other = other->Prev;
     } while (other && CmpCallTime(Port, other) < 0);
-    if (other)
-      InsertMiddle(MsgPort, Port, All, other, other->Next);
-    else
-      InsertFirst(MsgPort, Port, All);
+    if (other) {
+      InsertMiddle(MsgPorts, Port, All, other, other->Next);
+    } else {
+      InsertFirst(MsgPorts, Port, All);
+    }
   }
 }
 
@@ -256,7 +261,7 @@ void SortMsgPortByCallTime(Tmsgport Port) {
  * we use a bubble sort... no need to optimize to death this
  */
 void SortAllMsgPortsByCallTime(void) {
-  Tmsgport Max, This, Port = All->FirstMsgPort;
+  Tmsgport Max, This, Port = All->MsgPorts.First;
   Tmsgport Start, End;
 
   Start = End = (Tmsgport)0;
@@ -284,8 +289,8 @@ void SortAllMsgPortsByCallTime(void) {
     if (!End)
       End = Max;
   }
-  All->FirstMsgPort = Start;
-  All->LastMsgPort = End;
+  All->MsgPorts.First = Start;
+  All->MsgPorts.Last = End;
 }
 
 byte SendControlMsg(Tmsgport MsgPort, udat Code, udat Len, const char *Data) {
@@ -646,8 +651,8 @@ void ResetBorderPattern(void) {
   Tmsgport MsgP;
   Twidget w;
 
-  for (MsgP = All->FirstMsgPort; MsgP; MsgP = MsgP->Next) {
-    for (w = MsgP->FirstW; w; w = w->O_Next) {
+  for (MsgP = All->MsgPorts.First; MsgP; MsgP = MsgP->Next) {
+    for (w = MsgP->Widgets.First; w; w = w->O_Next) {
       if (IS_WINDOW(w))
         ((Twindow)w)->BorderPattern[0] = ((Twindow)w)->BorderPattern[1] = NULL;
     }
@@ -709,7 +714,7 @@ void FallBackKeyAction(Twindow w, event_keyboard *EventK) {
     default:
       break;
     }
-  else if ((G = (Tgadget)w->FirstW) && IS_GADGET(G)) {
+  else if ((G = (Tgadget)w->Widgets.First) && IS_GADGET(G)) {
     PressGadget(G);
     w->SelectW = (Twidget)G;
   } else

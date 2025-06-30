@@ -45,7 +45,8 @@
 #include <Tw/Tw.h>
 
 #define forHW(hw)                                                                                  \
-  for (Tdisplay next_hw = hw = All->FirstDisplay; hw && ((next_hw = hw->Next), true); hw = next_hw)
+  for (Tdisplay next_hw = hw = All->Displays.First; hw && ((next_hw = hw->Next), true);            \
+       hw = next_hw)
 
 /* common data */
 
@@ -64,11 +65,11 @@ static byte ConfigureHWDefault[HW_CONFIGURE_MAX];
 /* common functions */
 
 dat GetDisplayWidth(void) NOTHROW {
-  return All->FirstDisplay && !All->FirstDisplay->Quitted ? DisplayWidth : savedDisplayWidth;
+  return All->Displays.First && !All->Displays.First->Quitted ? DisplayWidth : savedDisplayWidth;
 }
 
 dat GetDisplayHeight(void) NOTHROW {
-  return All->FirstDisplay && !All->FirstDisplay->Quitted ? DisplayHeight : savedDisplayHeight;
+  return All->Displays.First && !All->Displays.First->Quitted ? DisplayHeight : savedDisplayHeight;
 }
 
 void UpdateFlagsHW(void) NOTHROW {
@@ -419,14 +420,14 @@ byte InitHW(void) {
 }
 
 void QuitHW(void) {
-  DeleteList(All->FirstDisplay);
+  DeleteList(All->Displays.First);
 }
 
 bool RestartHW(bool verbose) {
   Tdisplay hw;
   byte ret = tfalse;
 
-  if (All->FirstDisplay) {
+  if (All->Displays.First) {
     forHW(hw) {
       if (hw->DoInit()) {
         ret = true;
@@ -458,7 +459,7 @@ void SuspendHW(bool verbose) {
     else
       hw->DoQuit();
   }
-  if (verbose && !All->FirstDisplay) {
+  if (verbose && !All->Displays.First) {
     log(INFO) << "twin: SuspendHW(): All display drivers had to be removed\n"
                  "      since they were attached to clients (twattach/twdisplay).\n"
                  "twin: --- STOPPED ---\n";
@@ -490,7 +491,7 @@ byte ResizeDisplay(void) {
   dat Width, Height;
   byte change = tfalse;
 
-  if (All->FirstDisplay) {
+  if (All->Displays.First) {
     if (!TryDisplayWidth || !TryDisplayHeight) {
       /*
        * we are trying to come up with a fair display size
@@ -1104,7 +1105,7 @@ byte StdAddMouseEvent(Tdisplay hw, udat Code, dat MouseX, dat MouseY) {
   if (hw && hw == All->MouseDisplay && hw->FlagsHW & FlagNoInputHW) {
     return ttrue;
   }
-  if ((Code & MOUSE_ACTION_ANY) == MOVE_MOUSE && (msg = Ext(WM, MsgPort)->LastMsg) &&
+  if ((Code & MOUSE_ACTION_ANY) == MOVE_MOUSE && (msg = Ext(WM, MsgPort)->Msgs.Last) &&
       msg->Type == msg_mouse && (event = &msg->Event.EventMouse) && event->Code == Code) {
     /* merge the two events */
     event->X = MouseX;

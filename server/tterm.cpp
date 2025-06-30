@@ -86,7 +86,7 @@ static Twindow OpenTerm(const char *arg0, const char *const *argv) {
     if (spawnInWindow(Window, arg0, argv)) {
       if (RegisterWindowFdIO(Window, TwinTermIO)) {
         Window->ShutDownHook = termShutDown;
-        Window->Map((Twidget)All->FirstScreen);
+        Window->Map((Twidget)All->Screens.First);
         return Window;
       }
       close(Window->RemoteData.Fd);
@@ -102,7 +102,7 @@ static void TwinTermH(Tmsgport MsgPort) {
   udat Code /*, Repeat*/;
   Twindow Win;
 
-  while ((msg = Term_MsgPort->FirstMsg)) {
+  while ((msg = Term_MsgPort->Msgs.First)) {
     msg->Remove();
 
     Event = &msg->Event;

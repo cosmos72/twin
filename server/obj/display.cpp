@@ -13,7 +13,7 @@
 #include "obj/all.h" // extern All
 #include "obj/display.h"
 #include "alloc.h"    // AllocMem0(), CloneStrL()
-#include "methods.h"  // InsertT(), InsertLast(), RemoveT()
+#include "methods.h"  // InsertLast()
 #include "twin.h"     // NOSLOT
 #include "hw.h"       // DisplayHWCTTY
 #include "hw_multi.h" // ResizeDisplay(), RunNoHW()
@@ -45,7 +45,7 @@ Tdisplay Sdisplay::Init(Chars name) {
    * ->Quitted will be set to tfalse only
    * after InitHW() has succeeded
    */
-  InsertLast(Display, this, ::All);
+  InsertLast(Displays, this, ::All);
   return this;
 }
 
@@ -68,9 +68,9 @@ void Sdisplay::Delete() {
   Sobj::Delete();
 
   if (!quitted) {
-    if (!::All->FirstDisplay || isCTTY) {
+    if (!::All->Displays.First || isCTTY) {
       RunNoHW(tfalse);
-    } else if (::All->FirstDisplay && ResizeDisplay()) {
+    } else if (::All->Displays.First && ResizeDisplay()) {
       QueuedDrawArea2FullScreen = true;
     }
   }
@@ -78,7 +78,7 @@ void Sdisplay::Delete() {
 
 void Sdisplay::Insert(Tall parent, Tdisplay prev, Tdisplay next) {
   if (parent && !All) {
-    InsertT(this, &parent->FirstDisplay, prev, next, NULL);
+    parent->Displays.Insert(this, prev, next);
     All = parent;
 #if 0
     /*
@@ -92,7 +92,7 @@ void Sdisplay::Insert(Tall parent, Tdisplay prev, Tdisplay next) {
 
 void Sdisplay::Remove() {
   if (All) {
-    RemoveT(this, &All->FirstDisplay, NULL);
+    All->Displays.Remove(this);
     All = (Tall)0;
 
     ::All->HookDisplay();

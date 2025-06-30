@@ -13,7 +13,7 @@
 #include "alloc.h" // AllocMem()
 #include "log.h"
 #include "fn.h"      // Fn_Tobj
-#include "methods.h" // RemoveT()
+#include "methods.h" // MoveFirst()
 #include "obj/all.h"
 #include "obj/id.h" // AssignId()
 #include "obj/msg.h"
@@ -63,19 +63,19 @@ void Smsg::Insert(Tmsgport parent, Tmsg prev, Tmsg next) {
     /* if adding the first Tmsg, move the Tmsgport to the head
      * of Tmsgport list, so that the scheduler will run it */
     Tall all = parent->All;
-    if (all && !parent->FirstMsg) {
+    if (all && !parent->Msgs.First) {
       // MoveFirst is a macro, parent->All would be evaluated *after* it's set to NULL
-      MoveFirst(MsgPort, all, parent);
+      MoveFirst(MsgPorts, all, parent);
     }
 
-    InsertT(this, &parent->FirstMsg, prev, next, NULL);
+    parent->Msgs.Insert(this, prev, next);
     MsgPort = parent;
   }
 }
 
 void Smsg::Remove() {
   if (MsgPort) {
-    RemoveT(this, &MsgPort->FirstMsg, NULL);
+    MsgPort->Msgs.Remove(this);
     MsgPort = (Tmsgport)0;
   }
 }

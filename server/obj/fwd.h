@@ -78,7 +78,8 @@ typedef Sall *Tall;
 
 typedef void (*HookFn)(Twidget);
 
-struct HookData {
+class HookData {
+public:
   HookFn Fn;
   Twidget W;
 

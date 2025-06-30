@@ -18,6 +18,7 @@
 #include "obj/window.h" /* BUTTON_MAX */
 #include "tty.h"        /* USER_MAP */
 #include "stl_types.h"  /* String */
+#include "stl/list.h"
 
 #include <Tw/Tw.h> /* TW_MAX_MIMELEN */
 
@@ -98,14 +99,16 @@ public:
   Tobj Prev, Next, Parent;
 
   /* Tall */
-  Tscreen FirstScreen, LastScreen;
-  Tmsgport FirstMsgPort, LastMsgPort, RunMsgPort;
-  Tmutex FirstMutex, LastMutex;
+  List<Tscreen> Screens;
+  List<Tmsgport> MsgPorts;
+  Tmsgport RunMsgPort;
+  List<Tmutex> Mutexes;
 
-  Tmodule FirstModule, LastModule;
+  List<Tmodule> Modules;
   HookData HookModule;
 
-  Tdisplay FirstDisplay, LastDisplay, MouseDisplay, ExclusiveDisplay;
+  List<Tdisplay> Displays;
+  Tdisplay MouseDisplay, ExclusiveDisplay;
   HookData HookDisplay;
 
   dat DisplayWidth, DisplayHeight;

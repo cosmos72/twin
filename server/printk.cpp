@@ -31,7 +31,7 @@ void printk_str(const char *s, size_t len) {
   if (MessagesWin) {
     if (MessagesWin->HLogic > TW_SMALLBUFF) {
       while (MessagesWin->HLogic > TW_SMALLBUFF) {
-        MessagesWin->USE.R.FirstRow->Delete();
+        MessagesWin->USE.R.Rows.First->Delete();
         MessagesWin->CurY--;
       }
       if (MessagesWin->Parent) {

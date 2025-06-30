@@ -176,9 +176,9 @@ bool Sdraw::Init(Twidget w, dat x1, dat y1, dat x2, dat y2, bool shaded) {
   Twidget c = NULL, cc = NULL;
   byte HasTopBar, HasBorder;
 
-  if (!w || !d)
+  if (!w || !d) {
     return false;
-
+  }
   d->Next = NULL;
   d->W = w;
   d->NoChildren = d->BorderDone = false;
@@ -198,17 +198,16 @@ bool Sdraw::Init(Twidget w, dat x1, dat y1, dat x2, dat y2, bool shaded) {
   d->Y2 = y2;
 
   while (w) {
-
-    if (w->Flags & WIDGETFL_NOTVISIBLE)
+    if (w->Flags & WIDGETFL_NOTVISIBLE) {
       return false;
-
+    }
     HasTopBar = HasBorder = 0;
 
-    if (!IS_WINDOW(w) || !(((Twindow)w)->Attr & WINDOW_ROLLED_UP))
+    if (!IS_WINDOW(w) || !(((Twindow)w)->Attr & WINDOW_ROLLED_UP)) {
       height = w->YWidth;
-    else
+    } else {
       height = 1;
-
+    }
     if (cycle++) {
       xl = w->XLogic;
       yl = w->YLogic;
@@ -218,9 +217,9 @@ bool Sdraw::Init(Twidget w, dat x1, dat y1, dat x2, dat y2, bool shaded) {
       else if (IS_WINDOW(w) && !(((Twindow)w)->Flags & WINDOWFL_BORDERLESS))
         /* count border thickness */
         HasBorder = 1;
-    } else
+    } else {
       xl = yl = 0;
-
+    }
     d->Left += (ldat)w->Left - xl + HasBorder;
     d->Rgt += (ldat)w->Left - xl + HasBorder;
     d->X1 = Max2(d->X1 - xl, 0) + HasBorder + w->Left;
@@ -244,14 +243,15 @@ bool Sdraw::Init(Twidget w, dat x1, dat y1, dat x2, dat y2, bool shaded) {
   d->Y1 = Max2(d->Y1, 0);
   d->Y2 = Min2(d->Y2, d->DHeight - 1);
 
-  d->Screen = (Tscreen)c;
   d->TopW = cc;
-  if (d->W == cc)
+  if (d->W == cc) {
     d->W = NULL;
-
-  if (c && IS_SCREEN(c))
+  }
+  if (c && IS_SCREEN(c)) {
+    d->Screen = (Tscreen)c;
     return d->X1 <= d->X2 && d->Y1 <= d->Y2;
-
+  }
+  d->Screen = NULL;
   return false;
 }
 
@@ -332,7 +332,7 @@ Twidget Swidget::FindWidgetAt(dat x, dat y) {
     return (Twidget)0;
   }
 
-  for (w = FirstW; w; w = w->Next) {
+  for (w = Widgets.First; w; w = w->Next) {
 
     if (w->Flags & WIDGETFL_NOTVISIBLE)
       continue;
@@ -409,7 +409,7 @@ void Swidget::DrawSelf(Sdraw *d) {
     * this would suppress EXPOSE messages during resize (good)
     * but also clears the whole Twidget during non-top resize (bad)
     */
-  if ((All->State & state_any) == state_resize && (Twidget)All->FirstScreen->ClickWindow == w) {
+  if ((All->State & state_any) == state_resize && (Twidget)All->Screens.First->ClickWindow == w) {
       /* user is interactively resizing this Twindow... pad with spaces */
       FillVideo(x1, y1, x2, y2, w->USE_Fill);
       return;
@@ -764,7 +764,7 @@ void Swindow::DrawSelf(Sdraw *d) {
       }
       DirtyVideo(x1, y1, x2, Y2);
     }
-  } else if (W_USE(w, USEROWS) && w->USE.R.FirstRow) {
+  } else if (W_USE(w, USEROWS) && w->USE.R.Rows.First) {
     /*
      * editor-like windows. no length limit in the rows and in XLogic.
      */
@@ -780,9 +780,9 @@ void Swindow::DrawSelf(Sdraw *d) {
     else if (w->USE.R.NumRowOne && w->USE.R.RowOne && row == w->USE.R.NumRowOne)
       curr_row = w->USE.R.RowOne;
     else if (row == (ldat)0)
-      curr_row = w->USE.R.FirstRow;
+      curr_row = w->USE.R.Rows.First;
     else if (row + (ldat)1 == w->HLogic)
-      curr_row = w->USE.R.LastRow;
+      curr_row = w->USE.R.Rows.Last;
     else
       curr_row = w->FindRow(row);
 
@@ -940,8 +940,8 @@ void Sdraw::Draw() {
       if (IS_WINDOW(w) && !((window = (Twindow)w)->Flags & WINDOWFL_BORDERLESS)) {
 
         if (!only_child) {
-          winActive = window == (Twindow)All->FirstScreen->FocusW() ||
-                      window == All->FirstScreen->MenuWindow;
+          winActive = window == (Twindow)All->Screens.First->FocusW() ||
+                      window == All->Screens.First->MenuWindow;
           border = (window->Flags & WINDOWFL_MENU) || !winActive;
           DrawSelfBorder(window, left, up, rgt, dwn, x1, y1, x2, y2, border, winActive, shaded);
         }
@@ -981,9 +981,9 @@ void Sdraw::Draw() {
     if (no_children)
       child_next = NULL;
     else {
-      if (!child_next)
-        child_next = w->FirstW;
-
+      if (!child_next) {
+        child_next = w->Widgets.First;
+      }
       if (!no_children && child_next) {
         while (child_next && !child_found) {
           cL = left + child_next->Left;
@@ -1135,8 +1135,8 @@ Twidget NonScreenParent(Twidget w) {
 
 Twindow FindCursorWindow(void) {
   Twidget P, w;
-  if (!(P = All->FirstScreen->FocusW()))
-    P = (Twidget)All->FirstScreen->MenuWindow;
+  if (!(P = All->Screens.First->FocusW()))
+    P = (Twidget)All->Screens.First->MenuWindow;
   if (P)
     while ((w = P->SelectW))
       P = w;
@@ -1156,7 +1156,7 @@ byte ContainsCursor(Twidget w) {
 void Sdraw::DrawArea() {
   Sdraw *d = this;
   Sdraw *FirstD = d;
-  Tscreen FirstScreen, screen;
+  Tscreen first_screen, screen;
   Twidget w, onlyW, TopOnlyW, NextW;
   Ssetup *SetUp;
   ldat dwidth, dheight, ylimit;
@@ -1180,7 +1180,7 @@ void Sdraw::DrawArea() {
   do {
     w = d->TopW;
     onlyW = d->W;
-    FirstScreen = d->Screen;
+    first_screen = d->Screen;
     x1 = d->X1;
     y1 = d->Y1;
     x2 = d->X2;
@@ -1206,16 +1206,16 @@ void Sdraw::DrawArea() {
 
     if (w) {
       if (IS_SCREEN(w->Parent)) {
-        FirstScreen = (Tscreen)w->Parent;
+        first_screen = (Tscreen)w->Parent;
       } else {
         continue;
       }
     }
-    if (!FirstScreen) {
-      FirstScreen = All->FirstScreen;
+    if (!first_screen) {
+      first_screen = All->Screens.First;
     }
     /* calculate visible part of this Tscreen */
-    for (screen = All->FirstScreen; screen && screen != FirstScreen;
+    for (screen = All->Screens.First; screen && screen != first_screen;
          screen = screen->NextScreen()) {
       ylimit = screen->Up;
       if (y2 >= ylimit)
@@ -1224,10 +1224,10 @@ void Sdraw::DrawArea() {
     if (y1 > y2) {
       continue;
     }
-    screen = FirstScreen->NextScreen();
-    ylimit = FirstScreen->Up; /* FIXED +1 */
+    screen = first_screen->NextScreen();
+    ylimit = first_screen->Up; /* FIXED +1 */
 
-    if (!onlyW || (onlyW && ScreenParent(onlyW->Parent) != FirstScreen)) {
+    if (!onlyW || (onlyW && ScreenParent(onlyW->Parent) != first_screen)) {
       if (y1 < ylimit) {
         if (screen) {
           _DrawAreaCtx_(&FirstD, screen, w, onlyW, x1, y1, x2, Min2(y2, ylimit - 1), shaded,
@@ -1248,9 +1248,9 @@ void Sdraw::DrawArea() {
       y1 = ylimit;
 
     if (!w) {
-      w = FirstScreen->FirstW;
+      w = first_screen->Widgets.First;
       if (y1 == ylimit && !onlyW) {
-        FirstScreen->DrawMenu(x1, x2);
+        first_screen->DrawMenu(x1, x2);
         if (++y1 > y2)
           continue;
       }
@@ -1266,8 +1266,8 @@ void Sdraw::DrawArea() {
         w = w->Next;
         continue;
       }
-      sh_left = (ldat)w->Left + (ldat)FirstScreen->Left - FirstScreen->XLogic;
-      sh_up = (ldat)w->Up + (ldat)ylimit - FirstScreen->YLogic;
+      sh_left = (ldat)w->Left + (ldat)first_screen->Left - first_screen->XLogic;
+      sh_up = (ldat)w->Up + (ldat)ylimit - first_screen->YLogic;
       sh_right = sh_left + (ldat)w->XWidth - 1;
       sh_down = sh_up +
                 (IS_WINDOW(w) && (((Twindow)w)->Attr & WINDOW_ROLLED_UP) ? 0 : (ldat)w->YWidth - 1);
@@ -1302,7 +1302,7 @@ void Sdraw::DrawArea() {
     }
 
     if (!WidgetFound && !onlyW) {
-      DrawDesktop(FirstScreen, x1, y1, x2, y2, shaded);
+      DrawDesktop(first_screen, x1, y1, x2, y2, shaded);
       continue;
     }
 
@@ -1330,14 +1330,14 @@ void Sdraw::DrawArea() {
           _DrawAreaCtx_(&FirstD, (Tscreen)0, NextW, onlyW, (dat)hs_x1, (dat)hs_y1, (dat)hs_x2,
                         (dat)s_y2, ttrue, &lError);
         else
-          DrawDesktop(FirstScreen, (dat)hs_x1, (dat)hs_y1, (dat)hs_x2, (dat)s_y2, true);
+          DrawDesktop(first_screen, (dat)hs_x1, (dat)hs_y1, (dat)hs_x2, (dat)s_y2, true);
       }
       if (vs_x1 <= vs_x2 && vs_y1 <= s_y2) {
         if (NextW)
           _DrawAreaCtx_(&FirstD, (Tscreen)0, NextW, onlyW, (dat)vs_x1, (dat)vs_y1, (dat)vs_x2,
                         (dat)s_y2, ttrue, &lError);
         else
-          DrawDesktop(FirstScreen, (dat)vs_x1, (dat)vs_y1, (dat)vs_x2, (dat)s_y2, true);
+          DrawDesktop(first_screen, (dat)vs_x1, (dat)vs_y1, (dat)vs_x2, (dat)s_y2, true);
       }
     }
 
@@ -1351,7 +1351,7 @@ void Sdraw::DrawArea() {
       if (NextW)
         _DrawAreaCtx_(&FirstD, (Tscreen)0, NextW, onlyW, x1, dwn + (dat)1, x2, y2, shaded, &lError);
       else
-        DrawDesktop(FirstScreen, x1, dwn + (dat)1, x2, y2, shaded);
+        DrawDesktop(first_screen, x1, dwn + (dat)1, x2, y2, shaded);
     } else
       dwn = y2;
 
@@ -1363,7 +1363,7 @@ void Sdraw::DrawArea() {
         _DrawAreaCtx_(&FirstD, (Tscreen)0, NextW, onlyW, rgt + (dat)1, y1, x2, dwn, shaded,
                       &lError);
       else
-        DrawDesktop(FirstScreen, rgt + (dat)1, y1, x2, dwn, shaded);
+        DrawDesktop(first_screen, rgt + (dat)1, y1, x2, dwn, shaded);
     } else
       rgt = x2;
 
@@ -1375,7 +1375,7 @@ void Sdraw::DrawArea() {
         _DrawAreaCtx_(&FirstD, (Tscreen)0, NextW, onlyW, x1, y1, left - (dat)1, dwn, shaded,
                       &lError);
       else
-        DrawDesktop(FirstScreen, x1, y1, left - (dat)1, dwn, shaded);
+        DrawDesktop(first_screen, x1, y1, left - (dat)1, dwn, shaded);
     } else
       left = x1;
 
@@ -1387,7 +1387,7 @@ void Sdraw::DrawArea() {
         _DrawAreaCtx_(&FirstD, (Tscreen)0, NextW, onlyW, left, y1, rgt, up - (dat)1, shaded,
                       &lError);
       else
-        DrawDesktop(FirstScreen, left, y1, rgt, up - (dat)1, shaded);
+        DrawDesktop(first_screen, left, y1, rgt, up - (dat)1, shaded);
     } else
       up = y1;
 
@@ -1407,7 +1407,7 @@ void Sdraw::DrawArea() {
           _DrawAreaCtx_(&FirstD, (Tscreen)0, NextW, onlyW, (dat)X_1, (dat)Y_1, (dat)X_2, (dat)Y_2,
                         shaded, &lError);
         else
-          DrawDesktop(FirstScreen, (dat)X_1, (dat)Y_1, (dat)X_2, (dat)Y_2, shaded);
+          DrawDesktop(first_screen, (dat)X_1, (dat)Y_1, (dat)X_2, (dat)Y_2, shaded);
       }
 
       /* Draw the visible area right of the Twindow, above the shadow : */
@@ -1423,7 +1423,7 @@ void Sdraw::DrawArea() {
           _DrawAreaCtx_(&FirstD, (Tscreen)0, NextW, onlyW, (dat)X_1, (dat)Y_1, (dat)X_2, (dat)Y_2,
                         shaded, &lError);
         else
-          DrawDesktop(FirstScreen, (dat)X_1, (dat)Y_1, (dat)X_2, (dat)Y_2, shaded);
+          DrawDesktop(first_screen, (dat)X_1, (dat)Y_1, (dat)X_2, (dat)Y_2, shaded);
       }
 
       /* Draw the visible area between the Twindow and a floating shadow : */
@@ -1471,7 +1471,7 @@ void Sdraw::DrawArea() {
             _DrawAreaCtx_(&FirstD, (Tscreen)0, NextW, onlyW, (dat)X_1, (dat)Y_1, (dat)X_2, (dat)Y_2,
                           shaded, &lError);
           else
-            DrawDesktop(FirstScreen, (dat)X_1, (dat)Y_1, (dat)X_2, (dat)Y_2, shaded);
+            DrawDesktop(first_screen, (dat)X_1, (dat)Y_1, (dat)X_2, (dat)Y_2, shaded);
         }
       }
     }
@@ -1481,7 +1481,7 @@ void Sdraw::DrawArea() {
     Error(lError);
 }
 
-void DrawArea2(Tscreen FirstScreen, Twidget w, Twidget onlyW, dat x1, dat y1, dat x2, dat y2,
+void DrawArea2(Tscreen first_screen, Twidget w, Twidget onlyW, dat x1, dat y1, dat x2, dat y2,
                bool shaded) {
   Sdraw d;
 
@@ -1500,7 +1500,7 @@ void DrawArea2(Tscreen FirstScreen, Twidget w, Twidget onlyW, dat x1, dat y1, da
     d.Next = NULL;
     d.W = onlyW;
     d.TopW = w;
-    d.Screen = FirstScreen;
+    d.Screen = first_screen;
     d.Shaded = shaded;
 
     d.DrawArea();
@@ -1512,9 +1512,9 @@ void DrawBorderWindow(Twindow w, byte Flags) {
   dat left, up, rgt, dwn;
   dat dwidth, dheight;
   dat ylimit;
-  Twidget FirstW;
+  Twidget first_w;
   Twidget Parent;
-  Tscreen screen, FirstScreen;
+  Tscreen screen, first_screen;
 
   if (QueuedDrawArea2FullScreen || !w || (w->Flags & (WINDOWFL_BORDERLESS | WINDOWFL_NOTVISIBLE)) ||
       !(Parent = w->Parent) || !IS_SCREEN(Parent))
@@ -1534,8 +1534,8 @@ void DrawBorderWindow(Twindow w, byte Flags) {
       sh_down <= (ldat)ylimit)
     return;
 
-  FirstScreen = screen == All->FirstScreen ? screen : (Tscreen)0;
-  FirstW = FirstScreen && (Twidget)w == screen->FirstW ? (Twidget)w : (Twidget)0;
+  first_screen = screen == All->Screens.First ? screen : (Tscreen)0;
+  first_w = first_screen && (Twidget)w == screen->Widgets.First ? (Twidget)w : (Twidget)0;
 
   left = (dat)Max2(sh_left, (ldat)0);
   up = (dat)Max2(sh_up, (ldat)ylimit + 1);
@@ -1543,14 +1543,14 @@ void DrawBorderWindow(Twindow w, byte Flags) {
   dwn = (dat)Min2(sh_down, (ldat)dheight - (ldat)1);
 
   if ((Flags & BORDER_UP) && sh_up >= ylimit)
-    DrawArea2(FirstScreen, FirstW, (Twidget)w, left, up, rgt, up, tfalse);
+    DrawArea2(first_screen, first_w, (Twidget)w, left, up, rgt, up, tfalse);
   if (!(w->Flags & WINDOW_ROLLED_UP)) {
     if ((Flags & BORDER_LEFT) && sh_left >= 0)
-      DrawArea2(FirstScreen, FirstW, (Twidget)w, left, up, left, dwn, tfalse);
+      DrawArea2(first_screen, first_w, (Twidget)w, left, up, left, dwn, tfalse);
     if ((Flags & BORDER_RIGHT) && sh_right < (ldat)dwidth)
-      DrawArea2(FirstScreen, FirstW, (Twidget)w, rgt, up, rgt, dwn, tfalse);
+      DrawArea2(first_screen, first_w, (Twidget)w, rgt, up, rgt, dwn, tfalse);
     if ((Flags & BORDER_DOWN) && sh_down < (ldat)dheight)
-      DrawArea2(FirstScreen, FirstW, (Twidget)w, left, dwn, rgt, dwn, tfalse);
+      DrawArea2(first_screen, first_w, (Twidget)w, left, dwn, rgt, dwn, tfalse);
   }
 }
 
@@ -1641,7 +1641,7 @@ void DrawAreaWindow2(Twindow w) {
   Sdraw d;
   byte Dvalid = tfalse;
   if (!QueuedDrawArea2FullScreen && w && w->Parent && IS_SCREEN(w->Parent)) {
-    if ((Twidget)w == All->FirstScreen->FirstW) {
+    if ((Twidget)w == All->Screens.First->Widgets.First) {
       DrawWidget((Twidget)w, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
 
     } else if (d.Init((Twidget)w, 0, 0, TW_MAXDAT, TW_MAXDAT, false)) {
@@ -1765,7 +1765,8 @@ void DrawMenuScreen(Tscreen screen, dat Xstart, dat Xend) {
   if (j < 0 || j >= dheight || Xstart >= dwidth || Xstart > Xend)
     return;
 
-  for (fScreen = All->FirstScreen; fScreen && fScreen != screen; fScreen = fScreen->NextScreen()) {
+  for (fScreen = All->Screens.First; fScreen && fScreen != screen;
+       fScreen = fScreen->NextScreen()) {
     if (fScreen->Up <= j) {
       return;
     }
@@ -1810,8 +1811,8 @@ void DrawMenuScreen(Tscreen screen, dat Xstart, dat Xend) {
 
         if (item) {
           /* check if item is from All->CommonMenu */
-          if ((Tmenu)item->Parent == All->CommonMenu && Menu->LastI)
-            x = Menu->LastI->Left + Menu->LastI->Len;
+          if ((Tmenu)item->Parent == All->CommonMenu && Menu->Items.Last)
+            x = Menu->Items.Last->Left + Menu->Items.Last->Len;
           else
             x = 0;
 
@@ -1831,7 +1832,7 @@ void DrawMenuScreen(Tscreen screen, dat Xstart, dat Xend) {
         font = ' ';
       }
     }
-    if (screen != All->FirstScreen) {
+    if (screen != All->Screens.First) {
       color = Menu->ColDisabled;
     }
     Video[i + j * (ldat)dwidth] = TCELL(color, font);
@@ -1840,10 +1841,10 @@ void DrawMenuScreen(Tscreen screen, dat Xstart, dat Xend) {
 }
 
 void DrawScreen(Tscreen screen) {
-  Tscreen FirstScreen;
+  Tscreen first_screen;
   if (!QueuedDrawArea2FullScreen) {
-    FirstScreen = screen == All->FirstScreen ? screen : (Tscreen)0;
-    DrawArea2(FirstScreen, (Twidget)0, (Twidget)0, 0, (dat)screen->Up, TW_MAXDAT, TW_MAXDAT,
+    first_screen = screen == All->Screens.First ? screen : (Tscreen)0;
+    DrawArea2(first_screen, (Twidget)0, (Twidget)0, 0, (dat)screen->Up, TW_MAXDAT, TW_MAXDAT,
               tfalse);
   }
 }

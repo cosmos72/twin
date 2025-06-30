@@ -14,7 +14,6 @@
 #include "builtin.h"      // ColorFill()
 #include "draw.h"         // DrawAreaWidget()
 #include "fn.h"           // Fn_Tobj
-#include "methods.h"      // RemoveT()
 #include "obj/menuitem.h" // COD_RESERVED
 #include "obj/row.h"
 #include "obj/window.h"
@@ -59,9 +58,9 @@ Twindow Srow::Window() const {
 
 void Srow::Insert(Twindow parent, Trow prev, Trow next) {
   if (parent && W_USE(parent, USEROWS) && !Parent) {
-    InsertT(this, &parent->USE.R.FirstRow, prev, next, &parent->HLogic);
-    Parent = parent;
+    parent->USE.R.Rows.Insert(this, prev, next, &parent->HLogic);
     parent->USE.R.NumRowOne = parent->USE.R.NumRowSplit = (ldat)0;
+    Parent = parent;
   }
 }
 
@@ -69,7 +68,7 @@ void Srow::Remove() {
   Twindow w = Window();
   if (w && W_USE(w, USEROWS)) {
     w->USE.R.NumRowOne = w->USE.R.NumRowSplit = (ldat)0;
-    RemoveT(this, &w->USE.R.FirstRow, &w->HLogic);
+    w->USE.R.Rows.Remove(this, &w->HLogic);
   }
   Parent = NULL;
 }
@@ -135,16 +134,16 @@ void Srow::Raise() {
 
   } else if (IS_MENU(parent) && IS_MENUITEM(row)) {
     Tmenu menu = (Tmenu)parent;
-    if (row != menu->FirstI) {
+    if (row != menu->Items.First) {
       row->Remove();
-      ((Tmenuitem)row)->Insert(menu, (Tmenuitem)0, menu->FirstI);
+      ((Tmenuitem)row)->Insert(menu, (Tmenuitem)0, menu->Items.First);
       SyncMenu(menu);
     }
   } else if (IS_WINDOW(parent) && W_USE((Twindow)parent, USEROWS)) {
     Twindow window = (Twindow)parent;
-    if (row != window->USE.R.FirstRow) {
+    if (row != window->USE.R.Rows.First) {
       row->Remove();
-      row->Insert(window, (Trow)0, window->USE.R.FirstRow);
+      row->Insert(window, (Trow)0, window->USE.R.Rows.First);
       DrawAreaWidget(window);
     }
   }
@@ -157,16 +156,16 @@ void Srow::Lower() {
     return;
   } else if (IS_MENU(parent) && IS_MENUITEM(row)) {
     Tmenu menu = (Tmenu)parent;
-    if (row != menu->LastI) {
+    if (row != menu->Items.Last) {
       row->Remove();
-      ((Tmenuitem)row)->Insert(menu, menu->LastI, (Tmenuitem)0);
+      ((Tmenuitem)row)->Insert(menu, menu->Items.Last, (Tmenuitem)0);
       SyncMenu(menu);
     }
   } else if (IS_WINDOW(parent) && W_USE((Twindow)parent, USEROWS)) {
     Twindow window = (Twindow)parent;
-    if (row != window->USE.R.LastRow) {
+    if (row != window->USE.R.Rows.Last) {
       row->Remove();
-      row->Insert(window, window->USE.R.LastRow, (Trow)0);
+      row->Insert(window, window->USE.R.Rows.Last, (Trow)0);
       DrawAreaWidget(window);
     }
   }

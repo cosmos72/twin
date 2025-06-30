@@ -26,7 +26,7 @@ Tmutex Smutex::Create(Tmsgport owner, byte namelen, const char *name, byte perm)
   if (!perm || !owner)
     return x;
 
-  curr = ::All->FirstMutex;
+  curr = ::All->Mutexes.First;
   while (curr && mask) {
     if (namelen == curr->NameLen && !memcmp(name, curr->Name, namelen)) {
       if (curr->Owner == owner) {
@@ -62,7 +62,7 @@ Tmutex Smutex::Init(Tmsgport owner, byte namelen, const char *name, byte perm) {
     return NULL;
   }
   Perm = perm;
-  InsertLast(Mutex, this, ::All);
+  InsertLast(Mutexes, this, ::All);
   // Owner = NULL;
   Own(owner);
   return this;
@@ -76,27 +76,27 @@ void Smutex::Delete() {
 
 void Smutex::Insert(Tall parent, Tmutex prev, Tmutex next) {
   if (parent && !All) {
-    InsertT(this, &All->FirstMutex, prev, next, NULL);
+    parent->Mutexes.Insert(this, prev, next);
     All = parent;
   }
 }
 
 void Smutex::Remove() {
   if (All) {
-    RemoveT(this, &All->FirstMutex, NULL);
+    All->Mutexes.Remove(this);
     All = (Tall)0;
   }
 }
 
 void Smutex::Own(Tmsgport parent) {
   if (parent && !Owner) {
-    if ((O_Prev = parent->LastMutex))
-      parent->LastMutex->O_Next = this;
-    else
-      parent->FirstMutex = this;
-
+    if ((O_Prev = parent->Mutexes.Last)) {
+      parent->Mutexes.Last->O_Next = this;
+    } else {
+      parent->Mutexes.First = this;
+    }
     O_Next = (Tmutex)0;
-    parent->LastMutex = this;
+    parent->Mutexes.Last = this;
 
     Owner = parent;
   }
@@ -105,16 +105,16 @@ void Smutex::Own(Tmsgport parent) {
 void Smutex::DisOwn() {
   Tmsgport parent = Owner;
   if (parent) {
-    if (O_Prev)
+    if (O_Prev) {
       O_Prev->O_Next = O_Next;
-    else if (parent->FirstMutex == this)
-      parent->FirstMutex = O_Next;
-
-    if (O_Next)
+    } else if (parent->Mutexes.First == this) {
+      parent->Mutexes.First = O_Next;
+    }
+    if (O_Next) {
       O_Next->O_Prev = O_Prev;
-    else if (parent->LastMutex == this)
-      parent->LastMutex = O_Prev;
-
+    } else if (parent->Mutexes.Last == this) {
+      parent->Mutexes.Last = O_Prev;
+    }
     O_Prev = O_Next = (Tmutex)0;
 
     Owner = (Tmsgport)0;

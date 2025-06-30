@@ -10,13 +10,13 @@
  *
  */
 
-#include "algo.h"    // Max2()
-#include "alloc.h"   // AllocMem0(), CloneStr2TRune()
-#include "fn.h"      // Fn_Tmenuitem
-#include "methods.h" // RemoveT()
+#include "algo.h"  // Max2()
+#include "alloc.h" // AllocMem0(), CloneStr2TRune()
+#include "fn.h"    // Fn_Tmenuitem
 #include "obj/menuitem.h"
-#include "resize.h" // SyncMenu()
-#include "twin.h"   // IS_WINDOW()
+#include "methods.h" // MoveFirst()
+#include "resize.h"  // SyncMenu()
+#include "twin.h"    // IS_WINDOW()
 
 #include <new>
 #include <Tw/datasizes.h> // TW_MAXLDAT
@@ -65,9 +65,9 @@ Tmenuitem Smenuitem::Init(Tobj parent, Twindow w, udat code, byte flags, dat lef
       if ((ldat)w->YWidth < (len = Min2(TW_MAXDAT, w->HLogic + (ldat)3)))
         w->YWidth = len;
 
-      Insert((Tobj)w, (Tmenuitem)w->USE.R.LastRow, NULL);
+      Insert((Tobj)w, (Tmenuitem)w->USE.R.Rows.Last, NULL);
     } else {
-      Insert(parent, ((Tmenu)parent)->LastI, NULL);
+      Insert(parent, ((Tmenu)parent)->Items.Last, NULL);
       SyncMenu((Tmenu)parent);
     }
     return this;
@@ -101,7 +101,7 @@ Tmenuitem Smenuitem::NextItem() const {
 void Smenuitem::Insert(Tobj parent, Tmenuitem prev, Tmenuitem next) {
   if (parent && !Parent) {
     if (IS_MENU(parent)) {
-      InsertT(this, &((Tmenu)parent)->FirstI, prev, next, NULL);
+      ((Tmenu)parent)->Items.Insert(this, prev, next);
       Parent = parent;
     } else if (IS_WINDOW(parent)) {
       // call superclass implementation
@@ -113,7 +113,7 @@ void Smenuitem::Insert(Tobj parent, Tmenuitem prev, Tmenuitem next) {
 void Smenuitem::Remove() {
   if (Parent) {
     if (IS_MENU(Parent)) {
-      RemoveT(this, &((Tmenu)Parent)->FirstI, NULL);
+      ((Tmenu)Parent)->Items.Remove(this);
       Parent = (Tobj)0;
     } else {
       Srow::Remove();
@@ -128,8 +128,8 @@ Tmenuitem Smenuitem::Create4Menu(Tobj parent, Twindow window, udat code, byte fl
     return (Tmenuitem)0;
   }
   dat left;
-  if (IS_MENU(parent) && ((Tmenu)parent)->LastI)
-    left = ((Tmenu)parent)->LastI->Left + ((Tmenu)parent)->LastI->Len;
+  if (IS_MENU(parent) && ((Tmenu)parent)->Items.Last)
+    left = ((Tmenu)parent)->Items.Last->Left + ((Tmenu)parent)->Items.Last->Len;
   else
     left = (dat)1;
 
@@ -140,7 +140,7 @@ Tmenuitem Smenuitem::Create4Menu(Tobj parent, Twindow window, udat code, byte fl
   if (window) {
     window->Left = left;
   }
-  return New(menuitem)(parent, window, code, flags, left, len, shortcut, name);
+  return Smenuitem::Create(parent, window, code, flags, left, len, shortcut, name);
 }
 
 uldat Smenuitem::Create4MenuCommon(Tmenu menu) {

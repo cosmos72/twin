@@ -146,7 +146,7 @@ static void flush_tty(tty_data *tty) {
   /* finally, keyboard focus configuration: */
   if (tty->Flags & TTY_NEEDREFOCUS) {
     tty->Flags &= ~TTY_NEEDREFOCUS;
-    if (w == (Twindow)All->FirstScreen->FocusW()) {
+    if (w == (Twindow)All->Screens.First->FocusW()) {
       w->KbdFocus();
     }
   }
@@ -335,7 +335,7 @@ static void scrollup(tty_data *tty, dat t, dat b, dat nr) {
     return;
   }
   /* try to accelerate this */
-  if (w == All->FirstScreen->FirstW) {
+  if (w == All->Screens.First->Widgets.First) {
     accel = true;
     flush_tty(tty);
   } else {
@@ -385,7 +385,7 @@ static void scrolldown(tty_data *tty, dat t, dat b, dat nr) {
     return;
   }
   /* try to accelerate this */
-  if (tty->Win == All->FirstScreen->FirstW) {
+  if (tty->Win == All->Screens.First->Widgets.First) {
     accel = true;
     flush_tty(tty);
   } else {
@@ -1526,7 +1526,7 @@ Twidget TtyKbdFocus(Twidget newW) {
   udat newFlags;
   Twidget oldW;
   Twidget P;
-  Tscreen screen = newW && (P = newW->Parent) && IS_SCREEN(P) ? (Tscreen)P : All->FirstScreen;
+  Tscreen screen = newW && (P = newW->Parent) && IS_SCREEN(P) ? (Tscreen)P : All->Screens.First;
 
   if (screen) {
     oldW = screen->FocusW();
@@ -1534,7 +1534,7 @@ Twidget TtyKbdFocus(Twidget newW) {
   } else {
     oldW = newW = (Twidget)0;
   }
-  if (screen == All->FirstScreen) {
+  if (screen == All->Screens.First) {
     if (!newW || !IS_WINDOW(newW) || !W_USE((Twindow)newW, USECONTENTS) ||
         !((Twindow)newW)->USE.C.TtyData) {
       newFlags = defaultFlags;
@@ -1555,7 +1555,7 @@ Twidget TtyKbdFocus(Twidget newW) {
 
 void ForceKbdFocus(void) {
   kbdFlags = ~defaultFlags;
-  (void)TtyKbdFocus(All->FirstScreen->FocusW());
+  (void)TtyKbdFocus(All->Screens.First->FocusW());
 }
 
 static tty_data *common(Twindow w) {
@@ -1567,7 +1567,7 @@ static tty_data *common(Twindow w) {
 
   /* scroll YLogic to bottom */
   if (w->YLogic < tty->ScrollBack) {
-    if (w == All->FirstScreen->FirstW) {
+    if (w == All->Screens.First->Widgets.First) {
       ScrollFirstWindow(0, tty->ScrollBack - w->YLogic, ttrue);
     } else {
       dirty_tty(tty, 0, 0, tty->SizeX - 1, tty->SizeY - 1);
@@ -1786,7 +1786,7 @@ bool TtyWriteTCell(Twindow w, dat x, dat y, uldat len, const tcell *text) {
 
   /* scroll YLogic to bottom */
   if (w->YLogic < tty->ScrollBack) {
-    if (w == All->FirstScreen->FirstW) {
+    if (w == All->Screens.First->Widgets.First) {
       ScrollFirstWindow(0, tty->ScrollBack - w->YLogic, ttrue);
     } else {
       dirty_tty(tty, 0, 0, tty->SizeX - 1, tty->SizeY - 1);
