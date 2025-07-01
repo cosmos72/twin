@@ -110,8 +110,7 @@ public:
 
 class Swidget : public Sobj {
 public:
-  TwidgetFn Fn;
-  Twidget Prev, Next; /* list in the same parent */
+  Twidget Prev, Next; /* siblings in the same parent */
   Twidget Parent;     /* where this Twidget sits */
   /* Twidget */
   List<Twidget> Widgets; /* list of children */

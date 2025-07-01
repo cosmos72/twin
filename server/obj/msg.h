@@ -21,7 +21,6 @@
 
 class Smsg : public Sobj {
 public:
-  TobjFn Fn;
   Tmsg Prev, Next;
   Tmsgport MsgPort;
   /* Tmsg */

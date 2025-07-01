@@ -11,7 +11,6 @@
  */
 
 #include "alloc.h"   // AllocMem0()
-#include "fn.h"      // Fn_Tobj
 #include "hw.h"      // QueuedDrawArea2FullScreen
 #include "methods.h" // InsertLast()
 #include "twin.h"    // IS_SCREEN(), IS_WINDOW()
@@ -28,7 +27,6 @@ Tmenu Smenu::Create(Tmsgport owner, tcolor colitem, tcolor colselect, tcolor col
     void *addr = AllocMem0(sizeof(Smenu));
     if (addr) {
       m = new (addr) Smenu();
-      m->Fn = Fn_Tobj;
       if (!m->Init(owner, colitem, colselect, coldisabled, colselectdisabled, colshtcut,
                    colselshtcut, flagdefcolinfo)) {
         m->Delete();

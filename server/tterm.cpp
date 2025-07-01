@@ -190,7 +190,6 @@ static void TwinTermIO(int Fd, Twindow Window) {
 static void OverrideMethods(bool enter) {
   if (enter) {
     OverrideMethod(widget, KbdFocus, FakeKbdFocus, TtyKbdFocus);
-    OverrideMethod(gadget, KbdFocus, FakeKbdFocus, TtyKbdFocus);
     OverrideMethod(window, KbdFocus, FakeKbdFocus, TtyKbdFocus);
     OverrideMethod(window, TtyWriteCharset, FakeWriteCharset, TtyWriteCharset);
     OverrideMethod(window, TtyWriteUtf8, FakeWriteUtf8, TtyWriteUtf8);
@@ -203,7 +202,6 @@ static void OverrideMethods(bool enter) {
     OverrideMethod(window, TtyWriteUtf8, TtyWriteUtf8, FakeWriteUtf8);
     OverrideMethod(window, TtyWriteCharset, TtyWriteCharset, FakeWriteCharset);
     OverrideMethod(window, KbdFocus, TtyKbdFocus, FakeKbdFocus);
-    OverrideMethod(gadget, KbdFocus, TtyKbdFocus, FakeKbdFocus);
     OverrideMethod(widget, KbdFocus, TtyKbdFocus, FakeKbdFocus);
   }
 }

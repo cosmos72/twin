@@ -13,10 +13,9 @@
 #ifndef TWIN_FWD_H
 #define TWIN_FWD_H
 
-class SobjList;
-class SobjEntry;
 class tty_data;
 class Sremotedata;
+class SobjEntry;
 
 class Sobj;
 class Swidget;
@@ -33,21 +32,16 @@ class Smutex;
 class Smodule;
 class Sdisplay;
 
-class SobjFn;
 class SwidgetFn;
 class SwindowFn;
-class SmsgFn;
-class SmsgportFn;
-class SmutexFn;
 class SmoduleFn;
 
 class Ssetup;
 class Sselection;
 class Sall;
 
-typedef SobjList *TobjList;
-typedef SobjEntry *TobjEntry;
 typedef Sremotedata Tremotedata;
+typedef SobjEntry *TobjEntry;
 
 typedef Sobj *Tobj;
 typedef Swidget *Twidget;
@@ -64,12 +58,8 @@ typedef Smutex *Tmutex;
 typedef Smodule *Tmodule;
 typedef Sdisplay *Tdisplay;
 
-typedef SobjFn *TobjFn;
 typedef SwidgetFn *TwidgetFn;
 typedef SwindowFn *TwindowFn;
-typedef SmsgFn *TmsgFn;
-typedef SmsgportFn *TmsgportFn;
-typedef SmutexFn *TmutexFn;
 typedef SmoduleFn *TmoduleFn;
 
 typedef Ssetup *Tsetup;

@@ -16,7 +16,6 @@
 #include "alloc.h"   // AllocMem0(), CloneStrL()
 #include "data.h"    // DEFAULT_Col*
 #include "draw.h"    // ContainsCursor(), DrawAreaWidget(), DrawAreaWindow2()
-#include "fn.h"      // Fn_Twindow
 #include "methods.h" // IncMouseMotionN(), DecMouseMotionN()
 #include "resize.h"  // UpdateCursor(), RollUpWindow()
 #include "twin.h"    // NOFD, NOPID, NOSLOT
@@ -39,7 +38,6 @@ Twindow Swindow::Create(Tmsgport owner, dat titlelen, const char *title, const t
     void *addr = AllocMem0(sizeof(Swindow));
     if (addr) {
       window = new (addr) Swindow();
-      window->Fn = (TwidgetFn)Fn_Twindow;
       if (!window->Init(owner, titlelen, title, coltitle, m, coltext, cursortype, attr, flags,
                         xwidth, ywidth, scrollbacklines)) {
         window->Delete();

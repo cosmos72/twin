@@ -1000,30 +1000,31 @@ static void sockSetTRuneTranslation(const trune trans[0x80]) {
   }
 }
 
-static Tmsgport sockGetMsgPortObj(Tobj p) {
-  TobjEntry e = (TobjEntry)p;
-  while (e) {
-    if (IS_MSGPORT(e)) {
-      return (Tmsgport)e;
-    }
-    switch (e->Id >> class_byte_shift) {
+static Tmsgport sockGetMsgPortObj(Tobj o) {
+  while (o) {
+    switch (o->Id >> class_byte_shift) {
     case Trow_class_byte:
     case Tmenuitem_class_byte:
+      o = ((Trow)o)->Parent;
+      break;
     case Tmenu_class_byte:
-      e = (TobjEntry)e->Parent;
+      o = ((Tmenu)o)->MsgPort;
       break;
     case Tmutex_class_byte:
-      e = (TobjEntry)((Tmutex)e)->Owner;
+      o = ((Tmutex)o)->Owner;
       break;
+    case Tmsgport_class_byte:
+      return (Tmsgport)o;
     default:
-      if (IS_WIDGET(e))
-        e = (TobjEntry)((Twidget)e)->Owner;
-      else
-        e = NULL;
+      if (IS_WIDGET(o)) {
+        o = ((Twidget)o)->Owner;
+      } else {
+        o = NULL;
+      }
       break;
     }
   }
-  return (Tmsgport)e;
+  return (Tmsgport)0;
 }
 
 static void sockDeleteObj(void *V) {

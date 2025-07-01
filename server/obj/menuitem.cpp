@@ -12,7 +12,6 @@
 
 #include "algo.h"  // Max2()
 #include "alloc.h" // AllocMem0(), CloneStr2TRune()
-#include "fn.h"    // Fn_Tmenuitem
 #include "obj/menuitem.h"
 #include "methods.h" // MoveFirst()
 #include "resize.h"  // SyncMenu()
@@ -30,7 +29,6 @@ Tmenuitem Smenuitem::Create(Tobj parent, Twindow w, udat code, byte flags, dat l
     void *addr = AllocMem0(sizeof(Smenuitem));
     if (addr) {
       item = new (addr) Smenuitem();
-      item->Fn = Fn_Tobj;
       if (!item->Init(parent, w, code, flags, left, len, shortcut, name)) {
         item->Delete();
         item = NULL;

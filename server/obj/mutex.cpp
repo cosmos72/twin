@@ -46,7 +46,6 @@ Tmutex Smutex::Create(Tmsgport owner, byte namelen, const char *name, byte perm)
       void *addr = AllocMem0(sizeof(Smutex));
       if (addr) {
         x = new (addr) Smutex();
-        x->Fn = Fn_Tobj;
         if (!x->Init(owner, namelen, name, perm)) {
           x->Delete();
           x = NULL;

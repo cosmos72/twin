@@ -530,7 +530,7 @@ void ExposeWindow2(Twindow w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitc
   if (utf8_bytes) {
     bool (*writeUtf8)(Twindow, uldat, const char *);
     if (W_USE(w, USECONTENTS)) {
-      writeUtf8 = w->fn()->TtyWriteUtf8;
+      writeUtf8 = Fn_Twindow->TtyWriteUtf8;
     } else
       writeUtf8 = RowWriteUtf8Window;
 
@@ -545,7 +545,7 @@ void ExposeWindow2(Twindow w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitc
   } else if (runes) {
     bool (*writeTRune)(Twindow, uldat, const trune *);
     if (W_USE(w, USECONTENTS))
-      writeTRune = w->fn()->TtyWriteTRune;
+      writeTRune = Fn_Twindow->TtyWriteTRune;
     else
       writeTRune = RowWriteTRuneWindow;
 
@@ -560,7 +560,7 @@ void ExposeWindow2(Twindow w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitc
   } else if (cells) {
     bool (*writeTCell)(Twindow, dat, dat, uldat, const tcell *);
     if (W_USE(w, USECONTENTS))
-      writeTCell = w->fn()->TtyWriteTCell;
+      writeTCell = Fn_Twindow->TtyWriteTCell;
     else
       writeTCell = RowWriteTCellWindow;
 

@@ -17,7 +17,6 @@
 
 class Smenu : public Sobj {
 public:
-  TobjFn Fn;
   Tmenu Prev, Next; /* in the same Tmsgport */
   Tmsgport MsgPort;
   /* Tmenu */

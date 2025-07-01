@@ -48,7 +48,6 @@ public:
 
 class Sdisplay : public Sobj {
 public:
-  TobjFn Fn;
   Tdisplay Prev, Next; /* in the same All */
   Tall All;
 

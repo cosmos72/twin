@@ -14,6 +14,7 @@
 #define TWIN_MODULE_H
 
 #include "obj/fwd.h"
+#include "obj/fn.h"
 #include "obj/obj.h"
 #include "stl/string.h"
 
@@ -30,7 +31,6 @@ public:
 
 class Smodule : public Sobj {
 public:
-  TmoduleFn Fn;
   Tmodule Prev, Next; /* siblings in the same All */
   Tall All;
   /* Tmodule */
@@ -50,10 +50,10 @@ public:
   void Insert(Tall parent, Tmodule prev, Tmodule next);
 
   bool DlOpen() {
-    return Fn->DlOpen(this);
+    return Fn_Tmodule->DlOpen(this);
   }
   void DlClose() {
-    Fn->DlClose(this);
+    Fn_Tmodule->DlClose(this);
   }
 };
 

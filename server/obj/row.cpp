@@ -13,7 +13,6 @@
 #include "alloc.h"        // AllocMem0()
 #include "builtin.h"      // ColorFill()
 #include "draw.h"         // DrawAreaWidget()
-#include "fn.h"           // Fn_Tobj
 #include "obj/menuitem.h" // COD_RESERVED
 #include "obj/row.h"
 #include "obj/window.h"
@@ -29,7 +28,6 @@ Trow Srow::Create(udat code, byte flags) {
     void *addr = AllocMem0(sizeof(Srow));
     if (addr) {
       r = new (addr) Srow();
-      r->Fn = Fn_Tobj;
       if (!r->Init(code, flags, Trow_class_id)) {
         r->Delete();
         r = NULL;

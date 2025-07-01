@@ -1933,15 +1933,16 @@ static void SmartPlace(Twidget w, Tscreen screen) {
   w->MapTopReal(screen);
 }
 
-static void OverrideMethods(byte enter) {
-  if (enter)
+static void OverrideMethods(bool enter) {
+  if (enter) {
     OverrideMethod(window, FindBorder, FakeFindBorderWindow, WMFindBorderWindow);
-  else
+  } else {
     OverrideMethod(window, FindBorder, WMFindBorderWindow, FakeFindBorderWindow);
+  }
 }
 
-byte InitWM(void) {
-  byte sent = tfalse;
+bool InitWM(void) {
+  byte logged = false;
 
   srand48(time(NULL));
   if ((WM_MsgPort = Smsgport::Create(2, "WM", 0, 0, 0, WManagerH)) &&
@@ -1955,26 +1956,26 @@ byte InitWM(void) {
         MapQueue->Remove();
 
         if (InitRC()) {
-          OverrideMethods(ttrue);
-          return ttrue;
+          OverrideMethods(true);
+          return true;
         } else {
-          sent = ttrue;
           log(ERROR) << "twin: RC: " << Errstr << "\n";
+          logged = true;
         }
       }
       UnRegisterExt(WM, MsgPort, WM_MsgPort);
     } else {
-      sent = ttrue;
       log(ERROR) << "twin: WM: RegisterExt(WM,MsgPort) failed! Another WM is running?\n";
+      logged = true;
     }
   }
   if (WM_MsgPort) {
     WM_MsgPort->Delete();
   }
-  if (!sent) {
+  if (!logged) {
     log(ERROR) << "twin: WM: " << Errstr << "\n";
   }
-  return tfalse;
+  return false;
 }
 
 void QuitWM(void) {

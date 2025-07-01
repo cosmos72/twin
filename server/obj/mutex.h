@@ -17,7 +17,6 @@
 
 class Smutex : public Sobj {
 public:
-  TobjFn Fn;
   Tmutex Prev, Next; /* in the same All */
   Tall All;
   /* Tmutex */

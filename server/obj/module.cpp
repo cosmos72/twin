@@ -24,7 +24,6 @@ Tmodule Smodule::Create(Chars name) {
     void *addr = AllocMem0(sizeof(Smodule));
     if (addr) {
       m = new (addr) Smodule();
-      m->Fn = Fn_Tmodule;
       if (!m->Init(name)) {
         m->Delete();
         m = NULL;

@@ -95,7 +95,6 @@ public:
 
 class Sall : public Sobj {
 public:
-  TobjFn Fn;
   Tobj Prev, Next, Parent;
 
   /* Tall */

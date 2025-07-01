@@ -13,7 +13,6 @@
 #include "obj/gadget.h"
 
 #include "alloc.h"     // AllocMem0(), CloneStr2TRune()
-#include "fn.h"        // Fn_Tgadget
 #include "obj/id.h"    // Tgadget_class_id
 #include "obj/group.h" // Sgroup
 #include "menuitem.h"  // COD_RESERVED
@@ -38,7 +37,6 @@ Tgadget Sgadget::Create(Tmsgport owner, Twidget parent, dat xwidth, dat ywidth,
     void *addr = AllocMem0(sizeof(Sgadget));
     if (addr) {
       g = new (addr) Sgadget();
-      g->Fn = (TwidgetFn)Fn_Tgadget;
       if (!g->Init(owner, parent, xwidth, ywidth, textnormal, attr, flags, code, coltext,
                    coltextselect, coltextdisabled, coltextselectdisabled, left, up)) {
         g->Delete();
@@ -73,7 +71,6 @@ Tgadget Sgadget::CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolo
   void *addr = AllocMem0(sizeof(Sgadget));
   if (addr) {
     g = new (addr) Sgadget();
-    g->Fn = (TwidgetFn)Fn_Tgadget;
     if (!((Twidget)g)
              ->Init(owner, ++xwidth, ++ywidth, 0, GADGETFL_USETEXT | GADGETFL_BUTTON, 0, 0,
                     (tcell)0, Tgadget_class_id)) {

@@ -65,10 +65,11 @@ void ShowVersion(void) {
 static void human_print(const char *data, uldat len, byte may_trim) {
   putchar(' ');
   putchar('"');
-  if (may_trim && len > 100)
+  if (may_trim && len > 100) {
     len = 100;
-  else
+  } else {
     may_trim = tfalse;
+  }
   while (len--) {
     switch (*data) {
     case '\0':
@@ -172,31 +173,32 @@ int main(int argc, char *argv[]) {
             len = 13;
             printf("unknown_field");
           }
-          while (len < 32)
+          while (len < 32) {
             len++, putchar(' ');
-
+          }
           isvec = TSF->type >= TWS_vec && (TSF->type & ~TWS_vec) <= TWS_last;
-          if (isvec)
+          if (isvec) {
             type_id = TSF->type & ~TWS_vec;
-          else
+          } else {
             type_id = TSF->type;
-
-          if (type_id == TWS_tobj)
+          }
+          if (type_id == TWS_tobj) {
             type_id = TWS_highest;
-          else if (type_id > TWS_tobj)
+          } else if (type_id > TWS_tobj) {
             /* unknown */
             type_id = TWS_highest + 1;
-
+          }
           if (isvec) {
             len += 4 + strlen(type_list[type_id]);
             v_id = TSF->type & ~TWS_vec;
-            if (v_id == TWS_tobj)
+            if (v_id == TWS_tobj) {
               v_id = TWS_uldat;
+            }
             if (v_id < TWS_highest) {
               n = v_id = TSF->TWS_field_vecL / lsobj_magic[v_id];
-              do
+              do {
                 len++;
-              while (v_id /= 10);
+              } while (v_id /= 10);
               printf("= (%s[%d])", type_list[type_id], (int)n);
             } else
               printf("= (%s[])", type_list[type_id]);
@@ -204,17 +206,19 @@ int main(int argc, char *argv[]) {
             len += 2 + strlen(type_list[type_id]);
             printf("= (%s)", type_list[type_id]);
           }
-          while (len < 44)
+          while (len < 44) {
             len++, putchar(' ');
-
+          }
           if (isvec) {
             if (TSF->TWS_field_vecL && TSF->TWS_field_vecV) {
-              if (type_id == TWS_highest)
+              if (type_id == TWS_highest) {
                 human_print_tobjs(TSF->TWS_field_vecV, TSF->TWS_field_vecL, !verbose);
-              else
+              } else {
                 human_print(TSF->TWS_field_vecV, TSF->TWS_field_vecL, !verbose);
-            } else
+              }
+            } else {
               printf(" (NULL)\n");
+            }
           } else {
             err = TSF->TWS_field_scalar;
             printf("% -11ld # 0x%lx\n", (long)err, (long)err);

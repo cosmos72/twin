@@ -16,7 +16,6 @@
 #include "alloc.h"   // AllocMem0(), AllocMem(), CloneStrL(), CopyMem()
 #include "builtin.h" // Builtin_MsgPort
 #include "draw.h"    // DrawArea2()
-#include "fn.h"      // Fn_Tscreen
 #include "methods.h" // MoveFirst()
 #include "obj/all.h" // All
 #include "resize.h"  // ResizeFirstScreen()
@@ -31,7 +30,6 @@ Tscreen Sscreen::Create(dat namelen, const char *name, dat bgwidth, dat bgheight
     void *addr = AllocMem0(sizeof(Sscreen));
     if (addr) {
       screen = new (addr) Sscreen();
-      screen->Fn = (TwidgetFn)Fn_Tscreen;
       if (!screen->Init(namelen, name, bgwidth, bgheight, bg)) {
         screen->Delete();
         screen = NULL;

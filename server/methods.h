@@ -9,7 +9,6 @@
 #ifndef TWIN_METHODS_H
 #define TWIN_METHODS_H
 
-#include "obj/fn.h"
 #include "obj/window.h" // tpos
 
 byte FindInfo(Tmenu Menu, dat i);

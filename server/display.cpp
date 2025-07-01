@@ -218,7 +218,6 @@ static SmoduleFn _FnModule = {
 };
 
 Tmodule Smodule::Init(Chars /*name*/) {
-  Fn = &_FnModule;
   Sobj::Init(Tmodule_class_id);
   return this;
 }
@@ -230,7 +229,7 @@ void Smodule::Remove() {
 }
 
 static Smodule _Module;
-static Tmodule const GModule = (_Module.Fn = &_FnModule, _Module.Init(Chars()));
+static Tmodule const GModule = _Module.Init(Chars());
 
 static Tmodule DlLoadAny(Chars name) {
   byte (*init_func)(Tmodule);
@@ -307,10 +306,7 @@ static bool module_InitHW(Tdisplay hw, Chars arg) {
 
 static Tdisplay CreateDisplayHW(Chars name);
 
-static SobjFn _FnDisplay = {};
-
 Tdisplay Sdisplay::Init(Chars name) {
-  Fn = &_FnDisplay;
   if (!Sobj::Init(Tdisplay_class_id) || !Name.format(name)) {
     return NULL;
   }

@@ -16,7 +16,6 @@
 #include "alloc.h"   // AllocMem0()
 #include "methods.h" // IncMouseMotionN(), DecMouseMotionN()
 #include "extreg.h"  // Ext()
-#include "fn.h"      // Fn_Twidget
 #include "resize.h"  // UpdateCursor()
 #include "twin.h"    // IS_WIDGET()
 #include "draw.h"    // DrawAreaWidget()
@@ -33,7 +32,6 @@ Twidget Swidget::Create(Tmsgport owner, dat xwidth, dat ywidth, uldat attr, ulda
     void *addr = AllocMem0(sizeof(Swidget));
     if (addr) {
       w = new (addr) Swidget();
-      w->Fn = Fn_Twidget;
       if (!w->Init(owner, xwidth, ywidth, attr, flags, left, up, fill, Twidget_class_id)) {
         w->Delete();
         w = NULL;
@@ -190,7 +188,7 @@ void Swidget::UnFocus() {
 }
 
 Twidget Swidget::KbdFocus() {
-  return Fn->KbdFocus(this);
+  return Fn_Twidget->KbdFocus(this);
 }
 
 Twidget Swidget::KbdFocus(Twidget w) {

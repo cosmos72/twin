@@ -19,7 +19,6 @@
 
 class Srow : public Sobj {
 public:
-  TobjFn Fn;
   Trow Prev, Next;
   Tobj Parent;
 

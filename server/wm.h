@@ -24,7 +24,7 @@ struct wm_ctx {
   ldat Left, Up, Rgt, Dwn; /* Twindow (W) corners */
 };
 
-byte InitWM(void);
+bool InitWM(void);
 void QuitWM(void);
 
 void AskCloseWidget(Twidget w);

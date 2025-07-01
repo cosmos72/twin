@@ -11,7 +11,6 @@
  */
 
 #include "alloc.h"   // AllocMem0()
-#include "fn.h"      // Fn_Tobj
 #include "methods.h" // InsertLast()
 #include "obj/group.h"
 #include "obj/msgport.h"
@@ -25,7 +24,6 @@ Tgroup Sgroup::Create(Tmsgport owner) {
     void *addr = AllocMem0(sizeof(Sgroup));
     if (addr) {
       g = new (addr) Sgroup();
-      g->Fn = Fn_Tobj;
       if (!g->Init(owner)) {
         g->Delete();
         g = NULL;

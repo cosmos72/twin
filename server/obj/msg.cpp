@@ -12,7 +12,6 @@
 
 #include "alloc.h" // AllocMem()
 #include "log.h"
-#include "fn.h"      // Fn_Tobj
 #include "methods.h" // MoveFirst()
 #include "obj/all.h"
 #include "obj/id.h" // AssignId()
@@ -33,7 +32,6 @@ Tmsg Smsg::Create(udat type, size_t eventlen) {
   Tmsg m;
   if ((m = (Tmsg)AllocMem0(headerlen + eventlen))) {
     new (m) Smsg(); // in-place constructor
-    m->Fn = Fn_Tobj;
     if (!m->Init(type, (uldat)eventlen)) {
       m->Delete();
       m = NULL;

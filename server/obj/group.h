@@ -20,7 +20,6 @@
 
 class Sgroup : public Sobj {
 public:
-  TobjFn Fn;
   Tgroup Prev, Next; /* siblings in the same Tmsgport */
   Tmsgport MsgPort;
   /* Tgroup */

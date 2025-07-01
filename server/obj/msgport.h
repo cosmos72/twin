@@ -21,7 +21,6 @@
 
 class Smsgport : public Sobj {
 public:
-  TobjFn Fn;
   Tmsgport Prev, Next; /* list in the same All */
   Tall All;
   /* Tmsgport */
