@@ -834,10 +834,11 @@ bool InitBuiltin(void) {
       (Builtin_Menu = Smenu::Create(Builtin_MsgPort, TCOL(tblack, twhite), TCOL(tblack, tgreen),
                                     TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), TCOL(tred, twhite),
                                     TCOL(tred, tgreen), TCOL0)) &&
-      Info4Menu(Builtin_Menu, ROW_ACTIVE, (uldat)42, " Hit PAUSE or Mouse Right Button for Menu ",
-                ColorFill(color_array, 42, TCOL(tred, twhite))) &&
+      Builtin_Menu->SetInfo(ROW_ACTIVE, (uldat)42, " Hit PAUSE or Mouse Right Button for Menu ",
+                            ColorFill(color_array, 42, TCOL(tred, twhite))) &&
 
-      (w = Win4Menu(Builtin_Menu)) && Row4Menu(w, COD_CLOCK_WIN, ROW_ACTIVE, 9, " Clock   ") &&
+      (w = Swindow::Create4Menu(Builtin_Menu)) &&
+      Row4Menu(w, COD_CLOCK_WIN, ROW_ACTIVE, 9, " Clock   ") &&
       Row4Menu(w, COD_OPTION_WIN, ROW_ACTIVE, 9, " Options ") &&
       Row4Menu(w, COD_BUTTONS_WIN, ROW_ACTIVE, 9, " Buttons ") &&
       Row4Menu(w, COD_DISPLAY_WIN, ROW_ACTIVE, 9, " Display ") &&
@@ -845,18 +846,20 @@ bool InitBuiltin(void) {
       Row4Menu(w, COD_MESSAGES_WIN, ROW_ACTIVE, 10, " Messages ") &&
 #endif
       Row4Menu(w, COD_ABOUT_WIN, ROW_ACTIVE, 9, " About   ") &&
-      Item4Menu(Builtin_Menu, w, ttrue, 3, " \xF0 ") &&
+      Smenuitem::Create4Menu(Builtin_Menu, w, 0, ttrue, 3, " \xF0 ") &&
 
-      (w = Win4Menu(Builtin_Menu)) && Row4Menu(w, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&
+      (w = Swindow::Create4Menu(Builtin_Menu)) &&
+      Row4Menu(w, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&
       Row4Menu(w, COD_EXECUTE, ROW_ACTIVE, 10, " Execute  ") &&
       Row4Menu(w, COD_RELOAD_RC, ROW_ACTIVE, 11, " Reload RC ") &&
       Row4Menu(w, (udat)0, ROW_IGNORE, 11, "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
       Row4Menu(w, COD_DETACH, ROW_ACTIVE, 10, " Detach   ") &&
       Row4Menu(w, COD_SUSPEND, ROW_ACTIVE, 10, " Suspend  ") &&
       Row4Menu(w, COD_QUIT, ROW_ACTIVE, 10, " Quit     ") &&
-      (Builtin_File = Item4Menu(Builtin_Menu, w, ttrue, 6, " File ")) &&
+      (Builtin_File = Smenuitem::Create4Menu(Builtin_Menu, w, 0, ttrue, 6, " File ")) &&
 
-      (w = Win4Menu(Builtin_Menu)) && (w->InstallHook(UpdateMenuRows, &All->HookModule), ttrue) &&
+      (w = Swindow::Create4Menu(Builtin_Menu)) &&
+      (w->InstallHook(UpdateMenuRows, &All->HookModule), ttrue) &&
       Row4Menu(w, COD_TERM_ON, ROW_ACTIVE, 20, " Run Twin Term      ") &&
       Row4Menu(w, COD_TERM_OFF, ROW_INACTIVE, 20, " Stop Twin Term     ") &&
       Row4Menu(
@@ -864,9 +867,9 @@ bool InitBuiltin(void) {
           "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
       Row4Menu(w, COD_SOCKET_ON, ROW_ACTIVE, 20, " Run Socket Server  ") &&
       Row4Menu(w, COD_SOCKET_OFF, ROW_INACTIVE, 20, " Stop Socket Server ") &&
-      (Builtin_Modules = Item4Menu(Builtin_Menu, w, ttrue, 9, " Modules ")) &&
+      (Builtin_Modules = Smenuitem::Create4Menu(Builtin_Menu, w, 0, ttrue, 9, " Modules ")) &&
 
-      Item4MenuCommon(Builtin_Menu) &&
+      Smenuitem::Create4MenuCommon(Builtin_Menu) &&
 
       (AboutWin = Swindow::Create(Builtin_MsgPort, 5, "About",
                                   ColorFill(color_array, 5, TCOL(tWHITE, twhite)), Builtin_Menu,

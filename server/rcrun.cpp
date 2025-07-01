@@ -1058,7 +1058,8 @@ static byte USEDefaultCommonMenu(void) {
                              (tcolor)0, (tcolor)0, ttrue)))
     return tfalse;
 
-  if ((w = Win4Menu(Menu)) && (item = Item4Menu(Menu, w, ttrue, 8, " Window ")) &&
+  if ((w = Swindow::Create4Menu(Menu)) &&
+      (item = Smenuitem::Create4Menu(Menu, w, 0, ttrue, 8, " Window ")) &&
 
       /* we cannot create rows with codes >= COD_RESERVED... */
       (Row = Row4Menu(w, 0, ROW_ACTIVE, 13, " Move        ")) && (Row->Code = COD_COMMON_DRAG) &&

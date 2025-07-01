@@ -226,13 +226,14 @@ EXTERN_C byte InitModule(Tmodule Module) {
       (Term_Menu = Smenu::Create(Term_MsgPort, TCOL(tblack, twhite), TCOL(tblack, tgreen),
                                  TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), TCOL(tred, twhite),
                                  TCOL(tred, tgreen), (byte)0)) &&
-      Info4Menu(Term_Menu, ROW_ACTIVE, (uldat)19, " Builtin Twin Term ", color) &&
+      Term_Menu->SetInfo(ROW_ACTIVE, (uldat)19, " Builtin Twin Term ", color) &&
 
-      (Window = Win4Menu(Term_Menu)) && Row4Menu(Window, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&
+      (Window = Swindow::Create4Menu(Term_Menu)) &&
+      Row4Menu(Window, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&
       Row4Menu(Window, COD_QUIT, tfalse, 6, " Exit ") &&
-      Item4Menu(Term_Menu, Window, ttrue, 6, " File ") &&
+      Smenuitem::Create4Menu(Term_Menu, Window, 0, ttrue, 6, " File ") &&
 
-      Item4MenuCommon(Term_Menu)) {
+      Smenuitem::Create4MenuCommon(Term_Menu)) {
 
     RegisterExt(Term, Open, OpenTerm);
     OverrideMethods(true);

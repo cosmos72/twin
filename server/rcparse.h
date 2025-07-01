@@ -1296,7 +1296,8 @@ static byte NewCommonMenu(void *const *shm_M, Tmenu *res_CommonMenu, node **res_
   /* ok, now create the CommonMenu. Fill new_MenuBinds[] as we proceed */
 
   for (M = new_MenuList; M; M = M->next) {
-    if ((w = Win4Menu(Menu)) && (item = Item4Menu(Menu, w, ttrue, strlen(M->name), M->name))) {
+    if ((w = Swindow::Create4Menu(Menu)) &&
+        (item = Smenuitem::Create4Menu(Menu, w, 0, ttrue, strlen(M->name), M->name))) {
 
       if (!item->PrevItem()) {
         item->Left = 0; /* remove padding */

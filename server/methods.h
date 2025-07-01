@@ -46,17 +46,8 @@ void DecMouseMotionN(void);
 
 #define SendMsg(msgport, whichmsg) InsertLast(Msgs, (whichmsg), (msgport))
 
-#define Info4Menu(menu, flags, len, text, coltext) (menu)->SetInfo(flags, len, text, coltext)
-
-#define Win4Menu(menu) Swindow::Create4Menu(menu)
-
 #define Row4Menu(w, code, flags, len, name)                                                        \
   ((Trow)Smenuitem::Create4Menu((Tobj)(w), (Twindow)0, (code), (flags), (len), (name)))
-
-#define Item4Menu(menu, w, flags, len, name)                                                       \
-  Smenuitem::Create4Menu((Tobj)(menu), (w), (udat)0, (flags), (len), (name))
-
-#define Item4MenuCommon(Menu) Smenuitem::Create4MenuCommon(Menu)
 
 void *OverrideMth(void **where, void *OldMethod, void *NewMethod);
 
