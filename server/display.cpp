@@ -98,17 +98,6 @@ void gainPrivileges(void) {
 void RemotePidIsDead(pid_t pid) {
 }
 
-int printk(const char *format, ...) {
-  int i = 0;
-#ifdef TW_HAVE_VPRINTF
-  va_list ap;
-  va_start(ap, format);
-  i = vfprintf(stderr, format, ap);
-  va_end(ap);
-#endif
-  return i;
-}
-
 void printk_str(const char *s, size_t len) {
   (void)fwrite(s, len, 1, stderr);
 }
@@ -998,19 +987,20 @@ static void MainLoop(Tdisplay hw, int fd) {
     err = TwErrno;
     detail = TwErrnoDetail;
     QuitDisplay(hw);
-    printk("" SS ": libtw error: " SS "" SS "\n", MYname, TwStrError(err),
-           TwStrErrorDetail(err, detail));
+    fprintf(stderr, "" SS ": libtw error: " SS "" SS "\n", MYname, TwStrError(err),
+            TwStrErrorDetail(err, detail));
     exit(1);
   }
   err = TwErrno;
   detail = TwErrnoDetail;
   sys_errno = errno;
   QuitDisplay(hw);
-  printk("" SS ": shouldn't happen! Please report:\n"
-         "\tlibtw TwErrno: %d(%d),\t" SS "" SS "\n"
-         "\tsystem  errno: %d,\t" SS "\n",
-         MYname, err, detail, TwStrError(err), TwStrErrorDetail(err, detail), sys_errno,
-         strerror(sys_errno));
+  fprintf(stderr,
+          "" SS ": shouldn't happen! Please report:\n"
+          "\tlibtw TwErrno: %d(%d),\t" SS "" SS "\n"
+          "\tsystem  errno: %d,\t" SS "\n",
+          MYname, err, detail, TwStrError(err), TwStrErrorDetail(err, detail), sys_errno,
+          strerror(sys_errno));
   exit(1);
 }
 
@@ -1126,7 +1116,7 @@ int main(int argc, char *argv[]) {
       dpy = argi + 6;
     else if (!strncmp(argi, "-hw=", 4)) {
       if (!strncmp(argi + 4, "display", 7)) {
-        printk("" SS ": argument `--hw=display' is for internal use only.\n", MYname);
+        fprintf(stderr, "" SS ": argument `--hw=display' is for internal use only.\n", MYname);
         TryUsage(NULL);
         return 1;
       }
@@ -1145,18 +1135,18 @@ int main(int argc, char *argv[]) {
             /*
              * using server controlling tty makes no sense for twdisplay
              */
-            printk("" SS ": `" SS "' makes sense only with twattach.\n", MYname, argi);
+            fprintf(stderr, "" SS ": `" SS "' makes sense only with twattach.\n", MYname, argi);
             return 1;
           } else if (tty) {
             if (!strcmp(opt + 1, tty))
               /* attach twin to our tty */
               ourtty = 1;
           } else {
-            printk("" SS ": ttyname() failed: cannot find controlling tty!\n", MYname);
+            fprintf(stderr, "" SS ": ttyname() failed: cannot find controlling tty!\n", MYname);
             return 1;
           }
         } else {
-          printk("" SS ": malformed display hw `" SS "'\n", MYname, argi);
+          fprintf(stderr, "" SS ": malformed display hw `" SS "'\n", MYname, argi);
           return 1;
         }
 
@@ -1221,7 +1211,8 @@ int main(int argc, char *argv[]) {
       (client_dpy && *client_dpy && TWDisplay && !strcmp(client_dpy, TWDisplay))) {
 
     if (!force) {
-      printk("twdisplay: refusing to display twin inside itself. Use option `-f' to override.\n");
+      fprintf(stderr,
+              "twdisplay: refusing to display twin inside itself. Use option `-f' to override.\n");
       TwClose();
       return 1;
     }
@@ -1240,7 +1231,7 @@ int main(int argc, char *argv[]) {
 
       if (!VersionsMatch(force)) {
         if (!force) {
-          printk("twdisplay: Aborting. Use option `-f' to ignore versions check.\n");
+          fprintf(stderr, "twdisplay: Aborting. Use option `-f' to ignore versions check.\n");
           TwClose();
           return 1;
         }
@@ -1283,9 +1274,9 @@ int main(int argc, char *argv[]) {
 
       flags &= TW_ATTACH_HW_REDIRECT;
 
-      if (flags)
-        printk("messages reported by twin server...\n");
-
+      if (flags) {
+        fprintf(stderr, "messages reported by twin server...\n");
+      }
       for (;;) {
         uldat len;
         const char *reply = TwAttachGetReply(&len);

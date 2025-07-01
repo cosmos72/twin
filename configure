@@ -23917,24 +23917,6 @@ then :
   printf "%s\n" "#define HAVE_VERSIONSORT 1" >>confdefs.h
 
 fi
-ac_fn_c_check_func "$LINENO" "vprintf" "ac_cv_func_vprintf"
-if test "x$ac_cv_func_vprintf" = xyes
-then :
-  printf "%s\n" "#define HAVE_VPRINTF 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "vsprintf" "ac_cv_func_vsprintf"
-if test "x$ac_cv_func_vsprintf" = xyes
-then :
-  printf "%s\n" "#define HAVE_VSPRINTF 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "vsnprintf" "ac_cv_func_vsnprintf"
-if test "x$ac_cv_func_vsnprintf" = xyes
-then :
-  printf "%s\n" "#define HAVE_VSNPRINTF 1" >>confdefs.h
-
-fi
 ac_fn_c_check_func "$LINENO" "wait3" "ac_cv_func_wait3"
 if test "x$ac_cv_func_wait3" = xyes
 then :

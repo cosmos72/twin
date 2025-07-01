@@ -213,7 +213,7 @@ AC_CHECK_FUNCS([ \
       grantpt hstrerror initgroups lstat memchr memcmp memmove memset mkdir munmap posix_openpt \
       ptsname putenv rename scandir select setenv setlocale sigaction socket snprintf \
       strchr strdup strerror strrchr strspn strstr strtol strtoul sysconf tcsetpgrp \
-      uname unlockpt usleep versionsort vprintf vsprintf vsnprintf wait3 wait4])
+      uname unlockpt usleep versionsort wait3 wait4])
 
 AC_SEARCH_LIBS(crypt,          crypt)                 dnl crypt() is needed by twdm
 AC_SEARCH_LIBS(deflate,        z)
