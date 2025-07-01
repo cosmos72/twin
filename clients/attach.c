@@ -144,14 +144,16 @@ static char *fix_tty(char *arg, byte is_our_tty[1], byte err[1]) {
     if (!term) {
       term = "";
     }
-    target = (char *)malloc(strlen(tty) + 9 + strlen(comma) + (*term ? 6 + strlen(term) : 0));
+    size_t target_len = strlen(tty) + 9 + strlen(rest) + (*term ? 6 + strlen(term) : 0);
+    target = (char *)malloc(target_len);
     if (target) {
-      sprintf(target, "-hw=tty@%s%s%s%s", tty, (*term ? ",TERM=" : ""), term, rest);
+      snprintf(target, target_len, "-hw=tty@%s%s%s%s", tty, (*term ? ",TERM=" : ""), term, rest);
     }
   } else if (is_srv_tty) {
-    target = malloc(8 + strlen(rest));
+    size_t target_len = 8 + strlen(rest);
+    target = malloc(target_len);
     if (target) {
-      sprintf(target, "-hw=tty%s", rest);
+      snprintf(target, target_len, "-hw=tty%s", rest);
     }
   } else {
     target = strdup(arg);
@@ -186,9 +188,10 @@ static char *fix_x11(char *arg) {
   }
 
   if (our_xdisplay) {
-    target = (char *)malloc(strlen(arg) + 2 + strlen(our_xdisplay));
+    size_t target_len = strlen(arg) + 2 + strlen(our_xdisplay);
+    target = (char *)malloc(target_len);
     if (target) {
-      sprintf(target, "%.*s@%s%s", (int)(opts - arg), arg, our_xdisplay, opts);
+      snprintf(target, target_len, "%.*s@%s%s", (int)(opts - arg), arg, our_xdisplay, opts);
     }
   } else {
     target = strdup(arg);

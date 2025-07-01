@@ -211,9 +211,9 @@ dnl AC_FUNC_WAIT3
 AC_CHECK_FUNCS([ \
       alarm alphasort crypt dup2 ftime getenv gethostname getpagesize getpt getspnam gettimeofday \
       grantpt hstrerror initgroups lstat memchr memcmp memmove memset mkdir munmap posix_openpt \
-      ptsname putenv rename scandir select setenv setlocale sigaction socket strchr strdup strerror \
-      strrchr strspn strstr strtol strtoul sysconf tcsetpgrp uname unlockpt usleep \
-      versionsort vprintf vsprintf vsnprintf wait3 wait4])
+      ptsname putenv rename scandir select setenv setlocale sigaction socket snprintf \
+      strchr strdup strerror strrchr strspn strstr strtol strtoul sysconf tcsetpgrp \
+      uname unlockpt usleep versionsort vprintf vsprintf vsnprintf wait3 wait4])
 
 AC_SEARCH_LIBS(crypt,          crypt)                 dnl crypt() is needed by twdm
 AC_SEARCH_LIBS(deflate,        z)

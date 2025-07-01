@@ -1167,12 +1167,13 @@ int main(int argc, char *argv[]) {
 
         if (ourtty) {
           const char *term = getenv("TERM");
-          if (term && !*term)
+          if (term && !*term) {
             term = NULL;
+          }
+          size_t arg_hw_len = strlen(tty) + 9 + strlen(cs) + (term ? 6 + strlen(term) : 0);
+          arg_hw = (char *)malloc(arg_hw_len);
 
-          arg_hw = (char *)malloc(strlen(tty) + 9 + strlen(cs) + (term ? 6 + strlen(term) : 0));
-
-          sprintf(arg_hw, "-hw=tty%s%s%s", (term ? ",TERM=" : term), term, cs);
+          snprintf(arg_hw, arg_hw_len, "-hw=tty%s%s%s", (term ? ",TERM=" : term), term, cs);
         } else
           arg_hw = argi;
       } else if ((argi)[4]) {
@@ -1265,16 +1266,17 @@ int main(int argc, char *argv[]) {
         TwClose();
         return 1;
       }
-      if (!(buf = (char *)AllocMem(hw->Name.size() + 80))) {
+      size_t buf_len = hw->Name.size() + 80;
+      if (!(buf = (char *)AllocMem(buf_len))) {
         QuitDisplay(hw);
         TwClose();
         OutOfMemory();
         return 1;
       }
 
-      sprintf(buf, "-hw=display@(%.*s),x=%d,y=%d%s%s%s", (int)hw->Name.size(), hw->Name.data(),
-              (int)hw->X, (int)hw->Y, hw->CanResize ? ",resize" : "",
-              /* CanDragArea */ ttrue ? ",drag" : "", ExpensiveFlushVideo ? ",slow" : "");
+      snprintf(buf, buf_len, "-hw=display@(%.*s),x=%d,y=%d%s%s%s", (int)hw->Name.size(),
+               hw->Name.data(), (int)hw->X, (int)hw->Y, hw->CanResize ? ",resize" : "",
+               /* CanDragArea */ ttrue ? ",drag" : "", ExpensiveFlushVideo ? ",slow" : "");
 
       TwAttachHW(strlen(buf), buf, flags);
       TwFlush();

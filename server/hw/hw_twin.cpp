@@ -97,7 +97,7 @@ TW_ATTR_HIDDEN void tw_driver::Configure(Tdisplay hw, udat resource, byte todefa
       Tw_WriteCharsetWindow(self->dpy, self->win, 5, "\033[10]");
     else {
       char buf[17];
-      sprintf(buf, "\033[10;%u]", (unsigned)value);
+      snprintf(buf, sizeof(buf), "\033[10;%u]", (unsigned)value);
       Tw_WriteCharsetWindow(self->dpy, self->win, strlen(buf), buf);
     }
     hw->setFlush();
@@ -107,7 +107,7 @@ TW_ATTR_HIDDEN void tw_driver::Configure(Tdisplay hw, udat resource, byte todefa
       Tw_WriteCharsetWindow(self->dpy, self->win, 5, "\033[11]");
     else {
       char buf[17];
-      sprintf(buf, "\033[11;%u]", (unsigned)value);
+      snprintf(buf, sizeof(buf), "\033[11;%u]", (unsigned)value);
       Tw_WriteCharsetWindow(self->dpy, self->win, strlen(buf), buf);
     }
     hw->setFlush();
@@ -258,8 +258,8 @@ TW_ATTR_HIDDEN void tw_driver::FlushVideo(Tdisplay hw) {
   if (!ValidOldVideo || CursorType != hw->TT) {
     /* Tw_SetCursorWindow(self->win, CursorType); */
     char buff[16];
-    sprintf(buff, "\033[?%d;%d;%dc", (int)(CursorType & 0xFF), (int)((CursorType >> 8) & 0xFF),
-            (int)((CursorType >> 16) & 0xFF));
+    snprintf(buff, sizeof(buff), "\033[?%d;%d;%dc", (int)(CursorType & 0xFF),
+             (int)((CursorType >> 8) & 0xFF), (int)((CursorType >> 16) & 0xFF));
     Tw_WriteCharsetWindow(self->dpy, self->win, strlen(buff), buff);
     hw->TT = CursorType;
     hw->setFlush();
@@ -534,7 +534,7 @@ TW_ATTR_HIDDEN bool tw_driver::InitHW(Tdisplay hw) {
       const tcolor color_array[14] = {b, r, b, b, b, b, b, b, b, r, b, b, b, b};
       Tw_Info4Menu(self->dpy, tw_menu, TW_ROW_ACTIVE, (uldat)14, " Twin on Twin ", color_array);
 
-      sprintf(name + 5, "%s on twin", TWDisplay);
+      snprintf(name + 5, sizeof(name) - 5, "%s on twin", TWDisplay);
       len = strlen(name);
 
       self->win =

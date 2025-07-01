@@ -912,10 +912,10 @@ static void ShowResize(Twindow w) {
   dat x = w->XWidth;
   dat y = w->YWidth;
 
-  if (!(w->Flags & WINDOWFL_BORDERLESS))
+  if (!(w->Flags & WINDOWFL_BORDERLESS)) {
     x -= 2, y -= 2;
-
-  sprintf(buf, "%hdx%hd", x, y);
+  }
+  snprintf(buf, sizeof(buf), "%hdx%hd", x, y);
   All->BuiltinRow->SetText(strlen(buf), buf, 0);
   All->Screens.First->DrawMenu(All->DisplayWidth - 20, All->DisplayWidth - 10);
 }

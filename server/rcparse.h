@@ -506,8 +506,9 @@ static node LookupBind(ldat label, ldat ctx, node l) {
 }
 
 static str toString(ldat i) {
-  str s = (str)my_malloc(2 + 3 * sizeof(ldat));
-  sprintf(s, "%d", (int)i);
+  size_t s_len = 2 + 3 * sizeof(ldat);
+  str s = (str)my_malloc(s_len);
+  snprintf(s, s_len, "%d", (int)i);
   return s;
 }
 

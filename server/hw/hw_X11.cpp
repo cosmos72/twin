@@ -143,10 +143,11 @@ TW_ATTR_HIDDEN char *XDRIVER::AutodetectFont(const char *family, udat fontwidth,
   if (family) {
     return strdup(family);
   }
-  pattern = (char *)AllocMem(strlen(patterns[0].wildcard) + 1 + 3 * sizeof(unsigned));
-  if (!pattern)
+  size_t pattern_len = strlen(patterns[0].wildcard) + 1 + 3 * sizeof(unsigned);
+  pattern = (char *)AllocMem(pattern_len);
+  if (!pattern) {
     return NULL;
-
+  }
   for (i = 0; i < n_patterns && beatable_score; i++) {
     ldat score_adj = patterns[i].score_adj;
 
@@ -155,8 +156,9 @@ TW_ATTR_HIDDEN char *XDRIVER::AutodetectFont(const char *family, udat fontwidth,
     for (j = 0; j < 2 && beatable_score; j++) {
       n_fonts = 0;
       info = NULL;
-      sprintf(digits, "%u", (unsigned)(fontheight / 10 + (j != 0 ? look_up ? 1 : -1 : 0)));
-      sprintf(pattern, patterns[i].wildcard, digits + (digits[0] == '0'));
+      snprintf(digits, sizeof(digits), "%u",
+               (unsigned)(fontheight / 10 + (j != 0 ? look_up ? 1 : -1 : 0)));
+      snprintf(pattern, pattern_len, patterns[i].wildcard, digits + (digits[0] == '0'));
       names = XListFontsWithInfo(this->xdisplay, pattern, max_fonts, &n_fonts, &info);
 
       /* printk("%4d fonts match '%s'\n", names ? n_fonts : 0, pattern); */

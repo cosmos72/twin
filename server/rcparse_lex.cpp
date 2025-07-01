@@ -1607,7 +1607,7 @@ case 88:
 YY_RULE_SETUP
 #line 179 "rcparse.l"
 {
-            sprintf(errbuf, "twin: %.200s:%d: invalid identifier `%s'\n",
+            snprintf(errbuf, sizeof(errbuf), "twin: %.200s:%d: invalid identifier `%s'\n",
                 FILE_NAME, LINE_NO, yytext);
             YY_FATAL_ERROR(errbuf);
         }
@@ -1677,9 +1677,10 @@ case 90:
 YY_RULE_SETUP
 #line 241 "rcparse.l"
 {
-        char *buf = (char *)AllocMem(256 + strlen(yytext));
+        size_t buf_len = 256 + strlen(yytext);
+        char *buf = (char *)AllocMem(buf_len);
         if (buf) {
-            sprintf(buf, "twin: %.200s:%d: unterminated string:\n%s\n",
+            snprintf(buf, buf_len, "twin: %.200s:%d: unterminated string:\n%s\n",
                 FILE_NAME, LINE_NO, yytext);
                 YY_FATAL_ERROR(buf);
             } else {
@@ -1689,29 +1690,32 @@ YY_RULE_SETUP
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 252 "rcparse.l"
+#line 253 "rcparse.l"
 /* eat whitespace */
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 255 "rcparse.l"
+#line 256 "rcparse.l"
 {
             unsigned char ch = yytext[0];
-            sprintf(errbuf, "twin: %.200s:%d: illegal character 0x%02X",
+            snprintf(errbuf, sizeof(errbuf), "twin: %.200s:%d: illegal character 0x%02X",
                 FILE_NAME, LINE_NO, ch);
-                    if (ch >= 32 && ch < 127) {
-            sprintf(errbuf + strlen(errbuf), " `%c'\n", ch);
-                    } else
-            strcat(errbuf, "\n");
+            size_t errbuf_len = strlen(errbuf);
+            if (ch >= 32 && ch < 127) {
+              snprintf(errbuf + errbuf_len, 5, " `%c'\n", ch);
+            } else {
+              errbuf[errbuf_len++] = '\n';
+              errbuf[errbuf_len++] = '\0';
+            }
             YY_FATAL_ERROR(errbuf);
         }
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
-#line 266 "rcparse.l"
+#line 270 "rcparse.l"
 ECHO;
 	YY_BREAK
-#line 1715 "rcparse_lex.cpp"
+#line 1719 "rcparse_lex.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2716,7 +2720,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 266 "rcparse.l"
+#line 270 "rcparse.l"
 
 
 

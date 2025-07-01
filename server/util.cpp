@@ -1045,7 +1045,7 @@ bool InitTWDisplay(void) {
     addr_unix.sun_family = AF_UNIX;
 
     for (i = 0; i < 0x1000; i++) {
-      sprintf(twd, ":%hx", i);
+      snprintf(twd, sizeof(twd), ":%hx", i);
 
       len = CopyToSockaddrUn(TmpDir.data(), &addr_unix, 0);
       len = CopyToSockaddrUn("/.Twin", &addr_unix, len);
@@ -1100,8 +1100,9 @@ bool InitTWDisplay(void) {
             putenv(envTWD);
             putenv("TERM=linux");
 #endif
-            if ((arg0 = (char *)AllocMem(strlen(TWDisplay) + 6))) {
-              sprintf(arg0, "twin %s", TWDisplay);
+            size_t arg0_len = strlen(TWDisplay) + 6;
+            if ((arg0 = (char *)AllocMem(arg0_len))) {
+              snprintf(arg0, arg0_len, "twin %s", TWDisplay);
               SetArgv0(main_argv, main_argv_usable_len, arg0);
               FreeMem(arg0);
             }
@@ -1175,16 +1176,16 @@ static bool SetEnvs(struct passwd *p) {
   setenv("HOME", HOME.data(), 1);
   setenv("SHELL", p->pw_shell, 1);
   setenv("LOGNAME", p->pw_name, 1);
-  sprintf(buf, "/var/mail/%.*s", (int)(TW_BIGBUFF - 11), p->pw_name);
+  snprintf(buf, TW_BIGBUFF, "/var/mail/%.*s", (int)(TW_BIGBUFF - 11), p->pw_name);
   setenv("MAIL", buf, 1);
 #elif defined(TW_HAVE_PUTENV)
-  sprintf(buf, "HOME=%.*s", (int)(TW_BIGBUFF - 6), HOME.data());
+  snprintf(buf, TW_BIGBUFF, "HOME=%.*s", (int)(TW_BIGBUFF - 6), HOME.data());
   putenv(buf);
-  sprintf(buf, "SHELL=%.*s", (int)(TW_BIGBUFF - 7), p->pw_shell);
+  snprintf(buf, TW_BIGBUFF, "SHELL=%.*s", (int)(TW_BIGBUFF - 7), p->pw_shell);
   putenv(buf);
-  sprintf(buf, "LOGNAME=%.*s", (int)(TW_BIGBUFF - 9), p->pw_name);
+  snprintf(buf, TW_BIGBUFF, "LOGNAME=%.*s", (int)(TW_BIGBUFF - 9), p->pw_name);
   putenv(buf);
-  sprintf(buf, "MAIL=/var/mail/%.*s", (int)(TW_BIGBUFF - 16) p->pw_name);
+  snprintf(buf, TW_BIGBUFF, "MAIL=/var/mail/%.*s", (int)(TW_BIGBUFF - 16), p->pw_name);
   putenv(buf);
 #endif
   return true;

@@ -81,8 +81,8 @@ static uldat BuiltinTime(char builtin_egg[10]) {
   GetNow();
   t = (time_t)Now.tv_sec;
   localt = localtime(&t);
-  sprintf(builtin_egg, "%02d:%02d:%02d", (int)localt->tm_hour & 31, (int)localt->tm_min & 63,
-          (int)localt->tm_sec & 63);
+  snprintf(builtin_egg, 10, "%02d:%02d:%02d", (int)localt->tm_hour & 31, (int)localt->tm_min & 63,
+           (int)localt->tm_sec & 63);
   return strlen(builtin_egg);
 }
 

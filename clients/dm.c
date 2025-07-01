@@ -294,8 +294,9 @@ static byte InitClient(void) {
 
   if (!title) {
     struct utsname buf;
-    if (uname(&buf) >= 0 && (tbuf = (char *)TwAllocMem(12 + strlen(buf.nodename)))) {
-      sprintf(tbuf, "Welcome at %s", buf.nodename);
+    size_t tbuf_len;
+    if (uname(&buf) >= 0 && (tbuf = (char *)TwAllocMem(tbuf_len = 12 + strlen(buf.nodename)))) {
+      snprintf(tbuf, tbuf_len, "Welcome at %s", buf.nodename);
       title = tbuf;
     } else
       title = "Login Manager";
