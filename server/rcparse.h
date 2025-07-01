@@ -1184,7 +1184,7 @@ static byte CreateNeededScreens(node list, Tscreen *res_Screens) {
         }
         h++;
       }
-      s = New(screen)(strlen(list->name), list->name, w, h, attr);
+      s = Sscreen::Create(strlen(list->name), list->name, w, h, attr);
 
       FreeMem(attr);
     }
@@ -1289,8 +1289,8 @@ static byte NewCommonMenu(void *const *shm_M, Tmenu *res_CommonMenu, node **res_
   new_MenuBindsMax = 0;
   new_MenuList = (node)(*(shm_M + (&MenuList - Globals)));
 
-  if (!(Menu = New(menu)(Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0,
-                         (tcolor)0, ttrue)))
+  if (!(Menu = Smenu::Create(Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0,
+                             (tcolor)0, (tcolor)0, ttrue)))
     return tfalse;
 
   /* ok, now create the CommonMenu. Fill new_MenuBinds[] as we proceed */

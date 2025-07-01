@@ -49,11 +49,11 @@ static void termShutDown(Twidget w) {
 static Twindow newTermWindow(const char *title) {
   Twindow Window;
 
-  Window = New(window)(Term_MsgPort, strlen(title), title, NULL, Term_Menu, TCOL(twhite, tblack),
-                       LINECURSOR,
-                       WINDOW_WANT_KEYS | WINDOW_DRAG | WINDOW_RESIZE | WINDOW_Y_BAR | WINDOW_CLOSE,
-                       WINDOWFL_CURSOR_ON | WINDOWFL_USECONTENTS,
-                       /*width*/ 80, /*height*/ 25, /*scrollbacklines*/ 1000);
+  Window = Swindow::Create(
+      Term_MsgPort, strlen(title), title, NULL, Term_Menu, TCOL(twhite, tblack), LINECURSOR,
+      WINDOW_WANT_KEYS | WINDOW_DRAG | WINDOW_RESIZE | WINDOW_Y_BAR | WINDOW_CLOSE,
+      WINDOWFL_CURSOR_ON | WINDOWFL_USECONTENTS,
+      /*width*/ 80, /*height*/ 25, /*scrollbacklines*/ 1000);
 
   if (Window) {
     Window->SetColors(0x1FF, TCOL(tYELLOW, tcyan), TCOL(tGREEN, tBLUE), TCOL(twhite, tBLUE),
@@ -221,10 +221,11 @@ EXTERN_C byte InitModule(Tmodule Module) {
       (default_args[1] =
            (shell = strrchr(shellpath, '/')) ? CloneStr(shell) : CloneStr(shellpath)) &&
 
-      (Term_MsgPort = New(msgport)(14, "builtin twterm", (uldat)0, (udat)0, (byte)0, TwinTermH)) &&
-      (Term_Menu =
-           New(menu)(Term_MsgPort, TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
-                     TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
+      (Term_MsgPort =
+           Smsgport::Create(14, "builtin twterm", (uldat)0, (udat)0, (byte)0, TwinTermH)) &&
+      (Term_Menu = Smenu::Create(Term_MsgPort, TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                                 TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), TCOL(tred, twhite),
+                                 TCOL(tred, tgreen), (byte)0)) &&
       Info4Menu(Term_Menu, ROW_ACTIVE, (uldat)19, " Builtin Twin Term ", color) &&
 
       (Window = Win4Menu(Term_Menu)) && Row4Menu(Window, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&

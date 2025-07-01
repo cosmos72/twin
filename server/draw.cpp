@@ -419,7 +419,7 @@ void Swidget::DrawSelf(Sdraw *d) {
   if (!text && !runes && !cells) {
     /* ask the client to draw */
     Tmsg msg;
-    if ((msg = New(msg)(msg_widget_change, 0))) {
+    if ((msg = Smsg::Create(msg_widget_change, 0))) {
       event_widget *event = &msg->Event.EventWidget;
       event->W = w;
       event->Code = MSG_WIDGET_EXPOSE;

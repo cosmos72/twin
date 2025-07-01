@@ -297,7 +297,7 @@ byte SendControlMsg(Tmsgport MsgPort, udat Code, udat Len, const char *Data) {
   Tmsg msg;
   event_control *Event;
 
-  if (MsgPort && (msg = New(msg)(msg_control, Len))) {
+  if (MsgPort && (msg = Smsg::Create(msg_control, Len))) {
     Event = &msg->Event.EventControl;
     Event->Code = Code;
     Event->Len = Len;

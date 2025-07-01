@@ -42,7 +42,7 @@ Tscreen Sscreen::Create(dat namelen, const char *name, dat bgwidth, dat bgheight
 }
 
 Tscreen Sscreen::CreateSimple(dat namelen, const char *name, tcell bg) {
-  return New(screen)(namelen, name, 1, 1, &bg);
+  return Sscreen::Create(namelen, name, 1, 1, &bg);
 }
 
 Tscreen Sscreen::Init(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg) {

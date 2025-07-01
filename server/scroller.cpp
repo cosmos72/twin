@@ -35,8 +35,8 @@ Tmsg Do_Scroll, Dont_Scroll;
 
 byte InitScroller(void) {
   if ((Scroller_MsgPort =
-           New(msgport)(16, "builtin scroller", (tany)0, 401 MilliSECs, (byte)0, ScrollerH)) &&
-      (Do_Scroll = New(msg)(0, 0)) && (Dont_Scroll = New(msg)(0, 0))) {
+           Smsgport::Create(16, "builtin scroller", (tany)0, 401 MilliSECs, (byte)0, ScrollerH)) &&
+      (Do_Scroll = Smsg::Create(0, 0)) && (Dont_Scroll = Smsg::Create(0, 0))) {
 
     return ttrue;
   }

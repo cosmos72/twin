@@ -204,7 +204,7 @@ void Swidget::Map(Twidget parent) {
   if (!w || IS_SCREEN(w) || !parent || w->Parent || w->MapQueueMsg) {
     return;
   } else if (IS_SCREEN(parent)) {
-    if (Ext(WM, MsgPort) && (msg = New(msg)(msg_map, 0))) {
+    if (Ext(WM, MsgPort) && (msg = Smsg::Create(msg_map, 0))) {
       msg->Event.EventMap.W = w;
       msg->Event.EventMap.Code = 0;
       msg->Event.EventMap.Screen = (Tscreen)parent;

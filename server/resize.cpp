@@ -213,7 +213,7 @@ static Trow InsertRowsWindow(Twindow w, ldat NumRows) {
   Trow row;
 
   while (NumRows--) {
-    if ((row = New(row)(0, ROW_ACTIVE))) {
+    if ((row = Srow::Create(0, ROW_ACTIVE))) {
       row->Insert(w, w->USE.R.Rows.Last, NULL);
     } else
       break;
@@ -586,12 +586,12 @@ void ResizeWidget(Twidget w, dat X, dat Y) {
   }
 }
 
-void ResizeGadget(Tgadget G, dat X, dat Y) {
-  if (G) {
-    if (G_USE(G, USETEXT)) {
+void ResizeGadget(Tgadget g, dat X, dat Y) {
+  if (g) {
+    if (G_USE(g, USETEXT)) {
       /* FIXME: finish this */
     } else {
-      ResizeWidget((Twidget)G, X, Y);
+      ResizeWidget((Twidget)g, X, Y);
     }
   }
 }
@@ -1877,57 +1877,62 @@ void RestackRows(Tobj O, uldat N, const Trow *arrayR) {
 
 /* ---------------- */
 
-void SendMsgGadget(Tgadget G) {
-  Tmsg msg;
-  event_gadget *Event;
-  if (G->Code && !(G->Flags & GADGETFL_DISABLED)) {
-    if ((msg = New(msg)(msg_widget_gadget, 0))) {
-      Event = &msg->Event.EventGadget;
-      Event->W = G->Parent;
-      Event->Code = G->Code;
-      Event->Flags = G->Flags;
-      SendMsg(G->Owner, msg);
+void SendMsgGadget(Tgadget g) {
+  if (g->Code && !(g->Flags & GADGETFL_DISABLED)) {
+    Tmsg msg = Smsg::Create(msg_widget_gadget, 0);
+    if (msg) {
+      event_gadget *event = &msg->Event.EventGadget;
+      event->W = g->Parent;
+      event->Code = g->Code;
+      event->Flags = g->Flags;
+      SendMsg(g->Owner, msg);
     }
   }
 }
 
-static void realUnPressGadget(Tgadget G) {
-  G->Flags &= ~GADGETFL_PRESSED;
-  if (G->Group && G->Group->SelectG == G)
-    G->Group->SelectG = (Tgadget)0;
-  if ((Twidget)G == All->Screens.First->Widgets.First)
-    DrawWidget((Twidget)G, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
-  else
-    DrawAreaWidget((Twidget)G);
-}
-
-static void realPressGadget(Tgadget G) {
-  G->Flags |= GADGETFL_PRESSED;
-  if (G->Group)
-    G->Group->SelectG = G;
-  if ((Twidget)G == All->Screens.First->Widgets.First)
-    DrawWidget((Twidget)G, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
-  else
-    DrawAreaWidget((Twidget)G);
-}
-
-void PressGadget(Tgadget G) {
-  if (!(G->Flags & GADGETFL_DISABLED)) {
-    /* honour groups */
-    if (G->Group && G->Group->SelectG && G->Group->SelectG != G)
-      UnPressGadget(G->Group->SelectG, ttrue);
-
-    realPressGadget(G);
-    if (G->Flags & GADGETFL_TOGGLE)
-      SendMsgGadget(G);
+static void realUnPressGadget(Tgadget g) {
+  g->Flags &= ~GADGETFL_PRESSED;
+  if (g->Group && g->Group->SelectG == g) {
+    g->Group->SelectG = (Tgadget)0;
+  }
+  if (g == All->Screens.First->Widgets.First) {
+    DrawWidget(g, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
+  } else {
+    DrawAreaWidget(g);
   }
 }
 
-void UnPressGadget(Tgadget G, byte maySendMsgIfNotToggle) {
-  if (!(G->Flags & GADGETFL_DISABLED)) {
-    realUnPressGadget(G);
-    if (maySendMsgIfNotToggle || (G->Flags & GADGETFL_TOGGLE))
-      SendMsgGadget(G);
+static void realPressGadget(Tgadget g) {
+  g->Flags |= GADGETFL_PRESSED;
+  if (g->Group) {
+    g->Group->SelectG = g;
+  }
+  if (g == All->Screens.First->Widgets.First) {
+    DrawWidget(g, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
+  } else {
+    DrawAreaWidget(g);
+  }
+}
+
+void PressGadget(Tgadget g) {
+  if (!(g->Flags & GADGETFL_DISABLED)) {
+    /* honour groups */
+    if (g->Group && g->Group->SelectG && g->Group->SelectG != g) {
+      UnPressGadget(g->Group->SelectG, ttrue);
+    }
+    realPressGadget(g);
+    if (g->Flags & GADGETFL_TOGGLE) {
+      SendMsgGadget(g);
+    }
+  }
+}
+
+void UnPressGadget(Tgadget g, byte maySendMsgIfNotToggle) {
+  if (!(g->Flags & GADGETFL_DISABLED)) {
+    realUnPressGadget(g);
+    if (maySendMsgIfNotToggle || (g->Flags & GADGETFL_TOGGLE)) {
+      SendMsgGadget(g);
+    }
   }
 }
 
@@ -1944,8 +1949,9 @@ void Sgadget::WriteTexts(byte bitmap, dat t_width, dat t_height, const char *cha
     g_height--;
   }
 
-  if (!G_USE(g, USETEXT) || left >= g_width || up >= g_height)
+  if (!G_USE(g, USETEXT) || left >= g_width || up >= g_height) {
     return;
+  }
 
   if (left < 0) {
     left += g_width - t_width + 1;
@@ -2013,9 +2019,9 @@ void Sgadget::WriteTRunes(byte bitmap, dat t_width, dat t_height, //
     g_height--;
   }
 
-  if (!G_USE(g, USETEXT) || left >= g_width || up >= g_height)
+  if (!G_USE(g, USETEXT) || left >= g_width || up >= g_height) {
     return;
-
+  }
   if (left < 0) {
     left += g_width - t_width + 1;
     if (left < 0) {

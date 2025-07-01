@@ -26,8 +26,6 @@ void DecMouseMotionN(void);
 
 #define Do(command, objtype) (S##objtype::command)
 
-#define New(objtype) S##objtype::Create
-
 #define SKIP_FIRST_ARG(arg, ...) (__VA_ARGS__)
 #define Act(command, obj) (obj)->command SKIP_FIRST_ARG
 

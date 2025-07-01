@@ -52,11 +52,11 @@ Twindow Swindow::Create(Tmsgport owner, dat titlelen, const char *title, const t
 
 Twindow Swindow::Create4Menu(Tmenu menu) {
   Twindow window = (Twindow)0;
-  if (menu && (window = New(window)(menu->MsgPort, 0, NULL, (tcolor *)0, menu, TCOL(tblack, twhite),
-                                    NOCURSOR, WINDOW_AUTO_KEYS,
-                                    WINDOWFL_MENU | WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL |
-                                        WINDOWFL_ROWS_SELCURRENT,
-                                    MIN_XWIN, MIN_YWIN, 0))) {
+  if (menu && (window = Swindow::Create(menu->MsgPort, 0, NULL, (tcolor *)0, menu,
+                                        TCOL(tblack, twhite), NOCURSOR, WINDOW_AUTO_KEYS,
+                                        WINDOWFL_MENU | WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL |
+                                            WINDOWFL_ROWS_SELCURRENT,
+                                        MIN_XWIN, MIN_YWIN, 0))) {
 
     window->SetColors(0x1FF, TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(tWHITE, twhite),
                       TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),

@@ -339,7 +339,7 @@ void Check4Resize(Twindow w) {
       (!W_USE(w, USECONTENTS) || w->XWidth != w->USE.C.TtyData->SizeX + HasBorder ||
        w->YWidth != w->USE.C.TtyData->SizeY + HasBorder)) {
 
-    if ((msg = New(msg)(msg_widget_change, 0))) {
+    if ((msg = Smsg::Create(msg_widget_change, 0))) {
       Event = &msg->Event;
       Event->EventWidget.W = (Twidget)w;
       Event->EventWidget.Code = MSG_WIDGET_RESIZE;
@@ -357,7 +357,7 @@ void AskCloseWidget(Twidget w) {
 
   if (w && (!IS_WINDOW(w) || (w->Attr & WINDOW_CLOSE))) {
 
-    if ((msg = New(msg)(msg_widget_gadget, 0))) {
+    if ((msg = Smsg::Create(msg_widget_gadget, 0))) {
       msg->Event.EventGadget.W = w;
       msg->Event.EventGadget.Code = (udat)0; /* COD_CLOSE */
       SendMsg(w->Owner, msg);
@@ -433,7 +433,7 @@ static void CleanupLastW(Twidget last_w, udat LastKeys, byte LastInside) {
 
   if (last_w) {
     if (LastInside) {
-      if ((NewMsg = New(msg)(msg_widget_mouse, 0))) {
+      if ((NewMsg = Smsg::Create(msg_widget_mouse, 0))) {
         Event = &NewMsg->Event;
         Event->EventMouse.W = last_w;
         Event->EventMouse.ShiftFlags = (udat)0;
@@ -444,7 +444,7 @@ static void CleanupLastW(Twidget last_w, udat LastKeys, byte LastInside) {
       }
     }
     while (LastKeys & HOLD_ANY) {
-      if ((NewMsg = New(msg)(msg_widget_mouse, 0))) {
+      if ((NewMsg = Smsg::Create(msg_widget_mouse, 0))) {
         Event = &NewMsg->Event;
         Event->EventMouse.W = last_w;
         Event->EventMouse.ShiftFlags = (udat)0;
@@ -483,13 +483,13 @@ static void HandleHilightAndSelection(Twidget W, udat Code, dat X, dat Y, byte I
       /* store selection owner */
       SelectionImport();
 
-      if ((NewMsg = New(msg)(msg_selection, 0))) {
-        event_any *Event = &NewMsg->Event;
-        Event->EventSelection.W = W;
-        Event->EventSelection.Code = 0;
-        Event->EventSelection.pad = (udat)0;
-        Event->EventSelection.X = X;
-        Event->EventSelection.Y = Y;
+      if ((NewMsg = Smsg::Create(msg_selection, 0))) {
+        event_any *event = &NewMsg->Event;
+        event->EventSelection.W = W;
+        event->EventSelection.Code = 0;
+        event->EventSelection.pad = (udat)0;
+        event->EventSelection.X = X;
+        event->EventSelection.Y = Y;
         SendMsg(W->Owner, NewMsg);
       }
     }
@@ -501,7 +501,7 @@ static byte CheckForwardMsg(wm_ctx *C, Tmsg msg, byte WasUsed) {
   static byte LastInside = tfalse;
   static udat LastKeys = 0;
   Twidget last_w, w, P;
-  event_any *Event;
+  event_any *event;
   udat Code;
   dat X, Y;
   byte Inside, inUse = tfalse;
@@ -532,7 +532,7 @@ static byte CheckForwardMsg(wm_ctx *C, Tmsg msg, byte WasUsed) {
   else
     return inUse;
 
-  Event = &msg->Event;
+  event = &msg->Event;
   if (msg->Type == msg_key) {
     if (!WasUsed && All->State == state_default) {
 
@@ -543,11 +543,11 @@ static byte CheckForwardMsg(wm_ctx *C, Tmsg msg, byte WasUsed) {
       if (w) {
         if (w->Attr & WIDGET_WANT_KEYS) {
           msg->Type = msg_widget_key;
-          Event->EventKeyboard.W = (Twidget)w;
+          event->EventKeyboard.W = (Twidget)w;
           SendMsg(w->Owner, msg);
           return ttrue;
         } else if (IS_WINDOW(w) && ((Twindow)w)->Attr & WINDOW_AUTO_KEYS)
-          FallBackKeyAction((Twindow)w, &Event->EventKeyboard);
+          FallBackKeyAction((Twindow)w, &event->EventKeyboard);
       }
     }
     return inUse;
@@ -565,9 +565,9 @@ static byte CheckForwardMsg(wm_ctx *C, Tmsg msg, byte WasUsed) {
   if (!w->Owner || (IS_WINDOW(w) && ((Twindow)w)->Flags & WINDOWFL_MENU))
     return inUse;
 
-  C->Code = Code = Event->EventMouse.Code;
-  C->i = X = Event->EventMouse.X;
-  C->j = Y = Event->EventMouse.Y;
+  C->Code = Code = event->EventMouse.Code;
+  C->i = X = event->EventMouse.X;
+  C->j = Y = event->EventMouse.Y;
   Inside = tfalse;
 
   if (LastKeys) {
@@ -627,9 +627,9 @@ static byte CheckForwardMsg(wm_ctx *C, Tmsg msg, byte WasUsed) {
         X = Y = TW_MINDAT;
 
       msg->Type = msg_widget_mouse;
-      Event->EventMouse.W = (Twidget)w;
-      Event->EventMouse.X = X;
-      Event->EventMouse.Y = Y;
+      event->EventMouse.W = (Twidget)w;
+      event->EventMouse.X = X;
+      event->EventMouse.Y = Y;
       SendMsg(w->Owner, msg);
 
       LastInside = (w->Attr & WIDGET_WANT_MOUSE_MOTION) ? Inside : 0;
@@ -874,7 +874,7 @@ static void ReleaseMenu(wm_ctx *C) {
   Tmenuitem item;
   Trow Row;
   Tmsg msg;
-  event_menu *Event;
+  event_menu *event;
   udat Code;
 
   if (FW && IS_WINDOW(FW) && FW->CurY < TW_MAXLDAT && (menu = FW->Menu) &&
@@ -893,12 +893,12 @@ static void ReleaseMenu(wm_ctx *C) {
     Fill4RC_VM(C, (Twidget)MW, msg_menu_row, POS_MENU, Row->Code);
     (void)RC_VMQueue(C);
   } else if (Code) {
-    if ((msg = New(msg)(msg_menu_row, 0))) {
-      Event = &msg->Event.EventMenu;
-      Event->W = MW;
-      Event->Code = Code;
-      Event->Menu = menu;
-      Event->Row = Row;
+    if ((msg = Smsg::Create(msg_menu_row, 0))) {
+      event = &msg->Event.EventMenu;
+      event->W = MW;
+      event->Code = Code;
+      event->Menu = menu;
+      event->Row = Row;
       if (MW)
         SendMsg(MW->Owner, msg);
       else
@@ -1944,13 +1944,13 @@ byte InitWM(void) {
   byte sent = tfalse;
 
   srand48(time(NULL));
-  if ((WM_MsgPort = New(msgport)(2, "WM", 0, 0, 0, WManagerH)) &&
+  if ((WM_MsgPort = Smsgport::Create(2, "WM", 0, 0, 0, WManagerH)) &&
       /* this will later be sent to rcrun.c, it forces loading ~/.config/twin/twinrc */
       SendControlMsg(WM_MsgPort, MSG_CONTROL_OPEN, 0, NULL)) {
 
     if (RegisterExt(WM, MsgPort, WM_MsgPort)) {
 
-      if ((MapQueue = New(msgport)(11, "WM MapQueue", 0, 0, 0, (void (*)(Tmsgport))NoOp))) {
+      if ((MapQueue = Smsgport::Create(11, "WM MapQueue", 0, 0, 0, (void (*)(Tmsgport))NoOp))) {
 
         MapQueue->Remove();
 

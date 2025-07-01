@@ -122,7 +122,7 @@ void Smenu::Remove() {
 
 Trow Smenu::SetInfo(byte flags, ldat len, const char *text, const tcolor *coltext) {
   Tmenu menu = this;
-  Trow row = New(row)(0, flags);
+  Trow row = Srow::Create(0, flags);
   if (row) {
     if ((!text || (row->Text = CloneStr2TRune(text, len))) &&
         (!coltext || (row->ColText = (tcolor *)CloneMem(coltext, len * sizeof(tcolor))))) {

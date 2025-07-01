@@ -1054,8 +1054,8 @@ static byte USEDefaultCommonMenu(void) {
   Twindow w;
   Trow Row;
 
-  if (!(Menu = New(menu)(Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0,
-                         (tcolor)0, ttrue)))
+  if (!(Menu = Smenu::Create(Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0,
+                             (tcolor)0, (tcolor)0, ttrue)))
     return tfalse;
 
   if ((w = Win4Menu(Menu)) && (item = Item4Menu(Menu, w, ttrue, 8, " Window ")) &&

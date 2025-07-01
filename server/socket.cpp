@@ -1037,8 +1037,9 @@ static void sockDeleteObj(void *V) {
 static Twidget sockCreateWidget(dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left, dat Up,
                                 tcell Fill) {
   Tmsgport owner;
-  if ((owner = RemoteGetMsgPort(Slot)))
-    return New(widget)(owner, XWidth, YWidth, Attr, Flags, Left, Up, Fill);
+  if ((owner = RemoteGetMsgPort(Slot))) {
+    return Swidget::Create(owner, XWidth, YWidth, Attr, Flags, Left, Up, Fill);
+  }
   return (Twidget)0;
 }
 static void sockRecursiveDeleteWidget(Twidget w) {
@@ -1137,9 +1138,10 @@ static Tgadget sockCreateGadget(Twidget Parent, dat XWidth, dat YWidth, const ch
                                 tcolor ColTextSelect, tcolor ColTextDisabled,
                                 tcolor ColTextSelectDisabled, dat Left, dat Up) {
   Tmsgport owner;
-  if ((owner = RemoteGetMsgPort(Slot)))
-    return New(gadget)(owner, Parent, XWidth, YWidth, TextNormal, Attr, Flags, Code, ColText,
-                       ColTextSelect, ColTextDisabled, ColTextSelectDisabled, Left, Up);
+  if ((owner = RemoteGetMsgPort(Slot))) {
+    return Sgadget::Create(owner, Parent, XWidth, YWidth, TextNormal, Attr, Flags, Code, ColText,
+                           ColTextSelect, ColTextDisabled, ColTextSelectDisabled, Left, Up);
+  }
   return (Tgadget)0;
 }
 
@@ -1147,9 +1149,10 @@ static Twindow sockCreateWindow(dat TitleLen, const char *Title, const tcolor *C
                                 tcolor ColText, uldat CursorType, uldat Attr, uldat Flags,
                                 dat XWidth, dat YWidth, dat ScrollBackLines) {
   Tmsgport owner;
-  if ((owner = RemoteGetMsgPort(Slot)))
-    return New(window)(owner, TitleLen, Title, ColTitle, Menu, ColText, CursorType, Attr, Flags,
-                       XWidth, YWidth, ScrollBackLines);
+  if ((owner = RemoteGetMsgPort(Slot))) {
+    return Swindow::Create(owner, TitleLen, Title, ColTitle, Menu, ColText, CursorType, Attr, Flags,
+                           XWidth, YWidth, ScrollBackLines);
+  }
   return (Twindow)0;
 }
 
@@ -1214,9 +1217,10 @@ static Tmenu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled
                             tcolor ColSelectDisabled, tcolor ColShtCut, tcolor ColSelShtCut,
                             byte FlagDefColInfo) {
   Tmsgport owner;
-  if ((owner = RemoteGetMsgPort(Slot)))
-    return New(menu)(owner, ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut,
-                     ColSelShtCut, FlagDefColInfo);
+  if ((owner = RemoteGetMsgPort(Slot))) {
+    return Smenu::Create(owner, ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut,
+                         ColSelShtCut, FlagDefColInfo);
+  }
   return (Tmenu)0;
 }
 
@@ -1224,7 +1228,7 @@ static Tmenu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled
 static Tmsgport sockCreateMsgPort(byte NameLen, const char *Name) {
   Tmsgport MsgPort;
 
-  if ((MsgPort = New(msgport)(NameLen, Name, 0, 0, 0, SocketH))) {
+  if ((MsgPort = Smsgport::Create(NameLen, Name, 0, 0, 0, SocketH))) {
     RegisterMsgPort(MsgPort, Slot);
     MsgPort->ShutDownHook = sockShutDown;
   }
@@ -1244,8 +1248,9 @@ static Tmsgport sockFindMsgPort(Tmsgport Prev, byte NameLen, const char *Name) {
 
 static Tgroup sockCreateGroup(void) {
   Tmsgport owner = RemoteGetMsgPort(Slot);
-  if (owner)
-    return New(group)(owner);
+  if (owner) {
+    return Sgroup::Create(owner);
+  }
   return (Tgroup)0;
 }
 
@@ -1562,7 +1567,7 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat len, const byte *Data) {
         break;
       }
 
-      if ((msg = New(msg)(tw_msg->Type, _Len))) {
+      if ((msg = Smsg::Create(tw_msg->Type, _Len))) {
 
         msg->Event.EventCommon.W = (Twidget)Id2Obj(Twidget_class_byte, tw_msg->Event.EventCommon.W);
 

@@ -86,7 +86,7 @@ Tmodule DlLoadAny(Chars name) {
       return Module; // already loaded!
     }
   }
-  if ((Module = New(module)(name))) {
+  if ((Module = Smodule::Create(name))) {
     if (Module->DlOpen()) {
       return Module;
     }

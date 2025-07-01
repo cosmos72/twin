@@ -890,7 +890,7 @@ void SyntheticKey(Twidget w, udat Code, udat ShiftFlags, byte Len, const char *S
   event_keyboard *event;
   Tmsg msg;
 
-  if (w && Len && Seq && (msg = New(msg)(msg_widget_key, Len))) {
+  if (w && Len && Seq && (msg = Smsg::Create(msg_widget_key, Len))) {
 
     event = &msg->Event.EventKeyboard;
     event->W = w;
@@ -1112,7 +1112,7 @@ byte StdAddMouseEvent(Tdisplay hw, udat Code, dat MouseX, dat MouseY) {
     event->Y = MouseY;
     return ttrue;
   }
-  if ((msg = New(msg)(msg_mouse, 0))) {
+  if ((msg = Smsg::Create(msg_mouse, 0))) {
     event = &msg->Event.EventMouse;
     event->Code = Code;
     event->ShiftFlags = (udat)0;
