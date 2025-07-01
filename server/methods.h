@@ -24,11 +24,6 @@ tpos FakeFindBorderWindow(Twindow w, dat u, dat v, byte border, tcell *ptr_cell)
 void IncMouseMotionN(void);
 void DecMouseMotionN(void);
 
-#define Do(command, objtype) (S##objtype::command)
-
-#define SKIP_FIRST_ARG(arg, ...) (__VA_ARGS__)
-#define Act(command, obj) (obj)->command SKIP_FIRST_ARG
-
 #define DeleteList(First)                                                                          \
   do {                                                                                             \
     while (First) {                                                                                \

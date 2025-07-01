@@ -13,7 +13,7 @@
 #include "alloc.h"   // AllocMem0()
 #include "obj/all.h" // extern All
 #include "obj/mutex.h"
-#include "methods.h" // Act(), InsertLast()
+#include "methods.h" // InsertLast()
 #include "twin.h"    // IS_ALL(), IS_MUTEX()
 
 #include <new>
