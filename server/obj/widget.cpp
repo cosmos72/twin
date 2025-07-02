@@ -265,7 +265,7 @@ void Swidget::MapTopReal(Tscreen screen) {
     UpdateCursor();
   }
   if (IS_WINDOW(w)) {
-    DrawAreaWindow2((Twindow)w);
+    DrawAreaWindow((Twindow)w);
   } else {
     DrawAreaWidget(w);
   }
@@ -319,7 +319,7 @@ void Swidget::UnMap() {
 
       w->Remove();
       if (IS_WINDOW(w))
-        DrawAreaWindow2((Twindow)w);
+        DrawAreaWindow((Twindow)w);
       else
         DrawAreaWidget(w);
 

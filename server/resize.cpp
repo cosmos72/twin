@@ -875,21 +875,21 @@ void DragFirstWindow(dat i, dat j) {
   if (_Left <= _Rgt && _Up <= _Dwn) {
     if (Left_ > _Left) {
       xLeft = Min2(Left_ - (ldat)1, _Rgt);
-      DrawWidget((Twidget)w, (dat)_Left, (dat)_Up, (dat)xLeft, (dat)_Dwn, tfalse);
+      DrawUnobscuredWidget((Twidget)w, (dat)_Left, (dat)_Up, (dat)xLeft, (dat)_Dwn, tfalse);
     } else
       xLeft = _Left;
     if (Rgt_ < _Rgt) {
       xRgt = Max2(Rgt_ + (ldat)1, _Left);
-      DrawWidget((Twidget)w, (dat)xRgt, (dat)_Up, (dat)_Rgt, (dat)_Dwn, tfalse);
+      DrawUnobscuredWidget((Twidget)w, (dat)xRgt, (dat)_Up, (dat)_Rgt, (dat)_Dwn, tfalse);
     } else
       xRgt = _Rgt;
     if (Up_ > _Up) {
       xUp = Min2(Up_ - (ldat)1, _Dwn);
-      DrawWidget((Twidget)w, (dat)xLeft, (dat)_Up, (dat)xRgt, (dat)xUp, tfalse);
+      DrawUnobscuredWidget((Twidget)w, (dat)xLeft, (dat)_Up, (dat)xRgt, (dat)xUp, tfalse);
     }
     if (Dwn_ < _Dwn) {
       xDwn = Max2(Dwn_ + (ldat)1, _Up);
-      DrawWidget((Twidget)w, (dat)xLeft, (dat)xDwn, (dat)xRgt, (dat)_Dwn, tfalse);
+      DrawUnobscuredWidget((Twidget)w, (dat)xLeft, (dat)xDwn, (dat)xRgt, (dat)_Dwn, tfalse);
     }
   }
 
@@ -1216,7 +1216,7 @@ void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, ldat DeltaX, ldat Del
     return;
 
   if (DeltaX >= XWidth || -DeltaX >= XWidth || DeltaY >= YWidth || -DeltaY >= YWidth) {
-    DrawWidget((Twidget)w, (dat)0, (dat)0, TW_MAXDAT, TW_MAXDAT, tfalse);
+    DrawUnobscuredWidget((Twidget)w, (dat)0, (dat)0, TW_MAXDAT, TW_MAXDAT, tfalse);
     return;
   }
 
@@ -1264,16 +1264,16 @@ void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, ldat DeltaX, ldat Del
     if (Xend >= Xstart)
       DragArea(Xstart, Ystart, Xend, Yend, Xstart + DeltaX, Ystart);
     if (DeltaX > (dat)0)
-      DrawWidget((Twidget)w, Left, Up, Left + DeltaX - 1, Dwn, tfalse);
+      DrawUnobscuredWidget((Twidget)w, Left, Up, Left + DeltaX - 1, Dwn, tfalse);
     else
-      DrawWidget((Twidget)w, Rgt + DeltaX + 1, Up, Rgt, Dwn, tfalse);
+      DrawUnobscuredWidget((Twidget)w, Rgt + DeltaX + 1, Up, Rgt, Dwn, tfalse);
   } else if (DeltaY) {
     if (Yend >= Ystart)
       DragArea(Xstart, Ystart, Xend, Yend, Xstart, Ystart + DeltaY);
     if (DeltaY > (dat)0)
-      DrawWidget((Twidget)w, Left, Up, Rgt, Up + DeltaY - 1, tfalse);
+      DrawUnobscuredWidget((Twidget)w, Left, Up, Rgt, Up + DeltaY - 1, tfalse);
     else
-      DrawWidget((Twidget)w, Left, Dwn + DeltaY + 1, Rgt, Dwn, tfalse);
+      DrawUnobscuredWidget((Twidget)w, Left, Dwn + DeltaY + 1, Rgt, Dwn, tfalse);
   }
 }
 
@@ -1375,7 +1375,7 @@ void ScrollWindow(Twindow w, ldat DeltaX, ldat DeltaY) {
   if (DeltaY)
     w->YLogic = (YLogic += DeltaY);
 
-  DrawFullWindow2(w);
+  DrawFullWindow(w);
 
   if (ContainsCursor((Twidget)w))
     UpdateCursor();
@@ -1738,7 +1738,7 @@ void RollUpWindow(Twindow w, byte on_off) {
       ReDrawRolledUpAreaWindow(w, tfalse);
     } else if (!on_off && (w->Attr & WINDOW_ROLLED_UP)) {
       w->Attr &= ~WINDOW_ROLLED_UP;
-      DrawAreaWindow2(w);
+      DrawAreaWindow(w);
     }
     if (w->Parent == (Twidget)All->Screens.First)
       UpdateCursor();
@@ -1756,7 +1756,7 @@ void SetVisibleWidget(Twidget w, byte on_off) {
     if (on_off != visible) {
       w->Flags ^= WIDGETFL_NOTVISIBLE;
       if (IS_WINDOW(w))
-        DrawAreaWindow2((Twindow)w);
+        DrawAreaWindow((Twindow)w);
       else
         DrawAreaWidget(w);
     }
@@ -1773,7 +1773,7 @@ void RaiseWidget(Twidget w, bool alsoFocus) {
   if (screen->Widgets.First != w) {
     MoveFirst(Widgets, (Twidget)screen, w);
     if (IS_WINDOW(w)) {
-      DrawAreaWindow2((Twindow)w);
+      DrawAreaWindow((Twindow)w);
     } else {
       DrawAreaWidget(w);
     }
@@ -1797,7 +1797,7 @@ void LowerWidget(Twidget w, bool alsoUnFocus) {
     if (screen->Widgets.Last != w) {
       MoveLast(Widgets, (Twidget)screen, w);
       if (IS_WINDOW(w)) {
-        DrawAreaWindow2((Twindow)w);
+        DrawAreaWindow((Twindow)w);
       } else {
         DrawAreaWidget(w);
       }
@@ -1896,7 +1896,7 @@ static void realUnPressGadget(Tgadget g) {
     g->Group->SelectG = (Tgadget)0;
   }
   if (g == All->Screens.First->Widgets.First) {
-    DrawWidget(g, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
+    DrawUnobscuredWidget(g, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
   } else {
     DrawAreaWidget(g);
   }
@@ -1908,7 +1908,7 @@ static void realPressGadget(Tgadget g) {
     g->Group->SelectG = g;
   }
   if (g == All->Screens.First->Widgets.First) {
-    DrawWidget(g, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
+    DrawUnobscuredWidget(g, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
   } else {
     DrawAreaWidget(g);
   }

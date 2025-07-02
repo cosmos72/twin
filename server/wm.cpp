@@ -1193,7 +1193,7 @@ static void ContinueGadget(wm_ctx *C) {
 
       if (temp != FG->Flags) {
         if ((Twidget)FW == All->Screens.First->Widgets.First)
-          DrawWidget((Twidget)FG, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
+          DrawUnobscuredWidget((Twidget)FG, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
         else
           DrawAreaWidget((Twidget)FG);
       }

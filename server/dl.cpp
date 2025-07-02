@@ -97,7 +97,7 @@ Tmodule DlLoadAny(Chars name) {
 
 static Tmodule So[MAX_So];
 
-udat DlName2Code(const char *name) {
+IdSo DlName2Code(const char *name) {
   if (!strcmp(name, "term"))
     return TermSo;
   if (!strcmp(name, "socket"))
@@ -107,7 +107,7 @@ udat DlName2Code(const char *name) {
   return MainSo;
 }
 
-static Chars DlCode2Name(uldat code) {
+static Chars DlCode2Name(IdSo code) {
   switch (code) {
   case TermSo:
     return Chars("term");
@@ -121,9 +121,9 @@ static Chars DlCode2Name(uldat code) {
   }
 }
 
-Tmodule DlLoad(uldat code) {
+Tmodule DlLoad(IdSo code) {
   Tmodule M = (Tmodule)0;
-  if (code < MAX_So && !(M = So[code])) {
+  if (code >= 0 && code < MAX_So && !(M = So[code])) {
     const Chars name = DlCode2Name(code);
     M = DlLoadAny(name);
     if ((So[code] = M)) {
@@ -136,7 +136,7 @@ Tmodule DlLoad(uldat code) {
   return M;
 }
 
-void DlUnload(uldat code) {
+void DlUnload(IdSo code) {
   if (code < MAX_So) {
     if (So[code]) {
       So[code]->Delete();
@@ -146,15 +146,16 @@ void DlUnload(uldat code) {
   }
 }
 
-Tmodule DlIsLoaded(uldat code) {
-  if (code < MAX_So)
+Tmodule DlIsLoaded(IdSo code) {
+  if (code >= 0 && code < MAX_So) {
     return So[code];
+  }
   return (Tmodule)0;
 }
 
 void *DlSym(Tmodule Module, const char *name) {
-  if (Module && name)
+  if (Module && name) {
     return (void *)dlsym((dlhandle)Module->Handle, name);
-
+  }
   return NULL;
 }

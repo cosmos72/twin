@@ -44,12 +44,14 @@
 #include <Tutf/Tutf.h>
 #include <Tutf/Tutf_defs.h>
 
-#define MAX_RUNCYCLE 1024 /* kill a queue after this number of steps */
+enum {
+  MAX_RUNCYCLE = 1024, /* kill a queue after this number of steps */
 
-#define MAX_RUNSTACK 28
-typedef struct run run;
+  MAX_RUNSTACK = 28,
+};
 
-struct run {
+class run {
+public:
   run *next;
   uldat W;     /* the current Twidget (id) */
   uldat depth; /* index of last used stack element;
@@ -387,13 +389,15 @@ inline Twidget RCCheck4WidgetId(run *r) {
   return w;
 }
 
-#define Snext 0
-#define Sfunc 1
-#define Sbody 2
-#define Ssleep 3
-#define Swait 4
-#define Sinter 5
-#define Serr 6
+enum {
+  Snext = 0,
+  Sfunc = 1,
+  Sbody = 2,
+  Ssleep = 3,
+  Swait = 4,
+  Sinter = 5,
+  Serr = 6,
+};
 
 inline Twidget ForwardWindow(Twidget w) {
   while (w) {
@@ -509,12 +513,14 @@ static byte RCSteps(run *r) {
         ActivateCtx(C, state_menu);
         break;
       case MODULE:
-        if (n->x.f.a == -1)
+        if (n->x.f.a == -1) {
           n->x.f.a = DlName2Code(n->name);
-        if (n->x.f.flag == FL_ON)
-          DlLoad(n->x.f.a);
-        else
-          DlUnload(n->x.f.a);
+        }
+        if (n->x.f.flag == FL_ON) {
+          DlLoad((IdSo)n->x.f.a);
+        } else {
+          DlUnload((IdSo)n->x.f.a);
+        }
         break;
       case MOVE:
         if (w && IS_WINDOW(w))
@@ -1029,24 +1035,25 @@ void QuitRC(void) {
   shm_quit();
 }
 
-#define COD_COMMON_FIRST COD_COMMON_DRAG
+enum {
+  COD_COMMON_DRAG = COD_RESERVED,
+  COD_COMMON_RESIZE = COD_RESERVED + 1,
+  COD_COMMON_SCROLL = COD_RESERVED + 2,
+  COD_COMMON_CENTER = COD_RESERVED + 3,
+  COD_COMMON_MAXIMIZE = COD_RESERVED + 4,
+  COD_COMMON_FULLSCREEN = COD_RESERVED + 5,
+  COD_COMMON_ROLLTOGGLE = COD_RESERVED + 6,
+  COD_COMMON_RAISELOWER = COD_RESERVED + 7,
+  COD_COMMON_UNFOCUS = COD_RESERVED + 8,
+  COD_COMMON_NEXT = COD_RESERVED + 9,
+  COD_COMMON_WINDOWLIST = COD_RESERVED + 10,
+  COD_COMMON_REFRESH = COD_RESERVED + 11,
+  COD_COMMON_HOTKEY = COD_RESERVED + 12,
+  COD_COMMON_CLOSE = COD_RESERVED + 13,
 
-#define COD_COMMON_DRAG (COD_RESERVED)
-#define COD_COMMON_RESIZE (COD_RESERVED + 1)
-#define COD_COMMON_SCROLL (COD_RESERVED + 2)
-#define COD_COMMON_CENTER (COD_RESERVED + 3)
-#define COD_COMMON_MAXIMIZE (COD_RESERVED + 4)
-#define COD_COMMON_FULLSCREEN (COD_RESERVED + 5)
-#define COD_COMMON_ROLLTOGGLE (COD_RESERVED + 6)
-#define COD_COMMON_RAISELOWER (COD_RESERVED + 7)
-#define COD_COMMON_UNFOCUS (COD_RESERVED + 8)
-#define COD_COMMON_NEXT (COD_RESERVED + 9)
-#define COD_COMMON_WINDOWLIST (COD_RESERVED + 10)
-#define COD_COMMON_REFRESH (COD_RESERVED + 11)
-#define COD_COMMON_HOTKEY (COD_RESERVED + 12)
-#define COD_COMMON_CLOSE (COD_RESERVED + 13)
-
-#define COD_COMMON_LAST COD_COMMON_CLOSE
+  COD_COMMON_FIRST = COD_COMMON_DRAG,
+  COD_COMMON_LAST = COD_COMMON_CLOSE,
+};
 
 static byte USEDefaultCommonMenu(void) {
   Tmenu Menu;

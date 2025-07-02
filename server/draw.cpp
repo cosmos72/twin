@@ -1053,10 +1053,10 @@ void Sdraw::Draw() {
 }
 
 /*
- * this ASSUMES the specified part of the Twidget is unobscured.
+ * ASSUMES the specified part of the Twidget is unobscured.
  * x1,y1,x2,y2 are absolute Tscreen coordinates.
  */
-void DrawWidget(Twidget w, dat x1, dat y1, dat x2, dat y2, bool shaded) {
+void DrawUnobscuredWidget(Twidget w, dat x1, dat y1, dat x2, dat y2, bool shaded) {
   Sdraw d;
 
   if (!QueuedDrawArea2FullScreen && w && d.InitAbsolute(w, x1, y1, x2, y2, shaded)) {
@@ -1067,9 +1067,10 @@ void DrawWidget(Twidget w, dat x1, dat y1, dat x2, dat y2, bool shaded) {
 }
 
 /*
- * this DOES NOT assume that the specified part of the Twidget is unobscured
+ * does NOT assume that the specified part of the Twidget is unobscured.
+ *
+ * does NOT draw shadow.
  */
-/* partially replaces DrawAreaWindow() -- does not redraw shadow */
 void DrawAreaWidget(Twidget w) {
   Sdraw d;
 
@@ -1636,13 +1637,12 @@ void DrawShadeWindow(Twindow w, dat x1, dat y1, dat x2, dat y2, byte internal) {
   }
 }
 
-/* replaces DrawAreaWindow() */
-void DrawAreaWindow2(Twindow w) {
+void DrawAreaWindow(Twindow w) {
   Sdraw d;
   byte Dvalid = tfalse;
   if (!QueuedDrawArea2FullScreen && w && w->Parent && IS_SCREEN(w->Parent)) {
     if ((Twidget)w == All->Screens.First->Widgets.First) {
-      DrawWidget((Twidget)w, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
+      DrawUnobscuredWidget((Twidget)w, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
 
     } else if (d.Init((Twidget)w, 0, 0, TW_MAXDAT, TW_MAXDAT, false)) {
       Dvalid = ttrue;
@@ -1658,7 +1658,10 @@ void DrawAreaWindow2(Twindow w) {
   }
 }
 
-/* replaces DrawAbsoluteWindow() */
+void DrawFullWindow(Twindow w) {
+  DrawAreaWidget(w);
+}
+
 void DrawPartialWidget(Twidget w, dat X1, dat Y1, dat X2, dat Y2) {
   Sdraw d;
   if (!QueuedDrawArea2FullScreen && w && d.Init(w, X1, Y1, X2, Y2, false)) {
@@ -1674,7 +1677,6 @@ void DrawPartialWidget(Twidget w, dat X1, dat Y1, dat X2, dat Y2) {
   }
 }
 
-/* replaces DrawTextWindow() */
 void DrawLogicWidget(Twidget w, ldat X1, ldat Y1, ldat X2, ldat Y2) {
   ldat xl, yl;
   byte HasBorder;

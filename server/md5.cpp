@@ -23,7 +23,8 @@
 #endif
 
 #if TW_IS_LITTLE_ENDIAN
-#define byteReverse(buf, len) ((void)0)
+TW_INLINE void byteReverse(md5_uint32 *buf, unsigned longs) {
+}
 #elif TW_IS_BIG_ENDIAN
 
 #ifdef ASM_MD5
@@ -35,7 +36,7 @@ void byteReverse(md5_uint32 *buf, unsigned longs);
 TW_INLINE void byteReverse(md5_uint32 *buf, unsigned longs) {
   md5_uint32 t;
   do {
-#define BUF(i) ((md5_uint32) * ((unsigned char *)(buf) + (i)))
+#define BUF(i) ((md5_uint32)((unsigned char *)(buf))[i])
     t = BUF(0) | BUF(1) << 8 | BUF(2) << 16 | BUF(3) << 24;
     *buf++ = t;
 #undef BUF

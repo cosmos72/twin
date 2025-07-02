@@ -17,33 +17,33 @@ void DrawDesktop(Tscreen s, dat xstart, dat ystart, dat xend, dat yend, bool sha
 
 void DrawArea2(Tscreen FirstScreen, Twidget Top, Twidget OnlyW, dat X1, dat Y1, dat X2, dat Y2,
                bool Shaded);
-#define FULL_SCREEN (Tscreen)0, (Twidget)0, (Twidget)0, (dat)0, (dat)0, TW_MAXDAT, TW_MAXDAT, tfalse
 
 /*
- * DrawWidget() ASSUMES the specified part of the Twidget is unobscured.
+ * DrawUnobscuredWidget() ASSUMES the specified part of the Twidget is unobscured.
  * xstart,ystart,xend,yend are absolute Tscreen coordinates.
  */
-void DrawWidget(Twidget w, dat xstart, dat ystart, dat xend, dat yend, bool shaded);
-#define DrawFirstWidget(w) DrawWidget((w), 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse)
+void DrawUnobscuredWidget(Twidget w, dat xstart, dat ystart, dat xend, dat yend, bool shaded);
 void DrawAreaWidget(Twidget w);
-
-/* like DrawAreaWindow2, but does not draw the shadow: */
-#define DrawFullWindow2(w) DrawAreaWidget((Twidget)w)
 
 void DrawScreen(Tscreen s);
 
 void DrawBorderWindow(Twindow w, byte Flags);
-#define BORDER_LEFT (0x1)
-#define BORDER_UP (0x2)
-#define BORDER_RIGHT (0x4)
-#define BORDER_DOWN (0x8)
-#define BORDER_ANY (0xF)
+
+enum {
+  BORDER_LEFT = 0x1,
+  BORDER_UP = 0x2,
+  BORDER_RIGHT = 0x4,
+  BORDER_DOWN = 0x8,
+  BORDER_ANY = 0xF,
+};
 
 void DrawShadeWindow(Twindow w, dat xstart, dat ystart, dat xend, dat yend, byte internal);
 void DrawAreaShadeWindow(Tscreen s, Twindow w, dat xstart, dat ystart, dat xend, dat yend,
                          ldat shleft, ldat shup, ldat shrgt, ldat shdwn, byte internal);
 /* this also draws the shadow: */
-void DrawAreaWindow2(Twindow w);
+void DrawAreaWindow(Twindow w);
+/* like DrawAreaWindow, but does not draw the shadow: */
+void DrawFullWindow(Twindow w);
 
 void DrawPartialWidget(Twidget w, dat x1, dat y1, dat x2, dat y2);
 void DrawLogicWidget(Twidget w, ldat x1, ldat y1, ldat x2, ldat y2);

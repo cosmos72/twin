@@ -141,11 +141,9 @@ static byte getPty(void) {
   ptydev = pty_name;
   ttydev = tty_name;
 
-#define PTYCHAR1 "pqrstuvwxyzabcde"
-#define PTYCHAR2 "0123456789abcdef"
-  for (c1 = PTYCHAR1; *c1; c1++) {
+  for (c1 = "pqrstuvwxyzabcde"; *c1; c1++) {
     ptydev[len - 2] = ttydev[len - 2] = *c1;
-    for (c2 = PTYCHAR2; *c2; c2++) {
+    for (c2 = "0123456789abcdef"; *c2; c2++) {
       ptydev[len - 1] = ttydev[len - 1] = *c2;
       if ((fd = open(ptydev, O_RDWR | O_NOCTTY)) >= 0) {
         if ((sfd = open(ttydev, O_RDWR | O_NOCTTY)) >= 0)

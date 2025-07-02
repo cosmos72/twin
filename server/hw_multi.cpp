@@ -72,6 +72,10 @@ dat GetDisplayHeight(void) NOTHROW {
   return All->Displays.First && !All->Displays.First->Quitted ? DisplayHeight : savedDisplayHeight;
 }
 
+static inline void DrawArea2FullScreen() {
+  DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, (dat)0, (dat)0, TW_MAXDAT, TW_MAXDAT, tfalse);
+}
+
 void UpdateFlagsHW(void) NOTHROW {
   Tdisplay hw;
   StrategyReset(); /* reset StrategyFlag */
@@ -796,8 +800,6 @@ inline void SyncOldVideo(void) {
   }
 }
 
-#define MaxRecentBeepHW ((byte)30)
-
 void FlushHW(void) {
   static timevalue LastBeep = {(tany)0, (tany)0};
   timevalue tmp = {(tany)0, 100 MilliSECs};
@@ -824,7 +826,7 @@ void FlushHW(void) {
   if (QueuedDrawArea2FullScreen) {
     QueuedDrawArea2FullScreen = false;
     DirtyVideo(0, 0, DisplayWidth - 1, DisplayHeight - 1);
-    DrawArea2(FULL_SCREEN);
+    DrawArea2FullScreen();
     UpdateCursor();
   }
 
@@ -1153,26 +1155,29 @@ byte InitTransUser(void) {
   udat c;
 #ifdef __linux__
 
-#define SCRNMAP_T unsigned short
-#define SCRNMAP_IOCTL GIO_UNISCRNMAP
+  typedef unsigned short SCRNMAP_T;
 
   SCRNMAP_T map[E_TABSZ];
 
-  if (ioctl(0, SCRNMAP_IOCTL, map) == 0) {
+  if (ioctl(0, GIO_UNISCRNMAP, map) == 0) {
 
-    if (sizeof(SCRNMAP_T) == sizeof(trune))
+    if (sizeof(SCRNMAP_T) == sizeof(trune)) {
       CopyMem(map + 0x80, All->Gtranslations[USER_MAP] + 0x80, sizeof(trune) * 0x80);
-    else
-      for (c = 0x80; c < 0x100; c++)
+    } else {
+      for (c = 0x80; c < 0x100; c++) {
         All->Gtranslations[USER_MAP][c] = (trune)map[c];
+      }
+    }
   } else
 #endif
   {
     /* if nothing better is available, initialize to direct-to-font translation */
-    for (c = 0x80; c < 0x100; c++)
+    for (c = 0x80; c < 0x100; c++) {
       All->Gtranslations[USER_MAP][c] = (trune)c | 0xf000;
+    }
   }
-  for (c = 0; c < 0x80; c++)
+  for (c = 0; c < 0x80; c++) {
     All->Gtranslations[USER_MAP][c] = (trune)c;
+  }
   return ttrue;
 }

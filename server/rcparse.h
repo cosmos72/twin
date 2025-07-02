@@ -176,7 +176,9 @@ static void yyerror(const char *s) {
              << "\n";
 }
 
-#define NEW() (node) my_malloc(sizeof(struct s_node))
+static inline node NEW() {
+  return (node)my_malloc(sizeof(struct s_node));
+}
 
 static node ReverseList(node l) {
   node base = NULL, v;
@@ -189,13 +191,13 @@ static node ReverseList(node l) {
   return base;
 }
 
-inline node MakeNode(str name) {
+static inline node MakeNode(str name) {
   node n = NEW();
   n->name = name; /* this is my_malloc()ed memory (done by rcparse.l) */
   return n;
 }
 
-inline node MakeBuiltinFunc(ldat id) {
+static inline node MakeBuiltinFunc(ldat id) {
   node n = NEW();
   n->id = id;
   return n;
@@ -206,7 +208,7 @@ inline node MakeBuiltinFunc(ldat id) {
  * do nothing in that case
  * (it's a way to eat empty lines, they are coded as NULL nodes)
  */
-inline node AddtoNodeList(node l, node n) {
+static inline node AddtoNodeList(node l, node n) {
   if (n) {
     n->next = l;
     return n;

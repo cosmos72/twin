@@ -51,10 +51,11 @@ static void display_Configure(Tdisplay hw, udat resource, byte todefault, udat v
   display_CreateMsg(hw, ev_dpy_Configure, 0);
 
   ev->X = resource;
-  if (todefault)
+  if (todefault) {
     ev->Y = -1;
-  else
+  } else {
     ev->Y = (dat)value;
+  }
   Ext(Socket, SendMsg)(dpydriver(hw)->display, gmsg);
   hw->setFlush();
 }
@@ -63,32 +64,32 @@ static void display_Configure(Tdisplay hw, udat resource, byte todefault, udat v
 static void display_HandleEvent(Tdisplay hw) {
   Tmsg msg;
   Tmsgport helper = dpydriver(hw)->Helper;
-  event_any *Event;
+  event_any *event;
   dat x, y, dx, dy;
   udat keys;
 
   while ((msg = helper->Msgs.First)) {
 
     msg->Remove();
-    Event = &msg->Event;
+    event = &msg->Event;
 
     switch (msg->Type) {
     case msg_widget_key:
-      KeyboardEventCommon(hw, Event->EventKeyboard.Code, Event->EventKeyboard.ShiftFlags,
-                          Event->EventKeyboard.SeqLen, Event->EventKeyboard.AsciiSeq);
+      KeyboardEventCommon(hw, event->EventKeyboard.Code, event->EventKeyboard.ShiftFlags,
+                          event->EventKeyboard.SeqLen, event->EventKeyboard.AsciiSeq);
       break;
     case msg_widget_mouse:
-      x = Event->EventMouse.X;
-      y = Event->EventMouse.Y;
+      x = event->EventMouse.X;
+      y = event->EventMouse.Y;
       dx = x == 0 ? -1 : x == DisplayWidth - 1 ? 1 : 0;
       dy = y == 0 ? -1 : y == DisplayHeight - 1 ? 1 : 0;
-      keys = Event->EventMouse.Code;
+      keys = event->EventMouse.Code;
       keys = (keys & HOLD_ANY) | (isPRESS(keys) ? HOLD_CODE(PRESS_N(keys)) : 0);
 
       MouseEventCommon(hw, x, y, dx, dy, keys);
       break;
     case msg_widget_gadget:
-      if (!Event->EventGadget.Code)
+      if (!event->EventGadget.Code)
         /* 0 == Close Code */
         hw->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW;
       break;
@@ -108,8 +109,8 @@ static void display_HandleEvent(Tdisplay hw) {
       log(ERROR)
           << "\ntwin: display_HandleEvent(): unexpected SelectionRequest Message from twdisplay!\n";
 #if 0
-            TwinSelectionRequest(Event->EventSelectionRequest.Requestor,
-                                 Event->EventSelectionRequest.ReqPrivate,
+            TwinSelectionRequest(event->EventSelectionRequest.Requestor,
+                                 event->EventSelectionRequest.ReqPrivate,
                                  TwinSelectionGetOwner());
 #endif
       break;
@@ -121,14 +122,14 @@ static void display_HandleEvent(Tdisplay hw) {
           << "\ntwin: display_HandleEvent(): unexpected SelectionNotify Message from twdisplay!\n";
 #if 0
       TwinSelectionNotify(
-          dRequestor, dReqPrivate, Event->EventSelectionNotify.Magic,
-          Event->EventSelectionNotify.MIME(),
-          Event->EventSelectionNotify.Data());
+          dRequestor, dReqPrivate, event->EventSelectionNotify.Magic,
+          event->EventSelectionNotify.MIME(),
+          event->EventSelectionNotify.Data());
 #endif
       break;
 
     case msg_display:
-      switch (Event->EventDisplay.Code) {
+      switch (event->EventDisplay.Code) {
       case ev_dpy_RedrawVideo:
         /*
          * Not needed, twdisplay keeps its own copy of Video[]
@@ -137,17 +138,17 @@ static void display_HandleEvent(Tdisplay hw) {
         log(ERROR) << "\ntwin: display_HandleEvent(): unexpected Display.RedrawVideo Message from "
                       "twdisplay!\n";
 #if 0
-                if (Event->EventDisplay.Len == sizeof(dat) * 2)
-                    NeedRedrawVideo(hw, Event->EventDisplay.X, Event->EventDisplay.Y,
-                                    ((udat *)Event->EventDisplay.Data)[0],
-                                    ((udat *)Event->EventDisplay.Data)[1]);
+                if (event->EventDisplay.Len == sizeof(dat) * 2)
+                    NeedRedrawVideo(hw, event->EventDisplay.X, event->EventDisplay.Y,
+                                    ((udat *)event->EventDisplay.Data)[0],
+                                    ((udat *)event->EventDisplay.Data)[1]);
                 break;
 #endif
       case ev_dpy_Resize:
-        if (hw->X != Event->EventDisplay.X || hw->Y != Event->EventDisplay.Y) {
+        if (hw->X != event->EventDisplay.X || hw->Y != event->EventDisplay.Y) {
 
-          hw->X = Event->EventDisplay.X;
-          hw->Y = Event->EventDisplay.Y;
+          hw->X = event->EventDisplay.X;
+          hw->Y = event->EventDisplay.Y;
           ResizeDisplayPrefer(hw);
         }
         break;
@@ -399,7 +400,7 @@ static void display_QuitHW(Tdisplay hw) {
   hw->fnQuitHW = NULL;
 }
 
-static void fix4display(Tdisplay hw) {
+static void display_FixName(Tdisplay hw) {
   Chars name = hw->Name;
   if (name.starts_with(Chars("-hw=display@(-hw="))) {
     size_t pos = name.find(")");
@@ -548,7 +549,7 @@ static bool display_InitHW(Tdisplay hw) {
 
   Used++;
 
-  fix4display(hw);
+  display_FixName(hw);
 
   return true;
 }

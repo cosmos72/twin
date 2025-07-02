@@ -35,7 +35,7 @@ void printk_str(const char *s, size_t len) {
         MessagesWin->CurY--;
       }
       if (MessagesWin->Parent) {
-        DrawFullWindow2(MessagesWin);
+        DrawFullWindow(MessagesWin);
       }
     }
     MessagesWin->RowWriteCharset(len, s);

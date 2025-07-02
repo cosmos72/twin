@@ -11,7 +11,8 @@
 
 struct wm_ctx;
 
-#define GLOBAL_MAX 7
+enum { GLOBAL_MAX = 7 };
+
 extern node Globals[GLOBAL_MAX];
 extern byte GlobalsAreStatic;
 

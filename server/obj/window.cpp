@@ -15,7 +15,7 @@
 #include "algo.h"    // Max2()
 #include "alloc.h"   // AllocMem0(), CloneStrL()
 #include "data.h"    // DEFAULT_Col*
-#include "draw.h"    // ContainsCursor(), DrawAreaWidget(), DrawAreaWindow2()
+#include "draw.h"    // ContainsCursor(), DrawAreaWidget(), DrawAreaWindow()
 #include "methods.h" // IncMouseMotionN(), DecMouseMotionN()
 #include "resize.h"  // UpdateCursor(), RollUpWindow()
 #include "twin.h"    // NOFD, NOPID, NOSLOT
@@ -338,7 +338,7 @@ void Swindow::SetXY(dat x, dat y) {
     prev = Prev;
     next = Next;
     Remove();
-    DrawAreaWindow2(this);
+    DrawAreaWindow(this);
   }
   Left = x;
   Up = y;
@@ -348,7 +348,7 @@ void Swindow::SetXY(dat x, dat y) {
       Up += parent->YLogic;
     }
     Insert(parent, prev, next);
-    DrawAreaWindow2(this);
+    DrawAreaWindow(this);
   }
 }
 
@@ -450,7 +450,7 @@ void Swindow::Configure(byte bitmap, dat left, dat up, //
     prev = Prev;
     next = Next;
     Remove();
-    DrawAreaWindow2(this);
+    DrawAreaWindow(this);
   }
 
   if (bitmap & 1) {
@@ -490,7 +490,7 @@ void Swindow::Configure(byte bitmap, dat left, dat up, //
   }
   if (Parent) {
     InsertMiddle(Widgets, this, Parent, prev, next);
-    DrawAreaWindow2(this);
+    DrawAreaWindow(this);
   }
 }
 

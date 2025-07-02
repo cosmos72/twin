@@ -43,50 +43,54 @@
 #include <signal.h>
 #endif
 
-#define _CHECK T_UTF_32_CHECK_MARK
-#define _FULL T_UTF_32_FULL_BLOCK
-#define _LOWER T_UTF_32_LOWER_HALF_BLOCK
-#define _UPPER T_UTF_32_UPPER_HALF_BLOCK
-#define _MEDIUM_SHADE T_UTF_32_MEDIUM_SHADE
+enum {
+  _CHECK = T_UTF_32_CHECK_MARK,
+  _FULL = T_UTF_32_FULL_BLOCK,
+  _LOWER = T_UTF_32_LOWER_HALF_BLOCK,
+  _UPPER = T_UTF_32_UPPER_HALF_BLOCK,
+  _MEDIUM_SHADE = T_UTF_32_MEDIUM_SHADE,
+};
 
-#define COD_QUIT (udat)1  /* as in term.c */
-#define COD_SPAWN (udat)3 /* as COD_SPAWN in term.c */
+enum {
+  COD_QUIT = 1,  /* as in term.c */
+  COD_SPAWN = 3, /* as in term.c */
 
-#define COD_EXECUTE (udat)5
-#define COD_SUSPEND (udat)10
-#define COD_DETACH (udat)11
-#define COD_RELOAD_RC (udat)12
-#define COD_COPY (udat)13
-#define COD_PASTE (udat)14
+  COD_EXECUTE = 5,
+  COD_SUSPEND = 10,
+  COD_DETACH = 11,
+  COD_RELOAD_RC = 12,
+  COD_COPY = 13,
+  COD_PASTE = 14,
 
-#define COD_CLOCK_WIN (udat)20
-#define COD_OPTION_WIN (udat)21
-#define COD_BUTTONS_WIN (udat)22
-#define COD_DISPLAY_WIN (udat)23
-#define COD_MESSAGES_WIN (udat)24
-#define COD_ABOUT_WIN (udat)25
+  COD_CLOCK_WIN = 20,
+  COD_OPTION_WIN = 21,
+  COD_BUTTONS_WIN = 22,
+  COD_DISPLAY_WIN = 23,
+  COD_MESSAGES_WIN = 24,
+  COD_ABOUT_WIN = 25,
 
-#define COD_TERM_ON (udat)30
-#define COD_TERM_OFF (udat)31
-#define COD_SOCKET_ON (udat)32
-#define COD_SOCKET_OFF (udat)33
+  COD_TERM_ON = 30,
+  COD_TERM_OFF = 31,
+  COD_SOCKET_ON = 32,
+  COD_SOCKET_OFF = 33,
 
-#define COD_O_SHADOWS (udat)40
-#define COD_O_Xp_SHADE (udat)41
-#define COD_O_Xn_SHADE (udat)42
-#define COD_O_Yp_SHADE (udat)43
-#define COD_O_Yn_SHADE (udat)44
-#define COD_O_CURSOR_ALWAYS (udat)46
-#define COD_O_MENU_HIDE (udat)47
-#define COD_O_MENU_INFO (udat)48
-#define COD_O_MENU_RELAX (udat)49
-#define COD_O_SCREEN_SCROLL (udat)50
-#define COD_O_TERMINALS_UTF8 (udat)51
+  COD_O_SHADOWS = 40,
+  COD_O_Xp_SHADE = 41,
+  COD_O_Xn_SHADE = 42,
+  COD_O_Yp_SHADE = 43,
+  COD_O_Yn_SHADE = 44,
+  COD_O_CURSOR_ALWAYS = 46,
+  COD_O_MENU_HIDE = 47,
+  COD_O_MENU_INFO = 48,
+  COD_O_MENU_RELAX = 49,
+  COD_O_SCREEN_SCROLL = 50,
+  COD_O_TERMINALS_UTF8 = 51,
 
-#define COD_D_REMOVE (udat)60
-#define COD_D_THIS (udat)61
+  COD_D_REMOVE = 60,
+  COD_D_THIS = 61,
 
-#define COD_E_TTY (udat)70
+  COD_E_TTY = 70,
+};
 
 Tmsgport Builtin_MsgPort;
 
@@ -323,7 +327,7 @@ static void OptionH(Tmsg msg) {
     if (redraw == ttrue)
       QueuedDrawArea2FullScreen = true;
     else {
-      DrawFullWindow2(OptionWin);
+      DrawFullWindow(OptionWin);
       UpdateCursor();
     }
   }
@@ -438,7 +442,7 @@ static void UpdateDisplayWin(Twidget displayWin) {
         DisplayWin->RowWriteCharset(hw->Name.size(), hw->Name.data());
     }
     if (DisplayWin->Parent)
-      DrawFullWindow2(DisplayWin);
+      DrawFullWindow(DisplayWin);
   }
 }
 
@@ -774,7 +778,7 @@ void FullUpdateWinList(Twidget listWin) {
 
     UpdateWinList();
 
-    DrawAreaWindow2(WinList);
+    DrawAreaWindow(WinList);
   }
 }
 

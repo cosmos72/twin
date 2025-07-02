@@ -17,10 +17,12 @@
 extern byte StrategyFlag;
 extern tany StrategyDelay;
 /* strategy */
-#define HW_UNSET 0
-#define HW_ACCEL 1
-#define HW_BUFFER 2
-#define HW_DELAY 3
+enum {
+  HW_UNSET = 0,
+  HW_ACCEL = 1,
+  HW_BUFFER = 2,
+  HW_DELAY = 3,
+};
 
 void StrategyReset(void) NOTHROW;
 byte Strategy4Video(dat Xstart, dat Ystart, dat Xend, dat Yend) NOTHROW;

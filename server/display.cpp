@@ -431,56 +431,11 @@ static Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
   return NULL;
 }
 
-#if 0
-/* not needed, server-side hw_display already does optimization for us */
-inline void OptimizeChangedVideo(void) {
-    uldat _start, start, _end, end;
-    ldat i;
-
-    for (i=0; i<(ldat)DisplayHeight*2; i++) {
-        start = (uldat)ChangedVideo[i>>1][!(i&1)][0];
-
-        if (start != (uldat)-1) {
-
-            start += (i>>1) * (ldat)DisplayWidth;
-            _start = start;
-
-            _end = end = (uldat)ChangedVideo[i>>1][!(i&1)][1] + (i>>1) * (ldat)DisplayWidth;
-
-            while (start <= end && Video[start] == OldVideo[start])
-                start++;
-            while (start <= end && Video[end] == OldVideo[end])
-                end--;
-
-            if (start > end) {
-                if (i&1) {
-                    /*
-                     * this is the first area, to make it empty
-                     * copy the second on this.
-                     */
-                    if (ChangedVideo[i>>1][1][0] != -1) {
-                        ChangedVideo[i>>1][0][0] = ChangedVideo[i>>1][1][0];
-                        ChangedVideo[i>>1][0][1] = ChangedVideo[i>>1][1][1];
-                        ChangedVideo[i>>1][1][0] = -1;
-                    } else
-                        ChangedVideo[i>>1][0][0] = -1;
-                } else
-                    ChangedVideo[i>>1][1][0] = -1;
-                continue;
-            } else if (start > _start || end < _end) {
-                ChangedVideo[i>>1][!(i&1)][0] += start - _start;
-                ChangedVideo[i>>1][!(i&1)][1] -= _end - end;
-            }
-        }
-    }
+/* server-side hw_display already does optimization for us */
+static inline void OptimizeChangedVideo(void) {
 }
-#else
-#define OptimizeChangedVideo()                                                                     \
-  do {                                                                                             \
-  } while (0)
-#endif
 
-inline void SyncOldVideo(void) NOTHROW {
+static inline void SyncOldVideo(void) NOTHROW {
   ldat start, len;
   ldat i;
 
