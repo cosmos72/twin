@@ -45,14 +45,16 @@ public:
 };
 
 /* Some common Tmenuitem codes: */
-#define COD_CANCEL 0xF700
-#define COD_OK 0xF701
-#define COD_HELP 0xF702
-#define COD_OPEN 0xF703
-#define COD_DELETE 0xF704
-#define COD_NEW 0xF705
+enum {
+  COD_CANCEL = 0xF700,
+  COD_OK = 0xF701,
+  COD_HELP = 0xF702,
+  COD_OPEN = 0xF703,
+  COD_DELETE = 0xF704,
+  COD_NEW = 0xF705,
 
-/* don't use codes above or equal to this one! */
-#define COD_RESERVED 0xF800
+  /* codes above or equal to this are reserved for twin server */
+  COD_RESERVED = 0xF800,
+};
 
 #endif /* TWIN_MENUITEM_H */
