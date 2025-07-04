@@ -389,8 +389,9 @@ void UpdateButtonWin(void) {
       i++;
   }
   for (j = BUTTON_MAX - 1; j >= 0; j--) {
-    if (!All->ButtonVec[j].exists)
+    if (!All->ButtonVec[j].exists) {
       continue;
+    }
     i--;
 
     ButtonWin->GotoXY(26, 1 + i * 2);
@@ -405,7 +406,7 @@ void UpdateButtonWin(void) {
       pos = -pos - 2;
     }
     if (pos >= 0) {
-      snprintf(s, 4, " %3d", pos);
+      snprintf(s, sizeof(s), " %3d", pos);
       ButtonWin->TtyWriteCharset(strlen(s), s);
     }
   }

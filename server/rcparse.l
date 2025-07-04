@@ -258,9 +258,9 @@ Bold|High    return COL_HIGH;
             snprintf(errbuf, sizeof(errbuf), "twin: %.200s:%d: illegal character 0x%02X",
                 FILE_NAME, LINE_NO, ch);
             size_t errbuf_len = strlen(errbuf);
-            if (ch >= 32 && ch < 127) {
-              snprintf(errbuf + errbuf_len, 5, " `%c'\n", ch);
-            } else {
+            if (ch >= 32 && ch < 127 && errbuf_len <= sizeof(errbuf) - 6) {
+              snprintf(errbuf + errbuf_len, 6, " `%c'\n", ch);
+            } else if (errbuf_len <= sizeof(errbuf) - 2) {
               errbuf[errbuf_len++] = '\n';
               errbuf[errbuf_len++] = '\0';
             }
