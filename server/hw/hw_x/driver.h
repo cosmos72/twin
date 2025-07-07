@@ -2,12 +2,6 @@
 
 #include "stl/view.h"
 
-#if HW_X_DRIVER == HW_XFT
-#include "hw/hw_xft/xchar16.h"
-#else
-#include "hw/hw_x/xchar16.h"
-#endif
-
 class XSYM(color_info) {
 public:
   byte width, shift;
@@ -98,13 +92,13 @@ private:
   bool FontIsDualWidth(const XFontStruct *info);
 #if HW_X_DRIVER == HW_XFT
   static ldat CalcFontScore(udat fontwidth, udat fontheight, XftFont *fontp, const char *fontname);
-  void DrawString16(int x, int y, XChar16 *string, int length);
+  void DrawStringUtf8(int x, int y, int rune_count, const char *string, int string_length);
   static void CopyColor(trgb rgb, unsigned long pixel, XftColor *dst);
 #endif
   void DrawSome(dat x, dat y, ldat len);
   Tutf_function UTF_32_to_charset_function(const char *charset);
   static void utf8_to_wchar(Chars src, Vector<wchar_t> &dst);
-  static trune UTF_32_to_UCS_2(trune c);
+  static trune UTF_32_identity(trune c);
 
   static void InitKeys();
   static bool IsNumericKeypad(Twkey key);

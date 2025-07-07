@@ -14,10 +14,14 @@ TW_ATTR_HIDDEN unsigned long XDRIVER::ColorToPixel(trgb rgb) {
 TW_ATTR_HIDDEN void XDRIVER::DrawSome(dat x, dat y, ldat len) {
   tcell *V, *oV;
   tcolor col;
+  int startx, starty;
+  udat rune_count = 0;
   udat buflen = 0;
-  trune f;
-  XChar16 buf[TW_SMALLBUFF];
-  int xbegin, ybegin;
+#if HW_X_DRIVER == HW_X11
+  XChar2b buf[TW_SMALLBUFF];
+#else
+  char buf[TW_SMALLBUFF + 4]; /* enough space for a final 4-byte UTF-8 */
+#endif
 
   if (len <= 0) {
     return;
@@ -36,30 +40,38 @@ TW_ATTR_HIDDEN void XDRIVER::DrawSome(dat x, dat y, ldat len) {
     }
   }
 
-  xbegin = (x - this->xhw_startx) * (ldat)this->xwfont;
-  ybegin = (y - this->xhw_starty) * (ldat)this->xhfont;
+  startx = (x - this->xhw_startx) * (ldat)this->xwfont;
+  starty = (y - this->xhw_starty) * (ldat)this->xhfont;
 
   V = Video + x + y * (ldat)DisplayWidth;
   oV = OldVideo + x + y * (ldat)DisplayWidth;
 
   for (; len; x++, V++, oV++, len--) {
     col = TCOLOR(*V);
-    if (buflen && (col != xcol || (ValidOldVideo && *V == *oV) || buflen == TW_SMALLBUFF)) {
-      XDRAW(xcol, buf, buflen);
+    if (buflen && (col != this->xcol || (ValidOldVideo && *V == *oV) || buflen >= TW_SMALLBUFF)) {
+      XDRAW(this->xcol, rune_count, buf, buflen);
+      rune_count = 0;
       buflen = 0;
     }
     if (!ValidOldVideo || *V != *oV) {
       if (!buflen) {
-        xbegin = (x - this->xhw_startx) * (ldat)this->xwfont;
-        xcol = col;
+        startx = (x - this->xhw_startx) * (ldat)this->xwfont;
+        this->xcol = col;
       }
-      f = this->xUTF_32_to_charset(TRUNE(*V));
-      buf[buflen++] = RawToXChar16(f);
+      const trune r = this->xUTF_32_to_charset(TRUNE(*V));
+#if HW_X_DRIVER == HW_X11
+      buf[buflen++] = RuneToXChar2b(r);
+#else
+      const Utf8 u(r);
+      const size_t u_len = u.size();
+      memcpy(buf + buflen, u.data(), u_len);
+      buflen += u_len;
+#endif
+      rune_count++;
     }
   }
   if (buflen) {
-    XDRAW(xcol, buf, buflen);
-    buflen = 0;
+    XDRAW(this->xcol, rune_count, buf, buflen);
   }
 }
 
@@ -85,13 +97,17 @@ TW_ATTR_HIDDEN bool XDRIVER::LoadFont(const char *fontname, udat fontwidth, udat
 
   fontname = alloc_fontname = AutodetectFont(fontname, fontwidth, fontheight);
 #if HW_X_DRIVER == HW_X11
-  if ((fontname && (this->xsfont = XLoadQueryFont(this->xdisplay, fontname))) ||
-      (this->xsfont = XLoadQueryFont(this->xdisplay, fontname = "fixed")))
+  if (!fontname) {
+    fontname = "fixed";
+  }
+  this->xsfont = XLoadQueryFont(this->xdisplay, fontname);
 #elif HW_X_DRIVER == HW_XFT
-  if (fontname &&
-      (this->xsfont = XftFontOpenName(this->xdisplay, DefaultScreen(this->xdisplay), fontname)))
+  if (fontname) {
+    this->xsfont = XftFontOpenName(this->xdisplay, DefaultScreen(this->xdisplay), fontname);
+  }
 #endif
-  {
+
+  if (this->xsfont) {
     loaded = true;
 
 #if HW_X_DRIVER == HW_X11
@@ -114,7 +130,7 @@ TW_ATTR_HIDDEN bool XDRIVER::LoadFont(const char *fontname, udat fontwidth, udat
 
 TW_ATTR_HIDDEN int XDRIVER::check_hw_name(char *hw_name) {
   char *comma, *at;
-  if (strncmp(hw_name, "-hw=", 4) != 0) {
+  if (strncmp(hw_name, "-hw=", 4) != 0) { /*  */
     return -1;
   }
   comma = strchr(hw_name, ',');
@@ -153,12 +169,6 @@ TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
   int i, nskip = 0;
   udat fontwidth = 10, fontheight = 20;
   bool drag = false, noinput = false, palette = false;
-
-  /* default: show the whole screen */
-  this->xhw_view = this->xhw_startx = this->xhw_starty = this->xhw_endx = this->xhw_endy = 0;
-
-  /* not yet opened */
-  this->xdisplay = NULL;
 
   if (arg && *arg && ((nskip = check_hw_name(arg)) >= 0)) {
     arg += nskip;
@@ -242,7 +252,6 @@ TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
     }
   }
 
-  this->xsfont = NULL;
   this->xwindow = None;
   this->xgc = None;
   this->xReqCount = this->XReqCount = 0;
@@ -365,7 +374,7 @@ TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
         XStoreName(this->xdisplay, this->xwindow, title);
 
         if (!(this->xUTF_32_to_charset = UTF_32_to_charset_function(charset))) {
-          this->xUTF_32_to_charset = &XDRIVER::UTF_32_to_UCS_2;
+          this->xUTF_32_to_charset = &XDRIVER::UTF_32_identity;
         }
         /*
          * ask ICCCM-compliant window manager to tell us when close window

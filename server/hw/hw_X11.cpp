@@ -40,10 +40,10 @@
 #include "hw_x/driver.h"
 #include "hw_x/keyboard.h"
 
-#define XDRAW(col, buf, buflen)                                                                    \
+#define XDRAW(col, rune_count, buf, buflen)                                                        \
   do {                                                                                             \
     SetColors(col);                                                                                \
-    XDrawImageString16(this->xdisplay, this->xwindow, this->xgc, xbegin, ybegin + this->xupfont,   \
+    XDrawImageString16(this->xdisplay, this->xwindow, this->xgc, startx, starty + this->xupfont,   \
                        buf, buflen);                                                               \
   } while (0)
 
@@ -209,9 +209,9 @@ Tutf_function TW_ATTR_HIDDEN XDRIVER::UTF_32_to_charset_function(const char *cha
 
   if (!charset) {
     /* attempt to autodetect encoding from fontname */
-    if (XGetFontProperty(this->xsfont, XA_FONT, &prop))
+    if (XGetFontProperty(this->xsfont, XA_FONT, &prop)) {
       fontname = XGetAtomName(this->xdisplay, (Atom)prop);
-
+    }
     if (fontname && !strcmp(fontname, "vga")) {
       charset = T_NAME_CP437;
     } else if (fontname) {

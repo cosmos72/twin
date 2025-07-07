@@ -179,26 +179,26 @@ inline void display_DrawSome(Tdisplay hw, dat x, dat y, uldat len) {
   tcell *V, *oV;
   uldat buflen = 0;
   tcell *buf;
-  dat xbegin = x, ybegin = y;
+  dat startx = x, starty = y;
 
   V = Video + x + y * (ldat)DisplayWidth;
   oV = OldVideo + x + y * (ldat)DisplayWidth;
 
   for (; len; x++, V++, oV++, len--) {
     if (buflen && ValidOldVideo && *V == *oV) {
-      display_DrawTCell(hw, xbegin, ybegin, buflen, buf);
+      display_DrawTCell(hw, startx, starty, buflen, buf);
       buflen = 0;
     }
     if (!ValidOldVideo || *V != *oV) {
       if (!buflen++) {
-        xbegin = x;
-        ybegin = y;
+        startx = x;
+        starty = y;
         buf = V;
       }
     }
   }
   if (buflen) {
-    display_DrawTCell(hw, xbegin, ybegin, buflen, buf);
+    display_DrawTCell(hw, startx, starty, buflen, buf);
   }
 }
 

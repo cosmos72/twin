@@ -210,26 +210,26 @@ TW_ATTR_HIDDEN void tw_driver::DrawSome(Tdisplay hw, dat x, dat y, uldat len) {
   tcell *V, *oV;
   uldat buflen = 0;
   tcell *buf;
-  dat xbegin = x, ybegin = y;
+  dat startx = x, starty = y;
 
   V = Video + x + y * (ldat)DisplayWidth;
   oV = OldVideo + x + y * (ldat)DisplayWidth;
 
   for (; len; x++, V++, oV++, len--) {
     if (buflen && ValidOldVideo && *V == *oV) {
-      Tw_WriteTCellWindow(self->dpy, self->win, xbegin, ybegin, buflen, buf);
+      Tw_WriteTCellWindow(self->dpy, self->win, startx, starty, buflen, buf);
       buflen = 0;
     }
     if (!ValidOldVideo || *V != *oV) {
       if (!buflen++) {
-        xbegin = x;
-        ybegin = y;
+        startx = x;
+        starty = y;
         buf = V;
       }
     }
   }
   if (buflen)
-    Tw_WriteTCellWindow(self->dpy, self->win, xbegin, ybegin, buflen, buf);
+    Tw_WriteTCellWindow(self->dpy, self->win, startx, starty, buflen, buf);
 }
 
 TW_ATTR_HIDDEN void tw_driver::FlushVideo(Tdisplay hw) {

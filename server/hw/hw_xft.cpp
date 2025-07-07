@@ -43,26 +43,29 @@
 #include "hw_x/driver.h"
 #include "hw_x/keyboard.h"
 
-#define XDRAW(col, buf, buflen)                                                                    \
+#define XDRAW(col, rune_count, buf, buflen)                                                        \
   do {                                                                                             \
     SetColors(col);                                                                                \
-    DrawString16(xbegin, ybegin + this->xupfont, buf, buflen);                                     \
+    DrawStringUtf8(startx, starty + this->xupfont, rune_count, buf, buflen);                       \
   } while (0)
 
 #include "hw_x/util.h"
 #include "hw_x/common.h"
 
-TW_ATTR_HIDDEN void XDRIVER::DrawString16(int x, int y, XChar16 *string, int length) {
+TW_ATTR_HIDDEN void XDRIVER::DrawStringUtf8(int x, int y, int rune_count, const char *string,
+                                            int string_length) {
   /*
-   * XftDrawString16 doesn't erase the existing character before it draws a new one, and when
-   * it draws the new one, it only draws the strokes, so you see some of the previous character
-   * "underneath" the new one.  So we first draw a rectangle with the background color, and then
-   * draw the text on top of it in the foreground color.
+   * XftDrawStringUtf8 doesn't erase the existing character before it draws a new one,
+   * and when it draws the new character, it only draws the strokes, so you see some of the previous
+   * character "underneath" the new one.
+   * Solution: first draw a rectangle using background color, then draw the text on top of it
+   * using foreground color.
    */
   XftDrawRect(this->xtdraw, this->xtbg, x, y - this->xsfont->ascent,
-              length * this->xsfont->max_advance_width,
+              rune_count * this->xsfont->max_advance_width,
               this->xsfont->ascent + this->xsfont->descent);
-  XftDrawString16(this->xtdraw, this->xtfg, this->xsfont, x, y, string, length);
+  XftDrawStringUtf8(this->xtdraw, this->xtfg, this->xsfont, x, y, (const FcChar8 *)string,
+                    string_length);
 }
 
 TW_ATTR_HIDDEN void XDRIVER::CopyColor(trgb rgb, unsigned long pixel, XftColor *dst) {
@@ -110,7 +113,7 @@ TW_ATTR_HIDDEN void XDRIVER::SetColors(const tcolor col) {
   SetBg(TCOLBG(col));
 }
 
-ldat TW_ATTR_HIDDEN XDRIVER::CalcFontScore(udat fontwidth, udat fontheight, XftFont *fontp,
+TW_ATTR_HIDDEN ldat XDRIVER::CalcFontScore(udat fontwidth, udat fontheight, XftFont *fontp,
                                            const char *fontname) {
   if (FC_CHARSET_MAP_SIZE >= 256 / 32) {
     FcChar32 map[FC_CHARSET_MAP_SIZE] = {}, *ptr = map, mask = (FcChar32)-1;
@@ -252,6 +255,6 @@ TW_ATTR_HIDDEN bool XDRIVER::AllocColor(Visual *visual, Colormap colormap, XColo
 }
 
 Tutf_function TW_ATTR_HIDDEN XDRIVER::UTF_32_to_charset_function(const char *charset) {
-  /* this is sufficient for xft fonts which are 16-bit unicode */
-  return UTF_32_to_UCS_2;
+  /* this is sufficient for XftDrawStringUtf8 */
+  return UTF_32_identity;
 }

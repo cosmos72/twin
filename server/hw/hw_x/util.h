@@ -4,14 +4,21 @@
 
 #define X_TITLE_MAXLEN 80
 
+#if HW_X_DRIVER == HW_X11
+static inline XChar2b RuneToXChar2b(trune r) {
+  XChar2b c = {(unsigned char)(r >> 8), (unsigned char)(r & 0xFF)};
+  return c;
+}
+#endif
+
 TW_ATTR_HIDDEN void XDRIVER::FillWindowTitle(char *title, int maxlen) {
   int left = maxlen;
   int chunk = 0;
 
   memset(title, '\0', left);
-  if (left < 6)
+  if (left < 6) {
     return;
-
+  }
   left--; /* reserve space for final '\0' */
 
   memcpy(title, "twin ", 5);
@@ -33,46 +40,55 @@ TW_ATTR_HIDDEN void XDRIVER::FillWindowTitle(char *title, int maxlen) {
     title += chunk;
     left -= chunk;
   }
-  if (left <= 0)
+  if (left <= 0) {
     title--;
+  }
   title[0] = '\0';
 }
 
 TW_ATTR_HIDDEN void XDRIVER::HideCursor(dat x, dat y) {
-  int xbegin = (x - this->xhw_startx) * this->xwfont;
-  int ybegin = (y - this->xhw_starty) * this->xhfont; /* needed by XDRAW */
+  const int startx = (x - this->xhw_startx) * this->xwfont;
+  const int starty = (y - this->xhw_starty) * this->xhfont; /* needed by XDRAW */
 
-  tcell cell = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
-                   ? Video[x + y * (ldat)DisplayWidth]
-                   : TCELL(TCOL(tWHITE, tblack), ' ');
-  tcolor col = TCOLOR(cell);
-  trune f = this->xUTF_32_to_charset(TRUNE(cell));
-
-  XChar16 c = RawToXChar16(f);
-
-  XDRAW(col, &c, 1);
+  const tcell cell = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
+                         ? Video[x + y * (ldat)DisplayWidth]
+                         : TCELL(TCOL(tWHITE, tblack), ' ');
+  const tcolor col = TCOLOR(cell);
+  const trune r = this->xUTF_32_to_charset(TRUNE(cell));
+#if HW_X_DRIVER == HW_X11
+  const XChar2b buf = RuneToXChar2b(r);
+  XDRAW(col, 1, &buf, 1);
+#else
+  const Utf8 buf(r);
+  XDRAW(col, 1, buf.data(), buf.size());
+#endif
 }
 
 TW_ATTR_HIDDEN void XDRIVER::ShowCursor(uldat type, dat x, dat y) {
-  tcell cell = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
-                   ? Video[x + y * (ldat)DisplayWidth]
-                   : TCELL(TCOL(tWHITE, tblack), ' ');
-  tcolor color = TCOLOR(cell);
-  ldat xbegin = (x - this->xhw_startx) * this->xwfont;
-  ldat ybegin = (y - this->xhw_starty) * this->xhfont;
+  const tcell cell = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
+                         ? Video[x + y * (ldat)DisplayWidth]
+                         : TCELL(TCOL(tWHITE, tblack), ' ');
+  const tcolor color = TCOLOR(cell);
+  const ldat startx = (x - this->xhw_startx) * this->xwfont;
+  const ldat starty = (y - this->xhw_starty) * this->xhfont;
 
   if (type & 0x10) {
     /* soft cursor */
-    tcolor v = (color | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
-    trune f;
-    XChar16 c;
-    if ((type & 0x20) && (color & TCOL(0, twhite)) == (v & TCOL(0, twhite)))
-      v ^= TCOL(0, twhite);
-    if ((type & 0x40) && ((TCOLFG(v) & twhite) == (TCOLBG(v) & twhite)))
-      v ^= TCOL(twhite, 0);
-    f = this->xUTF_32_to_charset(TRUNE(cell));
-    c = RawToXChar16(f);
-    XDRAW(v, &c, 1);
+    tcolor col = (color | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
+    if ((type & 0x20) && (color & TCOL(0, twhite)) == (col & TCOL(0, twhite))) {
+      col ^= TCOL(0, twhite);
+    }
+    if ((type & 0x40) && ((TCOLFG(col) & twhite) == (TCOLBG(col) & twhite))) {
+      col ^= TCOL(twhite, 0);
+    }
+    const trune r = this->xUTF_32_to_charset(TRUNE(cell));
+#if HW_X_DRIVER == HW_X11
+    const XChar2b buf = RuneToXChar2b(r);
+    XDRAW(col, 1, &buf, 1);
+#else
+    const Utf8 buf(r);
+    XDRAW(col, 1, buf.data(), buf.size());
+#endif
   } else if (type & 0xF) {
     /* VGA hw-like cursor */
 
@@ -82,7 +98,7 @@ TW_ATTR_HIDDEN void XDRIVER::ShowCursor(uldat type, dat x, dat y) {
     udat i = this->xhfont * ((type & 0xF) - NOCURSOR) / (SOLIDCURSOR - NOCURSOR);
 
     XSetFunction(this->xdisplay, this->xgc, this->xsgc.function = GXxor);
-    XFillRectangle(this->xdisplay, this->xwindow, this->xgc, xbegin, ybegin + this->xhfont - i,
+    XFillRectangle(this->xdisplay, this->xwindow, this->xgc, startx, starty + this->xhfont - i,
                    this->xwfont, i);
     XSetFunction(this->xdisplay, this->xgc, this->xsgc.function = GXcopy);
   }
@@ -463,7 +479,7 @@ TW_ATTR_HIDDEN int XDRIVER::Die(Display * /*d*/) {
 }
 #endif
 
-TW_ATTR_HIDDEN trune XDRIVER::UTF_32_to_UCS_2(trune c) {
+TW_ATTR_HIDDEN trune XDRIVER::UTF_32_identity(trune c) {
   if ((c & 0x1FFE00) == 0xF000) {
     /* private use codepoints. for compatibility, treat as "direct-to-font" zone */
     c &= 0x01FF;
