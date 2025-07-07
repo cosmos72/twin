@@ -331,7 +331,7 @@ From 0.4.0 to 0.4.1: (Massimiliano Ghilardi, 30 Dec 2001)
 	  int c; char *s; c = *((int *)s)++;
 	* Worked around KDE `knotes' spamming requests for selection contents,
 	  which resulted in `-hw=X' internal error
-	  "hw_X11.c: X11_SelectionRequest_up(): too many nested X Selection Request events!"
+	  "hw_x11.c: X11_SelectionRequest_up(): too many nested X Selection Request events!"
 	* Updated twsysmon to linux kernel 2.4 style disk activity report.
 	* Added a few more long options to twdisplay and twattach.
 	* Cleaned up namespace for libraries version-related #defines.

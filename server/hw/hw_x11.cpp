@@ -1,5 +1,5 @@
 /*
- *  hw_X11.c  --  functions to let twin display on X11
+ *  hw_x11.c  --  functions to let twin display on X11
  *
  *  Copyright (C) 1999-2001 by Massimiliano Ghilardi
  *
@@ -30,7 +30,7 @@
 #include <X11/Xatom.h>
 #include <X11/Xmd.h> /* CARD32 */
 
-#define THIS "hw_X11"
+#define THIS "hw_x11"
 
 #include "hw_x/flavor.h"
 #undef HW_X_DRIVER

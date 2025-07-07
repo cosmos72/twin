@@ -34,7 +34,7 @@ in the diagram below (which enhances the diagram I previously wrote):
    |                  |        |             |             |                  |
    |                  V        V             V             V                  V
    |   +----------------+  +---------+  +----------+  +----------+   +------------------+
-   |   |hw_twin_tunnel_c|  |hw_twin_c|  | hw_gtk_c |  | hw_X11_c |   |hw_twin_detunnel_c|
+   |   |hw_twin_tunnel_c|  |hw_twin_c|  | hw_gtk_c |  | hw_x11_c |   |hw_twin_detunnel_c|
    |   +----------------+  +---------+  +----------+  +----------+   +------------------+
    |                  |        |             |             |                  |
    V                  V        V             V             V                  |
@@ -59,7 +59,7 @@ in the diagram below (which enhances the diagram I previously wrote):
  |        |       ^        |              |            |                    |           |
  |        V       |        V              V            V                    |           V
  |   +---------+  |  +------------+   +--------+   +--------+               |  +------------------+
- |   |hw_twin.c|  |  |hw_display.c|   |hw_X11.c|   |hw_tty.c|               |  |   ext_libTT.c    |
+ |   |hw_twin.c|  |  |hw_display.c|   |hw_x11.c|   |hw_tty.c|               |  |   ext_libTT.c    |
  |   +---------+  |  +------------+   +--------+   +--------+               |  +------------------+
  |        |       |        |              |            |                    |           |
  +--------+       |        V              V            V                    |           V

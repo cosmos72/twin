@@ -295,7 +295,7 @@ public:
 
   /*
    * set to ttrue if the display was corrupted by some external event
-   * example: hw_X11.c sets this when its window gets Expose events
+   * example: hw_x11.c sets this when its window gets Expose events
    */
   bool RedrawVideo;
 

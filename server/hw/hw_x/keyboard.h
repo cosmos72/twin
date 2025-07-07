@@ -28,8 +28,8 @@
  *
  * Suppose twin is running on X, and you also have twdisplay running on the same X.
  * You select something inside a twterm. Twin will export the selection on all displays,
- * in this case hw_X11 and hw_display (which talks to twdisplay and its other hw_X11).
- * Both the hw_X11 will do a XSetSelectionOwner, causing a race: one wins,
+ * in this case hw_x11 and hw_display (which talks to twdisplay and its other hw_x11).
+ * Both the hw_x11 will do a XSetSelectionOwner, causing a race: one wins,
  * the other receives a SelectionClear event from X.
  *
  * Suppose twdisplay wins.
@@ -42,11 +42,11 @@
  *   |      |
  *   v      v
  * twdisplay   receives a "Selection Request" from X (xterm), and knows twin Selection owner is twin
- * -> hw_X11 (twdisplay) so it forwards the request to twin
+ * -> hw_x11 (twdisplay) so it forwards the request to twin
  *
  *  twin       receives a "Selection Request" from twdisplay, and knows twin Selection owner is twin
- * -> hw_X11 (twdisplay) so it resets the Selection owner (displays hold selection only for a single
- * request) and forwards the request to hw_X11 (twdisplay), so that twdisplay receives the request
+ * -> hw_x11 (twdisplay) so it resets the Selection owner (displays hold selection only for a single
+ * request) and forwards the request to hw_x11 (twdisplay), so that twdisplay receives the request
  * AS AN X11 SELECTION REQUEST!
  *
  *   twdisplay receives a "Selection Request" from X (twin), and knows twin Selection owner is None
