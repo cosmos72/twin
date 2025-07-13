@@ -55,11 +55,11 @@ static byte dirtyN;
 #define CTRL_ACTION 0x0d00ff81
 #define CTRL_ALWAYS 0x0800f501 /* Cannot be overridden by TTY_DISPCTRL */
 
-static inline void change_flags(tty_data *tty, uldat bit, byte on_off) {
+static inline void change_flags(tty_data *tty, uldat bits, byte on_off) {
   if (on_off) {
-    tty->Flags |= bit;
+    tty->Flags |= bits;
   } else {
-    tty->Flags &= ~bit;
+    tty->Flags &= ~bits;
   }
 }
 
@@ -815,38 +815,55 @@ static void set_mode(tty_data *tty, byte on_off) {
         break;
       case 8: /* Autorepeat on/off */
         break;
-      case 9: /* new style */
-        change_flags(tty, TTY_REPORTMOUSE_TWTERM, on_off);
-        change_flags(tty, TTY_REPORTMOUSE_ALSO_MOVE, tfalse);
-        tty->Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE_MOTION | WINDOW_WANT_MOUSE,
-                              on_off ? WINDOW_WANT_MOUSE : 0);
+      case 9: /* X10-compatible mouse reporting */
+        change_flags(tty,
+                     TTY_REPORTMOUSE_STYLE | TTY_REPORTMOUSE_RELEASE | TTY_REPORTMOUSE_DRAG |
+                         TTY_REPORTMOUSE_MOVE,
+                     tfalse);
+        change_flags(tty, TTY_REPORTMOUSE_X10, on_off);
+        tty->Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE, on_off ? WINDOW_WANT_MOUSE : 0);
         break;
       case 25: /* Cursor on/off */
         tty->Win->ChangeField(TWS_window_Flags, WINDOWFL_CURSOR_ON,
                               on_off ? WINDOWFL_CURSOR_ON : 0);
         tty->Flags |= TTY_UPDATECURSOR;
         break;
-      case 999: /* new style, also report mouse move */
-        change_flags(tty, TTY_REPORTMOUSE_TWTERM, on_off);
-        change_flags(tty, TTY_REPORTMOUSE_ALSO_MOVE, on_off);
+      case 999: /* twterm mouse reporting, includes mouse movement */
+        change_flags(tty, TTY_REPORTMOUSE_STYLE, tfalse);
+        change_flags(tty,
+                     TTY_REPORTMOUSE_TWTERM | TTY_REPORTMOUSE_RELEASE | TTY_REPORTMOUSE_DRAG |
+                         TTY_REPORTMOUSE_MOVE,
+                     on_off);
         tty->Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
                               on_off ? WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION : 0);
         break;
-      case 1000: /* classic xterm style */
-        change_flags(tty, TTY_REPORTMOUSE_XTERM, on_off);
-        change_flags(tty, TTY_REPORTMOUSE_ALSO_MOVE, tfalse);
-        tty->Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
-                              on_off ? WINDOW_WANT_MOUSE : 0);
+      case 1000: /* xterm mouse reporting, button press/release only */
+        change_flags(tty, TTY_REPORTMOUSE_STYLE | TTY_REPORTMOUSE_DRAG | TTY_REPORTMOUSE_MOVE,
+                     tfalse);
+        change_flags(tty, TTY_REPORTMOUSE_XTERM | TTY_REPORTMOUSE_RELEASE, on_off);
+        tty->Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE, on_off ? WINDOW_WANT_MOUSE : 0);
         break;
-
-      case 1002: /* classic xterm style, also report mouse dragging */
-        change_flags(tty, TTY_REPORTMOUSE_XTERM, on_off);
-        change_flags(tty, TTY_REPORTMOUSE_ALSO_MOVE, on_off);
+      case 1002: /* xterm mouse reporting, includes mouse dragging */
+        change_flags(tty, TTY_REPORTMOUSE_STYLE | TTY_REPORTMOUSE_MOVE, tfalse);
+        change_flags(tty, TTY_REPORTMOUSE_XTERM | TTY_REPORTMOUSE_RELEASE | TTY_REPORTMOUSE_DRAG,
+                     on_off);
         tty->Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
                               on_off ? WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION : 0);
         break;
-
-        /* ANSI modes set/reset */
+      case 1003: /* xterm mouse reporting, includes mouse movement */
+        change_flags(tty, TTY_REPORTMOUSE_STYLE, tfalse);
+        change_flags(tty,
+                     TTY_REPORTMOUSE_XTERM | TTY_REPORTMOUSE_RELEASE | TTY_REPORTMOUSE_DRAG |
+                         TTY_REPORTMOUSE_MOVE,
+                     on_off);
+        tty->Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
+                              on_off ? WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION : 0);
+        break;
+      case 1006: /* xterm mouse reporting, toggles decimal mode */
+        change_flags(tty, TTY_REPORTMOUSE_DECIMAL, on_off);
+        break;
+      default:
+        break;
       }
     } else {
       switch (par) {

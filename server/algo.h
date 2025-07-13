@@ -30,6 +30,9 @@ inline ldat Max2(ldat x, ldat y) NOTHROW {
 inline ldat Max3(ldat x, ldat y, ldat z) NOTHROW {
   return Max2(Max2(x, y), z);
 }
+inline ldat Clamp(ldat min_x, ldat x, ldat max_x) NOTHROW {
+  return x < min_x ? min_x : x > max_x ? max_x : x;
+}
 
 inline uldat Min2u(uldat x, uldat y) NOTHROW {
   return x < y ? x : y;

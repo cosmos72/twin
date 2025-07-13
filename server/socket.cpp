@@ -2406,7 +2406,7 @@ static void SocketIO(int fd, uldat slot) {
 static void SocketH(Tmsgport MsgPort) {
   Tmsg msg;
   Twidget w;
-  char buf[10];
+  char buf[24];
   byte len;
 
   while ((msg = MsgPort->Msgs.First)) {
@@ -2414,18 +2414,19 @@ static void SocketH(Tmsgport MsgPort) {
 
     if (msg->Type == msg_widget_mouse && (w = msg->Event.EventMouse.W) && IS_WINDOW(w) &&
         (w->Flags & WINDOWFL_USECONTENTS) && ((Twindow)w)->USE.C.TtyData &&
-        ((Twindow)w)->USE.C.TtyData->Flags & (TTY_REPORTMOUSE_TWTERM | TTY_REPORTMOUSE_XTERM)) {
+        ((Twindow)w)->USE.C.TtyData->Flags & TTY_REPORTMOUSE_STYLE) {
 
-      len = CreateXTermMouseEvent(&msg->Event.EventMouse, 10, buf);
+      len = CreateXTermMouseEvent(&msg->Event.EventMouse, sizeof(buf), buf);
       /*
        * SyntheticKey() will send an appropriate keyboard message to this MsgPort
        * and we will sockSendMsg() it later in the while() loop.
        */
-      if (len)
+      if (len) {
         SyntheticKey(msg->Event.EventMouse.W, TW_XTermMouse, 0, len, buf);
-    } else
+      }
+    } else {
       sockSendMsg(MsgPort, msg);
-
+    }
     msg->Delete();
   }
 }

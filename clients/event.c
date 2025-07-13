@@ -274,16 +274,12 @@ int main(int argc, char *argv[]) {
           case PRESS_RIGHT:
             s2 = " Right";
             break;
-#ifdef HOLD_WHEEL_REV
           case PRESS_WHEEL_REV:
             s2 = " Wheel Rev";
             break;
-#endif
-#ifdef HOLD_WHEEL_FWD
           case PRESS_WHEEL_FWD:
             s2 = " Wheel Fwd";
             break;
-#endif
           default:
             s2 = "Unknown Button ";
             break;
@@ -300,16 +296,12 @@ int main(int argc, char *argv[]) {
           case RELEASE_RIGHT:
             s2 = " Right";
             break;
-#ifdef HOLD_WHEEL_REV
           case RELEASE_WHEEL_REV:
             s2 = " Wheel Rev";
             break;
-#endif
-#ifdef HOLD_WHEEL_FWD
           case RELEASE_WHEEL_FWD:
             s2 = " Wheel Fwd";
             break;
-#endif
           default:
             s2 = "Unknown Button ";
             break;
@@ -324,12 +316,8 @@ int main(int argc, char *argv[]) {
           s4 = Code & HOLD_LEFT ? " Left" : "";
           s5 = Code & HOLD_MIDDLE ? " Middle" : "";
           s6 = Code & HOLD_RIGHT ? " Right" : "";
-#ifdef HOLD_WHEEL_REV
           s7 = Code & HOLD_WHEEL_REV ? " Wheel Rev" : "";
-#endif
-#ifdef HOLD_WHEEL_FWD
           s8 = Code & HOLD_WHEEL_FWD ? " Wheel Fwd" : "";
-#endif
           s9 = " held, ";
         } else
           s3 = s4 = s5 = s6 = s7 = s8 = s9 = "";

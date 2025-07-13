@@ -297,14 +297,8 @@ TW_ATTR_HIDDEN void XDRIVER::HandleEvent(XEvent *event) {
 
       dx = event->xbutton.state;
       dy = (dx & Button1Mask ? HOLD_LEFT : 0) | (dx & Button2Mask ? HOLD_MIDDLE : 0) |
-           (dx & Button3Mask ? HOLD_RIGHT : 0) |
-#ifdef HOLD_WHEEL_REV
-           (dx & Button4Mask ? HOLD_WHEEL_REV : 0) |
-#endif
-#ifdef HOLD_WHEEL_FWD
-           (dx & Button5Mask ? HOLD_WHEEL_FWD : 0) |
-#endif
-           0;
+           (dx & Button3Mask ? HOLD_RIGHT : 0) | (dx & Button4Mask ? HOLD_WHEEL_REV : 0) |
+           (dx & Button5Mask ? HOLD_WHEEL_FWD : 0);
 
       /*
        * when sending ButtonRelease event, X11 reports that button
@@ -319,16 +313,9 @@ TW_ATTR_HIDDEN void XDRIVER::HandleEvent(XEvent *event) {
       dx = (dx == Button1   ? HOLD_LEFT
             : dx == Button2 ? HOLD_MIDDLE
             : dx == Button3 ? HOLD_RIGHT
-            :
-#ifdef HOLD_WHEEL_REV
-            dx == Button4 ? HOLD_WHEEL_REV
-            :
-#endif
-#ifdef HOLD_WHEEL_FWD
-            dx == Button5 ? HOLD_WHEEL_FWD
-                          :
-#endif
-                          0);
+            : dx == Button4 ? HOLD_WHEEL_REV
+            : dx == Button5 ? HOLD_WHEEL_FWD
+                            : 0);
       if (event->type == ButtonPress) {
         dy |= dx;
       } else {
