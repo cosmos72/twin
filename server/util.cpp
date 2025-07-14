@@ -540,8 +540,7 @@ bool SetSelectionFromWindow(Twindow w) {
 }
 
 /* twterm-style mouse reporting */
-static byte CreateXTermMouseEventTwterm(event_mouse *event, byte buflen, char *buf,
-                                        const uldat flags) {
+static byte CreateMouseEventTwterm(event_mouse *event, byte buflen, char *buf, const uldat flags) {
   udat code = event->Code;
 
   /* if TTY_REPORTMOUSE_MOVE is set, also report motion */
@@ -565,8 +564,7 @@ static byte CreateXTermMouseEventTwterm(event_mouse *event, byte buflen, char *b
 }
 
 /* xterm-style mouse reporting */
-static byte CreateXTermMouseEventXterm(event_mouse *event, byte buflen, char *buf,
-                                       const uldat flags) {
+static byte CreateMouseEventXterm(event_mouse *event, byte buflen, char *buf, const uldat flags) {
 
   if (buflen < 6) {
     /* buffer too small! */
@@ -653,8 +651,8 @@ static char *PrintUdat100k(char *dst, udat n) {
 }
 
 /* xterm-style mouse reporting, decimal coordinates */
-static byte CreateXTermMouseEventXtermDecimal(event_mouse *event, byte buflen, char *buf,
-                                              const uldat flags) {
+static byte CreateMouseEventXtermDecimal(event_mouse *event, byte buflen, char *buf,
+                                         const uldat flags) {
   if (buflen < 18) {
     /* buffer too small! */
     return 0;
@@ -728,8 +726,7 @@ static byte CreateXTermMouseEventXtermDecimal(event_mouse *event, byte buflen, c
 }
 
 /* X10-style mouse reporting */
-static byte CreateXTermMouseEventX10(event_mouse *event, byte buflen, char *buf,
-                                     const uldat flags) {
+static byte CreateMouseEventX10(event_mouse *event, byte buflen, char *buf, const uldat flags) {
 
   const udat code = event->Code;
 
@@ -759,7 +756,7 @@ static byte CreateXTermMouseEventX10(event_mouse *event, byte buflen, char *buf,
   return 6;
 }
 
-byte CreateXTermMouseEvent(event_mouse *event, byte buflen, char *buf) {
+byte CreateMouseEvent(event_mouse *event, byte buflen, char *buf) {
   Twindow w = (Twindow)event->W;
 
   if (!w || !IS_WINDOW(w) || !W_USE(w, USECONTENTS) || !w->USE.C.TtyData) {
@@ -769,15 +766,15 @@ byte CreateXTermMouseEvent(event_mouse *event, byte buflen, char *buf) {
 
   switch (flags & TTY_REPORTMOUSE_STYLE) {
   case TTY_REPORTMOUSE_TWTERM:
-    return CreateXTermMouseEventTwterm(event, buflen, buf, flags);
+    return CreateMouseEventTwterm(event, buflen, buf, flags);
   case TTY_REPORTMOUSE_XTERM:
     if (flags & TTY_REPORTMOUSE_DECIMAL) {
-      return CreateXTermMouseEventXtermDecimal(event, buflen, buf, flags);
+      return CreateMouseEventXtermDecimal(event, buflen, buf, flags);
     } else {
-      return CreateXTermMouseEventXterm(event, buflen, buf, flags);
+      return CreateMouseEventXterm(event, buflen, buf, flags);
     }
   case TTY_REPORTMOUSE_X10:
-    return CreateXTermMouseEventX10(event, buflen, buf, flags);
+    return CreateMouseEventX10(event, buflen, buf, flags);
   default:
     return 0;
   }
@@ -1255,10 +1252,12 @@ bool InitTWDisplay(void) {
             CopyMem(TWDisplay, envTWD + 10, lenTWDisplay);
 #if defined(TW_HAVE_SETENV)
             setenv("TWDISPLAY", TWDisplay, 1);
-            setenv("TERM", "linux", 1);
+            setenv("TERM", "xterm-256color", 1);
+            setenv("COLORTERM", "truecolor", 1);
 #elif defined(TW_HAVE_PUTENV)
             putenv(envTWD);
-            putenv("TERM=linux");
+            putenv("TERM=xterm-256color");
+            putenv("COLORTERM=truecolor");
 #endif
             size_t arg0_len = strlen(TWDisplay) + 6;
             if ((arg0 = (char *)AllocMem(arg0_len))) {

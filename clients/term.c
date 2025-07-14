@@ -351,9 +351,11 @@ static byte InitTerm(void) {
   signal(SIGCHLD, SignalChild);
 
 #if defined(TW_HAVE_SETENV)
-  setenv("TERM", "linux", 1);
+  setenv("TERM", "xterm-256color", 1);
+  setenv("COLORTERM", "truecolor", 1);
 #elif defined(TW_HAVE_PUTENV)
-  putenv("TERM=linux");
+  putenv("TERM=xterm-256color");
+  putenv("COLORTERM=truecolor");
 #endif
 
   if (TwCheckMagic(term_magic) && TwOpen(NULL) && (Term_MsgPort = TwCreateMsgPort(6, "twterm")) &&

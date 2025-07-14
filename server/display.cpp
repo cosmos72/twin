@@ -55,7 +55,7 @@ static const char *MYname;
 static dat TryDisplayWidth, TryDisplayHeight;
 static byte ValidVideo;
 
-const char *TWDisplay, *origTWDisplay, *origTERM;
+const char *TWDisplay, *origTWDisplay, *origTERM, *origCOLORTERM;
 
 char printk_buf[TW_BIGBUFF];
 
@@ -1149,6 +1149,7 @@ int main(int argc, char *argv[]) {
   origTWDisplay = CloneStr(getenv("TWDISPLAY"));
   TWDisplay = dpy ? CloneStr(dpy) : origTWDisplay;
   origTERM = CloneStr(getenv("TERM"));
+  origCOLORTERM = CloneStr(getenv("COLORTERM"));
   {
     const char *home = getenv("HOME");
     if (!home) {

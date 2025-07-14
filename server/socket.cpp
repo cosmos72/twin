@@ -2416,7 +2416,7 @@ static void SocketH(Tmsgport MsgPort) {
         (w->Flags & WINDOWFL_USECONTENTS) && ((Twindow)w)->USE.C.TtyData &&
         ((Twindow)w)->USE.C.TtyData->Flags & TTY_REPORTMOUSE_STYLE) {
 
-      len = CreateXTermMouseEvent(&msg->Event.EventMouse, sizeof(buf), buf);
+      len = CreateMouseEvent(&msg->Event.EventMouse, sizeof(buf), buf);
       /*
        * SyntheticKey() will send an appropriate keyboard message to this MsgPort
        * and we will sockSendMsg() it later in the while() loop.

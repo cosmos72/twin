@@ -602,10 +602,8 @@ TW_ATTR_HIDDEN void tty_driver::termcap_ConfigureKeyboard(Tdisplay hw, udat reso
     }
     break;
   case HW_ALTCURSKEYS:
-    /*
-     fputs(todefault || !value ? "\033[?1l" : "\033[?1h", self->out);
-     hw->setFlush();
-     */
+    fputs(todefault || !value ? "\033[?1l" : "\033[?1h", self->out);
+    hw->setFlush();
     break;
   }
 }

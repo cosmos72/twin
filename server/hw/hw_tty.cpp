@@ -603,7 +603,7 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
         if (self->colormode == tty_color_autodetect) {
           Chars env_colorterm;
           if (!term_override &&
-              ((env_colorterm = Chars::from_c(getenv("COLORTERM"))) == Chars("truecolor") ||
+              ((env_colorterm = Chars::from_c(origCOLORTERM)) == Chars("truecolor") ||
                env_colorterm == Chars("24bit"))) {
             self->colormode = tty_color16m;
           } else if (self->tty_term.ends_with(Chars("256")) ||

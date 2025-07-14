@@ -100,7 +100,7 @@ TW_ATTR_HIDDEN void XDRIVER::Configure(Tdisplay hw, udat resource, byte todefaul
     self->xnumkeypad = todefault || !value;
     break;
   case HW_ALTCURSKEYS:
-    /* TODO */
+    self->xaltcursorkeys = !todefault && value;
     break;
   case HW_BELLPITCH:
     xctrl.bell_pitch = todefault ? -1 : value;
@@ -241,13 +241,16 @@ TW_ATTR_HIDDEN Twkey XDRIVER::LookupKey(XEvent *ev, udat *ShiftFlags, udat *len,
 
   } else if (tkey_entry != NULL && tkey_entry->len() &&
              (*len == 0 || (*ShiftFlags & ~(KBD_CAPS_LOCK | KBD_NUM_LOCK)) == 0)) {
-    /* XLookupString() returned empty string, or no ShiftFlags (ignoring CapsLock/NumLock): use the
-     * sequence stated in hw_keys.h */
-    if (tkey_entry->len() < maxlen) {
-      CopyMem(tkey_entry->seq, seq, *len = tkey_entry->len());
+    /* XLookupString() returned empty string, or no ShiftFlags (ignoring CapsLock/NumLock):
+     * use the sequence stated in hw_keys.h */
 
-      X_DEBUG_SHOW_KEY("replaced(2)", sym, *len, seq);
+    if (xaltcursorkeys && tkey >= TW_Left && tkey <= TW_Down) {
+      const char *altkeys = "\033OD\033OA\033OC\033OB";
+      CopyMem(altkeys + 3 * (tkey - TW_Left), seq, *len = 3);
+    } else if (tkey_entry->len() < maxlen) {
+      CopyMem(tkey_entry->seq, seq, *len = tkey_entry->len());
     }
+    X_DEBUG_SHOW_KEY("replaced(2)", sym, *len, seq);
   }
   return tkey == TW_Null && *len != 0 ? TW_Other : tkey;
 }

@@ -44,7 +44,7 @@
 fd_set save_rfds, save_wfds;
 int max_fds;
 byte lenTWDisplay;
-char *TWDisplay, *origTWDisplay, *origTERM, *origHW;
+char *TWDisplay, *origTWDisplay, *origTERM, *origCOLORTERM;
 char **main_argv, **orig_argv;
 uldat main_argv_usable_len;
 byte flag_secure, flag_envrc;
@@ -168,7 +168,7 @@ static byte Check4SpecialArgs(int argc, char *argv[]) {
   return tfalse;
 }
 
-static byte Init(void) {
+static bool Init(void) {
   FD_ZERO(&save_rfds);
   FD_ZERO(&save_wfds);
 
@@ -176,10 +176,15 @@ static byte Init(void) {
 
   CheckPrivileges();
 
-  if ((origTWDisplay = getenv("TWDISPLAY")))
+  if ((origTWDisplay = getenv("TWDISPLAY"))) {
     origTWDisplay = strdup(origTWDisplay);
-  if ((origTERM = getenv("TERM")))
+  }
+  if ((origTERM = getenv("TERM"))) {
     origTERM = strdup(origTERM);
+  }
+  if ((origCOLORTERM = getenv("COLORTERM"))) {
+    origCOLORTERM = strdup(origCOLORTERM);
+  }
 
   /*
    * WARNING:
@@ -273,9 +278,9 @@ int main(int argc, char *argv[]) {
   Now = &All->Now;
   InstantNow(Now); /* needed by various InitXXX() */
 
-  if (!Init())
+  if (!Init()) {
     Quit(0);
-
+  }
   /* not needed... done by InitHW() */
   /* QueuedDrawArea2FullScreen = true; */
 

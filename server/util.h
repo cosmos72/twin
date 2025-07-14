@@ -58,7 +58,7 @@ bool SetSelectionFromWindow(Twindow Window);
 void doSelectionSetOwner(Tobj Owner, tany Time, tany Frac);
 #define SEL_CURRENTTIME ((tany)0)
 
-byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, char *buf);
+byte CreateMouseEvent(event_mouse *Event, byte buflen, char *buf);
 
 /* close all fds except tty_fd_to_dup: duplicate it on fds 0, 1 and 2 */
 void closeAllFds(int tty_fd_to_dup);

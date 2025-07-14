@@ -134,10 +134,11 @@ TW_ATTR_HIDDEN void tty_driver::lrawkbd_ConfigureKeyboard(Tdisplay /*hw*/, udat 
     return;
   }
 
-  if (todefault || !value)
+  if (todefault || !value) {
     clr_vc_kbd_mode(kbd, flag);
-  else
+  } else {
     set_vc_kbd_mode(kbd, flag);
+  }
 }
 
 #ifdef DEBUG_HW_TTY_LRAWKBD

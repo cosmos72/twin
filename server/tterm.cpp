@@ -129,7 +129,7 @@ static void TwinTermH(Tmsgport MsgPort) {
     } else if (msg->Type == msg_widget_mouse) {
       if (Win) {
         char buf[24];
-        byte len = CreateXTermMouseEvent(&Event->EventMouse, sizeof(buf), buf);
+        byte len = CreateMouseEvent(&Event->EventMouse, sizeof(buf), buf);
 
         /* send mouse movements using xterm mouse protocol */
         if (len) {
