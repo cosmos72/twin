@@ -16,13 +16,13 @@ TW_ATTR_HIDDEN void tty_driver::termcap_MoveToXY(Tdisplay hw, udat x, udat y) {
 
 TW_ATTR_HIDDEN udat tty_driver::termcap_LookupKey(Tdisplay hw, udat *ShiftFlags, byte *slen,
                                                   char *s, byte *retlen, const char **ret) {
-  struct linux_keys {
+  struct xterm_keys {
     udat k;
     byte l;
     const char *s;
   };
-  static const linux_keys keys[] = {
 #define IS(k, l, s) {CAT(TW_, k), l, s}
+  static const xterm_keys keys[] = {
       IS(F1, 4, "\033[[A"),     IS(F2, 4, "\033[[B"),     IS(F3, 4, "\033[[C"),
       IS(F4, 4, "\033[[D"),     IS(F5, 4, "\033[[E"),     IS(F6, 5, "\033[17~"),
       IS(F7, 5, "\033[18~"),    IS(F8, 5, "\033[19~"),    IS(F9, 5, "\033[20~"),
@@ -31,10 +31,14 @@ TW_ATTR_HIDDEN udat tty_driver::termcap_LookupKey(Tdisplay hw, udat *ShiftFlags,
       IS(Delete, 4, "\033[3~"), IS(Insert, 4, "\033[2~"), IS(Next, 4, "\033[6~"),
       IS(Prior, 4, "\033[5~"),  IS(Left, 3, "\033[D"),    IS(Up, 3, "\033[A"),
       IS(Right, 3, "\033[C"),   IS(Down, 3, "\033[B"),
-#undef IS
   };
+  static const xterm_keys altkeys[] = {
+      IS(Left, 3, "\033OD"),    IS(Up, 3, "\033OA"),
+      IS(Right, 3, "\033OC"),   IS(Down, 3, "\033OB"),
+  };
+#undef IS
   tty_driver *self = ttydriver(hw);
-  const linux_keys *lk;
+  const xterm_keys *lk;
   char **key;
   byte keylen, len = *slen;
 
@@ -57,11 +61,15 @@ TW_ATTR_HIDDEN udat tty_driver::termcap_LookupKey(Tdisplay hw, udat *ShiftFlags,
 
     for (key = self->tc + tc_key_first; key < self->tc + tc_key_last; key++) {
       if (*key && **key && (keylen = strlen(*key)) <= len && !memcmp(*key, s, keylen)) {
-        lk = keys + (key - &self->tc[tc_key_first]);
+	lk = &keys[key - &self->tc[tc_key_first]];
+	udat code = lk->k;
+	if (self->altcurskeys && code >= TW_Left && code <= TW_Down) {
+	  lk = &altkeys[code - TW_Left];
+	}
         *slen = keylen;
         *retlen = lk->l;
         *ret = lk->s;
-        return lk->k;
+        return code;
       }
     }
 
@@ -602,8 +610,7 @@ TW_ATTR_HIDDEN void tty_driver::termcap_ConfigureKeyboard(Tdisplay hw, udat reso
     }
     break;
   case HW_ALTCURSKEYS:
-    fputs(todefault || !value ? "\033[?1l" : "\033[?1h", self->out);
-    hw->setFlush();
+    self->altcurskeys = value != 0 && !todefault;
     break;
   }
 }

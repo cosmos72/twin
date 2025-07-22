@@ -307,8 +307,9 @@ TW_ATTR_HIDDEN void tty_driver::stdin_KeyboardEvent(int fd, Tdisplay hw) {
   char *s = buf, *end = buf + sizeof(buf) - 1;
   const char *ret;
   tty_driver *self = ttydriver(hw);
-  udat Code, ShiftFlags;
-  byte got, chunk, retlen;
+  ldat got;
+  udat code, shiftFlags;
+  byte chunk, retlen;
 
   FD_ZERO(&rfds);
   FD_SET(fd, &rfds);
@@ -320,13 +321,13 @@ TW_ATTR_HIDDEN void tty_driver::stdin_KeyboardEvent(int fd, Tdisplay hw) {
 
   } while (got > 0 && (s += got) < end && select(fd + 1, &rfds, NULL, NULL, &t) == 1);
 
-  if (got == (byte)-1 && errno != EINTR && errno != EWOULDBLOCK) {
+  if (got == -1 && errno != EINTR && errno != EWOULDBLOCK) {
     /* BIG troubles */
     hw->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW;
     return;
   }
 
-  got = s - buf;
+  got = (ldat)(s - buf);
   s = buf;
 
   while (got > 0) {
@@ -355,7 +356,8 @@ TW_ATTR_HIDDEN void tty_driver::stdin_KeyboardEvent(int fd, Tdisplay hw) {
         } else {
           break;
         }
-        s += chunk, got -= chunk;
+        s += chunk;
+	got -= chunk;
         xterm_MouseEvent(fd, hw);
       }
     }
@@ -366,9 +368,9 @@ TW_ATTR_HIDDEN void tty_driver::stdin_KeyboardEvent(int fd, Tdisplay hw) {
       break;
     }
     ret = end;
-    Code = self->fnLookupKey(hw, &ShiftFlags, &chunk, s, &retlen, &ret);
+    code = self->fnLookupKey(hw, &shiftFlags, &chunk, s, &retlen, &ret);
     s += chunk, got -= chunk;
 
-    KeyboardEventCommon(hw, Code, ShiftFlags, retlen, ret);
+    KeyboardEventCommon(hw, code, shiftFlags, retlen, ret);
   }
 }
