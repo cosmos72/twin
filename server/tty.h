@@ -72,6 +72,8 @@ enum tty_state /*: udat*/ {
   EShash,
   ESsetG0,
   ESsetG1,
+  ESsetG2,
+  ESsetG3,
   ESpercent,
   ESignore,
   ESnonstd,

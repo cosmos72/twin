@@ -576,8 +576,11 @@ static void set_charset(tty_data *tty, byte g) {
 }
 
 static inline trune applyG(tty_data *tty, trune c) {
-  if (c < 0x100 && tty->Gv[tty->Gi] != LATIN1_MAP) {
-    c = tty->Win->Charset[c];
+  if (c < 0x100) {
+    const trune *charset = tty->Win->Charset;
+    if (charset != Tutf_ISO8859_1_to_UTF_32) {
+      c = charset[(byte)c];
+    }
   }
   return c;
 }
@@ -797,6 +800,10 @@ static void set_mode(tty_data *tty, byte on_off) {
       case 1: /* Cursor keys send ^[Ox/^[[x */
         change_flags(tty, TTY_ALTCURSKEYS, on_off);
         tty->Flags |= TTY_NEEDREFOCUS;
+        break;
+      case 2: /* set G0...G3 to LATIN1 charset */
+        std::memset(tty->Gv, LATIN1_MAP, sizeof(tty->Gv));
+        set_charset(tty, LATIN1_MAP);
         break;
       case 3: /* 80/132 mode switch unimplemented */
         break;
@@ -1156,15 +1163,43 @@ static inline void write_ctrl(tty_data *tty, byte c) {
 
   case ESesc:
     switch (c) {
-    case '[':
-      tty->State = ESsquare;
-      return;
-    case ']':
-      tty->State = ESnonstd;
+    case '#':
+      tty->State = EShash;
       return;
     case '%':
       tty->State = ESpercent;
       return;
+    case '(':
+      tty->State = ESsetG0;
+      return;
+    case ')':
+    case '-':
+      tty->State = ESsetG1;
+      return;
+    case '*':
+    case '.':
+      tty->State = ESsetG2;
+      return;
+    case '+':
+    case '/':
+      tty->State = ESsetG3;
+      return;
+
+    case '7':
+      save_current(tty);
+      break;
+    case '8':
+      restore_current(tty);
+      break;
+
+    case '=': /* Appl. keypad */
+      tty->Flags |= TTY_KBDAPPLIC | TTY_NEEDREFOCUS;
+      break;
+    case '>': /* Numeric keypad */
+      tty->Flags &= ~TTY_KBDAPPLIC;
+      tty->Flags |= TTY_NEEDREFOCUS;
+      break;
+
     case 'E':
       cr(tty);
       lf(tty);
@@ -1181,31 +1216,28 @@ static inline void write_ctrl(tty_data *tty, byte c) {
     case 'Z':
       respond_ID(tty);
       break;
-    case '7':
-      save_current(tty);
-      break;
-    case '8':
-      restore_current(tty);
-      break;
-    case '(':
-      tty->State = ESsetG0;
+
+    case '[':
+      tty->State = ESsquare;
       return;
-    case ')':
-      tty->State = ESsetG1;
-      return;
-    case '#':
-      tty->State = EShash;
+    case ']':
+      tty->State = ESnonstd;
       return;
     case 'c':
       reset_tty(tty, true);
       break;
-    case '>': /* Numeric keypad */
-      tty->Flags &= ~TTY_KBDAPPLIC;
-      tty->Flags |= TTY_NEEDREFOCUS;
+    case '~':
+      set_charset(tty, tty->Gv[tty->Gi = 1]);
       break;
-    case '=': /* Appl. keypad */
-      tty->Flags |= TTY_KBDAPPLIC | TTY_NEEDREFOCUS;
+    case 'n':
+    case '}':
+      set_charset(tty, tty->Gv[tty->Gi = 2]);
       break;
+    case 'o':
+    case '|':
+      set_charset(tty, tty->Gv[tty->Gi = 3]);
+      break;
+
     case '\\': /* ESC\ is the official termination for ESC]0; which starts window title change */
       set_newtitle(tty);
       break;
@@ -1467,11 +1499,11 @@ static inline void write_ctrl(tty_data *tty, byte c) {
     case 'B':
       tty->Gv[0] = LATIN1_MAP;
       break;
-    case 'U':
-      tty->Gv[0] = IBMPC_MAP;
-      break;
     case 'K':
       tty->Gv[0] = USER_MAP;
+      break;
+    case 'U':
+      tty->Gv[0] = IBMPC_MAP;
       break;
     default:
       break;
@@ -1489,17 +1521,61 @@ static inline void write_ctrl(tty_data *tty, byte c) {
     case 'B':
       tty->Gv[1] = LATIN1_MAP;
       break;
-    case 'U':
-      tty->Gv[1] = IBMPC_MAP;
-      break;
     case 'K':
       tty->Gv[1] = USER_MAP;
+      break;
+    case 'U':
+      tty->Gv[1] = IBMPC_MAP;
       break;
     default:
       break;
     }
     if (tty->Gi == 1) {
       set_charset(tty, tty->Gv[1]);
+    }
+    break;
+
+  case ESsetG2:
+    switch (c) {
+    case '0':
+      tty->Gv[2] = VT100GR_MAP;
+      break;
+    case 'B':
+      tty->Gv[2] = LATIN1_MAP;
+      break;
+    case 'K':
+      tty->Gv[2] = USER_MAP;
+      break;
+    case 'U':
+      tty->Gv[2] = IBMPC_MAP;
+      break;
+    default:
+      break;
+    }
+    if (tty->Gi == 2) {
+      set_charset(tty, tty->Gv[2]);
+    }
+    break;
+
+  case ESsetG3:
+    switch (c) {
+    case '0':
+      tty->Gv[3] = VT100GR_MAP;
+      break;
+    case 'B':
+      tty->Gv[3] = LATIN1_MAP;
+      break;
+    case 'K':
+      tty->Gv[3] = USER_MAP;
+      break;
+    case 'U':
+      tty->Gv[3] = IBMPC_MAP;
+      break;
+    default:
+      break;
+    }
+    if (tty->Gi == 3) {
+      set_charset(tty, tty->Gv[3]);
     }
     break;
 
@@ -1772,8 +1848,9 @@ bool TtyWriteTRune(Twindow w, uldat len, const trune *runes) {
         tty->X++;
         tty->Pos++;
       }
-    } else
+    } else {
       write_ctrl(tty, (byte)c);
+    }
   }
   flush_tty(tty);
   return true;
