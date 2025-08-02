@@ -102,7 +102,7 @@ public:
   uldat TabStop[5];
   uldat nPar, Par[NPAR];
 
-  byte currG, G, G0, G1, saveG, saveG0, saveG1;
+  byte Gv[4], saveGv[4], Gi, saveGi;
   byte utf8, utf8_count;
   trune utf8_char;
   trune (*InvCharset)(trune); /* pointer to trune -> byte translation function */

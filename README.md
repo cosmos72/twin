@@ -108,6 +108,8 @@ on your system:
 
   * an ANSI C compiler (for example gcc or clang)
 
+  * a C++ 98 compiler (for example g++ or clang++)
+
 
 Note: it is STRONGLY recommended to install at least the following packages before compiling twin
 (the exact names depend on the operating system or Linux distribution):

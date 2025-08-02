@@ -190,12 +190,16 @@ static bool InitTtyDataWindow(Twindow window, dat scrollbacklines) {
   Data->TabStop[1] = Data->TabStop[2] = Data->TabStop[3] = Data->TabStop[4] = 0x01010101;
   Data->nPar = 0;
 
-  Data->G = Data->saveG = 0;
   /* default to latin1 charset */
-  Data->currG = Data->G0 = Data->saveG0 = LATIN1_MAP;
-  Data->G1 = Data->saveG1 = VT100GR_MAP;
+  std::memset(Data->Gv, LATIN1_MAP, sizeof(Data->Gv));
+  std::memset(Data->saveGv, LATIN1_MAP, sizeof(Data->saveGv));
+  Data->Gv[1] = Data->saveGv[1] = VT100GR_MAP;
+  Data->Gi = Data->saveGi = 0;
 
-  Data->utf8 = Data->utf8_count = Data->utf8_char = 0;
+  /* default to UTF-8 mode */
+  Data->utf8 = 1;
+  Data->utf8_count = Data->utf8_char = 0;
+  window->Charset = Tutf_ISO_8859_1_to_UTF_32;
   Data->InvCharset = Tutf_UTF_32_to_ISO_8859_1;
   Data->newLen = Data->newMax = 0;
   Data->newName = NULL;

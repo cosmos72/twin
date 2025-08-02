@@ -555,7 +555,6 @@ static void update_eff(tty_data *tty) {
 
 static void set_charset(tty_data *tty, byte g) {
   Twindow w = tty->Win;
-  tty->currG = g;
   switch (g) {
   case VT100GR_MAP:
     w->Charset = Tutf_VT100GR_to_UTF_32;
@@ -577,7 +576,7 @@ static void set_charset(tty_data *tty, byte g) {
 }
 
 static inline trune applyG(tty_data *tty, trune c) {
-  if (c < 0x100) {
+  if (c < 0x100 && tty->Gv[tty->Gi] != LATIN1_MAP) {
     c = tty->Win->Charset[c];
   }
   return c;
@@ -620,7 +619,7 @@ static void csi_m(tty_data *tty) {
               * control chars if defined, don't set
               * bit 8 on output.
               */
-      set_charset(tty, tty->G ? tty->G1 : tty->G0);
+      set_charset(tty, tty->Gv[tty->Gi]);
       tty->Flags &= ~(TTY_DISPCTRL | TTY_SETMETA);
       break;
     case 11: /* ANSI X3.64-1979 (SCO-ish?)
@@ -662,7 +661,7 @@ static void csi_m(tty_data *tty) {
           i += 3;
           continue;
         } else if (tty->Par[i + 1] == 2) {
-          /* 24-bit truecolor foreground: ESC[38;2;<R>;<tty->G>;<B>m */
+          /* 24-bit truecolor foreground: ESC[38;2;<R>;<G>;<B>m */
           uldat r = tty->Par[i + 2];
           uldat g = tty->Par[i + 3];
           uldat b = tty->Par[i + 4];
@@ -698,7 +697,7 @@ static void csi_m(tty_data *tty) {
           i += 3;
           continue;
         } else if (tty->Par[i + 1] == 2) {
-          /* 24-bit truecolor background: ESC[48;2;<R>;<tty->G>;<B>m */
+          /* 24-bit truecolor background: ESC[48;2;<R>;<G>;<B>m */
           uldat r = tty->Par[i + 2];
           uldat g = tty->Par[i + 3];
           uldat b = tty->Par[i + 4];
@@ -971,9 +970,8 @@ static inline void save_current(tty_data *tty) {
   tty->saveX = tty->X;
   tty->saveY = tty->Y;
   tty->saveColor = tty->Win->ColText;
-  tty->saveG = tty->G;
-  tty->saveG0 = tty->G0;
-  tty->saveG1 = tty->G1;
+  tty->saveGi = tty->Gi;
+  std::memcpy(tty->saveGv, tty->Gv, sizeof(tty->Gv));
 }
 
 static inline void restore_current(tty_data *tty) {
@@ -981,10 +979,8 @@ static inline void restore_current(tty_data *tty) {
   tty->Win->ColText = tty->saveColor;
   update_eff(tty);
   tty->Flags &= ~TTY_NEEDWRAP;
-  tty->G = tty->saveG;
-  tty->G0 = tty->saveG0;
-  tty->G1 = tty->saveG1;
-  set_charset(tty, tty->G ? tty->G1 : tty->G0);
+  std::memcpy(tty->Gv, tty->saveGv, sizeof(tty->Gv));
+  set_charset(tty, tty->Gv[tty->Gi = tty->saveGi]);
 }
 
 static void reset_tty(tty_data *tty, bool do_clear) {
@@ -1012,12 +1008,15 @@ static void reset_tty(tty_data *tty, bool do_clear) {
 
   tty->nPar = 0;
 
-  tty->G = tty->saveG = 0;
   /* default to latin1 charset */
-  set_charset(tty, tty->G0 = tty->saveG0 = LATIN1_MAP);
-  tty->G1 = tty->saveG1 = VT100GR_MAP;
+  set_charset(tty, LATIN1_MAP);
+  std::memset(tty->Gv, LATIN1_MAP, sizeof(tty->Gv));
+  tty->Gv[1] = VT100GR_MAP;
+  tty->Gi = tty->saveGi = 0;
 
-  tty->utf8 = tty->utf8_count = tty->utf8_char = 0;
+  /* default to UTF-8 mode */
+  tty->utf8 = 1;
+  tty->utf8_count = tty->utf8_char = 0;
 
   /*
   bell_pitch = DEFAULT_BELL_PITCH;
@@ -1128,13 +1127,11 @@ static inline void write_ctrl(tty_data *tty, byte c) {
     cr(tty);
     return;
   case 14:
-    tty->G = 1;
-    set_charset(tty, tty->G1);
+    set_charset(tty, tty->Gv[tty->Gi = 1]);
     tty->Flags |= TTY_DISPCTRL;
     return;
   case 15:
-    tty->G = 0;
-    set_charset(tty, tty->G0);
+    set_charset(tty, tty->Gv[tty->Gi = 0]);
     tty->Flags &= ~TTY_DISPCTRL;
     return;
   case 24:
@@ -1465,44 +1462,44 @@ static inline void write_ctrl(tty_data *tty, byte c) {
   case ESsetG0:
     switch (c) {
     case '0':
-      tty->G0 = VT100GR_MAP;
+      tty->Gv[0] = VT100GR_MAP;
       break;
     case 'B':
-      tty->G0 = LATIN1_MAP;
+      tty->Gv[0] = LATIN1_MAP;
       break;
     case 'U':
-      tty->G0 = IBMPC_MAP;
+      tty->Gv[0] = IBMPC_MAP;
       break;
     case 'K':
-      tty->G0 = USER_MAP;
+      tty->Gv[0] = USER_MAP;
       break;
     default:
       break;
     }
-    if (tty->G == 0) {
-      set_charset(tty, tty->G0);
+    if (tty->Gi == 0) {
+      set_charset(tty, tty->Gv[0]);
     }
     break;
 
   case ESsetG1:
     switch (c) {
     case '0':
-      tty->G1 = VT100GR_MAP;
+      tty->Gv[1] = VT100GR_MAP;
       break;
     case 'B':
-      tty->G1 = LATIN1_MAP;
+      tty->Gv[1] = LATIN1_MAP;
       break;
     case 'U':
-      tty->G1 = IBMPC_MAP;
+      tty->Gv[1] = IBMPC_MAP;
       break;
     case 'K':
-      tty->G1 = USER_MAP;
+      tty->Gv[1] = USER_MAP;
       break;
     default:
       break;
     }
-    if (tty->G == 1) {
-      set_charset(tty, tty->G1);
+    if (tty->Gi == 1) {
+      set_charset(tty, tty->Gv[1]);
     }
     break;
 
@@ -1634,7 +1631,7 @@ static bool combine_utf8(tty_data *tty, trune *pc) {
 static bool TtyWriteCharsetOrUtf8(Twindow w, uldat len, const char *chars, bool force_utf8) {
   tty_data *tty;
   trune c;
-  byte printable, utf8_in_use, disp_ctrl, state_normal;
+  bool utf8_in_use, printable, disp_ctrl, state_normal;
 
   if (!w || !W_USE(w, USECONTENTS) || !w->USE.C.TtyData) {
     return false;
@@ -1669,10 +1666,15 @@ static bool TtyWriteCharsetOrUtf8(Twindow w, uldat len, const char *chars, bool 
         }
         printable = c >= 32 && c != 127 && c != 128 + 27;
 
-      } else {
-        if (tty->Flags & TTY_SETMETA)
-          c |= 0x80;
+        if (printable && c < 128) {
+          // apply G[] charsets also in UTF-8 mode
+          c = applyG(tty, (byte)c);
+        }
 
+      } else {
+        if (tty->Flags & TTY_SETMETA) {
+          c |= 0x80;
+        }
         printable = (c >= 32 || !(((disp_ctrl ? CTRL_ALWAYS : CTRL_ACTION) >> c) & 1)) &&
                     (c != 127 || disp_ctrl) && (c != 128 + 27);
 
@@ -1681,7 +1683,7 @@ static bool TtyWriteCharsetOrUtf8(Twindow w, uldat len, const char *chars, bool 
         }
       }
     } else {
-      utf8_in_use = printable = tfalse;
+      utf8_in_use = printable = false;
     }
     if (printable && state_normal) {
       /* Now try to find out how to display it */
@@ -1703,8 +1705,9 @@ static bool TtyWriteCharsetOrUtf8(Twindow w, uldat len, const char *chars, bool 
         tty->X++;
         tty->Pos++;
       }
-    } else
+    } else {
       write_ctrl(tty, (byte)c);
+    }
     /* don't flush here, it just decreases performance */
     /* flush_tty(); */
   }
