@@ -805,8 +805,7 @@ static void set_mode(tty_data *tty, byte on_off) {
         std::memset(tty->Gv, LATIN1_MAP, sizeof(tty->Gv));
         set_charset(tty, LATIN1_MAP);
         break;
-      case 3: /* 80/132 mode switch unimplemented */
-        break;
+      // case 3: break; /* 80/132 mode switch, unimplemented */
       case 5: /* Inverted screen on/off */
         change_flags(tty, TTY_INVERTSCR, on_off);
         update_eff(tty);
@@ -819,8 +818,7 @@ static void set_mode(tty_data *tty, byte on_off) {
       case 7: /* Autowrap on/off */
         change_flags(tty, TTY_AUTOWRAP, on_off);
         break;
-      case 8: /* Autorepeat on/off */
-        break;
+      // case 8: break; /* Autorepeat on/off, unimplemented */
       case 9: /* X10-compatible mouse reporting */
         change_flags(tty,
                      TTY_REPORTMOUSE_STYLE | TTY_REPORTMOUSE_RELEASE | TTY_REPORTMOUSE_DRAG |
@@ -927,17 +925,17 @@ static void setterm_command(tty_data *tty) {
   }
 }
 
-static inline void insert_line(tty_data *tty, ldat nr) {
+static void insert_line(tty_data *tty, ldat nr) {
   scrolldown(tty, tty->Y, tty->Bottom, nr);
   tty->Flags &= ~TTY_NEEDWRAP;
 }
 
-static inline void delete_line(tty_data *tty, ldat nr) {
+static void delete_line(tty_data *tty, ldat nr) {
   scrollup(tty, tty->Y, tty->Bottom, nr);
   tty->Flags &= ~TTY_NEEDWRAP;
 }
 
-static inline void csi_at(tty_data *tty, ldat nr) {
+static void csi_at(tty_data *tty, ldat nr) {
   if (nr > (ldat)tty->SizeX - tty->X) {
     nr = (ldat)tty->SizeX - tty->X;
   } else if (!nr) {
@@ -946,7 +944,7 @@ static inline void csi_at(tty_data *tty, ldat nr) {
   insert_char(tty, nr);
 }
 
-static inline void csi_L(tty_data *tty, ldat nr) {
+static void csi_L(tty_data *tty, ldat nr) {
   if (nr > (ldat)tty->SizeY - tty->Y) {
     nr = (ldat)tty->SizeY - tty->Y;
   } else if (!nr) {
@@ -955,7 +953,7 @@ static inline void csi_L(tty_data *tty, ldat nr) {
   insert_line(tty, nr);
 }
 
-static inline void csi_P(tty_data *tty, ldat nr) {
+static void csi_P(tty_data *tty, ldat nr) {
   if (nr > (ldat)tty->SizeX - tty->X) {
     nr = (ldat)tty->SizeX - tty->X;
   } else if (!nr) {
@@ -964,13 +962,28 @@ static inline void csi_P(tty_data *tty, ldat nr) {
   delete_char(tty, nr);
 }
 
-static inline void csi_M(tty_data *tty, ldat nr) {
+static void csi_M(tty_data *tty, ldat nr) {
   if (nr > (ldat)tty->SizeY - tty->Y) {
     nr = (ldat)tty->SizeY - tty->Y;
   } else if (!nr) {
     nr = 1;
   }
   delete_line(tty, nr);
+}
+
+static void csi_r(tty_data *tty) {
+  if (!tty->Par[0]) {
+    tty->Par[0]++;
+  }
+  if (!tty->nPar || !tty->Par[1]) {
+    tty->Par[1] = tty->SizeY;
+  }
+  /* Minimum allowed region is 2 lines */
+  if (tty->Par[0] < tty->Par[1] && tty->SizeY >= 0 && tty->Par[1] <= (uldat)tty->SizeY) {
+    tty->Top = tty->Par[0] - 1;
+    tty->Bottom = tty->Par[1];
+    goto_axy(tty, 0, 0);
+  }
 }
 
 static inline void save_current(tty_data *tty) {
@@ -1040,54 +1053,24 @@ static void reset_tty(tty_data *tty, bool do_clear) {
   }
 }
 
-static bool grow_newtitle(tty_data *tty) {
-  ldat maxlen;
-  char *name;
-  if (tty->newMax < TW_MAXDAT) {
-    maxlen = ((ldat)tty->newMax + (tty->newMax >> 1) + 3) | All->SetUp->MinAllocSize;
-    if (maxlen > TW_MAXDAT) {
-      maxlen = TW_MAXDAT;
-    }
-    if ((name = (char *)ReAllocMem(tty->newName, maxlen))) {
-      tty->newName = name;
-      tty->newMax = maxlen;
-      return true;
-    }
-  }
-  return false;
-}
-
 static bool insert_newtitle(tty_data *tty, byte c) {
-  if (tty->newLen < tty->newMax || grow_newtitle(tty)) {
-    tty->newName[tty->newLen++] = c;
-    return true;
-  }
-  return false;
+  return tty->newName.append(c);
 }
 
 static void set_newtitle(tty_data *tty) {
-  char *name;
-  dat len;
-
-  if (!tty->newName) {
+  String &name = tty->newName;
+  const size_t len = name.size();
+  if (len == 0) {
     return;
   }
   /* try to shrink... */
-  if (!(name = (char *)ReAllocMem(tty->newName, len = tty->newLen))) {
-    name = tty->newName;
-  }
-  tty->newLen = tty->newMax = 0;
-  tty->newName = NULL;
-
-  tty->Win->SetTitle(len, name);
+  name.shrink_to_fit();
+  /* name.release() also resets it to zero length */
+  tty->Win->SetTitle(len, name.release());
 }
 
 static void clear_newtitle(tty_data *tty) {
-  if (tty->newName) {
-    FreeMem(tty->newName);
-  }
-  tty->newName = NULL;
-  tty->newLen = tty->newMax = 0;
+  tty->newName.clear();
 }
 
 static inline void write_ctrl(tty_data *tty, byte c) {
@@ -1433,27 +1416,18 @@ static inline void write_ctrl(tty_data *tty, byte c) {
     case 'q': /* DECLL - but only 3 leds */
               /* map 0,1,2,3 to 0,1,2,4 */
 #if 0
-      if (tty->Par[0] < 4)
+      if (tty->Par[0] < 4) {
         setledstate(kbd_table, (tty->Par[0] < 3) ? tty->Par[0] : 4);
+      }
 #endif
       break;
     case 'r':
-      if (!tty->Par[0]) {
-        tty->Par[0]++;
-      }
-      if (!tty->nPar || !tty->Par[1]) {
-        tty->Par[1] = tty->SizeY;
-      }
-      /* Minimum allowed region is 2 lines */
-      if (tty->Par[0] < tty->Par[1] && tty->SizeY >= 0 && tty->Par[1] <= (uldat)tty->SizeY) {
-        tty->Top = tty->Par[0] - 1;
-        tty->Bottom = tty->Par[1];
-        goto_axy(tty, 0, 0);
-      }
+      csi_r(tty);
       break;
     case 's':
       save_current(tty);
       break;
+    // case 't': break; /* xterm window manipulation, unimplemented */
     case 'u':
       restore_current(tty);
       break;

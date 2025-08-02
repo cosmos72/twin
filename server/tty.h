@@ -10,6 +10,7 @@
 #define TWIN_TTY_H
 
 #include <Tw/datatypes.h>
+#include "stl/string.h"
 
 /* tty_data->Flags */
 enum tty_flag /*: uldat*/ {
@@ -109,8 +110,7 @@ public:
   trune utf8_char;
   trune (*InvCharset)(trune); /* pointer to trune -> byte translation function */
 
-  dat newLen, newMax;
-  char *newName; /* buffer for xterm set window title escape seq */
+  String newName; /* buffer for xterm set window title escape seq */
 };
 
 bool TtyWriteCharset(Twindow Window, uldat Len, const char *charset_bytes);

@@ -153,13 +153,17 @@ static bool InitTtyDataWindow(Twindow window, dat scrollbacklines) {
   if (!Data && !(window->USE.C.TtyData = Data = (tty_data *)AllocMem(sizeof(tty_data))))
     return false;
 
-  if (!p && !(window->USE.C.Contents = p = (tcell *)AllocMem(count * sizeof(tcell))))
+  if (!p && !(window->USE.C.Contents = p = (tcell *)AllocMem(count * sizeof(tcell)))) {
+    FreeMem(Data);
     return false;
+  }
+
+  new (&Data->newName) String();
 
   h = TCELL(TCOL(twhite, tblack), ' ');
-  while (count--)
+  while (count--) {
     *p++ = h;
-
+  }
   /*
    * this is a superset of reset_tty(),
    * but we don't want to call it from here
@@ -201,23 +205,27 @@ static bool InitTtyDataWindow(Twindow window, dat scrollbacklines) {
   Data->utf8_count = Data->utf8_char = 0;
   window->Charset = Tutf_ISO_8859_1_to_UTF_32;
   Data->InvCharset = Tutf_UTF_32_to_ISO_8859_1;
-  Data->newLen = Data->newMax = 0;
-  Data->newName = NULL;
 
   return true;
 }
 
 void Swindow::Delete() {
   UnMap();
-  if (Name)
+  if (Name) {
     FreeMem(Name);
-  if (ColName)
+  }
+  if (ColName) {
     FreeMem(ColName);
+  }
   if (W_USE(this, USECONTENTS)) {
-    if (USE.C.TtyData)
-      FreeMem(USE.C.TtyData);
-    if (USE.C.Contents)
+    tty_data *tty = USE.C.TtyData;
+    if (tty) {
+      tty->newName.~String();
+      FreeMem(tty);
+    }
+    if (USE.C.Contents) {
       FreeMem(USE.C.Contents);
+    }
   } else if (W_USE(this, USEROWS)) {
     DeleteList(USE.R.Rows.First);
   }
