@@ -1296,10 +1296,11 @@ static inline void write_ctrl(tty_data *tty, byte c) {
       break;
     case 'c':
       if (tty->State & ESques) {
-        if (!tty->Par[0])
-          tty->Par[1] = tty->Par[2] = tty->Par[0];
-        else if (tty->nPar == 1)
+        if (!tty->Par[0]) {
+          tty->Par[1] = tty->Par[2] = 0;
+        } else if (tty->nPar == 1) {
           tty->Par[2] = 0;
+        }
         tty->Win->CursorType = tty->Par[0] | (tty->Par[1] << 8) | (tty->Par[2] << 16);
         tty->Flags |= TTY_UPDATECURSOR;
       }
@@ -1424,9 +1425,19 @@ static inline void write_ctrl(tty_data *tty, byte c) {
     case 'r':
       csi_r(tty);
       break;
+    case 'S': {
+      uldat n = tty->Par[0];
+      scrollup(tty, tty->Top, tty->Bottom, n ? n : 1);
+      break;
+    }
     case 's':
       save_current(tty);
       break;
+    case 'T': {
+      uldat n = tty->Par[0];
+      scrolldown(tty, tty->Top, tty->Bottom, n ? n : 1);
+      break;
+    }
     // case 't': break; /* xterm window manipulation, unimplemented */
     case 'u':
       restore_current(tty);
