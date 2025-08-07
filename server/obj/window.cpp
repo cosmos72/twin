@@ -146,19 +146,21 @@ Twindow Swindow::Init(Tmsgport owner, dat titlelen, const char *title, const tco
 /* tty_data */
 
 static bool InitTtyDataWindow(Twindow window, dat scrollbacklines) {
-  tty_data *Data = window->USE.C.TtyData;
-  ldat count = window->WLogic * window->HLogic;
-  tcell *p = window->USE.C.Contents, h;
+  tty_data *tty = window->USE.C.TtyData;
 
-  if (!Data && !(window->USE.C.TtyData = Data = (tty_data *)AllocMem(sizeof(tty_data))))
-    return false;
-
-  if (!p && !(window->USE.C.Contents = p = (tcell *)AllocMem(count * sizeof(tcell)))) {
-    FreeMem(Data);
+  if (!tty && !(window->USE.C.TtyData = tty = (tty_data *)AllocMem(sizeof(tty_data)))) {
     return false;
   }
 
-  new (&Data->newName) String();
+  ldat count = window->WLogic * window->HLogic;
+  tcell *p = window->USE.C.Contents, h;
+
+  if (!p && !(window->USE.C.Contents = p = (tcell *)AllocMem(count * sizeof(tcell)))) {
+    FreeMem(tty);
+    return false;
+  }
+
+  new (&tty->newName) String();
 
   h = TCELL(TCOL(twhite, tblack), ' ');
   while (count--) {
@@ -168,43 +170,44 @@ static bool InitTtyDataWindow(Twindow window, dat scrollbacklines) {
    * this is a superset of reset_tty(),
    * but we don't want to call it from here
    */
-  Data->State = ESnormal;
-  Data->Flags = TTY_AUTOWRAP;
-  Data->Effects = 0;
-  window->YLogic = window->CurY = Data->ScrollBack = scrollbacklines;
+  tty->State = ESnormal;
+  tty->Flags = TTY_AUTOWRAP;
+  tty->Effects = 0;
+  window->YLogic = window->CurY = tty->ScrollBack = scrollbacklines;
   window->USE.C.HSplit = 0;
-  Data->SizeX = window->WLogic;
-  Data->SizeY = window->HLogic - scrollbacklines;
-  Data->Top = 0;
-  Data->Bottom = Data->SizeY;
-  Data->saveX = Data->X = window->CurX = 0;
-  Data->saveY = Data->Y = 0;
-  Data->Pos = Data->Start = window->USE.C.Contents + Data->ScrollBack * window->WLogic;
-  Data->Split = window->USE.C.Contents + window->WLogic * window->HLogic;
+  tty->SizeX = window->WLogic;
+  tty->SizeY = window->HLogic - scrollbacklines;
+  tty->Top = 0;
+  tty->Bottom = tty->SizeY;
+  tty->saveX = tty->X = window->CurX = 0;
+  tty->saveY = tty->Y = 0;
+  tty->Pos = tty->Start = window->USE.C.Contents + tty->ScrollBack * window->WLogic;
+  tty->Split = window->USE.C.Contents + window->WLogic * window->HLogic;
 
   window->CursorType = LINECURSOR;
   /* respect the WINDOWFL_CURSOR_ON set by the client and don't force it on */
 #if 0
   window->Flags |= WINDOWFL_CURSOR_ON;
 #endif
-  window->ColText = Data->Color = Data->DefColor = Data->saveColor = TCOL(twhite, tblack);
-  Data->Underline = TCOL(tWHITE, tblack);
-  Data->HalfInten = TCOL(tBLACK, tblack);
-  Data->TabStop[0] = 0x01010100;
-  Data->TabStop[1] = Data->TabStop[2] = Data->TabStop[3] = Data->TabStop[4] = 0x01010101;
-  Data->nPar = 0;
+  window->ColText = tty->Color = tty->DefColor = tty->saveColor = TCOL(twhite, tblack);
+  tty->Underline = TCOL(tWHITE, tblack);
+  tty->HalfInten = TCOL(tBLACK, tblack);
+  tty->Par[0] = tty->nPar = 0;
 
   /* default to latin1 charset */
-  std::memset(Data->Gv, LATIN1_MAP, sizeof(Data->Gv));
-  std::memset(Data->saveGv, LATIN1_MAP, sizeof(Data->saveGv));
-  Data->Gv[1] = Data->saveGv[1] = VT100GR_MAP;
-  Data->Gi = Data->saveGi = 0;
+  std::memset(tty->Gv, LATIN1_MAP, sizeof(tty->Gv));
+  std::memset(tty->saveGv, LATIN1_MAP, sizeof(tty->saveGv));
+  tty->Gv[1] = tty->saveGv[1] = VT100GR_MAP;
+  tty->Gi = tty->saveGi = 0;
 
   /* default to UTF-8 mode */
-  Data->utf8 = 1;
-  Data->utf8_count = Data->utf8_char = 0;
+  tty->utf8 = 1;
+  tty->utf8_count = tty->utf8_char = 0;
   window->Charset = Tutf_ISO_8859_1_to_UTF_32;
-  Data->InvCharset = Tutf_UTF_32_to_ISO_8859_1;
+  tty->InvCharset = Tutf_UTF_32_to_ISO_8859_1;
+
+  std::memset(tty->TabStop, 0x01, sizeof(tty->TabStop));
+  tty->TabStop[0] = 0x00;
 
   return true;
 }

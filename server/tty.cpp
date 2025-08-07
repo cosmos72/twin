@@ -1023,10 +1023,7 @@ static void reset_tty(tty_data *tty, bool do_clear) {
   w->Flags |= WINDOWFL_CURSOR_ON;
   w->CursorType = LINECURSOR;
 
-  tty->TabStop[0] = 0x01010100;
-  tty->TabStop[1] = tty->TabStop[2] = tty->TabStop[3] = tty->TabStop[4] = 0x01010101;
-
-  tty->nPar = 0;
+  tty->Par[0] = tty->nPar = 0;
 
   /* default to latin1 charset */
   set_charset(tty, LATIN1_MAP);
@@ -1037,6 +1034,9 @@ static void reset_tty(tty_data *tty, bool do_clear) {
   /* default to UTF-8 mode */
   tty->utf8 = 1;
   tty->utf8_count = tty->utf8_char = 0;
+
+  std::memset(tty->TabStop, 0x01, sizeof(tty->TabStop));
+  tty->TabStop[0] = 0;
 
   /*
   bell_pitch = DEFAULT_BELL_PITCH;
@@ -1051,6 +1051,41 @@ static void reset_tty(tty_data *tty, bool do_clear) {
   if (do_clear) {
     csi_J(tty, 2);
   }
+}
+
+static bool is_tabstop(tty_data *tty, dat x) {
+  if (x >= 0 && (udat)x < 8 * sizeof(tty->TabStop)) {
+    return (tty->TabStop[x >> 3] >> (x & 7)) & 1;
+  }
+  return false;
+}
+
+static void set_tabstop(tty_data *tty, dat x, bool on_off) {
+  if (x >= 0 && (udat)x < 8 * sizeof(tty->TabStop)) {
+    byte &tabstop = tty->TabStop[x >> 3];
+    if (on_off) {
+      tabstop |= 1 << (x & 7);
+    } else {
+      tabstop &= ~(1 << (x & 7));
+    }
+  }
+}
+
+static void goto_tab_forward(tty_data *tty, uldat n) {
+  if (n == 0) {
+    return;
+  }
+  const dat max = tty->SizeX - 1;
+  dat x = tty->X;
+  tty->Pos -= x;
+  while (x < max) {
+    x++;
+    if (is_tabstop(tty, x) && --n == 0) {
+      break;
+    }
+  }
+  tty->X = x;
+  tty->Pos += x;
 }
 
 static bool insert_newtitle(tty_data *tty, byte c) {
@@ -1095,15 +1130,8 @@ static inline void write_ctrl(tty_data *tty, byte c) {
   case 8:
     bs(tty);
     return;
-  case 9: /* TAB */
-    tty->Pos -= tty->X;
-    while (tty->X < tty->SizeX - 1) {
-      tty->X++;
-      if (tty->TabStop[tty->X >> 5] & (1 << (tty->X & 31))) {
-        break;
-      }
-    }
-    tty->Pos += tty->X;
+  case 9:
+    goto_tab_forward(tty, 1);
     return;
   case 10:
   case 11:
@@ -1194,7 +1222,7 @@ static inline void write_ctrl(tty_data *tty, byte c) {
       lf(tty);
       break;
     case 'H':
-      tty->TabStop[tty->X >> 5] |= (1 << (tty->X & 31));
+      set_tabstop(tty, tty->X, true);
       break;
     case 'Z':
       respond_ID(tty);
@@ -1229,8 +1257,7 @@ static inline void write_ctrl(tty_data *tty, byte c) {
 
   case ESnonstd:
     if (c == 'P') { /* Palette escape sequence */
-      tty->nPar = 0;
-      memset(tty->Par, 0, NPAR * sizeof(ldat));
+      tty->Par[0] = tty->nPar = 0;
       tty->State = ESrgb;
       return;
     } else if (c == 'R') /* Reset palette */
@@ -1250,12 +1277,15 @@ static inline void write_ctrl(tty_data *tty, byte c) {
 
   case ESrgb:
     if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')) {
-      tty->Par[tty->nPar++] = (c > '9' ? (c & 0xDF) - 'A' + 10 : c - '0');
-      if (tty->nPar == 7)
-        SetPaletteHW(tty->Par[0], tty->Par[1] * 16 + tty->Par[2], tty->Par[3] * 16 + tty->Par[4],
-                     tty->Par[5] * 16 + tty->Par[6]);
-      else
+      if (tty->nPar < 7) {
+        tty->Par[tty->nPar++] = (c > '9' ? (c & 0xDF) - 'A' + 10 : c - '0');
+        if (tty->nPar == 7) {
+          SetPaletteHW(tty->Par[0], tty->Par[1] * 16 + tty->Par[2], tty->Par[3] * 16 + tty->Par[4],
+                       tty->Par[5] * 16 + tty->Par[6]);
+        }
+      } else {
         return; /* avoid resetting tty->State */
+      }
     }
     break;
 
@@ -1277,9 +1307,8 @@ static inline void write_ctrl(tty_data *tty, byte c) {
     if ((c == ';' || c == ':') && tty->nPar < NPAR - 1) {
       tty->Par[++tty->nPar] = 0;
       return;
-    } else if (c >= '0' && c <= '9') {
-      tty->Par[tty->nPar] *= 10;
-      tty->Par[tty->nPar] += c - '0';
+    } else if (c >= '0' && c <= '9' && tty->nPar < NPAR) {
+      tty->Par[tty->nPar] = 10 * tty->Par[tty->nPar] + (c - '0');
       return;
     } else {
       tty->State = (tty_state)(ESgotpars | (tty->State & ESques));
@@ -1304,6 +1333,16 @@ static inline void write_ctrl(tty_data *tty, byte c) {
         tty->Win->CursorType = tty->Par[0] | (tty->Par[1] << 8) | (tty->Par[2] << 16);
         tty->Flags |= TTY_UPDATECURSOR;
       }
+    case 'J':
+      /* ESC [ nnn J   is erase display */
+      /* ESC [ ? nnn J is selective erase display */
+      csi_J(tty, tty->Par[0]);
+      break;
+    case 'K':
+      /* ESC [ nnn K   is erase line */
+      /* ESC [ ? nnn K is selective erase line */
+      csi_K(tty, tty->Par[0]);
+      break;
     case 'm':
       /* selection complement mask */
       break;
@@ -1323,31 +1362,6 @@ static inline void write_ctrl(tty_data *tty, byte c) {
     switch (c) {
     case 'm':
       csi_m(tty);
-      break;
-    case 'H':
-    case 'f':
-      if (tty->Par[0]) {
-        tty->Par[0]--;
-      }
-      if (!tty->nPar) {
-        tty->Par[1] = 0;
-      } else if (tty->Par[1]) {
-        tty->Par[1]--;
-      }
-      goto_axy(tty, tty->Par[1], tty->Par[0]);
-      break;
-    case 'J':
-      csi_J(tty, tty->Par[0]);
-      break;
-    case 'K':
-      csi_K(tty, tty->Par[0]);
-      break;
-    case 'G':
-    case '`':
-      if (tty->Par[0]) {
-        tty->Par[0]--;
-      }
-      goto_xy(tty, tty->Par[0], tty->Y);
       break;
     case 'A':
       if (!tty->Par[0]) {
@@ -1369,11 +1383,22 @@ static inline void write_ctrl(tty_data *tty, byte c) {
       }
       goto_xy(tty, tty->X + tty->Par[0], tty->Y);
       break;
+    case 'c':
+      if (!tty->Par[0]) {
+        respond_ID(tty);
+      }
+      break;
     case 'D':
       if (!tty->Par[0]) {
         tty->Par[0]++;
       }
       goto_xy(tty, tty->X - tty->Par[0], tty->Y);
+      break;
+    case 'd':
+      if (tty->Par[0]) {
+        tty->Par[0]--;
+      }
+      goto_axy(tty, tty->X, tty->Par[0]);
       break;
     case 'E':
       if (!tty->Par[0]) {
@@ -1387,12 +1412,39 @@ static inline void write_ctrl(tty_data *tty, byte c) {
       }
       goto_xy(tty, 0, tty->Y - tty->Par[0]);
       break;
-    case 'd':
+    case 'G':
+    case '`':
       if (tty->Par[0]) {
         tty->Par[0]--;
       }
-      goto_axy(tty, tty->X, tty->Par[0]);
+      goto_xy(tty, tty->Par[0], tty->Y);
       break;
+    case 'g': {
+      const uldat n = tty->Par[0];
+      if (n == 0) {
+        set_tabstop(tty, tty->X, false);
+      } else if (n == 3) {
+        std::memset(tty->TabStop, 0x00, sizeof(tty->TabStop));
+      }
+      break;
+    }
+    case 'H':
+    case 'f':
+      if (tty->Par[0]) {
+        tty->Par[0]--;
+      }
+      if (!tty->nPar) {
+        tty->Par[1] = 0;
+      } else if (tty->Par[1]) {
+        tty->Par[1]--;
+      }
+      goto_axy(tty, tty->Par[1], tty->Par[0]);
+      break;
+    case 'I': {
+      const uldat n = tty->Par[0];
+      goto_tab_forward(tty, n ? n : 1);
+      break;
+    }
     case 'L':
       csi_L(tty, tty->Par[0]);
       break;
@@ -1401,18 +1453,6 @@ static inline void write_ctrl(tty_data *tty, byte c) {
       break;
     case 'P':
       csi_P(tty, tty->Par[0]);
-      break;
-    case 'c':
-      if (!tty->Par[0]) {
-        respond_ID(tty);
-      }
-      break;
-    case 'g':
-      if (!tty->Par[0]) {
-        tty->TabStop[tty->X >> 5] &= ~(1 << (tty->X & 31));
-      } else if (tty->Par[0] == 3) {
-        tty->TabStop[0] = tty->TabStop[1] = tty->TabStop[2] = tty->TabStop[3] = tty->TabStop[4] = 0;
-      }
       break;
     case 'q': /* DECLL - but only 3 leds */
               /* map 0,1,2,3 to 0,1,2,4 */
@@ -1426,7 +1466,7 @@ static inline void write_ctrl(tty_data *tty, byte c) {
       csi_r(tty);
       break;
     case 'S': {
-      uldat n = tty->Par[0];
+      const uldat n = tty->Par[0];
       scrollup(tty, tty->Top, tty->Bottom, n ? n : 1);
       break;
     }
@@ -1434,7 +1474,7 @@ static inline void write_ctrl(tty_data *tty, byte c) {
       save_current(tty);
       break;
     case 'T': {
-      uldat n = tty->Par[0];
+      const uldat n = tty->Par[0];
       scrolldown(tty, tty->Top, tty->Bottom, n ? n : 1);
       break;
     }
@@ -1477,93 +1517,31 @@ static inline void write_ctrl(tty_data *tty, byte c) {
     break;
 
   case ESsetG0:
-    switch (c) {
-    case '0':
-      tty->Gv[0] = VT100GR_MAP;
-      break;
-    case 'B':
-      tty->Gv[0] = LATIN1_MAP;
-      break;
-    case 'K':
-      tty->Gv[0] = USER_MAP;
-      break;
-    case 'U':
-      tty->Gv[0] = IBMPC_MAP;
-      break;
-    default:
-      break;
-    }
-    if (tty->Gi == 0) {
-      set_charset(tty, tty->Gv[0]);
-    }
-    break;
-
   case ESsetG1:
-    switch (c) {
-    case '0':
-      tty->Gv[1] = VT100GR_MAP;
-      break;
-    case 'B':
-      tty->Gv[1] = LATIN1_MAP;
-      break;
-    case 'K':
-      tty->Gv[1] = USER_MAP;
-      break;
-    case 'U':
-      tty->Gv[1] = IBMPC_MAP;
-      break;
-    default:
-      break;
-    }
-    if (tty->Gi == 1) {
-      set_charset(tty, tty->Gv[1]);
-    }
-    break;
-
   case ESsetG2:
+  case ESsetG3: {
+    const byte i = (tty->State & ESany) - ESsetG0;
     switch (c) {
     case '0':
-      tty->Gv[2] = VT100GR_MAP;
+      tty->Gv[i] = VT100GR_MAP;
       break;
     case 'B':
-      tty->Gv[2] = LATIN1_MAP;
+      tty->Gv[i] = LATIN1_MAP;
       break;
     case 'K':
-      tty->Gv[2] = USER_MAP;
+      tty->Gv[i] = USER_MAP;
       break;
     case 'U':
-      tty->Gv[2] = IBMPC_MAP;
+      tty->Gv[i] = IBMPC_MAP;
       break;
     default:
       break;
     }
-    if (tty->Gi == 2) {
-      set_charset(tty, tty->Gv[2]);
+    if (tty->Gi == i) {
+      set_charset(tty, tty->Gv[i]);
     }
     break;
-
-  case ESsetG3:
-    switch (c) {
-    case '0':
-      tty->Gv[3] = VT100GR_MAP;
-      break;
-    case 'B':
-      tty->Gv[3] = LATIN1_MAP;
-      break;
-    case 'K':
-      tty->Gv[3] = USER_MAP;
-      break;
-    case 'U':
-      tty->Gv[3] = IBMPC_MAP;
-      break;
-    default:
-      break;
-    }
-    if (tty->Gi == 3) {
-      set_charset(tty, tty->Gv[3]);
-    }
-    break;
-
+  }
   case ESxterm_ignore_:
     if (c == ';') {
       tty->State = ESxterm_ignore;

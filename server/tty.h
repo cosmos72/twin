@@ -102,7 +102,6 @@ public:
                         /* AfterSplit is just Window->Contents */
   tcell *Pos;           /* Pointer to cursor position in buffer */
   tcolor Color, DefColor, saveColor, Underline, HalfInten;
-  uldat TabStop[5];
   uldat nPar, Par[NPAR];
 
   byte Gv[4], saveGv[4], Gi, saveGi;
@@ -110,7 +109,8 @@ public:
   trune utf8_char;
   trune (*InvCharset)(trune); /* pointer to trune -> byte translation function */
 
-  String newName; /* buffer for xterm set window title escape seq */
+  String newName;    /* buffer for xterm set window title escape seq */
+  byte TabStop[128]; /* Allow tab stops in positions 0-1023 */
 };
 
 bool TtyWriteCharset(Twindow Window, uldat Len, const char *charset_bytes);
