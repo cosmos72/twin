@@ -43,27 +43,29 @@ static void alienRead(const byte *src, uldat srclen, byte *dst, uldat dstlen, by
 #if TW_IS_LITTLE_ENDIAN
 
   /* copy the least significant bits */
-  if (flip)
+  if (flip) {
     FlipCopyMem(src + (srclen > dstlen ? srclen - dstlen : 0), dst, Min2(dstlen, srclen));
-  else
+  } else {
     CopyMem(src, dst, Min2(dstlen, srclen));
+  }
   /* and set the remaining to zero */
-  if (dstlen > srclen)
+  if (dstlen > srclen) {
     memset(dst + srclen, '\0', dstlen - srclen);
-
-#else /* TW_IS_BIG_ENDIAN */
+  }
+#else  /* TW_IS_BIG_ENDIAN */
 
   /* copy the least significant bits */
-  if (flip)
+  if (flip) {
     FlipCopyMem(src, dst + (dstlen > srclen ? dstlen - srclen : 0), Min2(dstlen, srclen));
-  else if (dstlen > srclen)
+  } else if (dstlen > srclen) {
     CopyMem(src, dst + dstlen - srclen, srclen);
-  else
+  } else {
     CopyMem(src + srclen - dstlen, dst, dstlen);
+  }
   /* set the high bits to zero */
-  if (dstlen > srclen)
+  if (dstlen > srclen) {
     memset(dst, '\0', dstlen - srclen);
-
+  }
 #endif /* TW_IS_LITTLE_ENDIAN */
 }
 
@@ -671,8 +673,7 @@ static void AlienIO(int fd, uldat slot) {
       if (len < 2 * AlienSizeofUldat) {
         s += len;
         continue;
-      }
-      if (s + len > s && s + len <= tend) {
+      } else if (len <= tend - s) {
         end = s + len;
         POP(s, uldat, RequestN);
         POP(s, uldat, Funct);
@@ -684,15 +685,17 @@ static void AlienIO(int fd, uldat slot) {
                                    * without this, tw* clients can freeze
                                    * if twdisplay is in use
                                    */
-        } else if (Funct == FIND_MAGIC)
+        } else if (Funct == FIND_MAGIC) {
           alienMultiplexB(0);
+        }
         s = end;
-      } else if (s + len < s) {
-        s = tend;
-        break;
-      } else { /* if (s + len > tend) */
+      } else if (len <= 1048576) {
         /* must wait for rest of packet... unpop len */
         s -= AlienSizeofUldat;
+        break;
+      } else {
+        /* ignore invalid packet, is too long */
+        s = tend;
         break;
       }
     }

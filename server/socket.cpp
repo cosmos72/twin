@@ -2339,17 +2339,17 @@ static void SocketIO(int fd, uldat slot) {
     return;
 
   if ((len = read(Fd, t, tot)) && len && len != (uldat)-1) {
-    if (len < (uldat)tot)
+    if (len < (uldat)tot) {
       RemoteReadShrinkQueue(Slot, (uldat)tot - len);
-
+    }
     /* ok, now process the data */
 
 #ifdef CONF_SOCKET_GZ
     if ((gzSlot = LS.pairSlot) != NOSLOT) {
       /* hmmm, a compressed socket. */
-      if (RemoteGunzip(Slot))
+      if (RemoteGunzip(Slot)) {
         Slot = gzSlot;
-      else {
+      } else {
         Ext(Remote, KillSlot)(Slot);
         return;
       }
@@ -2362,10 +2362,10 @@ static void SocketIO(int fd, uldat slot) {
     while (s + 3 * sizeof(uldat) <= tend) {
       Pop(s, uldat, len);
       if (len < 2 * sizeof(uldat)) {
+        /* ignore invalid packet, is too short */
         s += len;
         continue;
-      }
-      if (s + len > s && s + len <= tend) {
+      } else if (len <= tend - s) {
         end = s + len;
         Pop(s, uldat, RequestN);
         Pop(s, uldat, Funct);
@@ -2380,12 +2380,13 @@ static void SocketIO(int fd, uldat slot) {
         } else if (Funct == FIND_MAGIC)
           sockMultiplexB(0);
         s = end;
-      } else if (s + len < s) {
-        s = tend;
-        break;
-      } else { /* if (s + len > tend) */
+      } else if (len <= 1048576) {
         /* must wait for rest of packet... unpop len */
         s -= sizeof(uldat);
+        break;
+      } else {
+        /* ignore invalid packet, is too long */
+        s = tend;
         break;
       }
     }
