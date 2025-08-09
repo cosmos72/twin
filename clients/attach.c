@@ -170,9 +170,9 @@ static char *fix_x11(char *arg) {
   char *target = NULL;
   char *opts = NULL;
 
-  if (!strncmp(arg, "-hw=xft", 7) || !strncmp(arg, "-hw=X11", 7)) {
+  if (!strncmp(arg, "-hw=xft", 7) || !strncmp(arg, "-hw=X11", 7) || !strncmp(arg, "-hw=x11", 7)) {
     opts = arg + 7;
-  } else /* if (!strncmp(arg, "-hw=X", 5)) */ {
+  } else /* if (!strncmp(arg, "-hw=X", 5) || !strncmp(arg, "-hw=x", 5)) */ {
     opts = arg + 5;
   }
 
@@ -225,23 +225,23 @@ int main(int argc, char *argv[]) {
     } else if (!strcmp(arg, "-h") || !strcmp(arg, "-help")) {
       Usage(detach);
       return 0;
-    } else if (!strcmp(arg, "-x") || !strcmp(arg, "-excl"))
+    } else if (!strcmp(arg, "-x") || !strcmp(arg, "-excl")) {
       flags |= TW_ATTACH_HW_EXCLUSIVE;
-    else if (!strcmp(arg, "-s") || !strcmp(arg, "-share"))
+    } else if (!strcmp(arg, "-s") || !strcmp(arg, "-share")) {
       flags &= ~TW_ATTACH_HW_EXCLUSIVE;
-    else if (!strcmp(arg, "-a"))
+    } else if (!strcmp(arg, "-a")) {
       detach = 0;
-    else if (!strcmp(arg, "-d"))
+    } else if (!strcmp(arg, "-d")) {
       detach = 1;
-    else if (!strcmp(arg, "-v") || !strcmp(arg, "-verbose"))
+    } else if (!strcmp(arg, "-v") || !strcmp(arg, "-verbose")) {
       flags |= TW_ATTACH_HW_REDIRECT;
-    else if (!strcmp(arg, "-q") || !strcmp(arg, "-quiet"))
+    } else if (!strcmp(arg, "-q") || !strcmp(arg, "-quiet")) {
       flags &= ~TW_ATTACH_HW_REDIRECT;
-    else if (!strcmp(arg, "-f") || !strcmp(arg, "-force"))
+    } else if (!strcmp(arg, "-f") || !strcmp(arg, "-force")) {
       force = 1;
-    else if (!strncmp(arg, "-twin@", 6))
+    } else if (!strncmp(arg, "-twin@", 6)) {
       dpy = arg + 6;
-    else if (!strncmp(arg, "-hw=", 4)) {
+    } else if (!strncmp(arg, "-hw=", 4)) {
       if (target) {
         fprintf(stderr, "%s: only a single --hw=... argument is supported\n", MYname);
         return 1;
@@ -251,7 +251,7 @@ int main(int argc, char *argv[]) {
         if (err != 0 || !target) {
           return 1;
         }
-      } else if (arg[4] == 'X' || !strncmp(arg + 4, "xft", 3)) {
+      } else if (arg[4] == 'X' || arg[4] == 'x') {
         target = fix_x11(arg);
         if (!target) {
           return 1;

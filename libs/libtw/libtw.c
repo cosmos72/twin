@@ -816,12 +816,13 @@ static uldat TryRead(tw_d TwD, const timevalue *Timeout) {
   /* for ioctl(int, FIONREAD, int *) */
   sel = 0;
   mayread = ioctl(Fd, FIONREAD, &sel) >= 0;
-  if (!mayread || !sel)
+  if (!mayread || !sel) {
     len = TW_SMALLBUFF;
-  else if (sel > TW_HUGEBUFF)
+  } else if (sel > TW_HUGEBUFF) {
     len = TW_HUGEBUFF;
-  else
+  } else {
     len = sel;
+  }
 
   if (QLeft(Q, len)) {
     t = GetQueue(TwD, Q, &got);
@@ -2118,8 +2119,9 @@ static void FailedCall(tw_d TwD, uldat err, uldat order) {
 }
 
 TW_INLINE uldat NextSerial(tw_d TwD) {
-  if (++RequestN == tmsg_magic)
+  if (++RequestN == tmsg_magic) {
     ++RequestN;
+  }
   return RequestN;
 }
 

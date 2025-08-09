@@ -22,7 +22,6 @@ exts Exts = {{NULL},
              {
                  (void (*)(Tmsgport, Tmsg))NoOp,
                  AlwaysTrue,
-                 (void (*)(uldat, Span<s_tsfield>))NoOp,
              },
              {FakeOpenTerm}};
 const exts OrigExts = {{NULL},
@@ -30,6 +29,5 @@ const exts OrigExts = {{NULL},
                        {
                            (void (*)(Tmsgport, Tmsg))NoOp,
                            AlwaysTrue,
-                           (void (*)(uldat, Span<s_tsfield>))NoOp,
                        },
                        {FakeOpenTerm}};
