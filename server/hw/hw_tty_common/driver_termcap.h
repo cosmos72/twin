@@ -518,9 +518,9 @@ TW_ATTR_HIDDEN void tty_driver::termcap_DrawTCell(Tdisplay hw, dat x, dat y, tce
   }
   termcap_MoveToXY(hw, x, y);
 
-  const tcolor c = TCOLOR(V);
-  if (c != self->col) {
-    termcap_SetColor(hw, c);
+  const tcolor col = TCOLOR(V);
+  if (col != self->col) {
+    termcap_SetColor(hw, col);
   }
   const trune r = TRUNE(V);
   byte b = (byte)r;

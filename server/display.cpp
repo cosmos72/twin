@@ -1037,7 +1037,7 @@ TW_DECL_MAGIC(display_magic);
 int main(int argc, char *argv[]) {
   const char *tty = ttyname(0);
   const char *dpy = NULL, *client_dpy = NULL;
-  char *arg_hw = NULL;
+  const char *arg_hw = NULL;
   int fd;
   byte flags = TW_ATTACH_HW_REDIRECT;
   byte ret = 0, ourtty = 0;
@@ -1048,60 +1048,59 @@ int main(int argc, char *argv[]) {
   MYname = argv[0];
 
   while (*++argv) {
-    char *argi = *argv;
-    if (!strcmp(argi, "-V") || !strcmp(argi, "-version")) {
+    Chars argi = Chars::from_c(*argv);
+    if (argi == Chars("-V") || argi == Chars("-version")) {
       ShowVersion();
       return 0;
-    } else if (!strcmp(argi, "-h") || !strcmp(argi, "-help")) {
+    } else if (argi == Chars("-h") || argi == Chars("-help")) {
       Usage();
       return 0;
-    } else if (!strcmp(argi, "-x") || !strcmp(argi, "-excl"))
+    } else if (argi == Chars("-x") || argi == Chars("-excl")) {
       flags |= TW_ATTACH_HW_EXCLUSIVE;
-    else if (!strcmp(argi, "-s") || !strcmp(argi, "-share"))
+    } else if (argi == Chars("-s") || argi == Chars("-share")) {
       flags &= ~TW_ATTACH_HW_EXCLUSIVE;
-    else if (!strcmp(argi, "-v") || !strcmp(argi, "-verbose"))
+    } else if (argi == Chars("-v") || argi == Chars("-verbose")) {
       flags |= TW_ATTACH_HW_REDIRECT;
-    else if (!strcmp(argi, "-q") || !strcmp(argi, "-quiet"))
+    } else if (argi == Chars("-q") || argi == Chars("-quiet")) {
       flags &= ~TW_ATTACH_HW_REDIRECT;
-    else if (!strcmp(argi, "-f") || !strcmp(argi, "-force"))
+    } else if (argi == Chars("-f") || argi == Chars("-force")) {
       force = true;
-    else if (!strncmp(argi, "-plugindir=", 11)) {
-      plugindir = Chars::from_c(argi + 11);
-    } else if (!strncmp(argi, "-twin@", 6))
-      dpy = argi + 6;
-    else if (!strncmp(argi, "-hw=", 4)) {
-      if (!strncmp(argi + 4, "display", 7)) {
-        fprintf(stderr, "" SS ": argument `--hw=display' is for internal use only.\n", MYname);
+    } else if (argi.starts_with(Chars("-plugindir="))) {
+      plugindir = argi.view(11, argi.size());
+    } else if (argi.starts_with(Chars("-twin@"))) {
+      dpy = argi.data() + 6;
+    } else if (argi.starts_with(Chars("-hw="))) {
+      if (argi.size() >= 11 && argi.view(4, 11) == Chars("display")) {
+        fprintf(stderr, SS ": argument `--hw=display' is for internal use only.\n", MYname);
         TryUsage(NULL);
         return 1;
       }
-      if (!strncmp(argi + 4, "tty", 3)) {
+      if (argi.size() >= 7 && argi.view(4, 7) == Chars("tty")) {
         const char *cs = "";
-        char *opt = argi + 7;
-        char *s = strchr(opt, ',');
-        if (s)
+        const char *opt = argi.data() + 7;
+        char *s = (char *)(void *)strchr(opt, ',');
+        if (s) {
           *s = '\0';
-
-        if (!*opt)
+        }
+        if (!*opt) {
           /* attach twin to our tty */
           ourtty = 1;
-        else if (opt[0] == '@' && opt[1]) {
+        } else if (opt[0] == '@' && opt[1]) {
           if (opt[1] == '-') {
-            /*
-             * using server controlling tty makes no sense for twdisplay
-             */
-            fprintf(stderr, "" SS ": `" SS "' makes sense only with twattach.\n", MYname, argi);
+            /* using server controlling tty makes no sense for twattach */
+            fprintf(stderr, SS ": `" SS "' makes sense only with twattach.\n", MYname, argi.data());
             return 1;
           } else if (tty) {
-            if (!strcmp(opt + 1, tty))
+            if (!strcmp(opt + 1, tty)) {
               /* attach twin to our tty */
               ourtty = 1;
+            }
           } else {
-            fprintf(stderr, "" SS ": ttyname() failed: cannot find controlling tty!\n", MYname);
+            fprintf(stderr, SS ": ttyname() failed: cannot find controlling tty!\n", MYname);
             return 1;
           }
         } else {
-          fprintf(stderr, "" SS ": malformed display hw `" SS "'\n", MYname, argi);
+          fprintf(stderr, SS ": malformed display hw `" SS "'\n", MYname, argi.data());
           return 1;
         }
 
@@ -1115,25 +1114,36 @@ int main(int argc, char *argv[]) {
           if (term && !*term) {
             term = NULL;
           }
-          size_t arg_hw_len = strlen(tty) + 9 + strlen(cs) + (term ? 6 + strlen(term) : 0);
-          arg_hw = (char *)malloc(arg_hw_len);
-
-          snprintf(arg_hw, arg_hw_len, "-hw=tty%s%s%s", (term ? ",TERM=" : term), term, cs);
-        } else
-          arg_hw = argi;
-      } else if ((argi)[4]) {
-        arg_hw = argi;
-        if (!strncmp(argi + 4, "twin@", 5)) {
-          client_dpy = argi + 9;
-        } else if (!strcmp(argi + 4, "twin")) {
-          client_dpy = "";
+          const char *colorterm = getenv("COLORTERM");
+          bool truecolor = colorterm && !strcmp(colorterm, "truecolor");
+          size_t arg_hw_len =
+              strlen(tty) + 9 + strlen(cs) + (term ? 6 + strlen(term) : 0) + (truecolor ? 9 : 0);
+          char *arg_alloc = (char *)malloc(arg_hw_len);
+          if (!arg_alloc) {
+            fputs("twdisplay: out of memory!\n", stderr);
+            return 1;
+          }
+          snprintf(arg_alloc, arg_hw_len, "-hw=tty%s%s%s%s", (term ? ",TERM=" : term),
+                   (term ? term : ""), (truecolor ? ",colors=16m" : ""), cs);
+          arg_hw = arg_alloc;
+        } else {
+          arg_hw = argi.data();
+        }
+      } else if (argi.size() > 4) {
+        arg_hw = argi.data();
+        if (argi.size() >= 8 && argi.view(4, 8) == Chars("twin")) {
+          if (arg_hw[8] == '@') {
+            client_dpy = arg_hw + 9;
+          } else {
+            client_dpy = "";
+          }
         }
       } else {
-        TryUsage(argi);
+        TryUsage(argi.data());
         return 1;
       }
     } else {
-      TryUsage(argi);
+      TryUsage(argi.data());
       return 1;
     }
   }
@@ -1147,9 +1157,10 @@ int main(int argc, char *argv[]) {
 #endif
 
   origTWDisplay = CloneStr(getenv("TWDISPLAY"));
-  TWDisplay = dpy ? CloneStr(dpy) : origTWDisplay;
   origTERM = CloneStr(getenv("TERM"));
   origCOLORTERM = CloneStr(getenv("COLORTERM"));
+
+  TWDisplay = dpy ? CloneStr(dpy) : origTWDisplay;
   {
     const char *home = getenv("HOME");
     if (!home) {
