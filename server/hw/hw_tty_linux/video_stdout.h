@@ -190,7 +190,7 @@ inline void linux_DrawSome(dat x, dat y, uldat len) {
           /* use utf-8 to output this non-ASCII char. */
           tty_DrawRune(c);
           continue;
-        } else if (tty_charset_to_UTF_32[c] != c) {
+        } else if (c > 255 || tty_charset_to_UTF_32[c] != c) {
           c = tty_UTF_32_to_charset(_c);
         }
       }
@@ -221,7 +221,7 @@ inline void linux_DrawTCell(dat x, dat y, tcell V) {
       /* use utf-8 to output this non-ASCII char. */
       tty_DrawRune(c);
       return;
-    } else if (tty_charset_to_UTF_32[c] != c) {
+    } else if (c > 255 || tty_charset_to_UTF_32[c] != c) {
       c = tty_UTF_32_to_charset(_c);
     }
   }
