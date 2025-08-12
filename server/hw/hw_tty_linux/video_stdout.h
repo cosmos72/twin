@@ -174,8 +174,6 @@ TW_ATTR_HIDDEN void tty_driver::linux_DrawSome(Tdisplay hw, dat x, dat y, uldat 
   tty_driver *self = ttydriver(hw);
   const tcell *V = Video + x + y * (ldat)DisplayWidth;
   const tcell *oV = OldVideo + x + y * (ldat)DisplayWidth;
-  tcolor col;
-  trune r, r_;
   bool sending = false;
 
   for (; len; V++, oV++, x++, len--) {
@@ -184,28 +182,28 @@ TW_ATTR_HIDDEN void tty_driver::linux_DrawSome(Tdisplay hw, dat x, dat y, uldat 
         sending = true;
         linux_MoveToXY(hw, x, y);
       }
-
-      col = TCOLOR(*V);
-
-      if (col != self->col)
-        linux_SetColor(hw, col);
-
-      r = r_ = TRUNE(*V);
+      const tcolor c = TCOLOR(*V);
+      if (c != self->col) {
+        linux_SetColor(hw, c);
+      }
+      const trune r = TRUNE(*V);
+      byte b = (byte)r;
       if (r >= 128) {
         if (self->tty_use_utf8) {
-          /* use utf-8 to output this non-ASCII char. */
+          /* use utf-8 to output this non-ASCII glyph. */
           DrawRune(hw, r);
           continue;
-        } else if (self->tty_charset_to_UTF_32[r] != r) {
-          r = self->tty_UTF_32_to_charset(r_);
+        } else if (r > 255 || self->tty_charset_to_UTF_32[r] != r) {
+          b = self->tty_UTF_32_to_charset(r);
         }
       }
-      if (self->tty_use_utf8 ? (r < 32 || r == 127)
-                             : (r < 32 && ((CTRL_ALWAYS >> r) & 1)) || r == 127 || r == 128 + 27) {
+      if (self->tty_use_utf8 ? (b < 32 || b == 127)
+                             : (b < 32 && ((CTRL_ALWAYS >> b) & 1)) || b == 127 || b == 128 + 27) {
         /* can't display it */
-        r = Tutf_UTF_32_to_ASCII(r_);
-        if (r < 32 || r >= 127)
-          r = 32;
+        b = Tutf_UTF_32_to_ASCII(r);
+        if (b < 32 || b >= 127) {
+          b = 32;
+        }
       }
       putc((char)r, self->out);
     } else {
@@ -216,32 +214,33 @@ TW_ATTR_HIDDEN void tty_driver::linux_DrawSome(Tdisplay hw, dat x, dat y, uldat 
 
 TW_ATTR_HIDDEN void tty_driver::linux_DrawTCell(Tdisplay hw, dat x, dat y, tcell V) {
   tty_driver *self = ttydriver(hw);
-  trune r, r_;
-  const tcolor c = TCOLOR(V);
 
   linux_MoveToXY(hw, x, y);
 
+  const tcolor c = TCOLOR(V);
   if (c != self->col) {
     linux_SetColor(hw, c);
   }
-  r = r_ = TRUNE(V);
+  const trune r = TRUNE(V);
+  byte b = (byte)r;
   if (r >= 128) {
     if (self->tty_use_utf8) {
-      /* use utf-8 to output this non-ASCII char. */
+      /* use utf-8 to output this non-ASCII glyph. */
       DrawRune(hw, r);
       return;
-    } else if (self->tty_charset_to_UTF_32[r] != r) {
-      r = self->tty_UTF_32_to_charset(r_);
+    } else if (r > 255 || self->tty_charset_to_UTF_32[r] != r) {
+      b = self->tty_UTF_32_to_charset(r);
     }
   }
-  if (self->tty_use_utf8 ? (r < 32 || r == 127)
-                         : (r < 32 && ((CTRL_ALWAYS >> r) & 1)) || r == 127 || r == 128 + 27) {
+  if (self->tty_use_utf8 ? (b < 32 || b == 127)
+                         : (b < 32 && ((CTRL_ALWAYS >> b) & 1)) || b == 127 || b == 128 + 27) {
     /* can't display it */
-    r = Tutf_UTF_32_to_ASCII(r_);
-    if (r < 32 || r >= 127)
-      r = 32;
+    b = Tutf_UTF_32_to_ASCII(r);
+    if (b < 32 || b >= 127) {
+      b = 32;
+    }
   }
-  putc((char)r, self->out);
+  putc((char)b, self->out);
 }
 
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.

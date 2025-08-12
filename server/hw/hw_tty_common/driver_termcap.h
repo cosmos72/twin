@@ -33,8 +33,10 @@ TW_ATTR_HIDDEN udat tty_driver::termcap_LookupKey(Tdisplay hw, udat *ShiftFlags,
       IS(Right, 3, "\033[C"),   IS(Down, 3, "\033[B"),
   };
   static const xterm_keys altkeys[] = {
-      IS(Left, 3, "\033OD"),    IS(Up, 3, "\033OA"),
-      IS(Right, 3, "\033OC"),   IS(Down, 3, "\033OB"),
+      IS(Left, 3, "\033OD"),
+      IS(Up, 3, "\033OA"),
+      IS(Right, 3, "\033OC"),
+      IS(Down, 3, "\033OB"),
   };
 #undef IS
   tty_driver *self = ttydriver(hw);
@@ -61,11 +63,11 @@ TW_ATTR_HIDDEN udat tty_driver::termcap_LookupKey(Tdisplay hw, udat *ShiftFlags,
 
     for (key = self->tc + tc_key_first; key < self->tc + tc_key_last; key++) {
       if (*key && **key && (keylen = strlen(*key)) <= len && !memcmp(*key, s, keylen)) {
-	lk = &keys[key - &self->tc[tc_key_first]];
-	udat code = lk->k;
-	if (self->altcurskeys && code >= TW_Left && code <= TW_Down) {
-	  lk = &altkeys[code - TW_Left];
-	}
+        lk = &keys[key - &self->tc[tc_key_first]];
+        udat code = lk->k;
+        if (self->altcurskeys && code >= TW_Left && code <= TW_Down) {
+          lk = &altkeys[code - TW_Left];
+        }
         *slen = keylen;
         *retlen = lk->l;
         *ret = lk->s;
@@ -463,17 +465,14 @@ TW_ATTR_HIDDEN void tty_driver::termcap_SetColor(Tdisplay hw, tcolor col) {
 
 TW_ATTR_HIDDEN void tty_driver::termcap_DrawSome(Tdisplay hw, dat x, dat y, uldat len) {
   tty_driver *self = ttydriver(hw);
-  const tcell *V, *oV;
-  tcolor col;
-  trune c, _c;
   uldat delta = x + y * (uldat)DisplayWidth;
-  bool sending = false;
 
   if (!self->wrapglitch && delta + len >= (uldat)DisplayWidth * DisplayHeight) {
     len = (uldat)DisplayWidth * DisplayHeight - delta - 1;
   }
-  V = Video + delta;
-  oV = OldVideo + delta;
+  const tcell *V = Video + delta;
+  const tcell *oV = OldVideo + delta;
+  bool sending = false;
 
   for (; len; V++, oV++, x++, len--) {
     if (!ValidOldVideo || *V != *oV) {
@@ -481,28 +480,29 @@ TW_ATTR_HIDDEN void tty_driver::termcap_DrawSome(Tdisplay hw, dat x, dat y, ulda
         sending = true;
         termcap_MoveToXY(hw, x, y);
       }
-      col = TCOLOR(*V);
+      const tcolor col = TCOLOR(*V);
       if (col != self->col) {
         termcap_SetColor(hw, col);
       }
-      c = _c = TRUNE(*V);
-      if (c >= 128) {
+      const trune r = TRUNE(*V);
+      byte b = (byte)r;
+      if (r >= 128) {
         if (self->tty_use_utf8) {
-          /* use utf-8 to output this non-ASCII char */
-          DrawRune(hw, _c);
+          /* use utf-8 to output this non-ASCII glyph */
+          DrawRune(hw, r);
           continue;
-        } else if (self->tty_charset_to_UTF_32[c] != c) {
-          c = self->tty_UTF_32_to_charset(_c);
+        } else if (r > 255 || self->tty_charset_to_UTF_32[r] != r) {
+          b = self->tty_UTF_32_to_charset(r);
         }
       }
-      if (c < 32 || c == 127 || c == 128 + 27) {
+      if (b < 32 || b == 127 || b == 128 + 27) {
         /* can't display it */
-        c = Tutf_UTF_32_to_ASCII(_c);
-        if (c < 32 || c >= 127) {
-          c = 32;
+        b = Tutf_UTF_32_to_ASCII(r);
+        if (b < 32 || b >= 127) {
+          b = 32;
         }
       }
-      putc((char)c, self->out);
+      putc((char)b, self->out);
     } else {
       sending = false;
     }
@@ -511,7 +511,6 @@ TW_ATTR_HIDDEN void tty_driver::termcap_DrawSome(Tdisplay hw, dat x, dat y, ulda
 
 TW_ATTR_HIDDEN void tty_driver::termcap_DrawTCell(Tdisplay hw, dat x, dat y, tcell V) {
   tty_driver *self = ttydriver(hw);
-  trune c, _c;
 
   if (!self->wrapglitch && x == DisplayWidth - 1 && y == DisplayHeight - 1) {
     /* wrapglitch is required to write to last screen position without scrolling */
@@ -519,27 +518,29 @@ TW_ATTR_HIDDEN void tty_driver::termcap_DrawTCell(Tdisplay hw, dat x, dat y, tce
   }
   termcap_MoveToXY(hw, x, y);
 
-  if (TCOLOR(V) != self->col) {
-    termcap_SetColor(hw, TCOLOR(V));
+  const tcolor c = TCOLOR(V);
+  if (c != self->col) {
+    termcap_SetColor(hw, c);
   }
-  c = _c = TRUNE(V);
-  if (c >= 128) {
+  const trune r = TRUNE(V);
+  byte b = (byte)r;
+  if (r >= 128) {
     if (self->tty_use_utf8) {
-      /* use utf-8 to output this non-ASCII char */
-      DrawRune(hw, _c);
+      /* use utf-8 to output this non-ASCII glyph */
+      DrawRune(hw, r);
       return;
-    } else if (self->tty_charset_to_UTF_32[c] != c) {
-      c = self->tty_UTF_32_to_charset(_c);
+    } else if (r > 255 || self->tty_charset_to_UTF_32[r] != r) {
+      b = self->tty_UTF_32_to_charset(r);
     }
   }
-  if (c < 32 || c == 127 || c == 128 + 27) {
+  if (b < 32 || b == 127 || b == 128 + 27) {
     /* can't display it */
-    c = Tutf_UTF_32_to_ASCII(_c);
-    if (c < 32 || c >= 127) {
-      c = 32;
+    b = Tutf_UTF_32_to_ASCII(r);
+    if (b < 32 || b >= 127) {
+      b = 32;
     }
   }
-  putc((char)c, self->out);
+  putc((char)b, self->out);
 }
 
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.
