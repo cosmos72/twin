@@ -357,31 +357,33 @@ bool DetachDisplayHW(Chars arg, byte flags) {
 
 /* initialize all required HW displays. Since we are at it, also parse command line */
 byte InitHW(void) {
-  char **arglist = orig_argv;
-  char *arg;
+  char **arglist;
+  Chars arg;
   udat hwcount = 0;
 
   byte ret = tfalse, flags = 0, nohw = tfalse;
 
   memset(ConfigureHWDefault, '\1', HW_CONFIGURE_MAX); /* set everything to default (-1) */
 
-  for (arglist = orig_argv; (arg = *arglist); arglist++) {
-    if (!strcmp(arg, "-nohw"))
+  for (arglist = orig_argv; *arglist; arglist++) {
+    arg = Chars::from_c(*arglist);
+    if (arg == Chars("-nohw")) {
       nohw = ttrue;
-    else if (!strcmp(arg, "-x") || !strcmp(arg, "-excl"))
+    } else if (arg == Chars("-x") || arg == Chars("-excl")) {
       flags |= TW_ATTACH_HW_EXCLUSIVE;
-    else if (!strcmp(arg, "-s") || !strcmp(arg, "-share"))
+    } else if (arg == Chars("-s") || arg == Chars("-share")) {
       flags &= ~TW_ATTACH_HW_EXCLUSIVE;
-    else if (!strcmp(arg, "-secure"))
+    } else if (arg == Chars("-secure")) {
       flag_secure = ttrue;
-    else if (!strcmp(arg, "-envrc"))
+    } else if (arg == Chars("-envrc")) {
       flag_envrc = ttrue;
-    else if (!strncmp(arg, "-hw=", 4))
+    } else if (arg.starts_with(Chars("-hw="))) {
       hwcount++;
-    else if (!strncmp(arg, "-plugindir=", 11))
+    } else if (arg.starts_with(Chars("-plugindir="))) {
       ; // already processed, ignore option
-    else
-      log(WARNING) << "twin: ignoring unknown option `" << Chars::from_c(arg) << "'\n";
+    } else {
+      log(WARNING) << "twin: ignoring unknown option `" << arg << "'\n";
+    }
   }
 
   if (nohw && hwcount > 0) {
@@ -404,22 +406,23 @@ byte InitHW(void) {
    */
   RunTwEnvRC();
 
-  if (nohw)
+  if (nohw) {
     RunNoHW(ret = ttrue);
-  else if (hwcount) {
-    for (arglist = orig_argv; (arg = *arglist); arglist++) {
-      if (!strncmp(arg, "-hw=", 4)) {
-        ret |= !!AttachDisplayHW(Chars::from_c(arg), NOSLOT, flags);
+  } else if (hwcount) {
+    for (arglist = orig_argv; *arglist; arglist++) {
+      arg = Chars::from_c(*arglist);
+      if (arg.starts_with(Chars("-hw="))) {
+        ret |= !!AttachDisplayHW(arg, NOSLOT, flags);
       }
     }
   }
-  if (hwcount == 0 && !ret)
+  if (hwcount == 0 && !ret) {
     /* autoprobe */
     ret = !!AttachDisplayHW(Chars(), NOSLOT, flags);
-
-  if (!ret)
+  }
+  if (!ret) {
     log(ERROR) << "\ntwin:  \033[1mALL  DISPLAY  DRIVERS  FAILED.  QUITTING.\033[0m\n";
-
+  }
   return ret;
 }
 
@@ -475,8 +478,9 @@ void PanicHW(void) {
 
   if (NeedHW & NeedPanicHW) {
     forHW(hw) {
-      if (hw->NeedHW & NeedPanicHW)
+      if (hw->NeedHW & NeedPanicHW) {
         hw->Delete();
+      }
     }
     NeedHW &= ~NeedPanicHW;
   }
@@ -505,10 +509,12 @@ byte ResizeDisplay(void) {
       forHW(hw) {
         if (!hw->Quitted) {
           hw->DetectSize(&Width, &Height);
-          if (TryDisplayWidth > Width)
+          if (TryDisplayWidth > Width) {
             TryDisplayWidth = Width;
-          if (TryDisplayHeight > Height)
+          }
+          if (TryDisplayHeight > Height) {
             TryDisplayHeight = Height;
+          }
         }
       }
     }
@@ -524,10 +530,12 @@ byte ResizeDisplay(void) {
       }
     } while (TryDisplayWidth < Width || TryDisplayHeight < Height);
 
-    if (!TryDisplayWidth || TryDisplayWidth == TW_MAXDAT)
+    if (!TryDisplayWidth || TryDisplayWidth == TW_MAXDAT) {
       TryDisplayWidth = DisplayWidth;
-    if (!TryDisplayHeight || TryDisplayHeight == TW_MAXDAT)
+    }
+    if (!TryDisplayHeight || TryDisplayHeight == TW_MAXDAT) {
       TryDisplayHeight = DisplayHeight;
+    }
 
     /* size seems reasonable, apply it to all HW displays */
     forHW(hw) {
@@ -535,9 +543,9 @@ byte ResizeDisplay(void) {
         hw->Resize(TryDisplayWidth, TryDisplayHeight);
       }
     }
-  } else
+  } else {
     TryDisplayWidth = TryDisplayHeight = 1;
-
+  }
   change = DisplayWidth != TryDisplayWidth || DisplayHeight != TryDisplayHeight;
 
   if (!NeedOldVideo && OldVideo) {
@@ -616,10 +624,11 @@ Tobj TwinSelectionGetOwner(void) {
    * only for a single request.
    */
   Tobj Owner = (Tobj)All->Selection->OwnerOnce;
-  if (Owner)
+  if (Owner) {
     All->Selection->OwnerOnce = NULL;
-  else
+  } else {
     Owner = (Tobj)All->Selection->Owner;
+  }
   return Owner;
 }
 
@@ -667,19 +676,19 @@ void TwinSelectionNotify(Tobj requestor, uldat reqprivate, e_id magic, Chars mim
 
     Tmsg newMsg = Smsg::Create(msg_selection_notify, mime.size() + data.size());
     if (newMsg) {
-      event_any *event = &newMsg->Event;
-      event->EventSelectionNotify.W = NULL;
-      event->EventSelectionNotify.Code = 0;
-      event->EventSelectionNotify.pad = 0;
-      event->EventSelectionNotify.ReqPrivate = reqprivate;
-      event->EventSelectionNotify.Magic = magic;
-      event->EventSelectionNotify.MimeLen = mime.size();
-      event->EventSelectionNotify.DataLen = data.size();
+      event_selectionnotify &ev = newMsg->Event.EventSelectionNotify;
+      ev.W = NULL;
+      ev.Code = 0;
+      ev.pad = 0;
+      ev.ReqPrivate = reqprivate;
+      ev.Magic = magic;
+      ev.MimeLen = mime.size();
+      ev.DataLen = data.size();
       if (mime) {
-        CopyMem(mime.data(), event->EventSelectionNotify.MIME().data(), mime.size());
+        CopyMem(mime.data(), ev.MIME().data(), mime.size());
       }
       if (data) {
-        CopyMem(data.data(), event->EventSelectionNotify.Data().data(), data.size());
+        CopyMem(data.data(), ev.Data().data(), data.size());
       }
       SendMsg((Tmsgport)requestor, newMsg);
     }
@@ -698,12 +707,12 @@ void TwinSelectionRequest(Tobj requestor, uldat reqprivate, Tobj owner) {
     if (owner->Id >> class_byte_shift == Tmsgport_class_byte) {
       Tmsg newMsg = Smsg::Create(msg_selection_request, 0);
       if (newMsg) {
-        event_any *event = &newMsg->Event;
-        event->EventSelectionRequest.W = NULL;
-        event->EventSelectionRequest.Code = 0;
-        event->EventSelectionRequest.pad = 0;
-        event->EventSelectionRequest.Requestor = requestor;
-        event->EventSelectionRequest.ReqPrivate = reqprivate;
+        event_selectionrequest &ev = newMsg->Event.EventSelectionRequest;
+        ev.W = NULL;
+        ev.Code = 0;
+        ev.pad = 0;
+        ev.Requestor = requestor;
+        ev.ReqPrivate = reqprivate;
         SendMsg((Tmsgport)owner, newMsg);
       }
     } else if (owner->Id >> class_byte_shift == Tdisplay_class_byte) {
@@ -751,11 +760,12 @@ inline void OptimizeChangedVideo(void) {
 
       _end = end = (uldat)ChangedVideo[i >> 1][!(i & 1)][1] + (i >> 1) * (ldat)DisplayWidth;
 
-      while (start <= end && Video[start] == OldVideo[start])
+      while (start <= end && Video[start] == OldVideo[start]) {
         start++;
-      while (start <= end && Video[end] == OldVideo[end])
+      }
+      while (start <= end && Video[end] == OldVideo[end]) {
         end--;
-
+      }
       if (start > end) {
         if (i & 1) {
           /*
@@ -766,17 +776,21 @@ inline void OptimizeChangedVideo(void) {
             ChangedVideo[i >> 1][0][0] = ChangedVideo[i >> 1][1][0];
             ChangedVideo[i >> 1][0][1] = ChangedVideo[i >> 1][1][1];
             ChangedVideo[i >> 1][1][0] = -1;
-          } else
+          } else {
             ChangedVideo[i >> 1][0][0] = -1;
-        } else
+          }
+        } else {
           ChangedVideo[i >> 1][1][0] = -1;
+        }
         continue;
       } else {
         ChangedVideoFlag = ttrue;
-        if (start > _start)
+        if (start > _start) {
           ChangedVideo[i >> 1][!(i & 1)][0] += start - _start;
-        if (end < _end)
+        }
+        if (end < _end) {
           ChangedVideo[i >> 1][!(i & 1)][1] -= _end - end;
+        }
       }
     }
   }
@@ -889,18 +903,16 @@ void FlushHW(void) {
 }
 
 void SyntheticKey(Twidget w, udat Code, udat ShiftFlags, byte Len, const char *Seq) {
-  event_keyboard *event;
   Tmsg msg;
 
   if (w && Len && Seq && (msg = Smsg::Create(msg_widget_key, Len))) {
-
-    event = &msg->Event.EventKeyboard;
-    event->W = w;
-    event->Code = Code;
-    event->ShiftFlags = ShiftFlags;
-    event->SeqLen = Len;
-    CopyMem(Seq, event->AsciiSeq, Len);
-    event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
+    event_keyboard &ev = msg->Event.EventKeyboard;
+    ev.W = w;
+    ev.Code = Code;
+    ev.ShiftFlags = ShiftFlags;
+    ev.SeqLen = Len;
+    CopyMem(Seq, ev.AsciiSeq, Len);
+    ev.AsciiSeq[Len] = '\0'; /* terminate string with \0 */
     SendMsg(w->Owner, msg);
   }
 }
@@ -1127,20 +1139,19 @@ byte StdAddMouseEvent(Tdisplay hw, udat Code, dat MouseX, dat MouseY) {
 }
 
 bool KeyboardEventCommon(Tdisplay hw, udat Code, udat ShiftFlags, udat Len, const char *Seq) {
-  event_keyboard *event;
   Tmsg msg;
 
   if (hw->FlagsHW & FlagNoInputHW) {
     return true;
   }
   if ((msg = Smsg::Create(msg_key, Len))) {
-    event = &msg->Event.EventKeyboard;
+    event_keyboard &ev = msg->Event.EventKeyboard;
 
-    event->Code = Code;
-    event->ShiftFlags = ShiftFlags;
-    event->SeqLen = Len;
-    CopyMem(Seq, event->AsciiSeq, Len);
-    event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
+    ev.Code = Code;
+    ev.ShiftFlags = ShiftFlags;
+    ev.SeqLen = Len;
+    CopyMem(Seq, ev.AsciiSeq, Len);
+    ev.AsciiSeq[Len] = '\0'; /* terminate string with \0 */
     SendMsg(Ext(WM, MsgPort), msg);
     return true;
   }

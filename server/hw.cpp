@@ -101,8 +101,9 @@ static void HandleSignalChild(void) {
   int status;
   GotSignalChild = false;
   while ((pid = Tw_wait3(&status, WNOHANG, (struct rusage *)0)) != 0 && pid != (pid_t)-1) {
-    if (WIFEXITED(status) || WIFSIGNALED(status))
+    if (WIFEXITED(status) || WIFSIGNALED(status)) {
       RemotePidIsDead(pid);
+    }
   }
 }
 
@@ -125,12 +126,15 @@ static void HandleSignalHangup(void) {
 
 void HandleSignals(void) {
   GotSignals = tfalse;
-  if (GotSignalWinch)
+  if (GotSignalWinch) {
     HandleSignalWinch();
-  if (GotSignalChild)
+  }
+  if (GotSignalChild) {
     HandleSignalChild();
-  if (GotSignalHangup)
+  }
+  if (GotSignalHangup) {
     HandleSignalHangup();
+  }
 }
 
 #ifndef TW_DONT_TRAP_SIGNALS
@@ -207,10 +211,12 @@ bool InitSignals(void) NOTHROW {
   signal(SIGWINCH, SignalWinch);
   signal(SIGCHLD, SignalChild);
   signal(SIGHUP, SignalHangup);
-  for (i = 0; i < N_OF(signals_ignore); i++)
+  for (i = 0; i < N_OF(signals_ignore); i++) {
     signal(signals_ignore[i], SIG_IGN);
-  for (i = 0; i < N_OF(signals_fatal); i++)
+  }
+  for (i = 0; i < N_OF(signals_fatal); i++) {
     signal(signals_fatal[i], SignalFatal);
+  }
   return true;
 }
 
@@ -218,10 +224,12 @@ void QuitSignals(void) NOTHROW {
   uldat i;
   signal(SIGWINCH, SIG_IGN);
   signal(SIGCHLD, SIG_IGN);
-  for (i = 0; i < N_OF(signals_ignore); i++)
+  for (i = 0; i < N_OF(signals_ignore); i++) {
     signal(signals_ignore[i], SIG_IGN);
-  for (i = 0; i < N_OF(signals_fatal); i++)
+  }
+  for (i = 0; i < N_OF(signals_fatal); i++) {
     signal(signals_fatal[i], SIG_DFL);
+  }
 }
 
 void AllDefaultSignals(void) NOTHROW {
@@ -229,10 +237,12 @@ void AllDefaultSignals(void) NOTHROW {
   signal(SIGWINCH, SIG_DFL);
   signal(SIGCHLD, SIG_DFL);
   signal(SIGHUP, SIG_DFL);
-  for (i = 0; i < N_OF(signals_ignore); i++)
+  for (i = 0; i < N_OF(signals_ignore); i++) {
     signal(signals_ignore[i], SIG_DFL);
-  for (i = 0; i < N_OF(signals_fatal); i++)
+  }
+  for (i = 0; i < N_OF(signals_fatal); i++) {
     signal(signals_fatal[i], SIG_DFL);
+  }
 }
 
 void MoveToXY(dat x, dat y) NOTHROW {
