@@ -1927,23 +1927,29 @@ static byte CreateAuth(char *path) {
   int fd, got = -1;
   uldat len = 0;
 
-  if ((fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0600)) >= 0 && chmod(path, 0600) == 0) {
-
-    len = GetRandomData();
-
-    if (len == AuthLen)
-      for (len = 0; len < AuthLen; len += got) {
-        got = write(fd, AuthData + len, AuthLen - len);
-        if (got < 0) {
-          if (errno == EINTR || errno == EWOULDBLOCK)
-            got = 0;
-          else
-            break;
-        }
-      }
-    close(fd);
+  fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+  if (fd < 0 || fchmod(fd, 0600) < 0) {
+    goto cleanup;
   }
 
+  len = GetRandomData();
+
+  if (len == AuthLen) {
+    for (len = 0; len < AuthLen; len += got) {
+      got = write(fd, AuthData + len, AuthLen - len);
+      if (got < 0) {
+        if (errno == EINTR || errno == EWOULDBLOCK)
+          got = 0;
+        else
+          break;
+      }
+    }
+  }
+
+cleanup:
+  if (fd >= 0) {
+    close(fd);
+  }
   return len == AuthLen ? ttrue : Error(SYSERROR);
 }
 
