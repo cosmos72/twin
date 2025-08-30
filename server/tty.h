@@ -107,6 +107,7 @@ public:
   byte Gv[4], saveGv[4], Gi, saveGi;
   byte utf8, utf8_count;
   trune utf8_char;
+  trune curr_rune;            /* for ESC [ NNN b i.e. repeat last char NNN times */
   trune (*InvCharset)(trune); /* pointer to trune -> byte translation function */
 
   String newName;    /* buffer for xterm set window title escape seq */

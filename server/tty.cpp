@@ -35,7 +35,7 @@
 #include <Tutf/Tutf.h>
 
 /*
- * VT102 emulator
+ * xterm emulator
  */
 
 /* static variables, common to most functions */
@@ -54,6 +54,8 @@ static byte dirtyN;
  */
 #define CTRL_ACTION 0x0d00ff81
 #define CTRL_ALWAYS 0x0800f501 /* Cannot be overridden by TTY_DISPCTRL */
+
+static void write_rune(tty_data *tty, trune c);
 
 static inline void change_flags(tty_data *tty, uldat bits, byte on_off) {
   if (on_off) {
@@ -453,7 +455,14 @@ static inline void del(tty_data * /*tty*/) {
   /* ignored */
 }
 
-static void csi_J(tty_data *tty, int vpar) {
+/** write current rune max(nr, 1) times */
+static void csi_b(tty_data *tty, uldat nr) {
+  do {
+    write_rune(tty, tty->curr_rune);
+  } while (nr-- > 1);
+}
+
+static void csi_J(tty_data *tty, uldat vpar) {
   tcell *start;
   ldat count;
 
@@ -481,7 +490,7 @@ static void csi_J(tty_data *tty, int vpar) {
   tty->Flags &= ~TTY_NEEDWRAP;
 }
 
-static void csi_K(tty_data *tty, int vpar) {
+static void csi_K(tty_data *tty, uldat vpar) {
   dat count;
   tcell *start;
 
@@ -511,8 +520,8 @@ static void csi_K(tty_data *tty, int vpar) {
   tty->Flags &= ~TTY_NEEDWRAP;
 }
 
-static void csi_X(tty_data *tty, int vpar) /* erase the following vpar positions */
-{                                          /* not vt100? */
+static void csi_X(tty_data *tty, uldat vpar) /* erase the following vpar positions */
+{                                            /* not vt100? */
   tcell *start = tty->Pos;
   if (!vpar) {
     vpar++;
@@ -1033,7 +1042,7 @@ static void reset_tty(tty_data *tty, bool do_clear) {
 
   /* default to UTF-8 mode */
   tty->utf8 = 1;
-  tty->utf8_count = tty->utf8_char = 0;
+  tty->utf8_count = tty->utf8_char = tty->curr_rune = 0;
 
   std::memset(tty->TabStop, 0x01, sizeof(tty->TabStop));
   tty->TabStop[0] = 0;
@@ -1108,7 +1117,7 @@ static void clear_newtitle(tty_data *tty) {
   tty->newName.clear();
 }
 
-static inline void write_ctrl(tty_data *tty, byte c) {
+static void write_ctrl(tty_data *tty, byte c) {
   /*
    *  Control characters can be used in the _middle_
    *  of an escape sequence.
@@ -1360,14 +1369,14 @@ static inline void write_ctrl(tty_data *tty, byte c) {
       break;
     }
     switch (c) {
-    case 'm':
-      csi_m(tty);
-      break;
     case 'A':
       if (!tty->Par[0]) {
         tty->Par[0]++;
       }
       goto_xy(tty, tty->X, tty->Y - tty->Par[0]);
+      break;
+    case 'b':
+      csi_b(tty, tty->Par[0]);
       break;
     case 'B':
     case 'e':
@@ -1450,6 +1459,9 @@ static inline void write_ctrl(tty_data *tty, byte c) {
       break;
     case 'M':
       csi_M(tty, tty->Par[0]);
+      break;
+    case 'm':
+      csi_m(tty);
       break;
     case 'P':
       csi_P(tty, tty->Par[0]);
@@ -1666,6 +1678,29 @@ static bool combine_utf8(tty_data *tty, trune *pc) {
   return false;
 }
 
+static void write_rune(tty_data *tty, trune c) {
+  /* Try to find out how to display c */
+  if (tty->Flags & TTY_NEEDWRAP) {
+    cr(tty);
+    lf(tty);
+  }
+  if (tty->Flags & TTY_INSERT) {
+    insert_char(tty, 1);
+  }
+  dirty_tty(tty, tty->X, tty->Y, tty->X, tty->Y);
+  tty->curr_rune = c;
+  *tty->Pos = TCELL(tty->Color, c);
+
+  if (tty->X == tty->SizeX - 1) {
+    if (tty->Flags & TTY_AUTOWRAP) {
+      tty->Flags |= TTY_NEEDWRAP;
+    }
+  } else {
+    tty->X++;
+    tty->Pos++;
+  }
+}
+
 /* this is the main entry point */
 static bool TtyWriteCharsetOrUtf8(Twindow w, uldat len, const char *chars, bool force_utf8) {
   tty_data *tty;
@@ -1725,25 +1760,7 @@ static bool TtyWriteCharsetOrUtf8(Twindow w, uldat len, const char *chars, bool 
       utf8_in_use = printable = false;
     }
     if (printable && state_normal) {
-      /* Now try to find out how to display it */
-      if (tty->Flags & TTY_NEEDWRAP) {
-        cr(tty);
-        lf(tty);
-      }
-      if (tty->Flags & TTY_INSERT) {
-        insert_char(tty, 1);
-      }
-      dirty_tty(tty, tty->X, tty->Y, tty->X, tty->Y);
-      *tty->Pos = TCELL(tty->Color, c);
-
-      if (tty->X == tty->SizeX - 1) {
-        if (tty->Flags & TTY_AUTOWRAP) {
-          tty->Flags |= TTY_NEEDWRAP;
-        }
-      } else {
-        tty->X++;
-        tty->Pos++;
-      }
+      write_rune(tty, c);
     } else {
       write_ctrl(tty, (byte)c);
     }
