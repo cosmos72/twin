@@ -13,8 +13,8 @@
 #include "obj/all.h" // extern All
 #include "obj/module.h"
 #include "alloc.h"   // CloneStrL()
-#include "methods.h" // InsertLast(), RemoveGeneric()
 #include "twin.h"    // IS_ALL(), IS_MODULE()
+#include "methods.h" // InsertLast()
 
 #include <new>
 
@@ -24,7 +24,6 @@ Tmodule Smodule::Create(Chars name) {
     void *addr = AllocMem0(sizeof(Smodule));
     if (addr) {
       m = new (addr) Smodule();
-      m->Fn = Fn_Tmodule;
       if (!m->Init(name)) {
         m->Delete();
         m = NULL;
@@ -41,7 +40,7 @@ Tmodule Smodule::Init(Chars name) {
   this->Used = 0;
   // this->Handle = NULL;
   // this->DoInit = NULL;
-  InsertLast(Module, this, ::All);
+  InsertLast(Modules, this, ::All);
   return this;
 }
 
@@ -56,15 +55,14 @@ void Smodule::Delete() {
 
 void Smodule::Insert(Tall parent, Tmodule prev, Tmodule next) {
   if (parent && !All) {
-    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstModule, //
-                  (TobjEntry)prev, (TobjEntry)next, NULL);
+    parent->Modules.Insert(this, prev, next);
     All = parent;
   }
 }
 
 void Smodule::Remove() {
   if (All) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstModule, NULL);
+    All->Modules.Remove(this);
     All = (Tall)0;
   }
 }

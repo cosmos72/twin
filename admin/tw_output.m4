@@ -46,7 +46,6 @@ m4_define([TW_OUTPUT], [[
   tw_cfg CONF_HW_TWIN           "$enable_hw_twin"
   tw_cfg CONF_HW_DISPLAY        "$enable_hw_display"
   tw_cfg CONF_OPT_SHADOWS       "$enable_opt_shadows"
-  tw_cfg CONF_OPT_BLINK         "$enable_opt_blink"
   tw_cfg CONF_OPT_CURSOR_ALWAYS "$enable_opt_cursor_always"
   tw_cfg CONF_OPT_MENU_HIDE     "$enable_opt_menu_hide"
   tw_cfg CONF_OPT_MENU_INFO     "$enable_opt_menu_info"

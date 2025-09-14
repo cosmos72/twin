@@ -18,8 +18,9 @@
 
 void *AllocMem(size_t len) NOTHROW {
   void *ret = NULL;
-  if (len && !(ret = malloc(len))) /* malloc(0) is not portable */
+  if (len && !(ret = malloc(len))) { /* malloc(0) is not portable */
     Error(NOMEMORY);
+  }
   return ret;
 }
 
@@ -33,8 +34,9 @@ void *ReAllocMem(void *addr, size_t len) NOTHROW {
       FreeMem(addr);
       ret = NULL;
     }
-  } else
+  } else {
     ret = AllocMem(len);
+  }
   return ret;
 }
 

@@ -22,7 +22,7 @@
 #include <dlfcn.h>
 #undef dlinit /* dlopen() requires no initialization */
 #define dlinit_once() true
-#define dlhandle void *
+typedef void *dlhandle;
 #define dlopen(name) dlopen((name), RTLD_NOW | RTLD_GLOBAL)
 #define DL_PREFIX "lib"
 #ifdef __APPLE__
@@ -38,10 +38,9 @@
 #define dlinit lt_dlinit
 bool dlinit_once(void); /* from dl_helper.c */
 #define dlerror lt_dlerror
-#define dlhandle lt_dlhandle
-#define dlopen(name)                                                                               \
-  lt_dlopenext(name) /* let ltdl decide library name suffix: .la .so .dll or whatever is on the    \
-                        target platform */
+typedef lt_dlhandle dlhandle;
+/* let ltdl decide library name suffix: .la .so .dll or whatever is on the  target platform */
+#define dlopen(name) lt_dlopenext(name)
 #define dlclose lt_dlclose
 #define dlsym lt_dlsym
 #ifdef TW_LT_LIBPREFIX

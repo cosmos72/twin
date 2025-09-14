@@ -13,15 +13,15 @@
 #include "obj/gadget.h"
 
 #include "alloc.h"     // AllocMem0(), CloneStr2TRune()
-#include "fn.h"        // Fn_Tgadget
 #include "obj/id.h"    // Tgadget_class_id
 #include "obj/group.h" // Sgroup
 #include "menuitem.h"  // COD_RESERVED
 #include "resize.h"    // PressGadget(), UnPressGadget()
 #include "draw.h"      // DrawAreaWidget()
+#include "builtin.h"   // ColorFill()
 
 #include <Tw/datasizes.h>   // TW_SIZEOF_TCOLOR
-#include <Tw/Tw_defs.h>     // tmaxcol
+#include <Tw/Tw_defs.h>     // tpalette_n
 #include <Tw/Twstat_defs.h> // TWS_gadget_*
 #include <Tutf/utf_32.h>    // T_UTF_32_*_BLOCK
 #include <Tutf/Tutf.h>      // Tutf_CP437_to_UTF_32
@@ -37,7 +37,6 @@ Tgadget Sgadget::Create(Tmsgport owner, Twidget parent, dat xwidth, dat ywidth,
     void *addr = AllocMem0(sizeof(Sgadget));
     if (addr) {
       g = new (addr) Sgadget();
-      g->Fn = (TwidgetFn)Fn_Tgadget;
       if (!g->Init(owner, parent, xwidth, ywidth, textnormal, attr, flags, code, coltext,
                    coltextselect, coltextdisabled, coltextselectdisabled, left, up)) {
         g->Delete();
@@ -72,7 +71,6 @@ Tgadget Sgadget::CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolo
   void *addr = AllocMem0(sizeof(Sgadget));
   if (addr) {
     g = new (addr) Sgadget();
-    g->Fn = (TwidgetFn)Fn_Tgadget;
     if (!((Twidget)g)
              ->Init(owner, ++xwidth, ++ywidth, 0, GADGETFL_USETEXT | GADGETFL_BUTTON, 0, 0,
                     (tcell)0, Tgadget_class_id)) {
@@ -82,34 +80,30 @@ Tgadget Sgadget::CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolo
 
     size = (ldat)xwidth * ywidth;
 
-    for (i = 0; i < 4; i++)
-      g->USE.T.Text[i] = NULL, g->USE.T.Color[i] = NULL;
-
-    for (i = 0; i < 4; i++)
+    for (i = 0; i < 4; i++) {
+      g->USE.T.Text[i] = NULL;
+      g->USE.T.Color[i] = NULL;
+    }
+    bgcol &= TCOL(0, tWHITE);
+    for (i = 0; i < 4; i++) {
       if (!(g->USE.T.Text[i] = (trune *)AllocMem(size * sizeof(trune))) ||
           !(g->USE.T.Color[i] = (tcolor *)AllocMem(size * sizeof(tcolor)))) {
 
         g->Delete();
         return NULL;
       }
-
+      ColorFill(g->USE.T.Color[i], size, bgcol);
+    }
     size = (ldat)--xwidth * --ywidth;
-    bgcol &= TCOL(0, tmaxcol);
 
     for (i = 0; i < 4; i++) {
       for (j = k = 0; j < ywidth; j++, k += xwidth + 1) {
         g->USE.T.Text[i][k + (i & 1 ? 0 : xwidth)] = i & 1 ? ' ' : k ? FULL_ : LOWER_;
-        g->USE.T.Color[i][k + (i & 1 ? 0 : xwidth)] = bgcol;
       }
       g->USE.T.Text[i][k] = ' ';
-      for (j = 0; j < xwidth; j++)
+      for (j = 0; j < xwidth; j++) {
         g->USE.T.Text[i][k + 1 + j] = i & 1 ? ' ' : UPPER_;
-#if TW_SIZEOF_TCOLOR == 1
-      memset((void *)(g->USE.T.Color[i] + k), bgcol, xwidth + 1);
-#else
-      for (j = 0; j <= xwidth; j++)
-        g->USE.T.Color[i][k + j] = bgcol;
-#endif
+      }
     }
 
     g->G_Prev = g->G_Next = (Tgadget)0;

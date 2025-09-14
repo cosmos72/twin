@@ -15,8 +15,8 @@
 
 #include "obj/obj.h"
 
-struct Smenu : public Sobj {
-  TobjFn Fn;
+class Smenu : public Sobj {
+public:
   Tmenu Prev, Next; /* in the same Tmsgport */
   Tmsgport MsgPort;
   /* Tmenu */
@@ -24,7 +24,8 @@ struct Smenu : public Sobj {
   byte CommonItems;
   byte FlagDefColInfo;
   Trow Info;
-  Tmenuitem FirstI, LastI, SelectI;
+  List<Tmenuitem> Items;
+  Tmenuitem SelectI;
 
   static Tmenu Create(Tmsgport port, tcolor colitem, tcolor colselect, tcolor coldisabled,
                       tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,

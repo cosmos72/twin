@@ -175,8 +175,8 @@ libterm_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(CXXFLAGS) $(libterm_la_LDFLAGS) $(LDFLAGS) -o $@
 @LIBTERM_la_TRUE@am_libterm_la_rpath = -rpath $(pkglibdir)
 am_twdisplay_OBJECTS = alloc.$(OBJEXT) display.$(OBJEXT) \
-	dl_helper.$(OBJEXT) log.$(OBJEXT) missing.$(OBJEXT) \
-	hw.$(OBJEXT)
+	dl_helper.$(OBJEXT) hw.$(OBJEXT) log.$(OBJEXT) \
+	missing.$(OBJEXT) palette.$(OBJEXT)
 twdisplay_OBJECTS = $(am_twdisplay_OBJECTS)
 twdisplay_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
@@ -191,15 +191,15 @@ am_twin_server_OBJECTS = alloc.$(OBJEXT) builtin.$(OBJEXT) \
 	data.$(OBJEXT) dl.$(OBJEXT) dl_helper.$(OBJEXT) draw.$(OBJEXT) \
 	extreg.$(OBJEXT) hw.$(OBJEXT) hw_multi.$(OBJEXT) log.$(OBJEXT) \
 	main.$(OBJEXT) methods.$(OBJEXT) missing.$(OBJEXT) \
-	obj/all.$(OBJEXT) obj/display.$(OBJEXT) obj/gadget.$(OBJEXT) \
-	obj/group.$(OBJEXT) obj/id.$(OBJEXT) obj/menu.$(OBJEXT) \
-	obj/menuitem.$(OBJEXT) obj/module.$(OBJEXT) obj/msg.$(OBJEXT) \
-	obj/msgport.$(OBJEXT) obj/mutex.$(OBJEXT) obj/obj.$(OBJEXT) \
-	obj/row.$(OBJEXT) obj/screen.$(OBJEXT) obj/widget.$(OBJEXT) \
-	obj/window.$(OBJEXT) printk.$(OBJEXT) privilege.$(OBJEXT) \
-	rcopt.$(OBJEXT) rcrun.$(OBJEXT) remote.$(OBJEXT) \
-	resize.$(OBJEXT) shm.$(OBJEXT) scroller.$(OBJEXT) \
-	util.$(OBJEXT) wm.$(OBJEXT)
+	palette.$(OBJEXT) obj/all.$(OBJEXT) obj/display.$(OBJEXT) \
+	obj/gadget.$(OBJEXT) obj/group.$(OBJEXT) obj/id.$(OBJEXT) \
+	obj/menu.$(OBJEXT) obj/menuitem.$(OBJEXT) obj/module.$(OBJEXT) \
+	obj/msg.$(OBJEXT) obj/msgport.$(OBJEXT) obj/mutex.$(OBJEXT) \
+	obj/obj.$(OBJEXT) obj/row.$(OBJEXT) obj/screen.$(OBJEXT) \
+	obj/widget.$(OBJEXT) obj/window.$(OBJEXT) printk.$(OBJEXT) \
+	privilege.$(OBJEXT) rcopt.$(OBJEXT) rcrun.$(OBJEXT) \
+	remote.$(OBJEXT) resize.$(OBJEXT) shm.$(OBJEXT) \
+	scroller.$(OBJEXT) util.$(OBJEXT) wm.$(OBJEXT)
 twin_server_OBJECTS = $(am_twin_server_OBJECTS)
 twin_server_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
@@ -228,15 +228,16 @@ am__depfiles_remade = ./$(DEPDIR)/alloc.Po ./$(DEPDIR)/builtin.Po \
 	./$(DEPDIR)/extreg.Po ./$(DEPDIR)/hw.Po \
 	./$(DEPDIR)/hw_multi.Po ./$(DEPDIR)/log.Po ./$(DEPDIR)/main.Po \
 	./$(DEPDIR)/md5.Plo ./$(DEPDIR)/methods.Po \
-	./$(DEPDIR)/missing.Po ./$(DEPDIR)/printk.Po \
-	./$(DEPDIR)/privilege.Po ./$(DEPDIR)/pty.Plo \
-	./$(DEPDIR)/rcopt.Po ./$(DEPDIR)/rcparse_lex.Plo \
-	./$(DEPDIR)/rcparse_tab.Plo ./$(DEPDIR)/rcrun.Po \
-	./$(DEPDIR)/remote.Po ./$(DEPDIR)/resize.Po \
-	./$(DEPDIR)/scroller.Po ./$(DEPDIR)/shm.Po \
-	./$(DEPDIR)/socket.Plo ./$(DEPDIR)/tterm.Plo \
-	./$(DEPDIR)/tty.Plo ./$(DEPDIR)/twin-wrapper.Po \
-	./$(DEPDIR)/util.Po ./$(DEPDIR)/wm.Po obj/$(DEPDIR)/all.Po \
+	./$(DEPDIR)/missing.Po ./$(DEPDIR)/palette.Po \
+	./$(DEPDIR)/printk.Po ./$(DEPDIR)/privilege.Po \
+	./$(DEPDIR)/pty.Plo ./$(DEPDIR)/rcopt.Po \
+	./$(DEPDIR)/rcparse_lex.Plo ./$(DEPDIR)/rcparse_tab.Plo \
+	./$(DEPDIR)/rcrun.Po ./$(DEPDIR)/remote.Po \
+	./$(DEPDIR)/resize.Po ./$(DEPDIR)/scroller.Po \
+	./$(DEPDIR)/shm.Po ./$(DEPDIR)/socket.Plo \
+	./$(DEPDIR)/tterm.Plo ./$(DEPDIR)/tty.Plo \
+	./$(DEPDIR)/twin-wrapper.Po ./$(DEPDIR)/util.Po \
+	./$(DEPDIR)/wm.Po obj/$(DEPDIR)/all.Po \
 	obj/$(DEPDIR)/display.Po obj/$(DEPDIR)/gadget.Po \
 	obj/$(DEPDIR)/group.Po obj/$(DEPDIR)/id.Po \
 	obj/$(DEPDIR)/menu.Po obj/$(DEPDIR)/menuitem.Po \
@@ -532,10 +533,10 @@ bin_SCRIPTS = twstart
 pkglib_LTLIBRARIES = $(am__append_1) $(am__append_2) $(am__append_3)
 AM_CPPFLAGS = -I$(top_srcdir)/include $(LTDLINCL) -DPLUGINDIR="\"$(pkglibdir)\"" -DCONFDIR="\"$(sysconfdir)/twin\""
 twin_CPPFLAGS = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir)\""
-twdisplay_SOURCES = alloc.cpp display.cpp dl_helper.cpp log.cpp missing.cpp hw.cpp
+twdisplay_SOURCES = alloc.cpp display.cpp dl_helper.cpp hw.cpp log.cpp missing.cpp palette.cpp
 twin_SOURCES = wrapper.c
-twin_server_SOURCES = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.cpp \
-                        extreg.cpp hw.cpp hw_multi.cpp log.cpp main.cpp methods.cpp missing.cpp \
+twin_server_SOURCES = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.cpp extreg.cpp \
+                        hw.cpp hw_multi.cpp log.cpp main.cpp methods.cpp missing.cpp palette.cpp \
                         obj/all.cpp obj/display.cpp obj/gadget.cpp obj/group.cpp \
                         obj/id.cpp obj/menu.cpp obj/menuitem.cpp obj/module.cpp obj/msg.cpp obj/msgport.cpp \
                         obj/mutex.cpp obj/obj.cpp obj/row.cpp obj/screen.cpp obj/widget.cpp obj/window.cpp \
@@ -774,6 +775,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/methods.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/missing.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/palette.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/printk.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/privilege.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pty.Plo@am__quote@ # am--include-marker
@@ -1099,6 +1101,7 @@ distclean: distclean-recursive
 	-rm -f ./$(DEPDIR)/md5.Plo
 	-rm -f ./$(DEPDIR)/methods.Po
 	-rm -f ./$(DEPDIR)/missing.Po
+	-rm -f ./$(DEPDIR)/palette.Po
 	-rm -f ./$(DEPDIR)/printk.Po
 	-rm -f ./$(DEPDIR)/privilege.Po
 	-rm -f ./$(DEPDIR)/pty.Plo
@@ -1193,6 +1196,7 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f ./$(DEPDIR)/md5.Plo
 	-rm -f ./$(DEPDIR)/methods.Po
 	-rm -f ./$(DEPDIR)/missing.Po
+	-rm -f ./$(DEPDIR)/palette.Po
 	-rm -f ./$(DEPDIR)/printk.Po
 	-rm -f ./$(DEPDIR)/privilege.Po
 	-rm -f ./$(DEPDIR)/pty.Plo

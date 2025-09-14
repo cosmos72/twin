@@ -37,105 +37,122 @@ struct sel_req {
 
 #define TSELMAX 2
 
-struct tw_data {
-  tdisplay Td;
-  twindow Twin;
-  tmsgport Tmsgport;
+class tw_driver {
+public:
+  Tdisplay hw;
+  tdisplay dpy;
+  twindow win;
+  tmsgport port;
   byte SelCount;
   byte TSelCount;
   sel_req SelReq[TSELMAX];  /* buffers to hold selection request data while waiting from twin */
   sel_req TSelReq[TSELMAX]; /* buffers to hold selection request data while waiting from libtw */
+
+  static bool InitHW(Tdisplay hw);
+  static void QuitHW(Tdisplay hw);
+
+  static void Beep(Tdisplay hw);
+  static void Configure(Tdisplay hw, udat resource, byte todefault, udat value);
+  static void CheckResize(Tdisplay hw, dat *x, dat *y);
+  static void DetectSize(Tdisplay hw, dat *x, dat *y);
+  static void DrawSome(Tdisplay hw, dat x, dat y, uldat len);
+  static void FlushHW(Tdisplay hw);
+  static void FlushVideo(Tdisplay hw);
+  static void HandleMsg(Tdisplay hw, tmsg msg);
+  static void KeyboardEvent(int fd, Tdisplay hw);
+  static void Resize(Tdisplay hw, dat x, dat y);
+
+  static void SelectionExport_TW(Tdisplay hw);
+  static bool SelectionImport_TW(Tdisplay hw);
+  static void SelectionNotify_TW(Tdisplay hw, uldat reqprivate, e_id magic, Chars mime, Chars data);
+  static void SelectionRequest_TW(Tdisplay hw, Tobj requestor, uldat reqprivate);
+
+  static void SelectionNotify_up(Tdisplay hw, uldat reqprivate, e_id magic, Chars mime, Chars data);
+  static void SelectionRequest_up(Tdisplay hw, uldat requestor, uldat reqprivate);
 };
 
-#define twdata ((tw_data *)HW->Private)
-#define Td (twdata->Td)
-#define Twin (twdata->Twin)
-#define Tmsgport (twdata->Tmsgport)
-#define SelCount (twdata->SelCount)
-#define TSelCount (twdata->TSelCount)
-#define SelReq (twdata->SelReq)
-#define TSelReq (twdata->TSelReq)
+#define twdriver(hw) ((tw_driver *)(hw)->Private)
 
-static void TW_SelectionRequest_up(uldat requestor, uldat reqprivate);
-static void TW_SelectionNotify_up(uldat reqprivate, e_id magic, Chars mime, Chars data);
+#define twdata(hw) (twdriver(hw)->TSelReq)
 
-static void TW_Beep(void) {
-  Tw_WriteCharsetWindow(Td, Twin, 1, "\007");
-  setFlush();
+TW_ATTR_HIDDEN void tw_driver::Beep(Tdisplay hw) {
+  tw_driver *self = twdriver(hw);
+  Tw_WriteCharsetWindow(self->dpy, self->win, 1, "\007");
+  hw->setFlush();
 }
 
-static void TW_Configure(udat resource, byte todefault, udat value) {
+TW_ATTR_HIDDEN void tw_driver::Configure(Tdisplay hw, udat resource, byte todefault, udat value) {
+  tw_driver *self = twdriver(hw);
   switch (resource) {
   case HW_KBDAPPLIC:
-    Tw_WriteCharsetWindow(Td, Twin, 2, todefault || !value ? "\033>" : "\033=");
-    setFlush();
+    Tw_WriteCharsetWindow(self->dpy, self->win, 2, todefault || !value ? "\033>" : "\033=");
+    hw->setFlush();
     break;
   case HW_ALTCURSKEYS:
-    Tw_WriteCharsetWindow(Td, Twin, 5, todefault || !value ? "\033[?1l" : "\033[?1h");
-    setFlush();
+    Tw_WriteCharsetWindow(self->dpy, self->win, 5, todefault || !value ? "\033[?1l" : "\033[?1h");
+    hw->setFlush();
     break;
   case HW_BELLPITCH:
     if (todefault)
-      Tw_WriteCharsetWindow(Td, Twin, 5, "\033[10]");
+      Tw_WriteCharsetWindow(self->dpy, self->win, 5, "\033[10]");
     else {
       char buf[17];
-      sprintf(buf, "\033[10;%u]", (unsigned)value);
-      Tw_WriteCharsetWindow(Td, Twin, strlen(buf), buf);
+      snprintf(buf, sizeof(buf), "\033[10;%u]", (unsigned)value);
+      Tw_WriteCharsetWindow(self->dpy, self->win, strlen(buf), buf);
     }
-    setFlush();
+    hw->setFlush();
     break;
   case HW_BELLDURATION:
     if (todefault)
-      Tw_WriteCharsetWindow(Td, Twin, 5, "\033[11]");
+      Tw_WriteCharsetWindow(self->dpy, self->win, 5, "\033[11]");
     else {
       char buf[17];
-      sprintf(buf, "\033[11;%u]", (unsigned)value);
-      Tw_WriteCharsetWindow(Td, Twin, strlen(buf), buf);
+      snprintf(buf, sizeof(buf), "\033[11;%u]", (unsigned)value);
+      Tw_WriteCharsetWindow(self->dpy, self->win, strlen(buf), buf);
     }
-    setFlush();
+    hw->setFlush();
     break;
   case HW_MOUSEMOTIONEVENTS:
     if (todefault)
       value = 0;
-    Tw_ChangeField(Td, Twin, TWS_window_Attr, TW_WINDOW_WANT_MOUSE_MOTION,
+    Tw_ChangeField(self->dpy, self->win, TWS_window_Attr, TW_WINDOW_WANT_MOUSE_MOTION,
                    value ? TW_WINDOW_WANT_MOUSE_MOTION : 0);
-    setFlush();
+    hw->setFlush();
     break;
   default:
     break;
   }
 }
 
-static void TW_HandleMsg(tmsg msg) {
-  tevent_any event;
+TW_ATTR_HIDDEN void tw_driver::HandleMsg(Tdisplay hw, tmsg msg) {
+  tevent_any event = &msg->Event;
+  tw_driver *self = twdriver(hw);
   dat x, y, dx, dy;
   udat keys;
 
-  event = &msg->Event;
-
   switch (msg->Type) {
   case TW_MSG_SELECTIONCLEAR:
-    HW->HWSelectionPrivate = 0; /* selection now owned by some other libtw client */
-    TwinSelectionSetOwner((Tobj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
+    hw->SelectionPrivate = 0; /* selection now owned by some other libtw client */
+    TwinSelectionSetOwner((Tobj)hw, SEL_CURRENTTIME, SEL_CURRENTTIME);
     return;
   case TW_MSG_SELECTIONREQUEST:
-    TW_SelectionRequest_up(event->EventSelectionRequest.Requestor,
-                           event->EventSelectionRequest.ReqPrivate);
+    SelectionRequest_up(hw, event->EventSelectionRequest.Requestor,
+                        event->EventSelectionRequest.ReqPrivate);
     return;
   case TW_MSG_SELECTIONNOTIFY:
-    TW_SelectionNotify_up(event->EventSelectionNotify.ReqPrivate,                                 //
-                          e_id(event->EventSelectionNotify.Magic),                                //
-                          Chars::from_c_maxlen(event->EventSelectionNotify.MIME, TW_MAX_MIMELEN), //
-                          Chars(event->EventSelectionNotify.Data, event->EventSelectionNotify.Len));
+    SelectionNotify_up(hw, event->EventSelectionNotify.ReqPrivate,                             //
+                       e_id(event->EventSelectionNotify.Magic),                                //
+                       Chars::from_c_maxlen(event->EventSelectionNotify.MIME, TW_MAX_MIMELEN), //
+                       Chars(event->EventSelectionNotify.Data, event->EventSelectionNotify.Len));
     return;
   default:
     break;
   }
 
-  if (event->EventCommon.W == Twin) {
+  if (event->EventCommon.W == self->win) {
     switch (msg->Type) {
     case TW_MSG_WIDGET_KEY:
-      KeyboardEventCommon(event->EventKeyboard.Code, event->EventKeyboard.ShiftFlags,
+      KeyboardEventCommon(hw, event->EventKeyboard.Code, event->EventKeyboard.ShiftFlags,
                           event->EventKeyboard.SeqLen, event->EventKeyboard.AsciiSeq);
       break;
     case TW_MSG_WIDGET_MOUSE:
@@ -146,20 +163,20 @@ static void TW_HandleMsg(tmsg msg) {
       keys = event->EventMouse.Code;
       keys = (keys & HOLD_ANY) | (isPRESS(keys) ? HOLD_CODE(PRESS_N(keys)) : 0);
 
-      MouseEventCommon(x, y, dx, dy, keys);
+      MouseEventCommon(hw, x, y, dx, dy, keys);
       break;
     case TW_MSG_WIDGET_CHANGE:
-      if (HW->X != event->EventWidget.XWidth || HW->Y != event->EventWidget.YWidth) {
+      if (hw->X != event->EventWidget.XWidth || hw->Y != event->EventWidget.YWidth) {
 
-        HW->X = event->EventWidget.XWidth;
-        HW->Y = event->EventWidget.YWidth;
-        ResizeDisplayPrefer(HW);
+        hw->X = event->EventWidget.XWidth;
+        hw->Y = event->EventWidget.YWidth;
+        ResizeDisplayPrefer(hw);
       }
       break;
     case TW_MSG_WIDGET_GADGET:
       if (!event->EventGadget.Code)
         /* 0 == Close Code */
-        HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+        hw->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW;
       break;
     default:
       break;
@@ -167,11 +184,10 @@ static void TW_HandleMsg(tmsg msg) {
   }
 }
 
-static void TW_KeyboardEvent(int fd, Tdisplay hw) {
+TW_ATTR_HIDDEN void tw_driver::KeyboardEvent(int fd, Tdisplay hw) {
+  tw_driver *self = twdriver(hw);
   tmsg msg;
-  byte firstloop = ttrue;
-  SaveHW;
-  SetHW(hw);
+  bool firstloop = true;
 
   /*
    * All other parts of twin read and parse data from fds in big chunks,
@@ -179,43 +195,45 @@ static void TW_KeyboardEvent(int fd, Tdisplay hw) {
    * To compensate this and avoid to lag behind, we do a small loop checking
    * for all messages received while reading the first one.
    */
-  while ((firstloop || Tw_PendingMsg(Td)) && (msg = Tw_ReadMsg(Td, tfalse))) {
-    TW_HandleMsg(msg);
-    firstloop = tfalse;
+  while ((firstloop || Tw_PendingMsg(self->dpy)) && (msg = Tw_ReadMsg(self->dpy, tfalse))) {
+    HandleMsg(hw, msg);
+    firstloop = false;
   }
 
-  if (Tw_InPanic(Td))
-    HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
-  RestoreHW;
+  if (Tw_InPanic(self->dpy)) {
+    hw->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW;
+  }
 }
 
-inline void TW_DrawSome(dat x, dat y, uldat len) {
+TW_ATTR_HIDDEN void tw_driver::DrawSome(Tdisplay hw, dat x, dat y, uldat len) {
+  tw_driver *self = twdriver(hw);
   tcell *V, *oV;
   uldat buflen = 0;
   tcell *buf;
-  dat xbegin = x, ybegin = y;
+  dat startx = x, starty = y;
 
   V = Video + x + y * (ldat)DisplayWidth;
   oV = OldVideo + x + y * (ldat)DisplayWidth;
 
   for (; len; x++, V++, oV++, len--) {
     if (buflen && ValidOldVideo && *V == *oV) {
-      Tw_WriteTCellWindow(Td, Twin, xbegin, ybegin, buflen, buf);
+      Tw_WriteTCellWindow(self->dpy, self->win, startx, starty, buflen, buf);
       buflen = 0;
     }
     if (!ValidOldVideo || *V != *oV) {
       if (!buflen++) {
-        xbegin = x;
-        ybegin = y;
+        startx = x;
+        starty = y;
         buf = V;
       }
     }
   }
   if (buflen)
-    Tw_WriteTCellWindow(Td, Twin, xbegin, ybegin, buflen, buf);
+    Tw_WriteTCellWindow(self->dpy, self->win, startx, starty, buflen, buf);
 }
 
-static void TW_FlushVideo(void) {
+TW_ATTR_HIDDEN void tw_driver::FlushVideo(Tdisplay hw) {
+  tw_driver *self = twdriver(hw);
   dat start, end;
   udat i;
 
@@ -224,119 +242,124 @@ static void TW_FlushVideo(void) {
     for (i = 0; i < DisplayHeight * 2; i++) {
       start = ChangedVideo[i >> 1][i & 1][0];
       end = ChangedVideo[i >> 1][i & 1][1];
-
-      if (start != -1)
-        TW_DrawSome(start, i >> 1, end - start + 1);
+      if (start != -1) {
+        DrawSome(hw, start, i >> 1, end - start + 1);
+      }
     }
-    setFlush();
+    hw->setFlush();
   }
 
   /* update the cursor */
   if (!ValidOldVideo ||
-      (CursorType != NOCURSOR && (CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
-    Tw_GotoXYWindow(Td, Twin, HW->XY[0] = CursorX, HW->XY[1] = CursorY);
-    setFlush();
+      (CursorType != NOCURSOR && (CursorX != hw->XY[0] || CursorY != hw->XY[1]))) {
+    Tw_GotoXYWindow(self->dpy, self->win, hw->XY[0] = CursorX, hw->XY[1] = CursorY);
+    hw->setFlush();
   }
-  if (!ValidOldVideo || CursorType != HW->TT) {
-    /* Tw_SetCursorWindow(Twin, CursorType); */
+  if (!ValidOldVideo || CursorType != hw->TT) {
+    /* Tw_SetCursorWindow(self->win, CursorType); */
     char buff[16];
-    sprintf(buff, "\033[?%d;%d;%dc", (int)(CursorType & 0xFF), (int)((CursorType >> 8) & 0xFF),
-            (int)((CursorType >> 16) & 0xFF));
-    Tw_WriteCharsetWindow(Td, Twin, strlen(buff), buff);
-    HW->TT = CursorType;
-    setFlush();
+    snprintf(buff, sizeof(buff), "\033[?%d;%d;%dc", (int)(CursorType & 0xFF),
+             (int)((CursorType >> 8) & 0xFF), (int)((CursorType >> 16) & 0xFF));
+    Tw_WriteCharsetWindow(self->dpy, self->win, strlen(buff), buff);
+    hw->TT = CursorType;
+    hw->setFlush();
   }
 
-  HW->FlagsHW &= ~FlHWChangedMouseFlag;
-  HW->RedrawVideo = tfalse;
+  hw->FlagsHW &= ~FlagChangedMouseFlagHW;
+  hw->RedrawVideo = false;
 }
 
-static void TW_FlushHW(void) {
-  byte ret = Tw_TimidFlush(Td);
-  if (ret == tfalse)
-    HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
-  else if (ret == ttrue) {
-    if (HW->NeedHW & NEEDFromPreviousFlushHW) {
-      HW->NeedHW &= ~NEEDFromPreviousFlushHW;
-      RemoteCouldWrite(HW->keyboard_slot);
+TW_ATTR_HIDDEN void tw_driver::FlushHW(Tdisplay hw) {
+  tw_driver *self = twdriver(hw);
+  byte ret = Tw_TimidFlush(self->dpy);
+  if (ret == tfalse) {
+    hw->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW;
+  } else if (ret == ttrue) {
+    if (hw->NeedHW & NeedFromPreviousFlushHW) {
+      hw->NeedHW &= ~NeedFromPreviousFlushHW;
+      RemoteCouldWrite(hw->keyboard_slot);
     }
-    clrFlush();
+    hw->clrFlush();
   } else { /* ret == ttrue+ttrue */
-    if (!(HW->NeedHW & NEEDFromPreviousFlushHW)) {
-      HW->NeedHW |= NEEDFromPreviousFlushHW;
-      RemoteCouldntWrite(HW->keyboard_slot);
+    if (!(hw->NeedHW & NeedFromPreviousFlushHW)) {
+      hw->NeedHW |= NeedFromPreviousFlushHW;
+      RemoteCouldntWrite(hw->keyboard_slot);
     }
   }
 }
 
-static void TW_DetectSize(dat *x, dat *y) {
-  *x = HW->X;
-  *y = HW->Y;
+TW_ATTR_HIDDEN void tw_driver::DetectSize(Tdisplay hw, dat *x, dat *y) {
+  *x = hw->X;
+  *y = hw->Y;
 }
 
-static void TW_CheckResize(dat *x, dat *y) { /* always ok */
+TW_ATTR_HIDDEN void tw_driver::CheckResize(Tdisplay hw, dat *x, dat *y) { /* always ok */
 }
 
-static void TW_Resize(dat x, dat y) {
-  if (x != HW->X || y != HW->Y) {
-    Tw_ResizeWindow(Td, Twin, HW->X = x, HW->Y = y);
-    setFlush();
+TW_ATTR_HIDDEN void tw_driver::Resize(Tdisplay hw, dat x, dat y) {
+  tw_driver *self = twdriver(hw);
+  if (x != hw->X || y != hw->Y) {
+    Tw_ResizeWindow(self->dpy, self->win, hw->X = x, hw->Y = y);
+    hw->setFlush();
   }
 }
 
 #if 0
-static byte TW_canDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-    return (ldat)(Rgt-Left+1) * (Dwn-Up+1) > 20;
+TW_ATTR_HIDDEN bool tw_driver::CanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
+                            dat DstUp) {
+  return (ldat)(Rgt - Left + 1) * (Dwn - Up + 1) > 20;
 }
 
-static void TW_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-    Tw_DragAreaWindow(Td, Twin, Twin, Left, Up, Rgt, Dwn, DstLeft, DstUp);
-    setFlush();
+TW_ATTR_HIDDEN void tw_driver::DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
+  Tw_DragAreaWindow(self->dpy, self->win, self->win, Left, Up, Rgt, Dwn, DstLeft, DstUp);
+  hw->setFlush();
 }
 #endif
 
 /*
  * import Selection from libtw
  */
-static byte TW_SelectionImport_TW(void) {
-  return !HW->HWSelectionPrivate;
+TW_ATTR_HIDDEN bool tw_driver::SelectionImport_TW(Tdisplay hw) {
+  return !hw->SelectionPrivate;
 }
 
 /*
  * export our Selection to libtw
  */
-static void TW_SelectionExport_TW(void) {
-  if (!HW->HWSelectionPrivate) {
+TW_ATTR_HIDDEN void tw_driver::SelectionExport_TW(Tdisplay hw) {
+  if (!hw->SelectionPrivate) {
+    tw_driver *self = twdriver(hw);
 #ifdef DEBUG_HW_TWIN
     printf("exporting selection to libtw server\n");
 #endif
-    HW->HWSelectionPrivate = Tmsgport;
-    Tw_SetOwnerSelection(Td, SEL_CURRENTTIME, SEL_CURRENTTIME);
-    setFlush();
+    hw->SelectionPrivate = self->port;
+    Tw_SetOwnerSelection(self->dpy, SEL_CURRENTTIME, SEL_CURRENTTIME);
+    hw->setFlush();
   }
 }
 
 /*
  * request Selection from libtw
  */
-static void TW_SelectionRequest_TW(Tobj requestor, uldat reqprivate) {
-  if (!HW->HWSelectionPrivate) {
-    if (TSelCount < TSELMAX) {
+TW_ATTR_HIDDEN void tw_driver::SelectionRequest_TW(Tdisplay hw, Tobj requestor, uldat reqprivate) {
+  if (!hw->SelectionPrivate) {
+    tw_driver *self = twdriver(hw);
+    if (self->TSelCount < TSELMAX) {
 #ifdef DEBUG_HW_TWIN
-      printf("requesting selection (%d) from libtw server\n", TSelCount);
+      printf("requesting selection (%d) from libtw server\n", self->TSelCount);
 #endif
       /*
        * we exploit the ReqPrivate field of libtw Selection Request/Notify
        */
-      TSelReq[TSelCount].Requestor = (topaque)requestor;
-      TSelReq[TSelCount].ReqPrivate = reqprivate;
-      Tw_RequestSelection(Td, Tw_GetOwnerSelection(Td), TSelCount++);
-      setFlush();
+      self->TSelReq[self->TSelCount].Requestor = (topaque)requestor;
+      self->TSelReq[self->TSelCount].ReqPrivate = reqprivate;
+      Tw_RequestSelection(self->dpy, Tw_GetOwnerSelection(self->dpy), self->TSelCount++);
+      hw->setFlush();
       /* we will get a TW_MSG_SELECTIONNOTIFY event, i.e.
        * a TW_SelectionNotify_up() call */
     } else {
-      TSelCount = 0;
-      log(WARNING) << "hw_twin.c: TW_SelectionRequest_TW1(): too many nested Twin Selection "
+      self->TSelCount = 0;
+      log(WARNING) << "hw_twin.c: TW_SelectionRequest_TW1(): too many nested self->win Selection "
                       "Request events!\n";
     }
   }
@@ -346,21 +369,22 @@ static void TW_SelectionRequest_TW(Tobj requestor, uldat reqprivate) {
 /*
  * request twin Selection from upper layer
  */
-static void TW_SelectionRequest_up(uldat requestor, uldat reqprivate) {
-  if (SelCount < TSELMAX) {
+TW_ATTR_HIDDEN void tw_driver::SelectionRequest_up(Tdisplay hw, uldat requestor, uldat reqprivate) {
+  tw_driver *self = twdriver(hw);
+  if (self->SelCount < TSELMAX) {
 #ifdef DEBUG_HW_TWIN
-    printf("requesting selection (%d) from twin core\n", SelCount);
+    printf("requesting selection (%d) from twin core\n", self->SelCount);
 #endif
     /*
      * we exploit the ReqPrivate field of libtw Selection Request/Notify
      */
-    SelReq[SelCount].Requestor = requestor;
-    SelReq[SelCount].ReqPrivate = reqprivate;
-    TwinSelectionRequest((Tobj)HW, SelCount++, TwinSelectionGetOwner());
-    /* we will get a HW->HWSelectionNotify(), i.e. TW_SelectionNotify_TW() call */
+    self->SelReq[self->SelCount].Requestor = requestor;
+    self->SelReq[self->SelCount].ReqPrivate = reqprivate;
+    TwinSelectionRequest((Tobj)hw, self->SelCount++, TwinSelectionGetOwner());
+    /* we will get a hw->SelectionNotify(), i.e. SelectionNotify_TW() call */
     /* the call **CAN** arrive while we are still inside TwinSelectionRequest() !!! */
   } else {
-    SelCount = 0;
+    self->SelCount = 0;
     log(WARNING)
         << "hw_twin.c: TW_SelectionRequest_up(): too many nested libtw Selection Request events!\n";
   }
@@ -369,56 +393,62 @@ static void TW_SelectionRequest_up(uldat requestor, uldat reqprivate) {
 /*
  * notify our Selection to libtw
  */
-static void TW_SelectionNotify_TW(uldat reqprivate, e_id magic, Chars mime, Chars data) {
+TW_ATTR_HIDDEN void tw_driver::SelectionNotify_TW(Tdisplay hw, uldat reqprivate, e_id magic,
+                                                  Chars mime, Chars data) {
+  tw_driver *self = twdriver(hw);
 #ifdef DEBUG_HW_TWIN
-  printf("notifying selection (%d/%d) to libtw server\n", reqprivate, SelCount - 1);
+  printf("notifying selection (%d/%d) to libtw server\n", reqprivate, self->SelCount - 1);
 #endif
-  if (reqprivate + 1 != SelCount) {
+  if (reqprivate + 1 != self->SelCount) {
     return;
   }
-  SelCount--;
+  self->SelCount--;
   char mimeBuf[TW_MAX_MIMELEN] = {};
   CopyMem(mime.data(), mimeBuf, Min2u(mime.size(), TW_MAX_MIMELEN));
-  Tw_NotifySelection(Td, SelReq[SelCount].Requestor, SelReq[SelCount].ReqPrivate, magic, mimeBuf,
-                     data.size(), data.data());
-  setFlush();
+  Tw_NotifySelection(self->dpy, self->SelReq[self->SelCount].Requestor,
+                     self->SelReq[self->SelCount].ReqPrivate, magic, mimeBuf, data.size(),
+                     data.data());
+  hw->setFlush();
 }
 
 /*
  * notify the libtw Selection to twin upper layer
  */
-static void TW_SelectionNotify_up(uldat reqprivate, e_id magic, Chars mime, Chars data) {
+TW_ATTR_HIDDEN void tw_driver::SelectionNotify_up(Tdisplay hw, uldat reqprivate, e_id magic,
+                                                  Chars mime, Chars data) {
+  tw_driver *self = twdriver(hw);
 #ifdef DEBUG_HW_TWIN
-  printf("notifying selection (%d/%d) to twin core\n", reqprivate, TSelCount - 1);
+  printf("notifying selection (%d/%d) to twin core\n", reqprivate, self->TSelCount - 1);
 #endif
-  if (reqprivate + 1 == TSelCount) {
-    TSelCount--;
-    TwinSelectionNotify((Tobj)(topaque)TSelReq[TSelCount].Requestor, TSelReq[TSelCount].ReqPrivate,
-                        magic, mime, data);
+  if (reqprivate + 1 == self->TSelCount) {
+    self->TSelCount--;
+    TwinSelectionNotify((Tobj)(topaque)self->TSelReq[self->TSelCount].Requestor,
+                        self->TSelReq[self->TSelCount].ReqPrivate, magic, mime, data);
   }
 }
 
-static void TW_QuitHW(void) {
-  /* not necessary, and Tmsgport, Twin could be undefined */
+TW_ATTR_HIDDEN void tw_driver::QuitHW(Tdisplay hw) {
+  tw_driver *self = twdriver(hw);
+
   /*
-   * Tw_UnMapWidget(Td, Twin);
-   * Tw_DeleteObj(Td, Twin);
-   * Tw_DeleteObj(Td, Tmsgport);
+   *redundant, and self->port, self->win could be unset:
+   *
+   * Tw_UnMapWidget(self->dpy, self->win);
+   * Tw_DeleteObj(self->dpy, self->win);
+   * Tw_DeleteObj(self->dpy, self->port);
    */
-  Tw_Close(Td);
+  Tw_Close(self->dpy);
 
-  UnRegisterRemote(HW->keyboard_slot);
-  HW->keyboard_slot = NOSLOT;
-
-  HW->KeyboardEvent = (void (*)(int, Tdisplay))NoOp;
-
-  HW->QuitHW = NoOp;
+  UnRegisterRemote(hw->keyboard_slot);
+  hw->keyboard_slot = NOSLOT;
+  hw->fnKeyboardEvent = NULL;
+  hw->fnQuitHW = NULL;
 }
 
 TW_DECL_MAGIC(hw_twin_magic);
 
-static bool TW_InitHW(void) {
-  Chars arg = HW->Name;
+TW_ATTR_HIDDEN bool tw_driver::InitHW(Tdisplay hw) {
+  Chars arg = hw->Name;
   char name[] = "twin :??? on twin";
   uldat len;
   tmenu tw_menu;
@@ -433,10 +463,10 @@ static bool TW_InitHW(void) {
     arg = arg.view(4, arg.size());
 
     if (arg.contains(Chars(",noinput"))) {
-      HW->FlagsHW |= FlHWNoInput;
+      hw->FlagsHW |= FlagNoInputHW;
     }
     if (arg.contains(Chars(",slow"))) {
-      HW->FlagsHW |= FlHWExpensiveFlushVideo;
+      hw->FlagsHW |= FlagExpensiveFlushVideoHW;
     }
     if (arg.contains(Chars(",help"))) {
       log(INFO)
@@ -471,8 +501,8 @@ static bool TW_InitHW(void) {
     log(ERROR) << "      TW_InitHW() failed: TWDISPLAY is not set\n";
     return false;
   }
-
-  if (!(HW->Private = (tw_data *)AllocMem(sizeof(tw_data)))) {
+  tw_driver *self;
+  if (!(hw->Private = self = (tw_driver *)AllocMem0(sizeof(tw_driver)))) {
     log(ERROR) << "      TW_InitHW(): Out of memory!\n";
     return false;
   }
@@ -481,135 +511,138 @@ static bool TW_InitHW(void) {
   Tw_ConfigMalloc(AllocMem, ReAllocMem, free);
 #endif
 
-  Td = NULL;
+  self->dpy = NULL;
 
-  if (Tw_CheckMagic(hw_twin_magic) && (Td = Tw_Open(arg.data())) &&
+  if (Tw_CheckMagic(hw_twin_magic) && (self->dpy = Tw_Open(arg.data())) &&
 
       /*
        * check if the server supports the functions we need and store their IDs
        * to avoid deadlocking later when we call them.
        */
-      Tw_FindLFunction(Td, Tw_MapWidget, Tw_WriteCharsetWindow, Tw_WriteTCellWindow,
+      Tw_FindLFunction(self->dpy, Tw_MapWidget, Tw_WriteCharsetWindow, Tw_WriteTCellWindow,
                        Tw_GotoXYWindow, Tw_ResizeWindow,
                        /* Tw_DragAreaWindow, */ NULL) &&
 
-      (tw_screen = Tw_FirstScreen(Td)) && (Tmsgport = Tw_CreateMsgPort(Td, 12, "Twin on Twin")) &&
-      (tw_menu = Tw_CreateMenu(Td, TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                               TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
-                               TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
-      Tw_Item4MenuCommon(Td, tw_menu)) {
+      (tw_screen = Tw_FirstScreen(self->dpy)) &&
+      (self->port = Tw_CreateMsgPort(self->dpy, 12, "Twin on Twin")) &&
+      (tw_menu = Tw_CreateMenu(self->dpy, TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                               TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), TCOL(tred, twhite),
+                               TCOL(tred, tgreen), (byte)0)) &&
+      Tw_Item4MenuCommon(self->dpy, tw_menu)) {
     do {
+      const tcolor b = TCOL(tblack, twhite), r = TCOL(tred, twhite);
+      const tcolor color_array[14] = {b, r, b, b, b, b, b, b, b, r, b, b, b, b};
+      Tw_Info4Menu(self->dpy, tw_menu, TW_ROW_ACTIVE, (uldat)14, " Twin on Twin ", color_array);
 
-      Tw_Info4Menu(Td, tw_menu, TW_ROW_ACTIVE, (uldat)14, " Twin on Twin ",
-                   (const tcolor *)"ptppppppptpppp");
-
-      sprintf(name + 5, "%s on twin", TWDisplay);
+      snprintf(name + 5, sizeof(name) - 5, "%s on twin", TWDisplay);
       len = strlen(name);
 
-      Twin = Tw_CreateWindow(Td, len, name, NULL, tw_menu, TCOL(twhite, tblack), TW_LINECURSOR,
-                             TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_MOUSE | TW_WINDOW_WANT_CHANGES |
-                                 TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_CLOSE,
-                             TW_WINDOWFL_USECONTENTS | TW_WINDOWFL_CURSOR_ON,
-                             (HW->X = GetDisplayWidth()), (HW->Y = GetDisplayHeight()), (uldat)0);
-
-      if (!Twin)
+      self->win =
+          Tw_CreateWindow(self->dpy, len, name, NULL, tw_menu, TCOL(twhite, tblack), TW_LINECURSOR,
+                          TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_MOUSE | TW_WINDOW_WANT_CHANGES |
+                              TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_CLOSE,
+                          TW_WINDOWFL_USECONTENTS | TW_WINDOWFL_CURSOR_ON,
+                          (hw->X = GetDisplayWidth()), (hw->Y = GetDisplayHeight()), (uldat)0);
+      if (!self->win) {
         break;
-
-      Tw_SetColorsWindow(Td, Twin, 0x1FF, TCOL(thigh | tyellow, tcyan),
-                         TCOL(thigh | tgreen, thigh | tblue), TCOL(twhite, thigh | tblue),
-                         TCOL(thigh | twhite, thigh | tblue), TCOL(thigh | twhite, thigh | tblue),
-                         TCOL(twhite, tblack), TCOL(twhite, thigh | tblack),
-                         TCOL(thigh | tblack, tblack), TCOL(tblack, thigh | tblack));
-      Tw_MapWidget(Td, Twin, tw_screen);
+      }
+      Tw_SetColorsWindow(self->dpy, self->win, 0x1FF, TCOL(tYELLOW, tcyan), TCOL(tGREEN, tBLUE),
+                         TCOL(twhite, tBLUE), TCOL(tWHITE, tBLUE), TCOL(tWHITE, tBLUE),
+                         TCOL(twhite, tblack), TCOL(twhite, tBLACK), TCOL(tBLACK, tblack),
+                         TCOL(tblack, tBLACK));
+      Tw_MapWidget(self->dpy, self->win, tw_screen);
 
       /*
-       * NOT Tw_Sync(Td) as it might deadlock when
+       * NOT Tw_Sync(self->dpy) as it might deadlock when
        * twin:x displays on twin:y which displays on twin:x
        */
-      Tw_Flush(Td);
+      Tw_Flush(self->dpy);
 
-      TSelCount = SelCount = 0;
+      self->TSelCount = self->SelCount = 0;
 
-      HW->mouse_slot = NOSLOT;
-      HW->keyboard_slot =
-          RegisterRemote(Tw_ConnectionFd(Td), (Tobj)HW, (void (*)(int, Tobj))TW_KeyboardEvent);
-      if (HW->keyboard_slot == NOSLOT)
+      hw->mouse_slot = NOSLOT;
+      hw->keyboard_slot = RegisterRemote(Tw_ConnectionFd(self->dpy), (Tobj)hw,
+                                         (void (*)(int, Tobj))&tw_driver::KeyboardEvent);
+      if (hw->keyboard_slot == NOSLOT)
         break;
 
-      HW->FlushVideo = TW_FlushVideo;
-      HW->FlushHW = TW_FlushHW;
+      hw->fnFlushVideo = &tw_driver::FlushVideo;
+      hw->fnFlushHW = &tw_driver::FlushHW;
 
-      HW->KeyboardEvent = TW_KeyboardEvent;
-      /* mouse events handled by TW_KeyboardEvent */
-      HW->MouseEvent = (void (*)(int, Tdisplay))NoOp;
+      hw->fnKeyboardEvent = &tw_driver::KeyboardEvent;
+      /* mouse events handled by KeyboardEvent() */
+      hw->fnMouseEvent = NULL;
 
-      HW->XY[0] = HW->XY[1] = 0;
-      HW->TT = (uldat)-1; /* force updating cursor */
+      hw->XY[0] = hw->XY[1] = 0;
+      hw->TT = (uldat)-1; /* force updating cursor */
 
-      HW->ShowMouse = NoOp;
-      HW->HideMouse = NoOp;
-      HW->UpdateMouseAndCursor = NoOp;
-      HW->MouseState.x = HW->MouseState.y = HW->MouseState.keys = 0;
+      hw->fnShowMouse = NULL;
+      hw->fnHideMouse = NULL;
+      hw->fnUpdateMouseAndCursor = NULL;
+      hw->MouseState.x = hw->MouseState.y = hw->MouseState.keys = 0;
 
-      HW->DetectSize = TW_DetectSize;
-      HW->CheckResize = TW_CheckResize;
-      HW->Resize = TW_Resize;
+      hw->fnDetectSize = &tw_driver::DetectSize;
+      hw->fnCheckResize = &tw_driver::CheckResize;
+      hw->fnResize = &tw_driver::Resize;
 
-      HW->HWSelectionImport = TW_SelectionImport_TW;
-      HW->HWSelectionExport = TW_SelectionExport_TW;
-      HW->HWSelectionRequest = TW_SelectionRequest_TW;
-      HW->HWSelectionNotify = TW_SelectionNotify_TW;
-      HW->HWSelectionPrivate = 0;
+      hw->fnSelectionImport = &tw_driver::SelectionImport_TW;
+      hw->fnSelectionExport = &tw_driver::SelectionExport_TW;
+      hw->fnSelectionRequest = &tw_driver::SelectionRequest_TW;
+      hw->fnSelectionNotify = &tw_driver::SelectionNotify_TW;
+      hw->SelectionPrivate = 0;
 
-      HW->CanDragArea = NULL;
+      hw->fnCanDragArea = NULL;
 
-      HW->Beep = TW_Beep;
-      HW->Configure = TW_Configure;
-      HW->SetPalette = (void (*)(udat, udat, udat, udat))NoOp;
-      HW->ResetPalette = NoOp;
+      hw->fnBeep = &tw_driver::Beep;
+      hw->fnConfigure = &tw_driver::Configure;
+      hw->fnSetPalette = NULL;
+      hw->fnResetPalette = NULL;
 
-      HW->QuitHW = TW_QuitHW;
-      HW->QuitKeyboard = NoOp;
-      HW->QuitMouse = NoOp;
-      HW->QuitVideo = NoOp;
+      hw->fnQuitHW = &tw_driver::QuitHW;
+      hw->fnQuitKeyboard = NULL;
+      hw->fnQuitMouse = NULL;
+      hw->fnQuitVideo = NULL;
 
-      HW->DisplayIsCTTY = tfalse;
-      HW->FlagsHW &= ~FlHWSoftMouse; /* mouse pointer handled by X11 server */
+      hw->DisplayIsCTTY = false;
+      hw->FlagsHW &= ~FlagSoftMouseHW; /* mouse pointer handled by X11 server */
 
-      HW->FlagsHW |= FlHWNeedOldVideo;
-      HW->FlagsHW &= ~FlHWExpensiveFlushVideo;
-      HW->NeedHW = 0;
-      HW->CanResize = ttrue;
-      HW->merge_Threshold = 0;
+      hw->FlagsHW |= FlagNeedOldVideoHW;
+      hw->FlagsHW &= ~FlagExpensiveFlushVideoHW;
+      hw->NeedHW = 0;
+      hw->CanResize = true;
 
       /*
        * we must draw everything on our new shiny window
        * without forcing all other displays
        * to redraw everything too.
        */
-      HW->RedrawVideo = tfalse;
-      NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
+      hw->RedrawVideo = false;
+      NeedRedrawVideo(hw, 0, 0, hw->X - 1, hw->Y - 1);
 
       return true;
 
     } while (0);
   } else {
     /* TwErrno(NULL) is valid... used when Tw_Open fails */
-    if ((len = Tw_Errno(Td)))
-      log(ERROR) << "      TW_InitHW() failed: " << Chars::from_c(Tw_StrError(Td, len)) << " "
-                 << Chars::from_c(Tw_StrErrorDetail(Td, len, Tw_ErrnoDetail(Td))) << "\n";
-    else
+    uldat err;
+    if ((err = Tw_Errno(self->dpy)))
+      log(ERROR) << "      TW_InitHW() failed: " << Chars::from_c(Tw_StrError(self->dpy, err))
+                 << " "
+                 << Chars::from_c(Tw_StrErrorDetail(self->dpy, err, Tw_ErrnoDetail(self->dpy)))
+                 << "\n";
+    else {
       log(ERROR) << "      TW_InitHW() failed.\n";
+    }
   }
 
-  if (Td && Tw_ConnectionFd(Td) >= 0)
-    TW_QuitHW();
-
+  if (self->dpy && Tw_ConnectionFd(self->dpy) >= 0) {
+    QuitHW(hw);
+  }
   return false;
 }
 
 EXTERN_C byte InitModule(Tmodule Module) {
-  Module->DoInit = TW_InitHW;
+  Module->DoInit = &tw_driver::InitHW;
   return ttrue;
 }
 

@@ -14,12 +14,13 @@
 #define TWIN_MSGPORT_H
 
 #include "obj/fwd.h"
-#include "obj/window.h" // struct Sremotedata
+#include "obj/window.h" // class Sremotedata
+#include "stl/list.h"
 
 #include <Tw/datatypes.h>
 
-struct Smsgport : public Sobj {
-  TobjFn Fn;
+class Smsgport : public Sobj {
+public:
   Tmsgport Prev, Next; /* list in the same All */
   Tall All;
   /* Tmsgport */
@@ -30,12 +31,12 @@ struct Smsgport : public Sobj {
   void (*ShutDownHook)(Tmsgport);
   timevalue CallTime, PauseDuration;
   Tremotedata RemoteData;
-  Tmsg FirstMsg, LastMsg;
-  Tmenu FirstMenu, LastMenu;    /* menus created by this MsgPort */
-  Twidget FirstW, LastW;        /* widgets owned by this MsgPort */
-  Tgroup FirstGroup, LastGroup; /* groups owned by this MsgPort */
-  Tmutex FirstMutex, LastMutex; /* mutexes owned by this MsgPort */
-  Tdisplay AttachHW;            /* that was attached as told by MsgPort */
+  List<Tmsg> Msgs;
+  List<Tmenu> Menus;     /* menus created by this MsgPort */
+  List<Twidget> Widgets; /* widgets owned by this MsgPort */
+  List<Tgroup> Groups;   /* groups owned by this MsgPort */
+  List<Tmutex> Mutexes;  /* mutexes owned by this MsgPort */
+  Tdisplay AttachHW;     /* that was attached as told by MsgPort */
 
   static Tmsgport Create(byte NameLen, const char *Name, tany PauseSec, tany PauseFraction,
                          byte WakeUp, void (*Handler)(Tmsgport));

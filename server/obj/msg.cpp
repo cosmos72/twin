@@ -12,8 +12,7 @@
 
 #include "alloc.h" // AllocMem()
 #include "log.h"
-#include "fn.h"      // Fn_Tobj
-#include "methods.h" // RemoveGeneric()
+#include "methods.h" // MoveFirst()
 #include "obj/all.h"
 #include "obj/id.h" // AssignId()
 #include "obj/msg.h"
@@ -33,7 +32,6 @@ Tmsg Smsg::Create(udat type, size_t eventlen) {
   Tmsg m;
   if ((m = (Tmsg)AllocMem0(headerlen + eventlen))) {
     new (m) Smsg(); // in-place constructor
-    m->Fn = Fn_Tobj;
     if (!m->Init(type, (uldat)eventlen)) {
       m->Delete();
       m = NULL;
@@ -63,20 +61,19 @@ void Smsg::Insert(Tmsgport parent, Tmsg prev, Tmsg next) {
     /* if adding the first Tmsg, move the Tmsgport to the head
      * of Tmsgport list, so that the scheduler will run it */
     Tall all = parent->All;
-    if (all && !parent->FirstMsg) {
+    if (all && !parent->Msgs.First) {
       // MoveFirst is a macro, parent->All would be evaluated *after* it's set to NULL
-      MoveFirst(MsgPort, all, parent);
+      MoveFirst(MsgPorts, all, parent);
     }
 
-    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstMsg, (TobjEntry)prev, (TobjEntry)next,
-                  NULL);
+    parent->Msgs.Insert(this, prev, next);
     MsgPort = parent;
   }
 }
 
 void Smsg::Remove() {
   if (MsgPort) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&MsgPort->FirstMsg, NULL);
+    MsgPort->Msgs.Remove(this);
     MsgPort = (Tmsgport)0;
   }
 }

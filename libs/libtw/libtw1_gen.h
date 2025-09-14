@@ -32,7 +32,7 @@
 { Tw_DeleteObj, 9,
 4, "Tw_DeleteObj", "0" "v" TWS_void_STR "x" TWS_tobj_STR },
 { Tw_ChangeFieldObj, 14,
-10, "Tw_ChangeFieldObj", "2" "v" TWS_void_STR "x" TWS_tobj_STR "_" TWS_udat_STR "_" TWS_uldat_STR "_" TWS_uldat_STR },
+10, "Tw_ChangeFieldObj", "2" "v" TWS_void_STR "x" TWS_tobj_STR "_" TWS_udat_STR "_" TWS_tany_STR "_" TWS_tany_STR },
 { Tw_CreateWidget, 12,
 16, "Tw_CreateWidget", "0" "x" TWS_tobj_STR "_" TWS_dat_STR "_" TWS_dat_STR "_" TWS_uldat_STR "_" TWS_uldat_STR "_" TWS_dat_STR "_" TWS_dat_STR "_" TWS_tcell_STR },
 { Tw_RecursiveDeleteWidget, 21,

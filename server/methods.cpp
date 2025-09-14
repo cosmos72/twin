@@ -36,8 +36,6 @@
 #include <Tutf/Tutf.h>
 #include <Tutf/Tutf_defs.h>
 
-/* some object-oriented ones not included in TobjFn */
-
 void *OverrideMth(void **where, void *OrigMth, void *NewMth) {
   if (*where == OrigMth) {
     *where = NewMth;
@@ -46,72 +44,18 @@ void *OverrideMth(void **where, void *OrigMth, void *NewMth) {
   return NULL;
 }
 
-#if 0 /* not used */
-inline void DeletePartialList(Tobj obj) {
-  Tobj next;
-  while (obj) {
-    next = obj->Next;
-    obj->Delete();
-    obj = next;
-  }
-}
-#endif
-
-void InsertGeneric(TobjEntry obj, TobjList parent, TobjEntry prev, TobjEntry next, ldat *objcount) {
-  if (obj->Prev || obj->Next)
-    return;
-
-  if (prev)
-    next = prev->Next;
-  else if (next)
-    prev = next->Prev;
-
-  if ((obj->Prev = prev))
-    prev->Next = obj;
-  else
-    parent->First = obj;
-
-  if ((obj->Next = next))
-    next->Prev = obj;
-  else
-    parent->Last = obj;
-
-  if (objcount)
-    ++(*objcount);
-}
-
-void RemoveGeneric(TobjEntry obj, TobjList parent, ldat *objcount) {
-  if (obj->Prev)
-    obj->Prev->Next = obj->Next;
-  else if (parent->First == obj)
-    parent->First = obj->Next;
-
-  if (obj->Next)
-    obj->Next->Prev = obj->Prev;
-  else if (parent->Last == obj)
-    parent->Last = obj->Prev;
-
-  obj->Prev = obj->Next = NULL;
-  if (objcount)
-    --(*objcount);
-}
-
-/* TobjFn and others fn_XXX functions */
-
-/* Tobj */
-
-static struct SobjFn _FnObj = {};
-
 /* Twidget */
 
 void IncMouseMotionN(void) {
-  if (!All->MouseMotionN++)
+  if (!All->MouseMotionN++) {
     EnableMouseMotionEvents(ttrue);
+  }
 }
 
 void DecMouseMotionN(void) {
-  if (All->MouseMotionN && !--All->MouseMotionN)
+  if (All->MouseMotionN && !--All->MouseMotionN) {
     EnableMouseMotionEvents(tfalse);
+  }
 }
 
 #define TtyKbdFocus FakeKbdFocus
@@ -119,7 +63,7 @@ Twidget FakeKbdFocus(Twidget w) {
   Twidget oldW;
   Twidget parent;
   Tscreen screen =
-      w && (parent = w->Parent) && IS_SCREEN(parent) ? (Tscreen)parent : All->FirstScreen;
+      w && (parent = w->Parent) && IS_SCREEN(parent) ? (Tscreen)parent : All->Screens.First;
 
   if (screen) {
     oldW = screen->FocusW();
@@ -130,61 +74,62 @@ Twidget FakeKbdFocus(Twidget w) {
   return oldW;
 }
 
-static struct SwidgetFn _FnWidget = {
+static SwidgetFn _FnWidget = {
     TtyKbdFocus,
 };
 
 /* Tgadget */
 
-static struct SwidgetFn _FnGadget = {
-    TtyKbdFocus,
-};
-
 /* Twindow */
 
 bool FakeWriteCharset(Twindow window, uldat Len, const char *charset_bytes) {
-  if (DlLoad(TermSo) && window->fn()->TtyWriteCharset != FakeWriteCharset)
+  if (DlLoad(TermSo) && Fn_Twindow->TtyWriteCharset != FakeWriteCharset) {
     return window->TtyWriteCharset(Len, charset_bytes);
+  }
   return false;
 }
 
 bool FakeWriteUtf8(Twindow window, uldat Len, const char *utf8_bytes) {
-  if (DlLoad(TermSo) && window->fn()->TtyWriteUtf8 != FakeWriteUtf8)
+  if (DlLoad(TermSo) && Fn_Twindow->TtyWriteUtf8 != FakeWriteUtf8) {
     return window->TtyWriteUtf8(Len, utf8_bytes);
+  }
   return false;
 }
 
 bool FakeWriteTRune(Twindow window, uldat Len, const trune *runes) {
-  if (DlLoad(TermSo) && window->fn()->TtyWriteTRune != FakeWriteTRune)
+  if (DlLoad(TermSo) && Fn_Twindow->TtyWriteTRune != FakeWriteTRune) {
     return window->TtyWriteTRune(Len, runes);
+  }
   return false;
 }
 
 bool FakeWriteTCell(Twindow window, dat x, dat y, uldat Len, const tcell *cells) {
-  if (DlLoad(TermSo) && window->fn()->TtyWriteTCell != FakeWriteTCell)
+  if (DlLoad(TermSo) && Fn_Twindow->TtyWriteTCell != FakeWriteTCell) {
     return window->TtyWriteTCell(x, y, Len, cells);
+  }
   return false;
 }
 
 Twindow FakeOpenTerm(const char *arg0, const char *const *argv) {
-  if (DlLoad(TermSo) && Ext(Term, Open) != FakeOpenTerm)
+  if (DlLoad(TermSo) && Ext(Term, Open) != FakeOpenTerm) {
     return Ext(Term, Open)(arg0, argv);
+  }
   return NULL;
 }
 
 tpos FakeFindBorderWindow(Twindow w, dat u, dat v, byte Border, tcell *PtrAttr) {
-  byte Horiz, Vert;
+  byte horiz, vert;
 
-  Horiz = u ? u + 1 == w->XWidth ? (byte)2 : (byte)1 : (byte)0;
-  Vert = v ? v + 1 == w->YWidth ? (byte)2 : (byte)1 : (byte)0;
+  horiz = u ? u + 1 == w->XWidth ? (byte)2 : (byte)1 : (byte)0;
+  vert = v ? v + 1 == w->YWidth ? (byte)2 : (byte)1 : (byte)0;
 
-  if (*PtrAttr)
-    *PtrAttr = TCELL(w->ColBorder, StdBorder[Border][Vert * 3 + Horiz]);
-
+  if (*PtrAttr) {
+    *PtrAttr = TCELL(w->ColBorder, StdBorder[Border][vert * 3 + horiz]);
+  }
   return v ? POS_ROOT : POS_TITLE;
 }
 
-static struct SwindowFn _FnWindow = {
+static SwindowFn _FnWindow = {
     /* Twidget */
     TtyKbdFocus,
     /* Twindow */
@@ -196,10 +141,6 @@ static struct SwindowFn _FnWindow = {
 };
 
 /* Tscreen */
-
-static struct SwidgetFn _FnScreen = {
-    (Twidget(*)(Twidget))NoOp, /* KbdFocus */
-};
 
 /* Tgroup */
 
@@ -220,7 +161,7 @@ byte FindInfo(Tmenu Menu, dat i) {
 
 /* Tmodule */
 
-static struct SmoduleFn _FnModule = {
+static SmoduleFn _FnModule = {
     /* Tmodule */
     DlOpen,
     DlClose,
@@ -228,6 +169,4 @@ static struct SmoduleFn _FnModule = {
 
 /* Tdisplay */
 
-SstructFn FnStruct = {
-    &_FnObj, &_FnWidget, &_FnGadget, &_FnWindow, &_FnScreen, &_FnModule,
-};
+SstructFn FnStruct = {&_FnWidget, &_FnWindow, &_FnModule};

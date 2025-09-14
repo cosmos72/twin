@@ -50,7 +50,6 @@
 #include "obj/module.h"
 #include "obj/display.h"
 #include "obj/all.h"
-#include "obj/fn.h"
 
 enum {
   NOFD = -1,

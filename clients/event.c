@@ -23,26 +23,25 @@ static twindow Event_Win, Event_SubWin;
 TW_DECL_MAGIC(event_magic);
 
 static byte InitEvent(void) {
+  const tcolor b = TCOL(tblack, twhite), r = TCOL(tred, twhite);
+  const tcolor color_array[14] = {b, r, b, b, b, b, b, r, b, b, b, b, b, b};
+
   return TwCheckMagic(event_magic) && TwOpen(NULL) &&
          (Event_MsgPort = TwCreateMsgPort(7, "twevent")) &&
          (Event_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                                    TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
-                                    TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
+                                    TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), TCOL(tred, twhite),
+                                    TCOL(tred, tgreen), (byte)0)) &&
          TwItem4MenuCommon(Event_Menu) &&
-         (TwInfo4Menu(Event_Menu, TW_ROW_ACTIVE, 14, " Event Tester ",
-                      (const tcolor *)"ptppppptpppppp"),
-          ttrue) &&
+         (TwInfo4Menu(Event_Menu, TW_ROW_ACTIVE, 14, " Event Tester ", color_array), ttrue) &&
          (Event_Win = TwCreateWindow(
               12, "Event Tester", NULL, Event_Menu, TCOL(twhite, tblack), TW_NOCURSOR,
               TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_MOUSE | TW_WINDOW_WANT_CHANGES | TW_WINDOW_DRAG |
                   TW_WINDOW_RESIZE | TW_WINDOW_CLOSE,
               TW_WINDOWFL_USEEXPOSE, 18, 8, 0)) &&
-         (TwSetColorsWindow(Event_Win, 0x1FF, TCOL(thigh | tyellow, tcyan),
-                            TCOL(thigh | tgreen, thigh | tblue), TCOL(twhite, thigh | tblue),
-                            TCOL(thigh | twhite, thigh | tblue),
-                            TCOL(thigh | twhite, thigh | tblue), TCOL(twhite, tblack),
-                            TCOL(twhite, thigh | tblack), TCOL(thigh | tblack, tblack),
-                            TCOL(tblack, thigh | tblack)),
+         (TwSetColorsWindow(Event_Win, 0x1FF, TCOL(tYELLOW, tcyan), TCOL(tGREEN, tBLUE),
+                            TCOL(twhite, tBLUE), TCOL(tWHITE, tBLUE), TCOL(tWHITE, tBLUE),
+                            TCOL(twhite, tblack), TCOL(twhite, tBLACK), TCOL(tBLACK, tblack),
+                            TCOL(tblack, tBLACK)),
           TwConfigureWindow(Event_Win, 0xF << 2, 0, 0, 10, 5, 30, 15),
           TwMapWindow(Event_Win, TwFirstScreen()), ttrue) &&
 
@@ -252,7 +251,7 @@ int main(int argc, char *argv[]) {
         human_print(EventN->Len, EventN->Data);
         putchar('\n');
       } else if (msg->Type == TW_MSG_WIDGET_MOUSE) {
-        char *s1, *s2, *s3, *s4, *s5, *s6, *s7, *s8, *s9;
+        const char *s1, *s2, *s3, *s4, *s5, *s6, *s7, *s8, *s9;
         tevent_mouse EventM = &msg->Event.EventMouse;
 
         Code = EventM->Code;
@@ -275,16 +274,12 @@ int main(int argc, char *argv[]) {
           case PRESS_RIGHT:
             s2 = " Right";
             break;
-#ifdef HOLD_WHEEL_REV
           case PRESS_WHEEL_REV:
             s2 = " Wheel Rev";
             break;
-#endif
-#ifdef HOLD_WHEEL_FWD
           case PRESS_WHEEL_FWD:
             s2 = " Wheel Fwd";
             break;
-#endif
           default:
             s2 = "Unknown Button ";
             break;
@@ -301,16 +296,12 @@ int main(int argc, char *argv[]) {
           case RELEASE_RIGHT:
             s2 = " Right";
             break;
-#ifdef HOLD_WHEEL_REV
           case RELEASE_WHEEL_REV:
             s2 = " Wheel Rev";
             break;
-#endif
-#ifdef HOLD_WHEEL_FWD
           case RELEASE_WHEEL_FWD:
             s2 = " Wheel Fwd";
             break;
-#endif
           default:
             s2 = "Unknown Button ";
             break;
@@ -325,12 +316,8 @@ int main(int argc, char *argv[]) {
           s4 = Code & HOLD_LEFT ? " Left" : "";
           s5 = Code & HOLD_MIDDLE ? " Middle" : "";
           s6 = Code & HOLD_RIGHT ? " Right" : "";
-#ifdef HOLD_WHEEL_REV
           s7 = Code & HOLD_WHEEL_REV ? " Wheel Rev" : "";
-#endif
-#ifdef HOLD_WHEEL_FWD
           s8 = Code & HOLD_WHEEL_FWD ? " Wheel Fwd" : "";
-#endif
           s9 = " held, ";
         } else
           s3 = s4 = s5 = s6 = s7 = s8 = s9 = "";

@@ -4,32 +4,28 @@
 /*
  * libgpm is stacked, not multi-headed (so no multiplex too)
  */
-static byte GPM_InUse;
+static bool gpm_used;
 
 /*
  * Linux gpm mouse input:
  * mouse input uses libgpm to connect to `gpm' mouse daemon
  * and read mouse state, but draws mouse pointer manually
  */
-
-static void GPM_QuitMouse(void);
-static void GPM_MouseEvent(int fd, Tdisplay hw);
-static void GPM_ConfigureMouse(udat resource, byte todefault, udat value);
-
-static int wrap_Gpm_Open(void) {
+TW_ATTR_HIDDEN int tty_driver::gpm_Open(Tdisplay hw) {
   /*
    * HACK! this works around a quirk in libgpm:
    * if Gpm_Open fails, it sets gpm_tried to non-zero
    * and following calls will just fail, not even trying anymore
    */
   extern int gpm_tried;
+  tty_driver *self = ttydriver(hw);
 
-  if (!tty_NAME) {
-    log(ERROR) << "      GPM_InitMouse() failed: unable to detect tty device\n";
+  if (!self->tty_name) {
+    log(ERROR) << "      gpm_InitMouse() failed: unable to detect tty device\n";
     return NOFD;
   }
-  if (tty_number < 1 || tty_number > 63) {
-    log(ERROR) << "      GPM_InitMouse() failed: terminal `" << tty_NAME
+  if (self->tty_number < 1 || self->tty_number > 63) {
+    log(ERROR) << "      gpm_InitMouse() failed: terminal `" << self->tty_name
                << "'\n      is not a local linux console.\n";
     return NOFD;
   }
@@ -38,71 +34,71 @@ static int wrap_Gpm_Open(void) {
 
   gpm_zerobased = 1;
   gpm_visiblepointer = 0;
-  GPM_Conn.eventMask = ~0;          /* Get everything */
-  GPM_Conn.defaultMask = ~GPM_HARD; /* Pass everything unused */
-  GPM_Conn.minMod = 0;              /* Run always... */
-  GPM_Conn.maxMod = ~0;             /* ...with any modifier */
+  self->gpm_conn.eventMask = ~0;          /* Get everything */
+  self->gpm_conn.defaultMask = ~GPM_HARD; /* Pass everything unused */
+  self->gpm_conn.minMod = 0;              /* Run always... */
+  self->gpm_conn.maxMod = ~0;             /* ...with any modifier */
 
-  GPM_fd = Gpm_Open(&GPM_Conn, tty_number);
+  self->gpm_fd = Gpm_Open(&self->gpm_conn, self->tty_number);
 
-  if (GPM_fd >= 0) {
+  if (self->gpm_fd >= 0) {
     /* gpm_consolefd is opened by GPM_Open() */
     fcntl(gpm_consolefd, F_SETFD, FD_CLOEXEC);
   } else {
-    log(ERROR) << "      GPM_InitMouse() failed: unable to connect to `gpm'.\n"
+    log(ERROR) << "      gpm_InitMouse() failed: unable to connect to `gpm'.\n"
                   "      make sure you started `twin' from the console\n"
                   "      and/or check that `gpm' is running.\n";
   }
-  return GPM_fd;
+  return self->gpm_fd;
 }
 
 /* return tfalse if failed */
-static byte GPM_InitMouse(void) {
-
-  if (GPM_InUse) {
-    log(ERROR) << "      GPM_InitMouse() failed: already connected to `gpm'.\n";
-    return tfalse;
+TW_ATTR_HIDDEN bool tty_driver::gpm_InitMouse(Tdisplay hw) {
+  if (gpm_used) {
+    log(ERROR) << "      gpm_InitMouse() failed: already connected to `gpm'.\n";
+    return false;
   }
+  if (gpm_Open(hw) < 0) {
+    return false;
+  }
+  tty_driver *self = ttydriver(hw);
 
-  if (wrap_Gpm_Open() < 0)
-    return tfalse;
+  fcntl(self->gpm_fd, F_SETFD, FD_CLOEXEC);
+  fcntl(self->gpm_fd, F_SETFL, O_NONBLOCK);
 
-  fcntl(GPM_fd, F_SETFD, FD_CLOEXEC);
-  fcntl(GPM_fd, F_SETFL, O_NONBLOCK);
-
-  HW->mouse_slot = RegisterRemote(GPM_fd, (Tobj)HW, (void (*)(int, Tobj))GPM_MouseEvent);
-  if (HW->mouse_slot == NOSLOT) {
+  hw->mouse_slot = RegisterRemote(self->gpm_fd, (Tobj)hw, (void (*)(int, Tobj))gpm_MouseEvent);
+  if (hw->mouse_slot == NOSLOT) {
     Gpm_Close();
-    return tfalse;
+    return false;
   }
 
-  HW->FlagsHW |= FlHWSoftMouse; /* _we_ Hide/Show it */
+  hw->FlagsHW |= FlagSoftMouseHW; /* _we_ Hide/Show it */
 
-  HW->MouseEvent = GPM_MouseEvent;
-  HW->ConfigureMouse = GPM_ConfigureMouse;
-  HW->QuitMouse = GPM_QuitMouse;
+  hw->fnMouseEvent = gpm_MouseEvent;
+  hw->fnConfigureMouse = gpm_ConfigureMouse;
+  hw->fnQuitMouse = gpm_QuitMouse;
 
-  GPM_InUse = ttrue;
+  gpm_used = true;
 
-  return ttrue;
+  return true;
 }
 
-static void GPM_QuitMouse(void) {
-  /* we cannot be sure that some InitVideo() initialized HW->HideMouse */
+TW_ATTR_HIDDEN void tty_driver::gpm_QuitMouse(Tdisplay hw) {
 #if 0
-    HW->HideMouse();
+  hw->HideMouse();
 #endif
   Gpm_Close();
 
-  UnRegisterRemote(HW->mouse_slot);
-  HW->mouse_slot = NOSLOT;
+  UnRegisterRemote(hw->mouse_slot);
+  hw->mouse_slot = NOSLOT;
 
-  GPM_InUse = tfalse;
+  gpm_used = tfalse;
 
-  HW->QuitMouse = NoOp;
+  hw->fnQuitMouse = NULL;
 }
 
-static void GPM_ConfigureMouse(udat resource, byte todefault, udat value) {
+TW_ATTR_HIDDEN void tty_driver::gpm_ConfigureMouse(Tdisplay hw, udat resource, byte todefault,
+                                                   udat value) {
   switch (resource) {
   case HW_MOUSEMOTIONEVENTS:
     /* nothing to do */
@@ -112,12 +108,11 @@ static void GPM_ConfigureMouse(udat resource, byte todefault, udat value) {
   }
 }
 
-static void GPM_MouseEvent(int fd, Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::gpm_MouseEvent(int fd, Tdisplay hw) {
+  Gpm_Event ev;
+  tty_driver *self = ttydriver(hw);
   int left = 0;
   udat IdButtons, Buttons = 0;
-  Gpm_Event GPM_EV;
-
-  SaveHW;
 
   /*
    * All other parts of twin read and parse data from fds in big chunks,
@@ -126,24 +121,22 @@ static void GPM_MouseEvent(int fd, Tdisplay hw) {
    */
   byte loopN = 30;
 
-  SetHW(hw);
-
   do {
-    if ((left = Gpm_GetEvent(&GPM_EV)) <= 0) {
+    if ((left = Gpm_GetEvent(&ev)) <= 0) {
       if (loopN == 30) {
-        log(ERROR) << "GPM_MouseEvent(): connection to gpm lost. Continuing without mouse :-(\n";
-        HW->QuitMouse();
-        null_InitMouse();
+        log(ERROR) << "gpm_MouseEvent(): connection to gpm lost. Continuing without mouse :-(\n";
+        hw->QuitMouse();
+        null_InitMouse(hw);
       }
       break;
     }
 
 #if 0
         All->FullShiftFlags =
-            (GPM_EV.modifiers & 1 ? FULL_LEFT_SHIFT_PRESSED : 0)
-            | (GPM_EV.modifiers & 2 ? FULL_RIGHT_ALT_PRESSED  : 0)
-            | (GPM_EV.modifiers & 4 ? FULL_LEFT_CTRL_PRESSED  : 0)
-            | (GPM_EV.modifiers & 8 ? FULL_LEFT_ALT_PRESSED   : 0);
+            (ev.modifiers & 1 ? FULL_LEFT_SHIFT_PRESSED : 0)
+            | (ev.modifiers & 2 ? FULL_RIGHT_ALT_PRESSED  : 0)
+            | (ev.modifiers & 4 ? FULL_LEFT_CTRL_PRESSED  : 0)
+            | (ev.modifiers & 8 ? FULL_LEFT_ALT_PRESSED   : 0);
 #endif
 
     /*
@@ -151,11 +144,12 @@ static void GPM_MouseEvent(int fd, Tdisplay hw) {
      * it reports which buttons get _released_, not which are still _pressed_
      * Fixed here. SIGH.
      */
-    IdButtons = GPM_EV.buttons;
+    IdButtons = ev.buttons;
 
-    if (GPM_EV.type & GPM_UP)
-      IdButtons = GPM_keys & ~IdButtons;
-    GPM_keys = IdButtons;
+    if (ev.type & GPM_UP) {
+      IdButtons = self->gpm_keys & ~IdButtons;
+    }
+    self->gpm_keys = IdButtons;
 
     Buttons |= (IdButtons & GPM_B_LEFT ? HOLD_LEFT : 0) |
                (IdButtons & GPM_B_MIDDLE ? HOLD_MIDDLE : 0) |
@@ -169,24 +163,22 @@ static void GPM_MouseEvent(int fd, Tdisplay hw) {
                0;
 
 #ifdef TW_HAVE_STRUCT_GPM_EVENT_WDY
-    if (GPM_EV.wdy != 0) {
-      while (GPM_EV.wdy > 0) {
-        MouseEventCommon(GPM_EV.x, GPM_EV.y, GPM_EV.dx, GPM_EV.dy, Buttons | HOLD_WHEEL_REV);
-        MouseEventCommon(GPM_EV.x, GPM_EV.y, 0, 0, Buttons);
-        GPM_EV.dx = GPM_EV.dy = 0;
-        GPM_EV.wdy--;
+    if (ev.wdy != 0) {
+      while (ev.wdy > 0) {
+        MouseEventCommon(hw, ev.x, ev.y, ev.dx, ev.dy, Buttons | HOLD_WHEEL_REV);
+        MouseEventCommon(hw, ev.x, ev.y, 0, 0, Buttons);
+        ev.dx = ev.dy = 0;
+        ev.wdy--;
       }
-      while (GPM_EV.wdy < 0) {
-        MouseEventCommon(GPM_EV.x, GPM_EV.y, GPM_EV.dx, GPM_EV.dy, Buttons | HOLD_WHEEL_FWD);
-        MouseEventCommon(GPM_EV.x, GPM_EV.y, 0, 0, Buttons);
-        GPM_EV.wdy++;
-        GPM_EV.dx = GPM_EV.dy = 0;
+      while (ev.wdy < 0) {
+        MouseEventCommon(hw, ev.x, ev.y, ev.dx, ev.dy, Buttons | HOLD_WHEEL_FWD);
+        MouseEventCommon(hw, ev.x, ev.y, 0, 0, Buttons);
+        ev.wdy++;
+        ev.dx = ev.dy = 0;
       }
     } else
 #endif
-      MouseEventCommon(GPM_EV.x, GPM_EV.y, GPM_EV.dx, GPM_EV.dy, Buttons);
+      MouseEventCommon(hw, ev.x, ev.y, ev.dx, ev.dy, Buttons);
 
-  } while (loopN-- && ioctl(GPM_fd, FIONREAD, &left) >= 0 && left > 0);
-
-  RestoreHW;
+  } while (loopN-- && ioctl(self->gpm_fd, FIONREAD, &left) >= 0 && left > 0);
 }

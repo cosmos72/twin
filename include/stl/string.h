@@ -116,6 +116,10 @@ public:
     return Chars(*this).starts_with(substr);
   }
 
+  bool ends_with(Chars substr) const NOTHROW {
+    return Chars(*this).ends_with(substr);
+  }
+
   using Base::append;
 
   bool append(Utf8 seq) NOTHROW {

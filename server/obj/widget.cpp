@@ -14,9 +14,8 @@
 
 #include "algo.h"    // Max2()
 #include "alloc.h"   // AllocMem0()
+#include "methods.h" // IncMouseMotionN(), DecMouseMotionN()
 #include "extreg.h"  // Ext()
-#include "fn.h"      // Fn_Twidget
-#include "methods.h" // InsertGeneric(), RemoveGeneric()
 #include "resize.h"  // UpdateCursor()
 #include "twin.h"    // IS_WIDGET()
 #include "draw.h"    // DrawAreaWidget()
@@ -33,7 +32,6 @@ Twidget Swidget::Create(Tmsgport owner, dat xwidth, dat ywidth, uldat attr, ulda
     void *addr = AllocMem0(sizeof(Swidget));
     if (addr) {
       w = new (addr) Swidget();
-      w->Fn = Fn_Twidget;
       if (!w->Init(owner, xwidth, ywidth, attr, flags, left, up, fill, Twidget_class_id)) {
         w->Delete();
         w = NULL;
@@ -72,8 +70,8 @@ void Swidget::Delete() {
     ShutDownHook(this);
   }
   DisOwn();
-  while (FirstW) {
-    FirstW->UnMap();
+  while (Widgets.First) {
+    Widgets.First->UnMap();
   }
   Sobj::Delete();
 }
@@ -84,8 +82,7 @@ void Swidget::InsertWidget(Tobj parent, Twidget prev, Twidget next) {
      * don't check this->Parent here, because Raise() and Lower() call Swidget::Remove()
      * then calls Swidget::Insert() but Swidget::Remove() does not reset w->Parent
      */
-    InsertGeneric((TobjEntry)this, (TobjList) & ((Twidget)parent)->FirstW, //
-                  (TobjEntry)prev, (TobjEntry)next, NULL);
+    ((Twidget)parent)->Widgets.Insert(this, prev, next);
   }
 }
 
@@ -96,7 +93,7 @@ void Swidget::Insert(Twidget parent, Twidget prev, Twidget next) {
 
 void Swidget::Remove() {
   if (Parent) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&Parent->FirstW, NULL);
+    Parent->Widgets.Remove(this);
   }
 }
 
@@ -122,7 +119,7 @@ void Swidget::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
 }
 
 Tgadget Swidget::FindGadgetByCode(udat Code) {
-  for (Twidget w = FirstW; w; w = w->Next) {
+  for (Twidget w = Widgets.First; w; w = w->Next) {
     if (IS_GADGET(w) && ((Tgadget)w)->Code == Code) {
       return (Tgadget)w;
     }
@@ -162,7 +159,7 @@ Twidget Swidget::Focus() {
 Twidget Swidget::Focus(Twidget w) {
   Twidget old = KbdFocus(w);
 
-  if (old != w && (!w || w->Parent == ::All->FirstScreen)) {
+  if (old != w && (!w || w->Parent == ::All->Screens.First)) {
     if (w && IS_WINDOW(w))
       DrawBorderWindow((Twindow)w, BORDER_ANY);
     if (old && IS_WINDOW(old))
@@ -170,7 +167,7 @@ Twidget Swidget::Focus(Twidget w) {
     if ((w && IS_WINDOW(w)) || (old && IS_WINDOW(old))) {
       UpdateCursor();
       if (!w || !IS_WINDOW(w) || !(((Twindow)w)->Flags & WINDOWFL_MENU)) {
-        ::All->FirstScreen->DrawMenu(0, TW_MAXDAT);
+        ::All->Screens.First->DrawMenu(0, TW_MAXDAT);
       }
     }
   }
@@ -178,20 +175,20 @@ Twidget Swidget::Focus(Twidget w) {
 }
 
 void Swidget::UnFocus() {
-  if (Parent == ::All->FirstScreen && this == ::All->FirstScreen->FocusW()) {
+  if (Parent == ::All->Screens.First && this == ::All->Screens.First->FocusW()) {
     if (IS_WINDOW(this)) {
       KbdFocus((Twidget)0);
       DrawBorderWindow((Twindow)this, BORDER_ANY);
       ((Tscreen)Parent)->DrawMenu(0, TW_MAXDAT);
       UpdateCursor();
     } else {
-      ::All->FirstScreen->FocusW((Twidget)0);
+      ::All->Screens.First->FocusW((Twidget)0);
     }
   }
 }
 
 Twidget Swidget::KbdFocus() {
-  return Fn->KbdFocus(this);
+  return Fn_Twidget->KbdFocus(this);
 }
 
 Twidget Swidget::KbdFocus(Twidget w) {
@@ -205,7 +202,7 @@ void Swidget::Map(Twidget parent) {
   if (!w || IS_SCREEN(w) || !parent || w->Parent || w->MapQueueMsg) {
     return;
   } else if (IS_SCREEN(parent)) {
-    if (Ext(WM, MsgPort) && (msg = New(msg)(msg_map, 0))) {
+    if (Ext(WM, MsgPort) && (msg = Smsg::Create(msg_map, 0))) {
       msg->Event.EventMap.W = w;
       msg->Event.EventMap.Code = 0;
       msg->Event.EventMap.Screen = (Tscreen)parent;
@@ -218,7 +215,7 @@ void Swidget::Map(Twidget parent) {
       w->Left = parent->XLogic;
       w->Up = parent->YLogic;
     }
-    InsertFirst(W, w, parent);
+    InsertFirst(Widgets, w, parent);
     w->Parent = parent;
 
     DrawAreaWidget(w);
@@ -252,31 +249,32 @@ void Swidget::MapTopReal(Tscreen screen) {
     w->Up += screen->YLogic;
   }
 
-  InsertFirst(W, w, (Twidget)screen);
+  InsertFirst(Widgets, w, (Twidget)screen);
   w->Parent = (Twidget)screen;
 
   /* top-level widgets must be visible */
   w->Flags &= ~WINDOWFL_NOTVISIBLE;
 
-  if (w->Attr & (WIDGET_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS))
+  if (w->Attr & (WIDGET_WANT_MOUSE_MOTION | WIDGET_AUTO_FOCUS)) {
     IncMouseMotionN();
-
-  if (screen == All->FirstScreen) {
+  }
+  if (screen == All->Screens.First) {
     oldw = w->KbdFocus();
     if (oldw && IS_WINDOW(oldw))
       DrawBorderWindow((Twindow)oldw, BORDER_ANY);
     UpdateCursor();
   }
-  if (IS_WINDOW(w))
-    DrawAreaWindow2((Twindow)w);
-  else
+  if (IS_WINDOW(w)) {
+    DrawAreaWindow((Twindow)w);
+  } else {
     DrawAreaWidget(w);
-  if (!(w->Flags & WINDOWFL_MENU))
+  }
+  if (!(w->Flags & WINDOWFL_MENU)) {
     screen->DrawMenu(0, TW_MAXDAT);
-
-  if (w->MapUnMapHook)
+  }
+  if (w->MapUnMapHook) {
     w->MapUnMapHook(w);
-
+  }
   screen->HookMap();
 }
 
@@ -288,7 +286,7 @@ void Swidget::UnMap() {
   } else if ((parent = w->Parent)) {
     if (IS_SCREEN(parent)) {
       Tscreen screen = (Tscreen)parent;
-      if (screen == All->FirstScreen && w == (Twidget)screen->MenuWindow) {
+      if (screen == All->Screens.First && w == (Twidget)screen->MenuWindow) {
         /*
          * ! DANGER !
          * Trying to UnMap() the Tmenu owner.
@@ -309,10 +307,10 @@ void Swidget::UnMap() {
         if (w->Flags & WINDOWFL_MENU) {
           next = screen->MenuWindow;
         } else {
-          if ((Twidget)w == screen->FirstW)
+          if ((Twidget)w == screen->Widgets.First)
             next = (Twindow)w->Next;
           else
-            next = (Twindow)screen->FirstW;
+            next = (Twindow)screen->Widgets.First;
 
           while (next && !IS_WINDOW(next))
             next = (Twindow)next->Next;
@@ -321,7 +319,7 @@ void Swidget::UnMap() {
 
       w->Remove();
       if (IS_WINDOW(w))
-        DrawAreaWindow2((Twindow)w);
+        DrawAreaWindow((Twindow)w);
       else
         DrawAreaWidget(w);
 
@@ -332,7 +330,7 @@ void Swidget::UnMap() {
       w->Parent = (Twidget)0;
 
       if (wasFocus) {
-        if (screen == All->FirstScreen) {
+        if (screen == All->Screens.First) {
           /*
            * in case the user was dragging this Twindow...
            */
@@ -391,13 +389,13 @@ void Swidget::Lower() {
 void Swidget::Own(Tmsgport owner) {
   Twidget w = this;
   if (!w->Owner) {
-    if ((w->O_Next = owner->FirstW))
-      owner->FirstW->O_Prev = w;
-    else
-      owner->LastW = w;
-
+    if ((w->O_Next = owner->Widgets.First)) {
+      owner->Widgets.First->O_Prev = w;
+    } else {
+      owner->Widgets.Last = w;
+    }
     w->O_Prev = (Twidget)0;
-    owner->FirstW = w;
+    owner->Widgets.First = w;
     w->Owner = owner;
   }
 }
@@ -410,22 +408,22 @@ void Swidget::DisOwn() {
   }
   if (w->O_Prev)
     w->O_Prev->O_Next = w->O_Next;
-  else if (owner->FirstW == w)
-    owner->FirstW = w->O_Next;
+  else if (owner->Widgets.First == w)
+    owner->Widgets.First = w->O_Next;
 
-  if (w->O_Next)
+  if (w->O_Next) {
     w->O_Next->O_Prev = w->O_Prev;
-  else if (owner->LastW == w)
-    owner->LastW = w->O_Prev;
-
+  } else if (owner->Widgets.Last == w) {
+    owner->Widgets.Last = w->O_Prev;
+  }
   w->O_Prev = w->O_Next = (Twidget)0;
   w->Owner = (Tmsgport)0;
 }
 
 void Swidget::RecursiveDelete(Tmsgport maybeOwner) {
   Twidget w = this;
-  while (w->FirstW) {
-    w->FirstW->RecursiveDelete(maybeOwner);
+  while (w->Widgets.First) {
+    w->Widgets.First->RecursiveDelete(maybeOwner);
   }
   if (w->Owner == maybeOwner) {
     w->Delete();

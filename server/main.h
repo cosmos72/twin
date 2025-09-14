@@ -14,7 +14,7 @@ class String;
 extern fd_set save_rfds, save_wfds;
 extern int max_fds;
 extern byte lenTWDisplay;
-extern char *TWDisplay, *origTWDisplay, *origTERM, *origHW;
+extern char *TWDisplay, *origTWDisplay, *origTERM, *origCOLORTERM;
 extern char **main_argv, **orig_argv;
 extern uldat main_argv_usable_len;
 extern byte flag_envrc, flag_secure;
@@ -28,8 +28,8 @@ extern int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *e
 void Quit(int status);
 
 void NoOp(void);
-byte AlwaysTrue(void);
-byte AlwaysFalse(void);
+bool AlwaysTrue(void);
+bool AlwaysFalse(void);
 void *AlwaysNull(void);
 
 #endif /* TWIN_MAIN_H */

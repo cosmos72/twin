@@ -238,7 +238,7 @@ static void shortsleep(void) {
 }
 
 static byte InitAttach(void) {
-  char *attach, *path_attach;
+  const char *attach, *path_attach;
   char buff[] = "--twin@:\0\0\0";
 
   if (use_twdisplay == DM_ATTACH ||
@@ -294,17 +294,18 @@ static byte InitClient(void) {
 
   if (!title) {
     struct utsname buf;
-    if (uname(&buf) >= 0 && (tbuf = (char *)TwAllocMem(12 + strlen(buf.nodename)))) {
-      sprintf(tbuf, "Welcome at %s", buf.nodename);
+    size_t tbuf_len;
+    if (uname(&buf) >= 0 && (tbuf = (char *)TwAllocMem(tbuf_len = 12 + strlen(buf.nodename)))) {
+      snprintf(tbuf, tbuf_len, "Welcome at %s", buf.nodename);
       title = tbuf;
     } else
       title = "Login Manager";
   }
 
   if ((DM_MsgPort = TwCreateMsgPort(2, "DM")) &&
-      (DM_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                              TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
-                              TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
+      (DM_Menu =
+           TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
+                        TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
       TwItem4MenuCommon(DM_Menu) &&
       (TwInfo4Menu(DM_Menu, TW_ROW_ACTIVE, 61,
                    " Twin Display Manager. Enter user name and password to login.", NULL),
@@ -321,17 +322,16 @@ static byte InitClient(void) {
            TW_WINDOWFL_CURSOR_ON | TW_WINDOWFL_USEROWS | TW_WINDOWFL_ROWS_DEFCOL, 30, 1, 0)) &&
 
       TwCreateButtonGadget(DM_Window, 7, 1, " Login ", TW_GADGETFL_USETEXT, DM_GADGET_LOGIN,
-                           TCOL(twhite, tblue), TCOL(thigh | twhite, tgreen),
-                           TCOL(thigh | tblack, tgreen), 5, 12) &&
+                           TCOL(twhite, tblue), TCOL(tWHITE, tgreen), TCOL(tBLACK, tgreen), 5,
+                           12) &&
       TwCreateButtonGadget(DM_Window, 7, 1, " Clear ", TW_GADGETFL_USETEXT, DM_GADGET_CLEAR,
-                           TCOL(twhite, tblue), TCOL(thigh | twhite, tgreen),
-                           TCOL(thigh | tblack, tgreen), 16, 12) &&
+                           TCOL(twhite, tblue), TCOL(tWHITE, tgreen), TCOL(tBLACK, tgreen), 16,
+                           12) &&
       TwCreateButtonGadget(DM_Window, 7, 1, " Leave ", TW_GADGETFL_USETEXT, DM_GADGET_CONSOLE,
-                           TCOL(twhite, tblue), TCOL(thigh | twhite, tgreen),
-                           TCOL(thigh | tblack, tgreen), 27, 12)
+                           TCOL(twhite, tblue), TCOL(tWHITE, tgreen), TCOL(tBLACK, tgreen), 27, 12)
 
   ) {
-    TwSetColTextWindow(DM_Window, TCOL(thigh | tred, tblue));
+    TwSetColTextWindow(DM_Window, TCOL(tRED, tblue));
     TwGotoXYWindow(DM_Window, 7, 8);
     TwWriteCharsetWindow(DM_Window, 26, "L O G I N   F A I L E D  !");
 

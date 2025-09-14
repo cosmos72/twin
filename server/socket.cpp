@@ -72,18 +72,20 @@
 #include <Tw/Twstat_defs.h>
 #include <Tutf/Tutf.h>
 
+class SockCtx;
+
 #define CONF_SOCKET_ALIEN
 
 #ifdef CONF_SOCKET_ALIEN
 
-static const byte *alienPop(const byte *src, uldat alien_len, void *dst, uldat len);
-static byte *alienPush(const void *src, uldat len, byte *dst, uldat alien_len);
-#define alienPOP(src, type, lval)                                                                  \
-  (src = alienPop(src, AlienSizeof(type, Slot), &(lval), sizeof(type)))
-#define alienPUSH(dst, type, lval)                                                                 \
-  (dst = alienPush(&(lval), sizeof(type), (dst), AlienSizeof(type, Slot)))
+static const byte *alienPop(uldat slot, const byte *src, uldat alien_len, void *dst, uldat len);
+static byte *alienPush(uldat slot, const void *src, uldat len, byte *dst, uldat alien_len);
+#define alienPOP(slot, src, type, lval)                                                            \
+  (src = alienPop(slot, src, AlienSizeof(type, slot), &(lval), sizeof(type)))
+#define alienPUSH(slot, dst, type, lval)                                                           \
+  (dst = alienPush(slot, &(lval), sizeof(type), (dst), AlienSizeof(type, slot)))
 
-static void alienSendMsg(Tmsgport MsgPort, Tmsg msg);
+static void alienSendMsg(Tmsgport port, Tmsg msg);
 static void AlienIO(int fd, uldat slot);
 
 #endif
@@ -91,38 +93,13 @@ static void AlienIO(int fd, uldat slot);
 /* First: private variables from remote.c */
 extern fdlist *FdList;
 extern uldat FdSize, FdTop, FdBottom, FdWQueued;
+
+#define xLS FdList[ctx.Slot]
 #define LS FdList[Slot]
 #define ls FdList[slot]
 #define ls_p FdList[ls.pairSlot]
 
 /* some extra functions not included in remote.c */
-
-#if 0  /* currently unused */
-static uldat RemoteReadAddQueue(uldat Slot, uldat len, byte *data) {
-    uldat nmax;
-
-    if (len == 0 || Slot >= FdTop || LS.Fd == NOFD)
-        return 0;
-
-    /* append to queue */
-    if (LS.RQstart + LS.RQlen + len > LS.RQmax) {
-        if (LS.RQstart)
-            MoveMem(LS.RQueue + LS.RQstart, LS.RQueue, LS.RQlen),
-            LS.RQstart = 0;
-
-        if (LS.RQlen + len > LS.RQmax) {
-            LS.RQueue = (byte *)ReAllocMem(LS.RQueue, nmax = (LS.RQmax+len+40)*5/4);
-            if (!LS.RQueue)
-                return (LS.RQmax = LS.RQlen = 0);
-            LS.RQmax = nmax;
-        }
-    }
-
-    CopyMem(data, LS.RQueue + LS.RQstart + LS.RQlen, len);
-    LS.RQlen += len;
-    return len;
-}
-#endif /* 0 */
 
 static byte *RemoteReadGrowQueue(uldat Slot, uldat len) {
   uldat nmax;
@@ -332,125 +309,142 @@ static void ShutdownGzip(uldat Slot);
 
 #endif /* CONF_SOCKET_GZ */
 
-static void SocketH(Tmsgport MsgPort);
+static void SocketH(Tmsgport port);
 
-static void sockShutDown(Tmsgport MsgPort) {
-  if (MsgPort->RemoteData.FdSlot < FdTop) {
-    UnRegisterMsgPort(MsgPort);
+static void sockShutDown(Tmsgport port) {
+  if (port->RemoteData.FdSlot < FdTop) {
+    UnRegisterMsgPort(port);
   }
 }
 
 /* prototypes of libtw back-end utility functions */
 
-static uldat sockFindFunction(byte len, const char *name, byte ProtoLen, const char *Proto);
-static byte sockSyncSocket(void);
-static byte sockServerSizeof(byte Type);
-static byte sockCanCompress(void);
-static byte sockDoCompress(byte on_off);
+static uldat sockFindFunction(SockCtx &ctx, byte len, const char *name, byte ProtoLen,
+                              const char *Proto);
+static byte sockSyncSocket(SockCtx &ctx);
+static byte sockServerSizeof(SockCtx &ctx, byte Type);
+static byte sockCanCompress(SockCtx &ctx);
+static byte sockDoCompress(SockCtx &ctx, byte on_off);
 
-static void sockNeedResizeDisplay(void);
-static void sockAttachHW(uldat len, const char *arg, byte flags);
-static byte sockDetachHW(uldat len, const char *arg);
-static void sockSetFontTranslation(const byte trans[0x80]);
-static void sockSetTRuneTranslation(const trune trans[0x80]);
+static void sockNeedResizeDisplay(SockCtx &ctx);
+static void sockAttachHW(SockCtx &ctx, uldat len, const char *arg, byte flags);
+static byte sockDetachHW(SockCtx &ctx, uldat len, const char *arg);
+static void sockSetFontTranslation(SockCtx &ctx, const byte trans[0x80]);
+static void sockSetTRuneTranslation(SockCtx &ctx, const trune trans[0x80]);
 
-static void sockDeleteObj(void *V);
+static void sockDeleteObj(SockCtx &ctx, void *V);
 
-static Twidget sockCreateWidget(dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left, dat Up,
-                                tcell Fill);
-static void sockRecursiveDeleteWidget(Twidget w);
-static void sockSetXYWidget(Twidget w, dat x, dat y);
-static void sockResizeWidget(Twidget w, dat XWidth, dat YWidth);
-#define sockScrollWidget ScrollWidget
-static void sockDrawWidget(Twidget w, dat XWidth, dat YWidth, dat Left, dat Up,
+static Twidget sockCreateWidget(SockCtx &ctx, dat XWidth, dat YWidth, uldat Attr, uldat Flags,
+                                dat Left, dat Up, tcell Fill);
+static void sockRecursiveDeleteWidget(SockCtx &ctx, Twidget w);
+static void sockSetXYWidget(SockCtx &ctx, Twidget w, dat x, dat y);
+static void sockResizeWidget(SockCtx &ctx, Twidget w, dat XWidth, dat YWidth);
+#define sockScrollWidget(ctx, w, DeltaX, DeltaY) ScrollWidget(w, DeltaX, DeltaY)
+static void sockDrawWidget(SockCtx &ctx, Twidget w, dat XWidth, dat YWidth, dat Left, dat Up,
                            const char *utf8_bytes, const trune *runes, const tcell *cells);
 
-#define sockSetVisibleWidget SetVisibleWidget
-static void sockFocusSubWidget(Twidget w);
+#define sockSetVisibleWidget(ctx, w, on_off) SetVisibleWidget(w, on_off)
+static void sockFocusSubWidget(SockCtx &ctx, Twidget w);
 
-#define sockRestackChildrenWidget RestackWidgets
-static void sockCirculateChildrenWidget(Twidget w, byte up_or_down);
+#define sockRestackChildrenWidget(ctx, w, N, arrayW) RestackWidgets(w, N, arrayW)
+static void sockCirculateChildrenWidget(SockCtx &ctx, Twidget w, byte up_or_down);
 #define TW_CIRCULATE_RAISE_LAST 0
 #define TW_CIRCULATE_LOWER_FIRST 1
 
-static Tgadget sockCreateGadget(Twidget Parent, dat XWidth, dat YWidth, const char *TextNormal,
-                                uldat Attr, uldat Flags, udat Code, tcolor ColText,
-                                tcolor ColTextSelect, tcolor ColTextDisabled,
+static Tgadget sockCreateGadget(SockCtx &ctx, Twidget Parent, dat XWidth, dat YWidth,
+                                const char *TextNormal, uldat Attr, uldat Flags, udat Code,
+                                tcolor ColText, tcolor ColTextSelect, tcolor ColTextDisabled,
                                 tcolor ColTextSelectDisabled, dat Left, dat Up);
 
-static Twindow sockCreateWindow(dat TitleLen, const char *Title, const tcolor *ColTitle, Tmenu Menu,
-                                tcolor ColText, uldat CursorType, uldat Attr, uldat Flags,
-                                dat XWidth, dat YWidth, dat ScrollBackLines);
-static void sockWriteCharsetWindow(Twindow w, uldat len, const char *charset_bytes);
-static void sockWriteUtf8Window(Twindow w, uldat len, const char *utf8_bytes);
-static void sockWriteTRuneWindow(Twindow w, uldat len, const trune *runes);
-static void sockWriteTCellWindow(Twindow w, dat x, dat y, uldat len, const tcell *cells);
-static void sockSetTitleWindow(Twindow w, dat titlelen, const char *title);
+static Twindow sockCreateWindow(SockCtx &ctx, dat TitleLen, const char *Title,
+                                const tcolor *ColTitle, Tmenu Menu, tcolor ColText,
+                                uldat CursorType, uldat Attr, uldat Flags, dat XWidth, dat YWidth,
+                                dat ScrollBackLines);
+static void sockWriteCharsetWindow(SockCtx &ctx, Twindow w, uldat len, const char *charset_bytes);
+static void sockWriteUtf8Window(SockCtx &ctx, Twindow w, uldat len, const char *utf8_bytes);
+static void sockWriteTRuneWindow(SockCtx &ctx, Twindow w, uldat len, const trune *runes);
+static void sockWriteTCellWindow(SockCtx &ctx, Twindow w, dat x, dat y, uldat len,
+                                 const tcell *cells);
+static void sockSetTitleWindow(SockCtx &ctx, Twindow w, dat titlelen, const char *title);
 
-static Trow sockFindRowByCodeWindow(Twindow w, dat Code);
+static Trow sockFindRowByCodeWindow(SockCtx &ctx, Twindow w, dat Code);
 
-static Tmenuitem sockCreate4MenuAny(Tobj Parent, Twindow w, udat Code, byte Flags, ldat len,
-                                    const char *Name);
+static Tmenuitem sockCreate4MenuAny(SockCtx &ctx, Tobj Parent, Twindow w, udat Code, byte Flags,
+                                    ldat len, const char *Name);
 
-#define sockRestackChildrenRow RestackRows
-static void sockCirculateChildrenRow(Tobj O, byte up_or_down);
+#define sockRestackChildrenRow(ctx, O, N, arrayR) RestackRows(O, N, arrayR)
+static void sockCirculateChildrenRow(SockCtx &ctx, Tobj O, byte up_or_down);
 #define TW_CIRCULATE_RAISE_LAST 0
 #define TW_CIRCULATE_LOWER_FIRST 1
 
-static Tmenu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
+static Tmenu sockCreateMenu(SockCtx &ctx, tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
                             tcolor ColSelectDisabled, tcolor ColShtCut, tcolor ColSelShtCut,
                             byte FlagDefColInfo);
 
-static Tmsgport sockCreateMsgPort(byte NameLen, const char *Name);
-static Tmsgport sockFindMsgPort(Tmsgport Prev, byte NameLen, const char *Name);
+static Tmsgport sockCreateMsgPort(SockCtx &ctx, byte NameLen, const char *Name);
+static Tmsgport sockFindMsgPort(SockCtx &ctx, Tmsgport Prev, byte NameLen, const char *Name);
 
-static Tgroup sockCreateGroup(void);
+static Tgroup sockCreateGroup(SockCtx &ctx);
 
-static Tobj sockPrevObj(Tobj o);
-static Tobj sockNextObj(Tobj o);
-static Tobj sockParentObj(Tobj o);
+static Tobj sockPrevObj(SockCtx &ctx, Tobj o);
+static Tobj sockNextObj(SockCtx &ctx, Tobj o);
+static Tobj sockParentObj(SockCtx &ctx, Tobj o);
 
-static Tscreen sockFirstScreen(void);
-static Twidget sockFirstWidget(Twidget w);
-static Tmsgport sockFirstMsgPort(void);
-static Tmenu sockFirstMenu(Tmsgport MsgPort);
-static Twidget sockFirstW(Tmsgport MsgPort);
-static Tgroup sockFirstGroup(Tmsgport MsgPort);
-static Tmutex sockFirstMutex(Tmsgport MsgPort);
-static Tmenuitem sockFirstMenuItem(Tmenu Menu);
-static Tgadget sockFirstGadget(Tgroup group);
+static Tscreen sockFirstScreen(SockCtx &ctx);
+static Twidget sockFirstWidget(SockCtx &ctx, Twidget w);
+static Tmsgport sockFirstMsgPort(SockCtx &ctx);
+static Tmenu sockFirstMenu(SockCtx &ctx, Tmsgport port);
+static Twidget sockFirstW(SockCtx &ctx, Tmsgport port);
+static Tgroup sockFirstGroup(SockCtx &ctx, Tmsgport port);
+static Tmutex sockFirstMutex(SockCtx &ctx, Tmsgport port);
+static Tmenuitem sockFirstMenuItem(SockCtx &ctx, Tmenu Menu);
+static Tgadget sockFirstGadget(SockCtx &ctx, Tgroup group);
 
-static byte sockSendToMsgPort(Tmsgport MsgPort, udat len, const byte *Data);
-static void sockBlindSendToMsgPort(Tmsgport MsgPort, udat len, const byte *Data);
+static byte sockSendToMsgPort(SockCtx &ctx, Tmsgport port, udat len, const byte *Data);
+static void sockBlindSendToMsgPort(SockCtx &ctx, Tmsgport port, udat len, const byte *Data);
 
-static Tobj sockGetOwnerSelection(void);
-static void sockSetOwnerSelection(tany Time, tany Frac);
-static void sockNotifySelection(Tobj Requestor, uldat ReqPrivate, uldat Magic,
+static Tobj sockGetOwnerSelection(SockCtx &ctx);
+static void sockSetOwnerSelection(SockCtx &ctx, tany Time, tany Frac);
+static void sockNotifySelection(SockCtx &ctx, Tobj Requestor, uldat ReqPrivate, uldat Magic,
                                 const char MIME[TW_MAX_MIMELEN], uldat len, const char *Data);
-static void sockRequestSelection(Tobj owner, uldat ReqPrivate);
+static void sockRequestSelection(SockCtx &ctx, Tobj owner, uldat ReqPrivate);
 
-#define sockSetServerUid SetServerUid
-#define sockGetDisplayWidth GetDisplayWidth
-#define sockGetDisplayHeight GetDisplayHeight
+#define sockSetServerUid(ctx, uid, privileges) SetServerUid(uid, privileges)
+#define sockGetDisplayWidth(ctx) GetDisplayWidth()
+#define sockGetDisplayHeight(ctx) GetDisplayHeight()
 
-static Tall sockGetAll(void);
+static Tall sockGetAll(SockCtx &ctx);
 
 /* Second: socket handling functions */
 
-static uldat MaxFunct, Slot, RequestN;
-static const byte *s, *end;
-static int inetFd = NOFD, Fd;
+static uldat MaxFunct;
+static int inetFd = NOFD;
 static uldat inetSlot = NOSLOT;
 
-static byte sockReply(uldat code, uldat len, const void *data);
+class SockCtx {
+public:
+  SockCtx();
+
+  uldat Slot;
+  uldat RequestN;
+  const byte *s;
+  const byte *end;
+  int Fd;
+};
+
+SockCtx::SockCtx() //
+    : Slot(NOSLOT), RequestN(0), s(NULL), end(NULL), Fd(NOFD) {
+}
+
+static byte sockReply(SockCtx &ctx, uldat code, uldat len, const void *data);
 
 static void SocketIO(int fd, uldat slot);
 
-#define Left(size) (s + (size) <= end)
+#define Left(size) (ctx.s + (size) <= ctx.end)
 
 #include "socket_id.h"
 
-static void sockStat(Tobj x, udat n, const byte *in);
+static void sockStat(SockCtx &ctx, Tobj x, udat n, const byte *in);
 
 typedef struct {
   byte Len, FormatLen;
@@ -507,8 +501,9 @@ inline void TWS_2_proto(udat tws_type, char proto[2]) {
   }
 }
 
-#define _obj .TWS_field_obj
 #define _any .TWS_field_scalar
+#define _cell .TWS_field_cell
+#define _obj .TWS_field_obj
 #define _vec .TWS_field_vecV
 #define _cvec .TWS_field_vecCV
 #define _len .TWS_field_vecL
@@ -521,7 +516,7 @@ inline void TWS_2_proto(udat tws_type, char proto[2]) {
 #define vecW_ TWS_vecW
 
 /* here a[0] is the first arg, N is the number of args */
-static tbool sockMultiplex_S(uldat id, Span<s_tsfield> a) {
+static tbool sockMultiplex_S(SockCtx &ctx, uldat id, Span<s_tsfield> a) {
   switch (id) {
 #include "socket1_gen.h"
   default:
@@ -531,20 +526,19 @@ static tbool sockMultiplex_S(uldat id, Span<s_tsfield> a) {
 }
 
 /* here a[1] is the first arg, a[0] is the return value, N is the number of args + 1 */
-#define fullMultiplexS(Id, a)                                                                      \
-  do {                                                                                             \
-    if ((Id) == order_StatObj) {                                                                   \
-      if ((a).size() > 3) {                                                                        \
-        sockStat((Tobj)(a)[1] _obj, (udat)(a)[2] _any, (const byte *)(a)[3] _vec);                 \
-      }                                                                                            \
-    } else {                                                                                       \
-      sockMultiplex_S(Id, a);                                                                      \
-    }                                                                                              \
-  } while (0)
+static void fullMultiplexS(SockCtx &ctx, uldat id, Span<s_tsfield> a) {
+  if (id == order_StatObj) {
+    if (a.size() > 3) {
+      sockStat(ctx, (Tobj)a[1] _obj, (udat)a[2] _any, (const byte *)a[3] _vec);
+    }
+  } else {
+    sockMultiplex_S(ctx, id, a);
+  }
+}
 
 /* here a[0] is the first arg, a.size is the number of args */
-static void sockMultiplexS(uldat id, Span<s_tsfield> a) {
-  if (sockMultiplex_S(id, a)) {
+static void sockMultiplexS(SockCtx &ctx, uldat id, Span<s_tsfield> a) {
+  if (sockMultiplex_S(ctx, id, a)) {
     a[0] _type = proto_2_TWS(sockF[id].Format);
   }
 }
@@ -601,8 +595,8 @@ static Tobj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
   return aX;
 }
 
-inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, uldat mask[1],
-                          byte flag[1], ldat fail) {
+inline ldat sockDecodeArg(SockCtx &ctx, uldat id, const char *Format, uldat n, tsfield a,
+                          uldat mask[1], byte flag[1], ldat fail) {
   const void *av;
   topaque nlen;
   byte c;
@@ -613,9 +607,9 @@ inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, ulda
 #define CASE_(type)                                                                                \
   case CAT(TWS_, type):                                                                            \
     /* ensure type size WAS negotiated */                                                          \
-    if (AlienSizeof(type, Slot) && Left(sizeof(type))) {                                           \
+    if (AlienSizeof(type, ctx.Slot) && Left(sizeof(type))) {                                       \
       type an;                                                                                     \
-      Pop(s, type, an);                                                                            \
+      Pop(ctx.s, type, an);                                                                        \
       a[n] _any = (tany)an;                                                                        \
       a[n] _type = c;                                                                              \
       break;                                                                                       \
@@ -623,11 +617,10 @@ inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, ulda
     fail = -fail;                                                                                  \
     break
 
-    case TWS_tcolor:
-      /*FALLTHROUGH*/
       CASE_(byte);
       CASE_(dat);
       CASE_(ldat);
+      CASE_(tcolor);
       CASE_(topaque);
       CASE_(tany);
       CASE_(trune);
@@ -642,7 +635,7 @@ inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, ulda
     /* all kind of pointers */
     if (Left(sizeof(uldat))) {
       uldat a0;
-      Pop(s, uldat, a0);
+      Pop(ctx.s, uldat, a0);
       c = (byte)*Format - Tbase_magic_CHR;
       a[n] _obj = Id2Obj(e_class_byte(c), a0);
       a[n] _type = obj_;
@@ -654,10 +647,10 @@ inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, ulda
     nlen = sockLengths(id, View<s_tsfield>(a, n));
     c = (byte)*Format;
     /* ensure type size WAS negotiated */
-    if ((c <= TWS_tcolor || AlienMagic(Slot)[c])) {
-      nlen *= AlienMagic(Slot)[c];
+    if ((c <= TWS_tcolor || AlienMagic(ctx.Slot)[c])) {
+      nlen *= AlienMagic(ctx.Slot)[c];
       if (Left(nlen)) {
-        PopAddr(s, const byte, nlen, av);
+        PopAddr(ctx.s, const byte, nlen, av);
         a[n] _len = nlen;
         a[n] _cvec = av;
         a[n] _type = vec_ | c;
@@ -668,15 +661,15 @@ inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, ulda
     break;
   case 'W':
     /* ensure 'topaque' size WAS negotiated */
-    if (AlienSizeof(topaque, Slot) && Left(sizeof(topaque))) {
-      Pop(s, topaque, nlen);
+    if (AlienSizeof(topaque, ctx.Slot) && Left(sizeof(topaque))) {
+      Pop(ctx.s, topaque, nlen);
 
       c = (byte)*Format;
       /* ensure type size WAS negotiated */
-      if ((c <= TWS_tcolor || AlienMagic(Slot)[c])) {
-        if (!nlen ||
-            (Left(nlen) && nlen == sockLengths(id, View<s_tsfield>(a, n)) * AlienMagic(Slot)[c])) {
-          PopAddr(s, const byte, nlen, av);
+      if ((c <= TWS_tcolor || AlienMagic(ctx.Slot)[c])) {
+        if (!nlen || (Left(nlen) &&
+                      nlen == sockLengths(id, View<s_tsfield>(a, n)) * AlienMagic(ctx.Slot)[c])) {
+          PopAddr(ctx.s, const byte, nlen, av);
           a[n] _len = nlen;
           a[n] _cvec = av;
           a[n] _type = vec_ | vecW_ | c;
@@ -690,7 +683,7 @@ inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, ulda
     nlen = sockLengths(id, View<s_tsfield>(a, n)) * sizeof(uldat);
     if (Left(nlen)) {
       c = (byte)*Format - Tbase_magic_CHR;
-      PopAddr(s, const byte, nlen, av);
+      PopAddr(ctx.s, const byte, nlen, av);
       if ((a[n] _vec = AllocId2ObjVec(flag, c, nlen / sizeof(uldat), (byte *)RemoveConst(av)))) {
         a[n] _len = nlen;
         a[n] _type = vec_ | obj_;
@@ -702,13 +695,13 @@ inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, ulda
     break;
   case 'Y':
     /* ensure 'topaque' size WAS negotiated */
-    if (AlienSizeof(topaque, Slot) && Left(sizeof(topaque))) {
-      Pop(s, topaque, nlen);
+    if (AlienSizeof(topaque, ctx.Slot) && Left(sizeof(topaque))) {
+      Pop(ctx.s, topaque, nlen);
 
       nlen *= sizeof(uldat);
       if (Left(nlen)) {
         c = (byte)*Format - Tbase_magic_CHR;
-        PopAddr(s, const byte, nlen, av);
+        PopAddr(ctx.s, const byte, nlen, av);
         if ((a[n] _vec = AllocId2ObjVec(flag, c, nlen / sizeof(uldat), (byte *)RemoveConst(av)))) {
           a[n] _len = nlen;
           a[n] _type = vec_ | obj_;
@@ -726,7 +719,7 @@ inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, ulda
   return fail;
 }
 
-static void sockMultiplexB(uldat id) {
+static void sockMultiplexB(SockCtx &ctx, uldat id) {
   static struct s_tsfield a[TW_MAX_ARGS_N];
   static byte warned = tfalse;
   uldat mask = 0; /* at least 32 bits. we need TW_MAX_ARGS_N... */
@@ -741,7 +734,7 @@ static void sockMultiplexB(uldat id) {
 
   while (fail > 0 && *Format) {
     if (n < TW_MAX_ARGS_N) {
-      fail = sockDecodeArg(id, Format, n, a, &mask, &flag, fail);
+      fail = sockDecodeArg(ctx, id, Format, n, a, &mask, &flag, fail);
 
     } else /* (n >= TW_MAX_ARGS_N) */ {
       if (!warned) {
@@ -760,7 +753,7 @@ static void sockMultiplexB(uldat id) {
       break;
   }
 
-  if ((flag = (fail > 0 && s == end && !*Format && (self != '2' || a[1] _obj)))) {
+  if ((flag = (fail > 0 && ctx.s == ctx.end && !*Format && (self != '2' || a[1] _obj)))) {
 
     if (retT[0] == 'O' && a[n - 1] _type == (TWS_vec | TWS_byte) &&
         a[n - 1] _len == 2 * sizeof(byte)) {
@@ -772,14 +765,14 @@ static void sockMultiplexB(uldat id) {
        * but it points to a[n-1] itself!
        */
       a[n - 1] _type = proto_2_TWS((const char *)(a[n - 1] _vec));
-      if (mask & 1 << (n - 1))
+      if (mask & 1 << (n - 1)) {
         FreeMem(a[n - 1].TWS_field_vecV);
-
+      }
       a[n - 1] _vec = &a[n - 1];
       a[n - 1] _len = 0;
     }
 
-    fullMultiplexS(id, Span<s_tsfield>(a, n));
+    fullMultiplexS(ctx, id, Span<s_tsfield>(a, n));
   }
 
   for (nlen = 0; mask; mask >>= 1, nlen++) {
@@ -801,7 +794,7 @@ static void sockMultiplexB(uldat id) {
 #define CASE_(type)                                                                                \
   case CAT(TWS_, type):                                                                            \
     /* ensure type size WAS negotiated */                                                          \
-    if (CAT(TWS_, type) <= TWS_tcolor || AlienSizeof(type, Slot)) {                                \
+    if (CAT(TWS_, type) <= TWS_tcolor || AlienSizeof(type, ctx.Slot)) {                            \
       /* move to first bytes on MSB machines */                                                    \
       const type a0 = (type)a[0] _any;                                                             \
       memcpy(&a[0] _any, &a0, sizeof(type));                                                       \
@@ -826,14 +819,14 @@ static void sockMultiplexB(uldat id) {
         break;
       }
       if (c && fail > 0) {
-        sockReply(OK_MAGIC, c, &a[0] _any);
+        sockReply(ctx, OK_MAGIC, c, &a[0] _any);
         return;
       }
       break;
 
     case 'x': {
       const uldat a0 = a[0] _obj ? a[0] _obj->Id : NOID;
-      sockReply(OK_MAGIC, sizeof(tobj), &a0);
+      sockReply(ctx, OK_MAGIC, sizeof(tobj), &a0);
       return;
     }
     case 'S':
@@ -851,7 +844,7 @@ static void sockMultiplexB(uldat id) {
       else
         fail = 1;
     }
-    sockReply(fail, 0, NULL);
+    sockReply(ctx, fail, 0, NULL);
   }
 }
 
@@ -893,7 +886,8 @@ static int CmpFormat(const char *f1, const char *f2, uldat len) {
   return len ? *f1 - *f2 : 0;
 }
 
-static uldat sockFindFunction(byte len, const char *Name, byte FormatLen, const char *Format) {
+static uldat sockFindFunction(SockCtx & /*ctx*/, byte len, const char *Name, byte FormatLen,
+                              const char *Format) {
   sockfn *F = sockF;
   if (Name) {
     while (F->Name && (F->Len != len || F->FormatLen - 1 != FormatLen ||
@@ -905,24 +899,25 @@ static uldat sockFindFunction(byte len, const char *Name, byte FormatLen, const 
   return NOID;
 }
 
-static byte sockSyncSocket(void) {
+static byte sockSyncSocket(SockCtx & /*ctx*/) {
   return ttrue;
 }
 
-static byte sockServerSizeof(byte Type) {
+static byte sockServerSizeof(SockCtx & /*ctx*/, byte Type) {
   return TwinMagicData[Type < TWS_highest ? Type : TWS_void];
 }
 
-static void sockNeedResizeDisplay(void) {
-  if (LS.MsgPort && LS.MsgPort->AttachHW)
-    ResizeDisplayPrefer(LS.MsgPort->AttachHW);
+static void sockNeedResizeDisplay(SockCtx &ctx) {
+  if (xLS.MsgPort && xLS.MsgPort->AttachHW) {
+    ResizeDisplayPrefer(xLS.MsgPort->AttachHW);
+  }
 }
 
 /*
  * this does direct write() on the connecting socket,
  * so it bypasses any compression.
  */
-static void sockAttachHW(uldat len, const char *arg, byte flags) {
+static void sockAttachHW(SockCtx &ctx, uldat len, const char *arg, byte flags) {
   Tdisplay D_HW;
   fd_set set;
   struct timeval tv = {2, 0};
@@ -930,30 +925,33 @@ static void sockAttachHW(uldat len, const char *arg, byte flags) {
   char buf[2] = "\0";
   bool verbose = (flags & TW_ATTACH_HW_REDIRECT) != 0;
 
-  realFd = LS.Fd >= 0 ? LS.Fd : FdList[LS.pairSlot].Fd;
+  realFd = xLS.Fd >= 0 ? xLS.Fd : FdList[xLS.pairSlot].Fd;
 
-  if (!LS.MsgPort) {
-    if (verbose)
+  if (!xLS.MsgPort) {
+    if (verbose) {
       write(realFd, "twin: AttachHW(): client did not create a MsgPort\n\0", 52);
-    else
+    } else {
       write(realFd, buf, 2);
+    }
     return;
   }
 
   if (verbose)
     verbose = RegisterPrintkFd(realFd);
 
-  if ((D_HW = AttachDisplayHW(Chars(arg, len), Slot, flags & TW_ATTACH_HW_EXCLUSIVE))) {
-    if (D_HW->NeedHW & NEEDPersistentSlot)
-      LS.MsgPort->AttachHW = D_HW;
-    else
+  if ((D_HW = AttachDisplayHW(Chars(arg, len), ctx.Slot, flags & TW_ATTACH_HW_EXCLUSIVE))) {
+    if (D_HW->NeedHW & NeedPersistentSlot) {
+      xLS.MsgPort->AttachHW = D_HW;
+    } else {
       D_HW->AttachSlot = NOSLOT; /* we don't need it => forget it */
+    }
   }
 
   if (D_HW) {
     buf[1]++;
-    if (D_HW->NeedHW & NEEDPersistentSlot)
+    if (D_HW->NeedHW & NeedPersistentSlot) {
       buf[1]++;
+    }
   }
   write(realFd, buf, 2);
 
@@ -966,15 +964,16 @@ static void sockAttachHW(uldat len, const char *arg, byte flags) {
   }
   read(realFd, buf, 1);
 
-  if (verbose)
+  if (verbose) {
     UnRegisterPrintkFd();
+  }
 }
 
-static byte sockDetachHW(uldat len, const char *arg) {
+static byte sockDetachHW(SockCtx &ctx, uldat len, const char *arg) {
   return DetachDisplayHW(Chars(arg, len), 0); /* cannot detach exclusive displays !! */
 }
 
-static void sockSetFontTranslation(const byte trans[0x80]) {
+static void sockSetFontTranslation(SockCtx &ctx, const byte trans[0x80]) {
   if (trans) {
     int i;
     trune *G = All->Gtranslations[USER_MAP];
@@ -989,7 +988,7 @@ static void sockSetFontTranslation(const byte trans[0x80]) {
   }
 }
 
-static void sockSetTRuneTranslation(const trune trans[0x80]) {
+static void sockSetTRuneTranslation(SockCtx &ctx, const trune trans[0x80]) {
   if (trans) {
     int i;
     trune *G = All->Gtranslations[USER_MAP];
@@ -1000,55 +999,58 @@ static void sockSetTRuneTranslation(const trune trans[0x80]) {
   }
 }
 
-static Tmsgport sockGetMsgPortObj(Tobj p) {
-  TobjEntry e = (TobjEntry)p;
-  while (e) {
-    if (IS_MSGPORT(e)) {
-      return (Tmsgport)e;
-    }
-    switch (e->Id >> class_byte_shift) {
+static Tmsgport sockGetMsgPortObj(SockCtx &ctx, Tobj o) {
+  while (o) {
+    switch (o->Id >> class_byte_shift) {
     case Trow_class_byte:
     case Tmenuitem_class_byte:
+      o = ((Trow)o)->Parent;
+      break;
     case Tmenu_class_byte:
-      e = (TobjEntry)e->Parent;
+      o = ((Tmenu)o)->MsgPort;
       break;
     case Tmutex_class_byte:
-      e = (TobjEntry)((Tmutex)e)->Owner;
+      o = ((Tmutex)o)->Owner;
       break;
+    case Tmsgport_class_byte:
+      return (Tmsgport)o;
     default:
-      if (IS_WIDGET(e))
-        e = (TobjEntry)((Twidget)e)->Owner;
-      else
-        e = NULL;
+      if (IS_WIDGET(o)) {
+        o = ((Twidget)o)->Owner;
+      } else {
+        o = NULL;
+      }
       break;
     }
   }
-  return (Tmsgport)e;
+  return (Tmsgport)0;
 }
 
-static void sockDeleteObj(void *V) {
+static void sockDeleteObj(SockCtx &ctx, void *V) {
   Tobj O = (Tobj)V;
-  Tmsgport MsgPort = RemoteGetMsgPort(Slot);
+  Tmsgport port = RemoteGetMsgPort(ctx.Slot);
 
-  if (MsgPort && MsgPort == sockGetMsgPortObj(O))
+  if (port && port == sockGetMsgPortObj(ctx, O)) {
     O->Delete();
+  }
 }
 
-static Twidget sockCreateWidget(dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left, dat Up,
-                                tcell Fill) {
+static Twidget sockCreateWidget(SockCtx &ctx, dat XWidth, dat YWidth, uldat Attr, uldat Flags,
+                                dat Left, dat Up, tcell Fill) {
   Tmsgport owner;
-  if ((owner = RemoteGetMsgPort(Slot)))
-    return New(widget)(owner, XWidth, YWidth, Attr, Flags, Left, Up, Fill);
+  if ((owner = RemoteGetMsgPort(ctx.Slot))) {
+    return Swidget::Create(owner, XWidth, YWidth, Attr, Flags, Left, Up, Fill);
+  }
   return (Twidget)0;
 }
-static void sockRecursiveDeleteWidget(Twidget w) {
-  Tmsgport MsgPort = RemoteGetMsgPort(Slot);
+static void sockRecursiveDeleteWidget(SockCtx &ctx, Twidget w) {
+  Tmsgport port = RemoteGetMsgPort(ctx.Slot);
 
   /* avoid too much visual activity... UnMap top-level Twidget immediately */
   w->UnMap();
-  w->RecursiveDelete(MsgPort);
+  w->RecursiveDelete(port);
 }
-static void sockSetXYWidget(Twidget w, dat x, dat y) {
+static void sockSetXYWidget(SockCtx &ctx, Twidget w, dat x, dat y) {
   if (w) {
     if (w->Parent && IS_SCREEN(w->Parent)) {
       x += w->Parent->XLogic;
@@ -1057,14 +1059,14 @@ static void sockSetXYWidget(Twidget w, dat x, dat y) {
     w->SetXY(x, y);
   }
 }
-static void sockDrawWidget(Twidget w, dat XWidth, dat YWidth, dat Left, dat Up, const char *Text,
-                           const trune *Font, const tcell *Attr) {
+static void sockDrawWidget(SockCtx &ctx, Twidget w, dat XWidth, dat YWidth, dat Left, dat Up,
+                           const char *Text, const trune *Font, const tcell *Attr) {
   if (w) {
     w->Expose(XWidth, YWidth, Left, Up, XWidth, Text, Font, Attr);
   }
 }
 
-static void sockFocusSubWidget(Twidget w) {
+static void sockFocusSubWidget(SockCtx &ctx, Twidget w) {
   Twidget P;
   if (w && !IS_SCREEN(w) && w->Parent && !IS_SCREEN(w->Parent)) {
     w->SelectW = NULL;
@@ -1072,12 +1074,13 @@ static void sockFocusSubWidget(Twidget w) {
       P->SelectW = w;
       w = P;
     }
-    if (ContainsCursor((Twidget)WindowParent(w)))
+    if (ContainsCursor((Twidget)WindowParent(w))) {
       UpdateCursor();
+    }
   }
 }
 
-static void sockResizeWidget(Twidget w, dat X, dat Y) {
+static void sockResizeWidget(SockCtx &ctx, Twidget w, dat X, dat Y) {
   if (w) {
     if (IS_WINDOW(w)) {
       if (!(w->Flags & WINDOWFL_BORDERLESS))
@@ -1091,36 +1094,36 @@ static void sockResizeWidget(Twidget w, dat X, dat Y) {
   }
 }
 
-static void sockCirculateChildrenWidget(Twidget w, byte up_or_down) {
+static void sockCirculateChildrenWidget(SockCtx &ctx, Twidget w, byte up_or_down) {
   if (w) {
     if (up_or_down == TW_CIRCULATE_RAISE_LAST) {
-      if ((w = w->LastW)) {
+      if ((w = w->Widgets.Last)) {
         w->Raise();
       }
     } else if (up_or_down == TW_CIRCULATE_LOWER_FIRST) {
-      if ((w = w->FirstW)) {
+      if ((w = w->Widgets.First)) {
         w->Lower();
       }
     }
   }
 }
 
-static void sockCirculateChildrenRow(Tobj obj, byte up_or_down) {
+static void sockCirculateChildrenRow(SockCtx &ctx, Tobj obj, byte up_or_down) {
   Trow row = (Trow)0;
   if (obj) {
     if (IS_WINDOW(obj) && W_USE((Twindow)obj, USEROWS)) {
 
       if (up_or_down == TW_CIRCULATE_RAISE_LAST)
-        row = ((Twindow)obj)->USE.R.LastRow;
+        row = ((Twindow)obj)->USE.R.Rows.Last;
       else if (up_or_down == TW_CIRCULATE_LOWER_FIRST)
-        row = ((Twindow)obj)->USE.R.FirstRow;
+        row = ((Twindow)obj)->USE.R.Rows.First;
 
     } else if (IS_MENU(obj)) {
 
       if (up_or_down == TW_CIRCULATE_RAISE_LAST)
-        row = ((Tmenu)obj)->LastI;
+        row = ((Tmenu)obj)->Items.Last;
       else if (up_or_down == TW_CIRCULATE_LOWER_FIRST)
-        row = ((Tmenu)obj)->FirstI;
+        row = ((Tmenu)obj)->Items.First;
     }
 
     if (row) {
@@ -1132,28 +1135,31 @@ static void sockCirculateChildrenRow(Tobj obj, byte up_or_down) {
   }
 }
 
-static Tgadget sockCreateGadget(Twidget Parent, dat XWidth, dat YWidth, const char *TextNormal,
-                                uldat Attr, uldat Flags, udat Code, tcolor ColText,
-                                tcolor ColTextSelect, tcolor ColTextDisabled,
+static Tgadget sockCreateGadget(SockCtx &ctx, Twidget Parent, dat XWidth, dat YWidth,
+                                const char *TextNormal, uldat Attr, uldat Flags, udat Code,
+                                tcolor ColText, tcolor ColTextSelect, tcolor ColTextDisabled,
                                 tcolor ColTextSelectDisabled, dat Left, dat Up) {
   Tmsgport owner;
-  if ((owner = RemoteGetMsgPort(Slot)))
-    return New(gadget)(owner, Parent, XWidth, YWidth, TextNormal, Attr, Flags, Code, ColText,
-                       ColTextSelect, ColTextDisabled, ColTextSelectDisabled, Left, Up);
+  if ((owner = RemoteGetMsgPort(ctx.Slot))) {
+    return Sgadget::Create(owner, Parent, XWidth, YWidth, TextNormal, Attr, Flags, Code, ColText,
+                           ColTextSelect, ColTextDisabled, ColTextSelectDisabled, Left, Up);
+  }
   return (Tgadget)0;
 }
 
-static Twindow sockCreateWindow(dat TitleLen, const char *Title, const tcolor *ColTitle, Tmenu Menu,
-                                tcolor ColText, uldat CursorType, uldat Attr, uldat Flags,
-                                dat XWidth, dat YWidth, dat ScrollBackLines) {
+static Twindow sockCreateWindow(SockCtx &ctx, dat TitleLen, const char *Title,
+                                const tcolor *ColTitle, Tmenu Menu, tcolor ColText,
+                                uldat CursorType, uldat Attr, uldat Flags, dat XWidth, dat YWidth,
+                                dat ScrollBackLines) {
   Tmsgport owner;
-  if ((owner = RemoteGetMsgPort(Slot)))
-    return New(window)(owner, TitleLen, Title, ColTitle, Menu, ColText, CursorType, Attr, Flags,
-                       XWidth, YWidth, ScrollBackLines);
+  if ((owner = RemoteGetMsgPort(ctx.Slot))) {
+    return Swindow::Create(owner, TitleLen, Title, ColTitle, Menu, ColText, CursorType, Attr, Flags,
+                           XWidth, YWidth, ScrollBackLines);
+  }
   return (Twindow)0;
 }
 
-static void sockWriteCharsetWindow(Twindow w, uldat len, const char *charset_bytes) {
+static void sockWriteCharsetWindow(SockCtx &ctx, Twindow w, uldat len, const char *charset_bytes) {
   if (w) {
     if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
       w->TtyWriteCharset(len, charset_bytes);
@@ -1162,7 +1168,7 @@ static void sockWriteCharsetWindow(Twindow w, uldat len, const char *charset_byt
   }
 }
 
-static void sockWriteUtf8Window(Twindow w, uldat len, const char *utf8_bytes) {
+static void sockWriteUtf8Window(SockCtx &ctx, Twindow w, uldat len, const char *utf8_bytes) {
   if (w) {
     if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
       w->TtyWriteUtf8(len, utf8_bytes);
@@ -1171,7 +1177,7 @@ static void sockWriteUtf8Window(Twindow w, uldat len, const char *utf8_bytes) {
   }
 }
 
-static void sockWriteTRuneWindow(Twindow w, uldat len, const trune *runes) {
+static void sockWriteTRuneWindow(SockCtx &ctx, Twindow w, uldat len, const trune *runes) {
   if (w) {
     if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
       w->TtyWriteTRune(len, runes);
@@ -1180,7 +1186,8 @@ static void sockWriteTRuneWindow(Twindow w, uldat len, const trune *runes) {
   }
 }
 
-static void sockWriteTCellWindow(Twindow w, dat x, dat y, uldat len, const tcell *cells) {
+static void sockWriteTCellWindow(SockCtx &ctx, Twindow w, dat x, dat y, uldat len,
+                                 const tcell *cells) {
   if (w) {
     if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
       w->TtyWriteTCell(x, y, len, cells);
@@ -1189,7 +1196,7 @@ static void sockWriteTCellWindow(Twindow w, dat x, dat y, uldat len, const tcell
   }
 }
 
-static void sockSetTitleWindow(Twindow w, dat titlelen, const char *title) {
+static void sockSetTitleWindow(SockCtx &ctx, Twindow w, dat titlelen, const char *title) {
   char *_title = NULL;
 
   if (w) {
@@ -1198,42 +1205,43 @@ static void sockSetTitleWindow(Twindow w, dat titlelen, const char *title) {
   }
 }
 
-static Trow sockFindRowByCodeWindow(Twindow w, dat Code) {
+static Trow sockFindRowByCodeWindow(SockCtx &ctx, Twindow w, dat Code) {
   if (w) {
     return w->FindRowByCode(Code, NULL);
   }
   return (Trow)0;
 }
 
-static Tmenuitem sockCreate4MenuAny(Tobj Parent, Twindow w, udat Code, byte Flags, ldat len,
-                                    const char *Name) {
+static Tmenuitem sockCreate4MenuAny(SockCtx &ctx, Tobj Parent, Twindow w, udat Code, byte Flags,
+                                    ldat len, const char *Name) {
   return Smenuitem::Create4Menu(Parent, w, Code, Flags, len, Name);
 }
 
-static Tmenu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
+static Tmenu sockCreateMenu(SockCtx &ctx, tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
                             tcolor ColSelectDisabled, tcolor ColShtCut, tcolor ColSelShtCut,
                             byte FlagDefColInfo) {
   Tmsgport owner;
-  if ((owner = RemoteGetMsgPort(Slot)))
-    return New(menu)(owner, ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut,
-                     ColSelShtCut, FlagDefColInfo);
+  if ((owner = RemoteGetMsgPort(ctx.Slot))) {
+    return Smenu::Create(owner, ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut,
+                         ColSelShtCut, FlagDefColInfo);
+  }
   return (Tmenu)0;
 }
 
 /* last 3 args are currently useless for remote clients */
-static Tmsgport sockCreateMsgPort(byte NameLen, const char *Name) {
-  Tmsgport MsgPort;
+static Tmsgport sockCreateMsgPort(SockCtx &ctx, byte NameLen, const char *Name) {
+  Tmsgport port;
 
-  if ((MsgPort = New(msgport)(NameLen, Name, 0, 0, 0, SocketH))) {
-    RegisterMsgPort(MsgPort, Slot);
-    MsgPort->ShutDownHook = sockShutDown;
+  if ((port = Smsgport::Create(NameLen, Name, 0, 0, 0, SocketH))) {
+    RegisterMsgPort(port, ctx.Slot);
+    port->ShutDownHook = sockShutDown;
   }
-  return MsgPort;
+  return port;
 }
-static Tmsgport sockFindMsgPort(Tmsgport Prev, byte NameLen, const char *Name) {
+static Tmsgport sockFindMsgPort(SockCtx &ctx, Tmsgport Prev, byte NameLen, const char *Name) {
   Tmsgport M;
   if (!(M = Prev))
-    M = All->FirstMsgPort;
+    M = All->MsgPorts.First;
   while (M) {
     if (M->NameLen == NameLen && !memcmp(M->Name, Name, NameLen))
       break;
@@ -1242,91 +1250,91 @@ static Tmsgport sockFindMsgPort(Tmsgport Prev, byte NameLen, const char *Name) {
   return M;
 }
 
-static Tgroup sockCreateGroup(void) {
-  Tmsgport owner = RemoteGetMsgPort(Slot);
-  if (owner)
-    return New(group)(owner);
+static Tgroup sockCreateGroup(SockCtx &ctx) {
+  Tmsgport owner = RemoteGetMsgPort(ctx.Slot);
+  if (owner) {
+    return Sgroup::Create(owner);
+  }
   return (Tgroup)0;
 }
 
-static Tobj sockPrevObj(Tobj o) {
+static Tobj sockPrevObj(SockCtx & /*ctx*/, Tobj o) {
   TobjEntry e = (TobjEntry)o;
   return (Tobj)(e ? e->Prev : e);
 }
-static Tobj sockNextObj(Tobj o) {
+static Tobj sockNextObj(SockCtx & /*ctx*/, Tobj o) {
   TobjEntry e = (TobjEntry)o;
   return (Tobj)(e ? e->Next : e);
 }
-static Tobj sockParentObj(Tobj o) {
+static Tobj sockParentObj(SockCtx & /*ctx*/, Tobj o) {
   TobjEntry e = (TobjEntry)o;
   return (Tobj)(e ? e->Parent : e);
 }
 
-static Tscreen sockFirstScreen(void) {
-  return All->FirstScreen;
+static Tscreen sockFirstScreen(SockCtx & /*ctx*/) {
+  return All->Screens.First;
 }
-static Twidget sockFirstWidget(Twidget w) {
-  return w ? w->FirstW : w;
+static Twidget sockFirstWidget(SockCtx & /*ctx*/, Twidget w) {
+  return w ? w->Widgets.First : (Twidget)0;
 }
-static Tmsgport sockFirstMsgPort(void) {
-  return All->FirstMsgPort;
+static Tmsgport sockFirstMsgPort(SockCtx & /*ctx*/) {
+  return All->MsgPorts.First;
 }
-static Tmenu sockFirstMenu(Tmsgport MsgPort) {
-  return MsgPort ? MsgPort->FirstMenu : (Tmenu)0;
+static Tmenu sockFirstMenu(SockCtx & /*ctx*/, Tmsgport port) {
+  return port ? port->Menus.First : (Tmenu)0;
 }
-static Twidget sockFirstW(Tmsgport MsgPort) {
-  return MsgPort ? MsgPort->FirstW : (Twidget)0;
+static Twidget sockFirstW(SockCtx & /*ctx*/, Tmsgport port) {
+  return port ? port->Widgets.First : (Twidget)0;
 }
-static Tgroup sockFirstGroup(Tmsgport MsgPort) {
-  return MsgPort ? MsgPort->FirstGroup : (Tgroup)0;
+static Tgroup sockFirstGroup(SockCtx & /*ctx*/, Tmsgport port) {
+  return port ? port->Groups.First : (Tgroup)0;
 }
-static Tmutex sockFirstMutex(Tmsgport MsgPort) {
-  return MsgPort ? MsgPort->FirstMutex : (Tmutex)0;
+static Tmutex sockFirstMutex(SockCtx & /*ctx*/, Tmsgport port) {
+  return port ? port->Mutexes.First : (Tmutex)0;
 }
-static Tmenuitem sockFirstMenuItem(Tmenu Menu) {
-  return Menu ? Menu->FirstI : (Tmenuitem)0;
+static Tmenuitem sockFirstMenuItem(SockCtx & /*ctx*/, Tmenu Menu) {
+  return Menu ? Menu->Items.First : (Tmenuitem)0;
 }
-static Tgadget sockFirstGadget(Tgroup group) {
-  return group ? group->FirstG : (Tgadget)0;
+static Tgadget sockFirstGadget(SockCtx & /*ctx*/, Tgroup group) {
+  return group ? group->Gadgets.First : (Tgadget)0;
 }
 
-static Tall sockGetAll(void) {
+static Tall sockGetAll(SockCtx & /*ctx*/) {
   return All;
 }
 
 /*
- * turn the (Tmsg) into a (tmsg) and write it on the MsgPort file descriptor.
+ * turn the (Tmsg) into a (tmsg) and write it on the port file descriptor.
  *
  * this can be called in nasty places like detaching non-exclusive displays
  * when an exclusive one is started. Must preserve Slot, Fd and other globals!
  */
-static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
+static void SocketSendMsg(Tmsgport port, Tmsg msg) {
+  SockCtx ctx;
   uldat len, tot;
   byte *t;
   uldat save_Slot;
   int save_Fd;
 
+  ctx.RequestN = MSG_MAGIC;
+  ctx.Fd = port->RemoteData.Fd;
+  ctx.Slot = port->RemoteData.FdSlot;
+
 #ifdef CONF_SOCKET_ALIEN
-  if (AlienXendian(Slot) != MagicNative) {
-    alienSendMsg(MsgPort, msg);
+  if (AlienXendian(ctx.Slot) != MagicNative) {
+    alienSendMsg(port, msg);
     return;
   }
 #endif
 
   len = 0;
-  save_Slot = Slot;
-  save_Fd = Fd;
-
-  RequestN = MSG_MAGIC;
-  Fd = MsgPort->RemoteData.Fd;
-  Slot = MsgPort->RemoteData.FdSlot;
 
   switch (msg->Type) {
   case msg_display:
-    sockReply(msg->Type, len = sizeof(twindow) + 4 * sizeof(udat) + msg->Event.EventDisplay.Len,
-              NULL);
+    sockReply(ctx, msg->Type,
+              len = sizeof(twindow) + 4 * sizeof(udat) + msg->Event.EventDisplay.Len, NULL);
 
-    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+    if ((t = RemoteWriteGetQueue(ctx.Slot, &tot)) && tot >= len) {
       t += tot - len;
 
       Push(t, twindow, NOID); /* not used here */
@@ -1338,11 +1346,11 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     }
     break;
   case msg_widget_key:
-    sockReply(msg->Type,
+    sockReply(ctx, msg->Type,
               len = sizeof(twindow) + 3 * sizeof(udat) + 2 * sizeof(byte) +
                     msg->Event.EventKeyboard.SeqLen,
               NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+    if ((t = RemoteWriteGetQueue(ctx.Slot, &tot)) && tot >= len) {
       t += tot - len;
       Push(t, twidget, Obj2Id(msg->Event.EventKeyboard.W));
       Push(t, udat, msg->Event.EventKeyboard.Code);
@@ -1354,8 +1362,8 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     }
     break;
   case msg_widget_mouse:
-    sockReply(msg->Type, len = sizeof(twindow) + 4 * sizeof(udat), NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+    sockReply(ctx, msg->Type, len = sizeof(twindow) + 4 * sizeof(udat), NULL);
+    if ((t = RemoteWriteGetQueue(ctx.Slot, &tot)) && tot >= len) {
       t += tot - len;
       Push(t, twidget, Obj2Id(msg->Event.EventMouse.W));
       Push(t, udat, msg->Event.EventMouse.Code);
@@ -1365,8 +1373,8 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     }
     break;
   case msg_widget_change:
-    sockReply(msg->Type, len = sizeof(twindow) + 6 * sizeof(dat), NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+    sockReply(ctx, msg->Type, len = sizeof(twindow) + 6 * sizeof(dat), NULL);
+    if ((t = RemoteWriteGetQueue(ctx.Slot, &tot)) && tot >= len) {
       t += tot - len;
       Push(t, twidget, Obj2Id(msg->Event.EventWidget.W));
       Push(t, udat, msg->Event.EventWidget.Code);
@@ -1378,8 +1386,8 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     }
     break;
   case msg_widget_gadget:
-    sockReply(msg->Type, len = sizeof(twindow) + 2 * sizeof(dat), NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+    sockReply(ctx, msg->Type, len = sizeof(twindow) + 2 * sizeof(dat), NULL);
+    if ((t = RemoteWriteGetQueue(ctx.Slot, &tot)) && tot >= len) {
       t += tot - len;
       Push(t, twidget, Obj2Id(msg->Event.EventGadget.W));
       Push(t, udat, msg->Event.EventGadget.Code);
@@ -1387,9 +1395,9 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     }
     break;
   case msg_menu_row:
-    sockReply(msg->Type, len = sizeof(twindow) + 2 * sizeof(dat) + sizeof(tmenu) + sizeof(trow),
-              NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+    sockReply(ctx, msg->Type,
+              len = sizeof(twindow) + 2 * sizeof(dat) + sizeof(tmenu) + sizeof(trow), NULL);
+    if ((t = RemoteWriteGetQueue(ctx.Slot, &tot)) && tot >= len) {
       t += tot - len;
       Push(t, twindow, Obj2Id(msg->Event.EventMenu.W));
       Push(t, udat, msg->Event.EventMenu.Code);
@@ -1399,8 +1407,8 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     }
     break;
   case msg_selection:
-    sockReply(msg->Type, len = sizeof(twindow) + 4 * sizeof(dat), NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+    sockReply(ctx, msg->Type, len = sizeof(twindow) + 4 * sizeof(dat), NULL);
+    if ((t = RemoteWriteGetQueue(ctx.Slot, &tot)) && tot >= len) {
       t += tot - len;
       Push(t, twidget, Obj2Id(msg->Event.EventSelection.W));
       Push(t, udat, msg->Event.EventSelection.Code);
@@ -1410,11 +1418,11 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     }
     break;
   case msg_selection_notify:
-    sockReply(msg->Type,
+    sockReply(ctx, msg->Type,
               len = sizeof(twindow) + 2 * sizeof(dat) + 3 * sizeof(ldat) + TW_MAX_MIMELEN +
                     msg->Event.EventSelectionNotify.DataLen,
               NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+    if ((t = RemoteWriteGetQueue(ctx.Slot, &tot)) && tot >= len) {
       t += tot - len;
       Push(t, twidget, Obj2Id(msg->Event.EventSelectionNotify.W));
       Push(t, udat, msg->Event.EventSelectionNotify.Code);
@@ -1434,9 +1442,9 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     }
     break;
   case msg_selection_request:
-    sockReply(msg->Type, len = sizeof(twindow) + 2 * sizeof(dat) + sizeof(tobj) + sizeof(ldat),
+    sockReply(ctx, msg->Type, len = sizeof(twindow) + 2 * sizeof(dat) + sizeof(tobj) + sizeof(ldat),
               NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+    if ((t = RemoteWriteGetQueue(ctx.Slot, &tot)) && tot >= len) {
       t += tot - len;
       Push(t, twidget, Obj2Id(msg->Event.EventSelectionRequest.W));
       Push(t, udat, msg->Event.EventSelectionRequest.Code);
@@ -1447,9 +1455,9 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     break;
 
   case msg_user_control:
-    sockReply(msg->Type, len = sizeof(twindow) + 4 * sizeof(dat) + msg->Event.EventControl.Len,
+    sockReply(ctx, msg->Type, len = sizeof(twindow) + 4 * sizeof(dat) + msg->Event.EventControl.Len,
               NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+    if ((t = RemoteWriteGetQueue(ctx.Slot, &tot)) && tot >= len) {
       t += tot - len;
       Push(t, twidget, Obj2Id(msg->Event.EventControl.W));
       Push(t, udat, msg->Event.EventControl.Code);
@@ -1461,9 +1469,9 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
     break;
 
   case msg_user_clientmsg:
-    sockReply(msg->Type, len = sizeof(twindow) + 2 * sizeof(dat) + msg->Event.EventClientMsg.Len,
-              NULL);
-    if ((t = RemoteWriteGetQueue(Slot, &tot)) && tot >= len) {
+    sockReply(ctx, msg->Type,
+              len = sizeof(twindow) + 2 * sizeof(dat) + msg->Event.EventClientMsg.Len, NULL);
+    if ((t = RemoteWriteGetQueue(ctx.Slot, &tot)) && tot >= len) {
       t += tot - len;
       Push(t, twidget, Obj2Id(msg->Event.EventClientMsg.W));
       Push(t, udat, msg->Event.EventClientMsg.Code);
@@ -1476,15 +1484,13 @@ static void sockSendMsg(Tmsgport MsgPort, Tmsg msg) {
   default:
     break;
   }
-  Slot = save_Slot;
-  Fd = save_Fd;
 }
 
 #define tmsgEventDelta ((udat)(size_t)&(((tmsg)0)->Event))
 #define tmsgEventOffset(x) ((udat)(size_t)&(((tmsg)0)->Event.x))
 
-/* extract the (tmsg) from Data, turn it into a (Tmsg) and send it to MsgPort */
-static byte sockSendToMsgPort(Tmsgport MsgPort, udat len, const byte *Data) {
+/* extract the (tmsg) from Data, turn it into a (Tmsg) and send it to port */
+static byte sockSendToMsgPort(SockCtx &ctx, Tmsgport port, udat len, const byte *Data) {
   tmsg tw_msg;
   Tmsgport Sender;
   Tmsg msg;
@@ -1497,12 +1503,12 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat len, const byte *Data) {
   /* be careful with alignment! */
   tw_msg = (tmsg)CloneMem(Data, len);
 
-  do
-    if (MsgPort && len && tw_msg && len >= tmsgEventDelta && len == tw_msg->Len &&
+  do {
+    if (port && len && tw_msg && len >= tmsgEventDelta && len == tw_msg->Len &&
         tw_msg->Magic == Tmsg_class_id) {
 
-      Sender = RemoteGetMsgPort(Slot);
-      if (Sender && Sender->AttachHW && MsgPort->Handler != SocketH)
+      Sender = RemoteGetMsgPort(ctx.Slot);
+      if (Sender && Sender->AttachHW && port->Handler != SocketH)
         minType = TW_MSG_DISPLAY;
       else
         minType = TW_MSG_USER_FIRST;
@@ -1546,23 +1552,23 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat len, const byte *Data) {
       if (!ok)
         break;
 
-      if (MsgPort->Handler == SocketH && MsgPort->RemoteData.Fd != NOFD &&
-          (dstSlot = MsgPort->RemoteData.FdSlot) != NOSLOT &&
-          !memcmp(FdList[dstSlot].AlienMagic, LS.AlienMagic, TWS_highest - 1)) {
+      if (port->Handler == SocketH && port->RemoteData.Fd != NOFD &&
+          (dstSlot = port->RemoteData.FdSlot) != NOSLOT &&
+          !memcmp(FdList[dstSlot].AlienMagic, xLS.AlienMagic, TWS_highest - 1)) {
         /*
          * shortcut: we have a (tmsg); instead of turning it into a (Tmsg)
-         * then have SocketH() call sockSendMsg() to turn it back into a (tmsg),
+         * then have SocketH() call SocketSendMsg() to turn it back into a (tmsg),
          * we directly copy it --- only one condition must be met:
          * both clients must have the same AlienMagic()
          * (i.e. endianity and data sizes).
          */
-        tw_msg->Len -= AlienSizeof(uldat, Slot);
+        tw_msg->Len -= AlienSizeof(uldat, ctx.Slot);
         tw_msg->Magic = MSG_MAGIC;
         RemoteWriteQueue(dstSlot, len, (const byte *)tw_msg);
         break;
       }
 
-      if ((msg = New(msg)(tw_msg->Type, _Len))) {
+      if ((msg = Smsg::Create(tw_msg->Type, _Len))) {
 
         msg->Event.EventCommon.W = (Twidget)Id2Obj(Twidget_class_byte, tw_msg->Event.EventCommon.W);
 
@@ -1672,7 +1678,7 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat len, const byte *Data) {
           msg->Event.EventClientMsg.Len = tw_msg->Event.EventClientMsg.Len;
 #ifdef CONF_SOCKET_ALIEN
           /* FIXME: this must be replaced with a call to alienSendToMsgPort() above */
-          if (AlienXendian(Slot) == MagicAlienXendian) {
+          if (AlienXendian(ctx.Slot) == MagicAlienXendian) {
             tevent_clientmsg tC = &tw_msg->Event.EventClientMsg;
             event_clientmsg *C = &msg->Event.EventClientMsg;
 
@@ -1688,12 +1694,12 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat len, const byte *Data) {
         }
 
         if (ok)
-          SendMsg(MsgPort, msg);
+          SendMsg(port, msg);
         else
           msg->Delete();
       }
     }
-  while (0);
+  } while (0);
 
   FreeMem(tw_msg);
   return ok;
@@ -1702,33 +1708,37 @@ static byte sockSendToMsgPort(Tmsgport MsgPort, udat len, const byte *Data) {
 #undef tmsgEventDelta
 #undef tmsgEventOffset
 
-static void sockBlindSendToMsgPort(Tmsgport MsgPort, udat len, const byte *Data) {
-  (void)sockSendToMsgPort(MsgPort, len, Data);
+static void sockBlindSendToMsgPort(SockCtx &ctx, Tmsgport port, udat len, const byte *Data) {
+  (void)sockSendToMsgPort(ctx, port, len, Data);
 }
 
-static Tobj sockGetOwnerSelection(void) {
+static Tobj sockGetOwnerSelection(SockCtx & /*ctx*/) {
   return TwinSelectionGetOwner();
 }
 
-static void sockSetOwnerSelection(tany Time, tany Frac) {
-  if (LS.MsgPort)
-    TwinSelectionSetOwner((Tobj)LS.MsgPort, Time, Frac);
+static void sockSetOwnerSelection(SockCtx &ctx, tany Time, tany Frac) {
+  Tmsgport port = xLS.MsgPort;
+  if (port) {
+    TwinSelectionSetOwner((Tobj)port, Time, Frac);
+  }
 }
 
-static void sockNotifySelection(Tobj requestor, uldat reqprivate, uldat magic,
+static void sockNotifySelection(SockCtx & /*ctx*/, Tobj requestor, uldat reqprivate, uldat magic,
                                 const char mime[TW_MAX_MIMELEN], uldat len, const char *data) {
   TwinSelectionNotify(requestor, reqprivate, e_id(magic),
                       Chars::from_c_maxlen(mime, TW_MAX_MIMELEN), Chars(data, len));
 }
 
-static void sockRequestSelection(Tobj owner, uldat ReqPrivate) {
-  if (LS.MsgPort)
-    TwinSelectionRequest((Tobj)LS.MsgPort, ReqPrivate, owner);
+static void sockRequestSelection(SockCtx &ctx, Tobj owner, uldat ReqPrivate) {
+  Tmsgport port = xLS.MsgPort;
+  if (port) {
+    TwinSelectionRequest((Tobj)port, ReqPrivate, owner);
+  }
 }
 
 #ifdef CONF_SOCKET_GZ
 
-static byte sockCanCompress(void) {
+static byte sockCanCompress(SockCtx & /*ctx*/) {
   return ttrue;
 }
 
@@ -1776,12 +1786,12 @@ static void ShutdownGzip(uldat slot) {
  * this is what it normally does anyway since it has to wait for the return value...
  * no problem.
  */
-static byte sockDoCompress(byte on_off) {
+static byte sockDoCompress(SockCtx &ctx, byte on_off) {
   uldat slot = NOSLOT;
   z_streamp z1 = NULL, z2 = NULL;
 
   if (on_off) {
-    if ((slot = RegisterRemoteFd(specFD, LS.HandlerIO.S)) != NOSLOT &&
+    if ((slot = RegisterRemoteFd(specFD, xLS.HandlerIO.S)) != NOSLOT &&
         (z1 = (z_streamp)AllocMem(sizeof(*z1))) && (z2 = (z_streamp)AllocMem(sizeof(*z2)))) {
 
       z1->zalloc = z2->zalloc = sockZAlloc;
@@ -1792,30 +1802,33 @@ static byte sockDoCompress(byte on_off) {
         if (inflateInit(z2) == Z_OK) {
 
           /* ok, start pairing the two slots */
-          ls.pairSlot = Slot;
+          ls.pairSlot = ctx.Slot;
           ls.PrivateData = static_cast<void *>(z1);
 
-          LS.pairSlot = slot;
-          LS.PrivateData = static_cast<void *>(z2);
-          LS.PrivateAfterFlush = FixupGzip;
+          xLS.pairSlot = slot;
+          xLS.PrivateData = static_cast<void *>(z2);
+          xLS.PrivateAfterFlush = FixupGzip;
 
-          /* we have ls.Fd == specFD. it will be fixed by LS.PrivateAfterFlush() */
+          /* we have ls.Fd == specFD. it will be fixed by xLS.PrivateAfterFlush() */
 
           return ttrue;
         }
         deflateEnd(z1);
       }
     }
-    if (z2)
+    if (z2) {
       FreeMem(z2);
-    if (z1)
+    }
+    if (z1) {
       FreeMem(z1);
-    if (slot != NOSLOT)
+    }
+    if (slot != NOSLOT) {
       UnRegisterRemote(slot);
+    }
     return tfalse;
   } else {
     /* inform RemoteFlush() we are shutting down the compression... */
-    LS.PrivateAfterFlush = ShutdownGzip;
+    xLS.PrivateAfterFlush = ShutdownGzip;
 
     return ttrue;
   }
@@ -1823,11 +1836,11 @@ static byte sockDoCompress(byte on_off) {
 
 #else
 
-static byte sockCanCompress(void) {
+static byte sockCanCompress(SockCtx & /*ctx*/) {
   return tfalse;
 }
 
-static byte sockDoCompress(byte on_off) {
+static byte sockDoCompress(SockCtx & /*ctx*/, byte on_off) {
   return tfalse;
 }
 
@@ -1835,48 +1848,50 @@ static byte sockDoCompress(byte on_off) {
 
 /* socket initialization functions */
 
-static uldat SendTwinProtocol(void) {
+static uldat SendTwinProtocol(uldat slot) {
   static char buf[] = " Twin-" TW_PROTOCOL_VERSION_STR "-" TWIN_VERSION_STR "\n";
   buf[0] = strlen(buf);
-  return RemoteWriteQueue(Slot, buf[0], (const byte *)buf);
+  return RemoteWriteQueue(slot, buf[0], (const byte *)buf);
 }
 
-static byte SendTwinMagic(byte len, const byte *magic) {
-  return RemoteWriteQueue(Slot, len, magic) == len;
+static byte SendTwinMagic(uldat slot, byte len, const byte *magic) {
+  return RemoteWriteQueue(slot, len, magic) == len;
 }
 
-static byte sockReply(uldat code, uldat len, const void *data) {
+static byte sockReply(SockCtx &ctx, uldat code, uldat len, const void *data) {
   uldat buf[3];
   buf[0] = 2 * sizeof(uldat) + len;
-  buf[1] = RequestN;
+  buf[1] = ctx.RequestN;
   buf[2] = code;
-  if (RemoteWriteQueue(Slot, 3 * sizeof(uldat), buf) == 3 * sizeof(uldat) && len)
-    return RemoteWriteQueue(Slot, len, data) == len;
+  if (RemoteWriteQueue(ctx.Slot, 3 * sizeof(uldat), buf) == 3 * sizeof(uldat) && len) {
+    return RemoteWriteQueue(ctx.Slot, len, data) == len;
+  }
   return tfalse;
 }
 
-static byte SendUldat(uldat data) {
+static byte SendUldat(uldat slot, uldat data) {
 
 #ifdef CONF_SOCKET_ALIEN
 
-  if (AlienXendian(Slot) == MagicNative)
-    return RemoteWriteQueue(Slot, sizeof(uldat), &data) == sizeof(uldat);
+  if (AlienXendian(slot) == MagicNative) {
+    return RemoteWriteQueue(slot, sizeof(uldat), &data) == sizeof(uldat);
+  }
 
   {
     uldat len;
-    byte *t, AlienSizeofUldat = AlienSizeof(uldat, Slot);
+    byte *t, AlienSizeofUldat = AlienSizeof(uldat, slot);
 
-    if (RemoteWriteQueue(Slot, AlienSizeofUldat, NULL) == AlienSizeofUldat) {
-      t = RemoteWriteGetQueue(Slot, &len);
+    if (RemoteWriteQueue(slot, AlienSizeofUldat, NULL) == AlienSizeofUldat) {
+      t = RemoteWriteGetQueue(slot, &len);
       t += len - AlienSizeofUldat;
-      alienPUSH(t, uldat, data);
+      alienPUSH(slot, t, uldat, data);
       return ttrue;
     }
     return tfalse;
   }
 #else /* !CONF_SOCKET_ALIEN */
 
-  return RemoteWriteQueue(Slot, sizeof(uldat), &data) == sizeof(uldat);
+  return RemoteWriteQueue(slot, sizeof(uldat), &data) == sizeof(uldat);
 
 #endif /* CONF_SOCKET_ALIEN */
 }
@@ -1923,7 +1938,7 @@ static uldat GetRandomData(void) {
   return len;
 }
 
-static byte CreateAuth(char *path) {
+static bool CreateAuth(char *path) {
   int fd, got = -1;
   uldat len = 0;
 
@@ -1935,25 +1950,26 @@ static byte CreateAuth(char *path) {
       for (len = 0; len < AuthLen; len += got) {
         got = write(fd, AuthData + len, AuthLen - len);
         if (got < 0) {
-          if (errno == EINTR || errno == EWOULDBLOCK)
+          if (errno == EINTR || errno == EWOULDBLOCK) {
             got = 0;
-          else
+          } else {
             break;
+          }
         }
       }
     close(fd);
   }
 
-  return len == AuthLen ? ttrue : Error(SYSERROR);
+  return len == AuthLen ? true : Error(SYSERROR);
 }
 
-static byte sockInitAuth(void) {
+static bool SocketInitAuth(void) {
   int fd, got;
   uldat len;
 
-  if (!HOME)
-    return tfalse;
-
+  if (!HOME) {
+    return false;
+  }
   len = HOME.size();
   len = Min2(len, TotalLen - 11);
   CopyMem(HOME.data(), AuthData, len);
@@ -1974,14 +1990,14 @@ static byte sockInitAuth(void) {
     }
   }
   close(fd);
-  if (len < AuthLen)
+  if (len < AuthLen) {
     return CreateAuth(AuthData);
-
-  return ttrue;
+  }
+  return true;
 }
 
-static byte SendChallenge(void) {
-  struct MD5Context ctx;
+static byte SendChallenge(uldat slot) {
+  struct MD5Context md5;
   int fd, got;
   uldat len, queue;
   byte *t;
@@ -1997,14 +2013,14 @@ static byte SendChallenge(void) {
       break;
   }
   close(fd);
-  if (got > 0 && len == TotalLen && (len -= AuthLen) && RemoteReadGrowQueue(Slot, digestLen) &&
+  if (got > 0 && len == TotalLen && (len -= AuthLen) && RemoteReadGrowQueue(slot, digestLen) &&
       /* make space for digest, and also check there's no pending data */
-      (t = RemoteReadGetQueue(Slot, &queue)) && queue == digestLen && SendUldat(len) &&
-      RemoteWriteQueue(Slot, len, AuthData + AuthLen)) {
+      (t = RemoteReadGetQueue(slot, &queue)) && queue == digestLen && SendUldat(slot, len) &&
+      RemoteWriteQueue(slot, len, AuthData + AuthLen)) {
 
-    MD5Init(&ctx);
-    MD5Update(&ctx, AuthData, TotalLen);
-    MD5Final(t, &ctx); /* write digest into t */
+    MD5Init(&md5);
+    MD5Update(&md5, AuthData, TotalLen);
+    MD5Final(t, &md5); /* write digest into t */
 
     return ttrue;
   }
@@ -2051,10 +2067,9 @@ static int EnsureRead(int fd, uldat slot, uldat len) {
   return max;
 }
 
-static handler_io_s GetHandlerIO() {
+static handler_io_s GetHandlerIO(uldat slot) {
 #ifdef CONF_SOCKET_ALIEN
-  if (AlienXendian(Slot) != MagicNative) {
-
+  if (AlienXendian(slot) != MagicNative) {
     return AlienIO;
   }
 #endif /* CONF_SOCKET_ALIEN */
@@ -2066,30 +2081,29 @@ static void Wait4AuthIO(int fd, uldat slot) {
   byte *t;
   int got;
 
-  /* macro LS uses global variable Slot: set it */
-  got = EnsureRead(fd, Slot = slot, digestLen * 2);
+  got = EnsureRead(fd, slot, digestLen * 2);
 
-  if (got < 0)
+  if (got < 0) {
     ;
-  else if (got < digestLen * 2)
+  } else if (got < digestLen * 2) {
     /* not yet ready to check */
     return;
-  else { /* (got >= digestLen*2) */
-    t = RemoteReadGetQueue(Slot, NULL);
+  } else { /* (got >= digestLen*2) */
+    t = RemoteReadGetQueue(slot, NULL);
     if (!memcmp(t, t + digestLen, digestLen)) {
       /* OK! */
-      if ((LS.HandlerIO.S = GetHandlerIO())) {
-        RemoteReadDeQueue(Slot, digestLen * 2);
-        SendUldat(TW_GO_MAGIC);
+      if ((ls.HandlerIO.S = GetHandlerIO(slot))) {
+        RemoteReadDeQueue(slot, digestLen * 2);
+        SendUldat(slot, TW_GO_MAGIC);
         return;
       }
     }
   }
 
   /* I/O error or Auth error */
-  SendUldat(TW_STOP_MAGIC);
-  RemoteFlush(Slot);
-  UnRegisterRemote(Slot);
+  SendUldat(slot, TW_STOP_MAGIC);
+  RemoteFlush(slot);
+  UnRegisterRemote(slot);
   close(fd);
 }
 
@@ -2123,10 +2137,9 @@ static byte Check4MagicTranslation(uldat slot, const byte *magic, byte len) {
   if (len1 > TWS_tcell && len == magic[0] &&
       magic[TWS_byte] == 1 && /* sizeof(byte) MUST be 1, or passing byte[] vectors would fail */
       magic[TWS_udat] >= 2 && magic[TWS_uldat] >= 4 && len - len1 == magic[TWS_uldat] + 1 &&
-      magic[TWS_tcolor] ==
-          1 && /* sizeof(tcolor) MUST be 1, or passing tcolor[] vectors would fail */
-      magic[TWS_topaque] >= 4 &&
-      magic[TWS_tany] >= 4 && magic[TWS_trune] >= 1 && magic[TWS_tcell] >= 2) {
+      /* sizeof(tcolor) MUST match, or passing tcolor[] vectors would fail */
+      magic[TWS_tcolor] == sizeof(tcolor) && magic[TWS_topaque] >= 4 && magic[TWS_tany] >= 4 &&
+      magic[TWS_trune] >= 1 && magic[TWS_tcell] >= 2) {
 
     /* store client magic numbers */
     CopyMem(magic, AlienMagic(slot), Min2(len1, TWS_highest));
@@ -2180,18 +2193,18 @@ static void Wait4Magic(int fd, uldat slot) {
   uldat max;
   int got;
 
-  t = RemoteReadGetQueue(Slot = slot, &max);
-  if (max == 0)
+  t = RemoteReadGetQueue(slot, &max);
+  if (max == 0) {
     max = TW_MAXBYTE;
-  else
+  } else {
     max = t[0];
+  }
+  got = EnsureRead(fd, slot, max);
 
-  got = EnsureRead(fd, Slot, max);
-
-  t = RemoteReadGetQueue(Slot, NULL);
-  if (got > 0)
+  t = RemoteReadGetQueue(slot, NULL);
+  if (got > 0) {
     max = t[0];
-
+  }
   if (got < 0) {
     ;
   } else if ((uldat)got < max) {
@@ -2202,40 +2215,41 @@ static void Wait4Magic(int fd, uldat slot) {
      * check whether the client has our same sizes and endianity
      * or one of the available translations is needed.
      */
-    if ((AlienXendian(Slot) = Check4MagicTranslation(Slot, t, max)) == MagicUnknown) {
+    if ((AlienXendian(slot) = Check4MagicTranslation(slot, t, max)) == MagicUnknown) {
       /*
        * no suitable translation available. use our native magic,
        * in case client's library can handle it.
        */
-      CopyMem(TwinMagicData, AlienMagic(Slot), TWS_highest);
-      AlienXendian(Slot) = MagicNative;
-      got = SendTwinMagic(TwinMagicData[0], TwinMagicData);
+      CopyMem(TwinMagicData, AlienMagic(slot), TWS_highest);
+      AlienXendian(slot) = MagicNative;
+      got = SendTwinMagic(slot, TwinMagicData[0], TwinMagicData);
     } else {
       /*
        * we have a translation for client's magic.
        * answer its same magic.
        */
-      got = SendTwinMagic((byte)max, t);
+      got = SendTwinMagic(slot, (byte)max, t);
     }
-    RemoteReadDeQueue(Slot, max);
+    RemoteReadDeQueue(slot, max);
 
     if (got) {
-      LS.HandlerIO.S = Wait4AuthIO;
-      if (SendUldat(TW_WAIT_MAGIC) && SendChallenge()) {
+      ls.HandlerIO.S = Wait4AuthIO;
+      if (SendUldat(slot, TW_WAIT_MAGIC) && SendChallenge(slot)) {
         return;
       }
     }
   }
 
   /* problem... out of memory or I/O error. */
-  UnRegisterRemote(Slot);
+  UnRegisterRemote(slot);
   close(fd);
 }
 
-static void unixSocketIO(int fd, uldat slot) {
+static void unixSocketIO(int fd, uldat /*slot*/) {
   struct sockaddr_un un_addr = {};
   socklen_t len = sizeof(un_addr);
   if ((fd = accept(unixFd, (struct sockaddr *)&un_addr, &len)) >= 0) {
+    uldat slot;
     /*
      * twin < 0.9.1 automatically trusted clients connected via the unix socket
      * i.e. accepted them without TwinAuth challenge.
@@ -2244,36 +2258,37 @@ static void unixSocketIO(int fd, uldat slot) {
      * Reason: on non-Linux systems, file system permissions on unix domain socket
      * may be ignored => different users may be able to connect through it.
      */
-    if ((Slot = RegisterRemoteFd(fd, Wait4Magic)) != NOSLOT) {
+    if ((slot = RegisterRemoteFd(fd, Wait4Magic)) != NOSLOT) {
       fcntl(fd, F_SETFL, O_NONBLOCK);
       fcntl(fd, F_SETFD, FD_CLOEXEC);
-      if (SendTwinProtocol()) {
+      if (SendTwinProtocol(slot)) {
         return;
       }
-      UnRegisterRemote(Slot);
+      UnRegisterRemote(slot);
     }
     close(fd);
   }
 }
 
-static void inetSocketIO(int fd, uldat slot) {
+static void inetSocketIO(int fd, uldat /*slot*/) {
   struct sockaddr_in in_addr = {};
   socklen_t len = sizeof(in_addr);
   if ((fd = accept(inetFd, (struct sockaddr *)&in_addr, &len)) >= 0) {
-    if ((Slot = RegisterRemoteFd(fd, Wait4Magic)) != NOSLOT) {
+    uldat slot;
+    if ((slot = RegisterRemoteFd(fd, Wait4Magic)) != NOSLOT) {
       fcntl(fd, F_SETFL, O_NONBLOCK);
       fcntl(fd, F_SETFD, FD_CLOEXEC);
-      if (SendTwinProtocol()) {
+      if (SendTwinProtocol(slot)) {
         return;
       }
-      UnRegisterRemote(Slot);
+      UnRegisterRemote(slot);
     }
     close(fd);
   }
 }
 
-static void sockKillSlot(uldat slot) {
-  Tmsgport MsgPort;
+static void SocketKillSlot(uldat slot) {
+  Tmsgport port;
   Tdisplay D_HW;
 
   if (slot != NOSLOT) {
@@ -2291,19 +2306,19 @@ static void sockKillSlot(uldat slot) {
     }
 #endif
 
-    if ((MsgPort = RemoteGetMsgPort(slot))) {
+    if ((port = RemoteGetMsgPort(slot))) {
       /*
        * no infinite recursion between KillSlot and DeleteMsgPort...
        * DeleteMsgPort doesn't kill the slot, only unregisters from it
        */
 
-      if ((D_HW = MsgPort->AttachHW)) {
+      if ((D_HW = port->AttachHW)) {
         /* avoid KillSlot <-> DeleteDisplayHW infinite recursion */
         D_HW->AttachSlot = NOSLOT;
         D_HW->Delete();
       }
 
-      MsgPort->Delete(); /* and all its children ! */
+      port->Delete(); /* and all its children ! */
     }
 
     if (ls.Fd >= 0)
@@ -2313,7 +2328,8 @@ static void sockKillSlot(uldat slot) {
 }
 
 static void SocketIO(int fd, uldat slot) {
-  uldat len, Funct;
+  SockCtx ctx;
+  uldat len, funct;
   byte *t;
   const byte *tend;
   int tot = 0;
@@ -2321,105 +2337,108 @@ static void SocketIO(int fd, uldat slot) {
   uldat gzSlot;
 #endif
 
-  Fd = fd;
-  Slot = slot;
+  ctx.Fd = fd;
+  ctx.Slot = slot;
 
-  if (ioctl(Fd, FIONREAD, &tot) != 0 || tot <= 0)
+  if (ioctl(ctx.Fd, FIONREAD, &tot) != 0 || tot <= 0)
     tot = TW_SMALLBUFF;
   else if (tot > TW_HUGEBUFF)
     tot = TW_HUGEBUFF;
 
-  if (!(t = RemoteReadGrowQueue(Slot, tot)))
+  if (!(t = RemoteReadGrowQueue(ctx.Slot, tot)))
     return;
 
-  if ((len = read(Fd, t, tot)) && len && len != (uldat)-1) {
-    if (len < (uldat)tot)
-      RemoteReadShrinkQueue(Slot, (uldat)tot - len);
-
+  if ((len = read(ctx.Fd, t, tot)) && len && len != (uldat)-1) {
+    if (len < (uldat)tot) {
+      RemoteReadShrinkQueue(ctx.Slot, (uldat)tot - len);
+    }
     /* ok, now process the data */
 
 #ifdef CONF_SOCKET_GZ
-    if ((gzSlot = LS.pairSlot) != NOSLOT) {
+    if ((gzSlot = xLS.pairSlot) != NOSLOT) {
       /* hmmm, a compressed socket. */
-      if (RemoteGunzip(Slot))
-        Slot = gzSlot;
-      else {
-        Ext(Remote, KillSlot)(Slot);
+      if (RemoteGunzip(ctx.Slot)) {
+        ctx.Slot = gzSlot;
+      } else {
+        Ext(Remote, KillSlot)(ctx.Slot);
         return;
       }
     }
 #endif
 
-    s = t = RemoteReadGetQueue(Slot, &len);
-    tend = s + len;
+    ctx.s = t = RemoteReadGetQueue(ctx.Slot, &len);
+    tend = ctx.s + len;
 
-    while (s + 3 * sizeof(uldat) <= tend) {
-      Pop(s, uldat, len);
+    while (ctx.s + 3 * sizeof(uldat) <= tend) {
+      Pop(ctx.s, uldat, len);
       if (len < 2 * sizeof(uldat)) {
-        s += len;
+        /* ignore invalid packet, is too short */
+        ctx.s += len;
         continue;
-      }
-      if (s + len > s && s + len <= tend) {
-        end = s + len;
-        Pop(s, uldat, RequestN);
-        Pop(s, uldat, Funct);
-        if (Funct < MaxFunct) {
-          slot = Slot;
-          sockMultiplexB(Funct); /* Slot is the uncompressed socket here ! */
-          Slot = slot;           /*
-                                  * restore, in case sockF[Funct].F() changed it;
-                                  * without this, tw* clients can freeze
-                                  * if twdisplay is in use
-                                  */
-        } else if (Funct == FIND_MAGIC)
-          sockMultiplexB(0);
-        s = end;
-      } else if (s + len < s) {
-        s = tend;
-        break;
-      } else { /* if (s + len > tend) */
+      } else if (len <= tend - ctx.s) {
+        ctx.end = ctx.s + len;
+        Pop(ctx.s, uldat, ctx.RequestN);
+        Pop(ctx.s, uldat, funct);
+        if (funct < MaxFunct) {
+          slot = ctx.Slot;
+          sockMultiplexB(ctx, funct); /* Slot is the uncompressed socket here ! */
+          ctx.Slot = slot;            /*
+                                       * restore, in case sockF[funct].F() changed it;
+                                       * without this, tw* clients can freeze
+                                       * if twdisplay is in use
+                                       */
+        } else if (funct == FIND_MAGIC)
+          sockMultiplexB(ctx, 0);
+        ctx.s = ctx.end;
+      } else if (len < TW_HUGEBUFF - 4 * sizeof(uldat)) {
         /* must wait for rest of packet... unpop len */
-        s -= sizeof(uldat);
+        ctx.s -= sizeof(uldat);
+        break;
+      } else {
+        /* ignore invalid packet, is too long */
+        ctx.s = tend;
         break;
       }
     }
-    RemoteReadDeQueue(Slot, (uldat)(s - t));
+    RemoteReadDeQueue(ctx.Slot, (uldat)(ctx.s - t));
 
 #ifdef CONF_SOCKET_GZ
-    if (gzSlot != NOSLOT)
+    if (gzSlot != NOSLOT) {
       /* compressed socket, restore Slot */
-      Slot = gzSlot;
+      ctx.Slot = gzSlot;
+    }
 #endif
 
   } else if (!len || (len == (uldat)-1 && errno != EINTR && errno != EWOULDBLOCK)) {
     /* let's close this sucker */
-    Ext(Remote, KillSlot)(Slot);
+    Ext(Remote, KillSlot)(ctx.Slot);
   }
 }
 
-static void SocketH(Tmsgport MsgPort) {
+static void SocketH(Tmsgport port) {
   Tmsg msg;
   Twidget w;
-  char buf[10];
+  char buf[24];
   byte len;
 
-  while ((msg = MsgPort->FirstMsg)) {
+  while ((msg = port->Msgs.First)) {
     msg->Remove();
 
     if (msg->Type == msg_widget_mouse && (w = msg->Event.EventMouse.W) && IS_WINDOW(w) &&
         (w->Flags & WINDOWFL_USECONTENTS) && ((Twindow)w)->USE.C.TtyData &&
-        ((Twindow)w)->USE.C.TtyData->Flags & (TTY_REPORTMOUSE_TWTERM | TTY_REPORTMOUSE_XTERM)) {
+        ((Twindow)w)->USE.C.TtyData->Flags & TTY_REPORTMOUSE_STYLE) {
 
-      len = CreateXTermMouseEvent(&msg->Event.EventMouse, 10, buf);
+      len = CreateMouseEvent(&msg->Event.EventMouse, sizeof(buf), buf);
       /*
-       * SyntheticKey() will send an appropriate keyboard message to this MsgPort
-       * and we will sockSendMsg() it later in the while() loop.
+       * SyntheticKey() will send an appropriate keyboard message to this port
+       * and we will SocketSendMsg() it later in the while() loop.
        */
-      if (len)
+      if (len) {
         SyntheticKey(msg->Event.EventMouse.W, TW_XTermMouse, 0, len, buf);
-    } else
-      sockSendMsg(MsgPort, msg);
-
+      }
+    } else {
+      SocketSendMsg(port, msg);
+    }
     msg->Delete();
   }
 }
@@ -2433,7 +2452,7 @@ EXTERN_C byte InitModule(Tmodule Module) {
       0,
   };
 
-  if (!sockInitAuth()) {
+  if (!SocketInitAuth()) {
     log(ERROR) << "twin: failed to create ~/.TwinAuth: " << Errstr << "\n";
     return tfalse;
   }
@@ -2470,10 +2489,9 @@ EXTERN_C byte InitModule(Tmodule Module) {
       sockF[MaxFunct].FormatLen = strlen(sockF[MaxFunct].Format);
     }
 
-    RegisterExt(Remote, KillSlot, sockKillSlot);
-    RegisterExt(Socket, SendMsg, sockSendMsg);
-    RegisterExt(Socket, InitAuth, sockInitAuth);
-    RegisterExt(Socket, MultiplexS, sockMultiplexS);
+    RegisterExt(Remote, KillSlot, SocketKillSlot);
+    RegisterExt(Socket, SendMsg, SocketSendMsg);
+    RegisterExt(Socket, InitAuth, SocketInitAuth);
 
     m = TWIN_MAGIC;
     CopyMem(&m, TwinMagicData + TwinMagicData[0] - sizeof(uldat), sizeof(uldat));
@@ -2490,24 +2508,24 @@ EXTERN_C byte InitModule(Tmodule Module) {
 }
 
 EXTERN_C void QuitModule(Tmodule Module) {
-  if (unixSlot != NOSLOT)
+  if (unixSlot != NOSLOT) {
     FdList[unixSlot].HandlerIO.S = save_unixSocketIO;
-
+  }
   if (inetSlot != NOSLOT) {
     UnRegisterRemote(inetSlot);
     close(inetFd);
   }
-  for (Slot = 0; Slot < FdTop; Slot++) {
-    if (LS.Fd != NOFD && (LS.HandlerIO.S == Wait4Magic || LS.HandlerIO.S == Wait4AuthIO ||
+  uldat slot;
+  for (slot = 0; slot < FdTop; slot++) {
+    if (ls.Fd != NOFD && (ls.HandlerIO.S == Wait4Magic || ls.HandlerIO.S == Wait4AuthIO ||
 #ifdef CONF_SOCKET_ALIEN
-                          LS.HandlerIO.S == AlienIO ||
+                          ls.HandlerIO.S == AlienIO ||
 #endif
-                          LS.HandlerIO.S == SocketIO)) {
-      Ext(Remote, KillSlot)(Slot);
+                          ls.HandlerIO.S == SocketIO)) {
+      Ext(Remote, KillSlot)(slot);
     }
   }
-  UnRegisterExt(Remote, KillSlot, sockKillSlot);
-  UnRegisterExt(Socket, SendMsg, sockSendMsg);
-  UnRegisterExt(Socket, InitAuth, sockInitAuth);
-  UnRegisterExt(Socket, MultiplexS, sockMultiplexS);
+  UnRegisterExt(Remote, KillSlot, SocketKillSlot);
+  UnRegisterExt(Socket, SendMsg, SocketSendMsg);
+  UnRegisterExt(Socket, InitAuth, SocketInitAuth);
 }

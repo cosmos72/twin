@@ -30,6 +30,7 @@
 #include "twin.h"
 #include "alloc.h"
 #include "algo.h"
+#include "builtin.h"
 #include "data.h"
 #include "draw.h"
 #include "log.h"
@@ -54,7 +55,7 @@ void FlushCursor(void) {
   if (NeedUpdateCursor) {
     NeedUpdateCursor = false;
 
-    const Tscreen screen = All->FirstScreen;
+    const Tscreen screen = All->Screens.First;
     const Twindow window = FindCursorWindow();
 
     if (window &&
@@ -69,7 +70,7 @@ void FlushCursor(void) {
       if (curX >= 0 && curX < (window->XWidth - hasBorder) && curY >= 0 &&
           curY < (window->YWidth - hasBorder) &&
           d.Init(window, (dat)curX, (dat)curY, (dat)curX, (dat)curY, false) &&
-          ((window == (Twindow)screen->FirstW && !window->FirstW) ||
+          ((window == (Twindow)screen->Widgets.First && !window->Widgets.First) ||
 #if 1
            /* widgets and gadgets cannot contain cursor, but they can obscure it */
            window == RecursiveFindWidgetAt(screen, (dat)d.X1, (dat)d.Y1 - screen->Up)
@@ -115,7 +116,7 @@ bool CheckResizeWindowContents(Twindow w) {
 bool ResizeWindowContents(Twindow w) {
   tcell *NewCont, *saveNewCont, *OldCont, *max, h;
   ldat count, common, left;
-  ttydata *Data = w->USE.C.TtyData;
+  tty_data *Data = w->USE.C.TtyData;
   dat x = w->XWidth, y = w->YWidth + Data->ScrollBack;
 
   if (!(w->Flags & WINDOWFL_BORDERLESS))
@@ -212,8 +213,8 @@ static Trow InsertRowsWindow(Twindow w, ldat NumRows) {
   Trow row;
 
   while (NumRows--) {
-    if ((row = New(row)(0, ROW_ACTIVE))) {
-      row->Insert(w, w->USE.R.LastRow, NULL);
+    if ((row = Srow::Create(0, ROW_ACTIVE))) {
+      row->Insert(w, w->USE.R.Rows.Last, NULL);
     } else
       break;
   }
@@ -248,7 +249,7 @@ bool RowWriteCharsetWindow(Twindow w, uldat len, const char *charset_bytes) {
   if (!w || (len && !charset_bytes) || !W_USE(w, USEROWS))
     return false;
 
-  Trow row = w->USE.R.LastRow;
+  Trow row = w->USE.R.Rows.Last;
   ldat x = w->CurX;
   ldat y = w->CurY;
   ldat max = w->HLogic;
@@ -261,7 +262,7 @@ bool RowWriteCharsetWindow(Twindow w, uldat len, const char *charset_bytes) {
     if (max <= y || (max == y + 1 && (*charset_bytes == '\n' || *charset_bytes == '\r'))) {
       if (InsertRowsWindow(w, Max2(y + 1 - max, 1))) {
         max = w->HLogic;
-        row = w->USE.R.LastRow;
+        row = w->USE.R.Rows.Last;
       } else
         return false;
     } else {
@@ -294,20 +295,21 @@ bool RowWriteCharsetWindow(Twindow w, uldat len, const char *charset_bytes) {
       for (uldat i = (uldat)Max2(0, -x); i < row_len; i++) {
         row->Text[x + i] = to_UTF_32[(byte)charset_bytes[i]];
       }
-      if (x >= 0 && (uldat)x > row->Len)
+      if (x >= 0 && (uldat)x > row->Len) {
         for (uldat i = row->Len; i < (uldat)x; i++) {
           row->Text[i] = (trune)' ';
         }
-
+      }
       if (!(w->Flags & WINDOWFL_ROWS_DEFCOL)) {
-        memset(row->ColText + x, w->ColText, sizeof(tcolor) * row_len);
-        if (x >= 0 && (uldat)x > row->Len)
-          memset(row->ColText + row->Len, w->ColText, sizeof(tcolor) * (x - row->Len));
+        ColorFill(row->ColText + x, row_len, w->ColText);
+        if (x >= 0 && (uldat)x > row->Len) {
+          ColorFill(row->ColText + row->Len, x - row->Len, w->ColText);
+        }
       }
 
-      if (row->Len < x + row_len)
+      if (row->Len < x + row_len) {
         row->Len = x + row_len;
-
+      }
       DrawLogicWidget(w, x, y, x + row_len - (ldat)1, y);
 
       charset_bytes += row_len;
@@ -322,9 +324,9 @@ bool RowWriteCharsetWindow(Twindow w, uldat len, const char *charset_bytes) {
       w->CurX = x += row_len;
   }
 
-  if (w == FindCursorWindow())
+  if (w == FindCursorWindow()) {
     UpdateCursor();
-
+  }
   return true;
 }
 
@@ -349,7 +351,7 @@ bool RowWriteTRuneWindow(Twindow w, uldat len, const trune *runes) {
   if (!w || !len || !W_USE(w, USEROWS))
     return false;
 
-  Trow row = w->USE.R.LastRow;
+  Trow row = w->USE.R.Rows.Last;
   const trune *text;
   ldat x = w->CurX, y = w->CurY, max = w->HLogic;
   uldat i, row_len;
@@ -362,7 +364,7 @@ bool RowWriteTRuneWindow(Twindow w, uldat len, const trune *runes) {
     if (max <= y || (max == y + 1 && (*runes == '\n' || *runes == '\r'))) {
       if (InsertRowsWindow(w, Max2(y + 1 - max, 1))) {
         max = w->HLogic;
-        row = w->USE.R.LastRow;
+        row = w->USE.R.Rows.Last;
       } else
         return tfalse;
     } else {
@@ -402,12 +404,12 @@ bool RowWriteTRuneWindow(Twindow w, uldat len, const trune *runes) {
 
       if (!(w->Flags & WINDOWFL_ROWS_DEFCOL)) {
         if (x >= 0) {
-          memset(row->ColText + x, w->ColText, sizeof(tcolor) * row_len);
+          ColorFill(row->ColText + x, row_len, w->ColText);
         } else if ((uldat)-x < row_len) {
-          memset(row->ColText, w->ColText - x, sizeof(tcolor) * (row_len + x));
+          ColorFill(row->ColText, row_len + x, w->ColText - x);
         }
         if (x >= 0 && (uldat)x > row->Len) {
-          memset(row->ColText + row->Len, w->ColText, sizeof(tcolor) * (x - row->Len));
+          ColorFill(row->ColText + row->Len, x - row->Len, w->ColText);
         }
       }
 
@@ -528,7 +530,7 @@ void ExposeWindow2(Twindow w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitc
   if (utf8_bytes) {
     bool (*writeUtf8)(Twindow, uldat, const char *);
     if (W_USE(w, USECONTENTS)) {
-      writeUtf8 = w->fn()->TtyWriteUtf8;
+      writeUtf8 = Fn_Twindow->TtyWriteUtf8;
     } else
       writeUtf8 = RowWriteUtf8Window;
 
@@ -543,7 +545,7 @@ void ExposeWindow2(Twindow w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitc
   } else if (runes) {
     bool (*writeTRune)(Twindow, uldat, const trune *);
     if (W_USE(w, USECONTENTS))
-      writeTRune = w->fn()->TtyWriteTRune;
+      writeTRune = Fn_Twindow->TtyWriteTRune;
     else
       writeTRune = RowWriteTRuneWindow;
 
@@ -558,7 +560,7 @@ void ExposeWindow2(Twindow w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitc
   } else if (cells) {
     bool (*writeTCell)(Twindow, dat, dat, uldat, const tcell *);
     if (W_USE(w, USECONTENTS))
-      writeTCell = w->fn()->TtyWriteTCell;
+      writeTCell = Fn_Twindow->TtyWriteTCell;
     else
       writeTCell = RowWriteTCellWindow;
 
@@ -584,12 +586,12 @@ void ResizeWidget(Twidget w, dat X, dat Y) {
   }
 }
 
-void ResizeGadget(Tgadget G, dat X, dat Y) {
-  if (G) {
-    if (G_USE(G, USETEXT)) {
+void ResizeGadget(Tgadget g, dat X, dat Y) {
+  if (g) {
+    if (G_USE(g, USETEXT)) {
       /* FIXME: finish this */
     } else {
-      ResizeWidget((Twidget)G, X, Y);
+      ResizeWidget((Twidget)g, X, Y);
     }
   }
 }
@@ -602,7 +604,7 @@ void DragFirstScreen(ldat DeltaX, ldat DeltaY) {
   dat ylimit;
   ldat Left, Up, Rgt, Dwn;
 
-  screen = All->FirstScreen;
+  screen = All->Screens.First;
   ylimit = screen->Up;
   DWidth = All->DisplayWidth;
   DHeight = All->DisplayHeight;
@@ -663,7 +665,7 @@ void ResizeFirstScreen(dat DeltaY) {
   dat ylimit;
   ldat Left, Up, Rgt, Dwn;
 
-  screen = All->FirstScreen;
+  screen = All->Screens.First;
   ylimit = screen->Up;
   DWidth = All->DisplayWidth;
   DHeight = All->DisplayHeight;
@@ -700,7 +702,7 @@ void CenterWindow(Twindow w) {
   dat DWidth, DHeight;
   dat ylimit;
 
-  if (!w || !(screen = (Tscreen)w->Parent) || (screen != All->FirstScreen) ||
+  if (!w || !(screen = (Tscreen)w->Parent) || (screen != All->Screens.First) ||
       (w->Flags & WINDOWFL_MENU))
     return;
 
@@ -745,8 +747,8 @@ inline void DrawDeltaShadeFirstWindow(dat i, dat j) {
   Twindow w;
   dat ylimit;
 
-  screen = All->FirstScreen;
-  if (!(w = (Twindow)screen->FirstW) || !IS_WINDOW(w))
+  screen = All->Screens.First;
+  if (!(w = (Twindow)screen->Widgets.First) || !IS_WINDOW(w))
     return;
 
   ylimit = screen->Up;
@@ -776,8 +778,8 @@ void DragFirstWindow(dat i, dat j) {
   dat DWidth, DHeight;
   byte Shade;
 
-  screen = All->FirstScreen;
-  if (!(w = (Twindow)screen->FirstW) || !IS_WINDOW(w) || !(w->Attr & WINDOW_DRAG))
+  screen = All->Screens.First;
+  if (!(w = (Twindow)screen->Widgets.First) || !IS_WINDOW(w) || !(w->Attr & WINDOW_DRAG))
     return;
 
   ylimit = screen->Up;
@@ -873,21 +875,21 @@ void DragFirstWindow(dat i, dat j) {
   if (_Left <= _Rgt && _Up <= _Dwn) {
     if (Left_ > _Left) {
       xLeft = Min2(Left_ - (ldat)1, _Rgt);
-      DrawWidget((Twidget)w, (dat)_Left, (dat)_Up, (dat)xLeft, (dat)_Dwn, tfalse);
+      DrawUnobscuredWidget((Twidget)w, (dat)_Left, (dat)_Up, (dat)xLeft, (dat)_Dwn, tfalse);
     } else
       xLeft = _Left;
     if (Rgt_ < _Rgt) {
       xRgt = Max2(Rgt_ + (ldat)1, _Left);
-      DrawWidget((Twidget)w, (dat)xRgt, (dat)_Up, (dat)_Rgt, (dat)_Dwn, tfalse);
+      DrawUnobscuredWidget((Twidget)w, (dat)xRgt, (dat)_Up, (dat)_Rgt, (dat)_Dwn, tfalse);
     } else
       xRgt = _Rgt;
     if (Up_ > _Up) {
       xUp = Min2(Up_ - (ldat)1, _Dwn);
-      DrawWidget((Twidget)w, (dat)xLeft, (dat)_Up, (dat)xRgt, (dat)xUp, tfalse);
+      DrawUnobscuredWidget((Twidget)w, (dat)xLeft, (dat)_Up, (dat)xRgt, (dat)xUp, tfalse);
     }
     if (Dwn_ < _Dwn) {
       xDwn = Max2(Dwn_ + (ldat)1, _Up);
-      DrawWidget((Twidget)w, (dat)xLeft, (dat)xDwn, (dat)xRgt, (dat)_Dwn, tfalse);
+      DrawUnobscuredWidget((Twidget)w, (dat)xLeft, (dat)xDwn, (dat)xRgt, (dat)_Dwn, tfalse);
     }
   }
 
@@ -907,7 +909,7 @@ void DragWindow(Twindow w, dat i, dat j) {
   if (!w || !(w->Attr & WINDOW_DRAG))
     return;
 
-  if (w == (Twindow)All->FirstScreen->FirstW) {
+  if (w == (Twindow)All->Screens.First->Widgets.First) {
     DragFirstWindow(i, j);
     return;
   }
@@ -969,7 +971,7 @@ void DragWindow(Twindow w, dat i, dat j) {
     DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, (dat)Left, (dat)Up, (dat)Rgt + DeltaXShade,
               (dat)Dwn, tfalse);
   }
-  if (w == (Twindow)All->FirstScreen->FocusW())
+  if (w == (Twindow)All->Screens.First->FocusW())
     UpdateCursor();
 }
 
@@ -984,8 +986,8 @@ void ResizeRelFirstWindow(dat i, dat j) {
   dat DWidth, DHeight;
   byte Shade, DeltaXShade, DeltaYShade, hasBorder;
 
-  screen = All->FirstScreen;
-  if (!(w = (Twindow)screen->FirstW) || !IS_WINDOW(w) ||
+  screen = All->Screens.First;
+  if (!(w = (Twindow)screen->Widgets.First) || !IS_WINDOW(w) ||
       (!i && !j)) /* || !(w->Attr & WINDOW_RESIZE)) */
     return;
 
@@ -1121,7 +1123,7 @@ void ResizeRelWindow(Twindow w, dat i, dat j) {
 
   visible = !(w->Flags & WIDGETFL_NOTVISIBLE);
 
-  if (visible && (Twidget)w == All->FirstScreen->FirstW) {
+  if (visible && (Twidget)w == All->Screens.First->Widgets.First) {
     ResizeRelFirstWindow(i, j);
     return;
   }
@@ -1175,13 +1177,13 @@ void ResizeRelWindow(Twindow w, dat i, dat j) {
         DrawShadeWindow(w, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
     }
 
-    if (visible && w == (Twindow)All->FirstScreen->FocusW())
+    if (visible && w == (Twindow)All->Screens.First->FocusW())
       UpdateCursor();
 
     /* resize contents? for Interactive Resize, let the WM resize it
      * when Interactive Resize finishes. otherwise, do it now */
     if (W_USE(w, USECONTENTS) && w->USE.C.Contents &&
-        (w != All->FirstScreen->ClickWindow || (All->State & state_any) != state_resize))
+        (w != All->Screens.First->ClickWindow || (All->State & state_any) != state_resize))
 
       CheckResizeWindowContents(w);
   }
@@ -1201,8 +1203,8 @@ void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, ldat DeltaX, ldat Del
   dat Xstart, Ystart, Xend, Yend;
   dat XWidth, YWidth, ylimit;
 
-  screen = All->FirstScreen;
-  w = (Twindow)screen->FirstW;
+  screen = All->Screens.First;
+  w = (Twindow)screen->Widgets.First;
 
   if (!w || !IS_WINDOW(w) || (w->Attr & WINDOW_ROLLED_UP))
     return;
@@ -1214,7 +1216,7 @@ void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, ldat DeltaX, ldat Del
     return;
 
   if (DeltaX >= XWidth || -DeltaX >= XWidth || DeltaY >= YWidth || -DeltaY >= YWidth) {
-    DrawWidget((Twidget)w, (dat)0, (dat)0, TW_MAXDAT, TW_MAXDAT, tfalse);
+    DrawUnobscuredWidget((Twidget)w, (dat)0, (dat)0, TW_MAXDAT, TW_MAXDAT, tfalse);
     return;
   }
 
@@ -1262,16 +1264,16 @@ void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, ldat DeltaX, ldat Del
     if (Xend >= Xstart)
       DragArea(Xstart, Ystart, Xend, Yend, Xstart + DeltaX, Ystart);
     if (DeltaX > (dat)0)
-      DrawWidget((Twidget)w, Left, Up, Left + DeltaX - 1, Dwn, tfalse);
+      DrawUnobscuredWidget((Twidget)w, Left, Up, Left + DeltaX - 1, Dwn, tfalse);
     else
-      DrawWidget((Twidget)w, Rgt + DeltaX + 1, Up, Rgt, Dwn, tfalse);
+      DrawUnobscuredWidget((Twidget)w, Rgt + DeltaX + 1, Up, Rgt, Dwn, tfalse);
   } else if (DeltaY) {
     if (Yend >= Ystart)
       DragArea(Xstart, Ystart, Xend, Yend, Xstart, Ystart + DeltaY);
     if (DeltaY > (dat)0)
-      DrawWidget((Twidget)w, Left, Up, Rgt, Up + DeltaY - 1, tfalse);
+      DrawUnobscuredWidget((Twidget)w, Left, Up, Rgt, Up + DeltaY - 1, tfalse);
     else
-      DrawWidget((Twidget)w, Left, Dwn + DeltaY + 1, Rgt, Dwn, tfalse);
+      DrawUnobscuredWidget((Twidget)w, Left, Dwn + DeltaY + 1, Rgt, Dwn, tfalse);
   }
 }
 
@@ -1280,7 +1282,7 @@ void ScrollFirstWindow(ldat DeltaX, ldat DeltaY, byte byXYLogic) {
   ldat XLogic, YLogic;
   dat XWidth, YWidth;
 
-  w = (Twindow)All->FirstScreen->FirstW;
+  w = (Twindow)All->Screens.First->Widgets.First;
   if (!w || !IS_WINDOW(w))
     return;
 
@@ -1340,7 +1342,7 @@ void ScrollWindow(Twindow w, ldat DeltaX, ldat DeltaY) {
   if (!DeltaX && !DeltaY)
     return;
 
-  if ((Twidget)w == All->FirstScreen->FirstW) {
+  if ((Twidget)w == All->Screens.First->Widgets.First) {
     ScrollFirstWindow(DeltaX, DeltaY, ttrue);
     return;
   }
@@ -1373,7 +1375,7 @@ void ScrollWindow(Twindow w, ldat DeltaX, ldat DeltaY) {
   if (DeltaY)
     w->YLogic = (YLogic += DeltaY);
 
-  DrawFullWindow2(w);
+  DrawFullWindow(w);
 
   if (ContainsCursor((Twidget)w))
     UpdateCursor();
@@ -1430,7 +1432,7 @@ byte ExecScrollFocusWindow(void) {
   if ((All->State & state_any) != state_scroll)
     return tfalse;
 
-  if (!(screen = All->FirstScreen) || !(w = (Twindow)screen->FocusW()) || !IS_WINDOW(w))
+  if (!(screen = All->Screens.First) || !(w = (Twindow)screen->FocusW()) || !IS_WINDOW(w))
     return tfalse;
 
   Attr = w->Attr;
@@ -1470,7 +1472,7 @@ byte ExecScrollFocusWindow(void) {
   } else if (Scroll == TAB_SELECT)
     return tfalse;
 
-  if ((Twidget)w == screen->FirstW)
+  if ((Twidget)w == screen->Widgets.First)
     ScrollFirstWindow(DeltaX, DeltaY, ttrue);
   else
     ScrollWindow(w, DeltaX, DeltaY);
@@ -1480,7 +1482,7 @@ byte ExecScrollFocusWindow(void) {
 /* Tmenu traversing functions */
 
 void HideMenu(byte on_off) {
-  Tscreen screen = All->FirstScreen;
+  Tscreen screen = All->Screens.First;
 
   if (on_off) {
     if (screen->Up == 0) {
@@ -1508,7 +1510,7 @@ void HideMenu(byte on_off) {
 static void OpenSubMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
   Twindow P = (Twindow)item->Parent;
   Twindow w = item->Window;
-  Tscreen S = All->FirstScreen;
+  Tscreen S = All->Screens.First;
   ldat y = P->CurY;
 
   P->CurY = item->WCurY;
@@ -1543,9 +1545,9 @@ static void OpenTopMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
     w->Up = 1;
     w->Left = item->Left;
 
-    if (M != _M && M->LastI) {
+    if (M != _M && M->Items.Last) {
       /* adjust common Tmenu w->Left to the item position in this Tmenu */
-      w->Left += M->LastI->Left + M->LastI->Len;
+      w->Left += M->Items.Last->Left + M->Items.Last->Len;
     }
   }
 
@@ -1561,7 +1563,7 @@ static void OpenTopMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
   } else {
     w->Flags |= WINDOWFL_DISABLED;
   }
-  w->MapTopReal(All->FirstScreen);
+  w->MapTopReal(All->Screens.First);
 
   if (w->CurY != TW_MAXLDAT && (item = (Tmenuitem)w->FindRow(w->CurY))) {
     OpenSubMenuItem(M, item, by_mouse);
@@ -1583,7 +1585,7 @@ static void OpenMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
 
 /* this activates the Tmenu bar */
 static void OpenMenu(Tmenuitem item, bool by_mouse) {
-  Tscreen S = All->FirstScreen;
+  Tscreen S = All->Screens.First;
   Twidget w = S->FocusW();
   Tmenu M = S->FindMenu();
 
@@ -1607,41 +1609,44 @@ static void OpenMenu(Tmenuitem item, bool by_mouse) {
  * do NOT use to close the Tmenu, CloseMenu() does that
  */
 static Tmenuitem CloseMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
-  Twindow P = (Twindow)item->Parent, w = item->Window;
+  Tobj parent = item->Parent;
+  Twindow w = item->Window;
 
-  if (w)
+  if (w) {
     w->UnMap();
-
-  if (P && IS_WINDOW(P)) {
+  }
+  if (parent && IS_WINDOW(parent)) {
+    Twindow wparent = (Twindow)parent;
     if (by_mouse) {
-      ldat y = P->CurY;
-      P->CurY = TW_MAXLDAT;
+      ldat y = wparent->CurY;
+      wparent->CurY = TW_MAXLDAT;
 
-      if (y != TW_MAXLDAT)
-        DrawLogicWidget((Twidget)P, 0, y, TW_MAXLDAT, y);
+      if (y != TW_MAXLDAT) {
+        DrawLogicWidget(wparent, 0, y, TW_MAXLDAT, y);
+      }
     }
-    item = P->MenuItem;
+    item = wparent->MenuItem;
     if (item) {
-      w = (Twindow)item->Parent;
-      if (w && IS_WINDOW(w))
-        w->Focus();
-      else
-        P->Focus();
+      Tobj item_parent = item->Parent;
+      if (item_parent && IS_WINDOW(item_parent)) {
+        ((Twindow)item_parent)->Focus();
+      } else {
+        wparent->Focus();
+      }
     }
-    return item;
   } else {
     item = (Tmenuitem)0;
     M->SetSelectedItem(item);
-    return item;
   }
+  return item;
 }
 
-static dat DepthOfMenuItem(Tmenuitem I) {
-  Twindow w;
+static dat DepthOfMenuItem(Tmenuitem item) {
+  Tobj parent;
   dat d = 0;
 
-  while (I && (w = (Twindow)I->Parent) && IS_WINDOW(w)) {
-    I = w->MenuItem;
+  while (item && (parent = item->Parent) && IS_WINDOW(parent)) {
+    item = ((Twindow)parent)->MenuItem;
     d++;
   }
   return d;
@@ -1669,7 +1674,7 @@ static void TraverseMenu(Tmenu M, Tmenuitem OldItem, dat Odepth, Tmenuitem NewIt
 
 /* close the Tmenu bar */
 void CloseMenu(void) {
-  Tscreen S = All->FirstScreen;
+  Tscreen S = All->Screens.First;
   Tmenu M = S->FindMenu();
   Tmenuitem item;
   Twindow w;
@@ -1701,7 +1706,7 @@ void CloseMenu(void) {
  * do NOT use to close the Tmenu, CloseMenu() does that
  */
 void SetMenuState(Tmenuitem item, bool by_mouse) {
-  Tscreen S = All->FirstScreen;
+  Tscreen S = All->Screens.First;
   Tmenu M = S->FindMenu();
   Tmenuitem OldItem = (Tmenuitem)0;
   dat Odepth = 0;
@@ -1733,9 +1738,9 @@ void RollUpWindow(Twindow w, byte on_off) {
       ReDrawRolledUpAreaWindow(w, tfalse);
     } else if (!on_off && (w->Attr & WINDOW_ROLLED_UP)) {
       w->Attr &= ~WINDOW_ROLLED_UP;
-      DrawAreaWindow2(w);
+      DrawAreaWindow(w);
     }
-    if (w->Parent == (Twidget)All->FirstScreen)
+    if (w->Parent == (Twidget)All->Screens.First)
       UpdateCursor();
   }
 }
@@ -1751,7 +1756,7 @@ void SetVisibleWidget(Twidget w, byte on_off) {
     if (on_off != visible) {
       w->Flags ^= WIDGETFL_NOTVISIBLE;
       if (IS_WINDOW(w))
-        DrawAreaWindow2((Twindow)w);
+        DrawAreaWindow((Twindow)w);
       else
         DrawAreaWidget(w);
     }
@@ -1765,14 +1770,15 @@ void RaiseWidget(Twidget w, bool alsoFocus) {
   }
   Tscreen screen = (Tscreen)w->Parent;
 
-  if (screen->FirstW != w) {
-    MoveFirst(W, (Twidget)screen, w);
-    if (IS_WINDOW(w))
-      DrawAreaWindow2((Twindow)w);
-    else
+  if (screen->Widgets.First != w) {
+    MoveFirst(Widgets, (Twidget)screen, w);
+    if (IS_WINDOW(w)) {
+      DrawAreaWindow((Twindow)w);
+    } else {
       DrawAreaWidget(w);
+    }
   }
-  if (screen == All->FirstScreen) {
+  if (screen == All->Screens.First) {
     if (alsoFocus) {
       w->Focus();
     }
@@ -1788,24 +1794,26 @@ void LowerWidget(Twidget w, bool alsoUnFocus) {
 
   if (w && (screen = (Tscreen)w->Parent) && IS_SCREEN(screen)) {
 
-    if (screen->LastW != w) {
-      MoveLast(W, (Twidget)screen, w);
-      if (IS_WINDOW(w))
-        DrawAreaWindow2((Twindow)w);
-      else
+    if (screen->Widgets.Last != w) {
+      MoveLast(Widgets, (Twidget)screen, w);
+      if (IS_WINDOW(w)) {
+        DrawAreaWindow((Twindow)w);
+      } else {
         DrawAreaWidget(w);
+      }
     }
-    if (screen == All->FirstScreen) {
+    if (screen == All->Screens.First) {
       if (alsoUnFocus) {
-        oldw = screen->FirstW;
-        if (oldw && IS_WINDOW(oldw) && oldw != w)
+        oldw = screen->Widgets.First;
+        if (oldw && IS_WINDOW(oldw) && oldw != w) {
           oldw->Focus();
-        else
+        } else {
           Swindow::Focus(NULL);
-      } else
+        }
+      } else {
         UpdateCursor();
+      }
     }
-
     screen->HookMap();
   }
 }
@@ -1869,57 +1877,62 @@ void RestackRows(Tobj O, uldat N, const Trow *arrayR) {
 
 /* ---------------- */
 
-void SendMsgGadget(Tgadget G) {
-  Tmsg msg;
-  event_gadget *Event;
-  if (G->Code && !(G->Flags & GADGETFL_DISABLED)) {
-    if ((msg = New(msg)(msg_widget_gadget, 0))) {
-      Event = &msg->Event.EventGadget;
-      Event->W = G->Parent;
-      Event->Code = G->Code;
-      Event->Flags = G->Flags;
-      SendMsg(G->Owner, msg);
+void SendMsgGadget(Tgadget g) {
+  if (g->Code && !(g->Flags & GADGETFL_DISABLED)) {
+    Tmsg msg = Smsg::Create(msg_widget_gadget, 0);
+    if (msg) {
+      event_gadget *event = &msg->Event.EventGadget;
+      event->W = g->Parent;
+      event->Code = g->Code;
+      event->Flags = g->Flags;
+      SendMsg(g->Owner, msg);
     }
   }
 }
 
-static void realUnPressGadget(Tgadget G) {
-  G->Flags &= ~GADGETFL_PRESSED;
-  if (G->Group && G->Group->SelectG == G)
-    G->Group->SelectG = (Tgadget)0;
-  if ((Twidget)G == All->FirstScreen->FirstW)
-    DrawWidget((Twidget)G, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
-  else
-    DrawAreaWidget((Twidget)G);
-}
-
-static void realPressGadget(Tgadget G) {
-  G->Flags |= GADGETFL_PRESSED;
-  if (G->Group)
-    G->Group->SelectG = G;
-  if ((Twidget)G == All->FirstScreen->FirstW)
-    DrawWidget((Twidget)G, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
-  else
-    DrawAreaWidget((Twidget)G);
-}
-
-void PressGadget(Tgadget G) {
-  if (!(G->Flags & GADGETFL_DISABLED)) {
-    /* honour groups */
-    if (G->Group && G->Group->SelectG && G->Group->SelectG != G)
-      UnPressGadget(G->Group->SelectG, ttrue);
-
-    realPressGadget(G);
-    if (G->Flags & GADGETFL_TOGGLE)
-      SendMsgGadget(G);
+static void realUnPressGadget(Tgadget g) {
+  g->Flags &= ~GADGETFL_PRESSED;
+  if (g->Group && g->Group->SelectG == g) {
+    g->Group->SelectG = (Tgadget)0;
+  }
+  if (g == All->Screens.First->Widgets.First) {
+    DrawUnobscuredWidget(g, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
+  } else {
+    DrawAreaWidget(g);
   }
 }
 
-void UnPressGadget(Tgadget G, byte maySendMsgIfNotToggle) {
-  if (!(G->Flags & GADGETFL_DISABLED)) {
-    realUnPressGadget(G);
-    if (maySendMsgIfNotToggle || (G->Flags & GADGETFL_TOGGLE))
-      SendMsgGadget(G);
+static void realPressGadget(Tgadget g) {
+  g->Flags |= GADGETFL_PRESSED;
+  if (g->Group) {
+    g->Group->SelectG = g;
+  }
+  if (g == All->Screens.First->Widgets.First) {
+    DrawUnobscuredWidget(g, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
+  } else {
+    DrawAreaWidget(g);
+  }
+}
+
+void PressGadget(Tgadget g) {
+  if (!(g->Flags & GADGETFL_DISABLED)) {
+    /* honour groups */
+    if (g->Group && g->Group->SelectG && g->Group->SelectG != g) {
+      UnPressGadget(g->Group->SelectG, ttrue);
+    }
+    realPressGadget(g);
+    if (g->Flags & GADGETFL_TOGGLE) {
+      SendMsgGadget(g);
+    }
+  }
+}
+
+void UnPressGadget(Tgadget g, byte maySendMsgIfNotToggle) {
+  if (!(g->Flags & GADGETFL_DISABLED)) {
+    realUnPressGadget(g);
+    if (maySendMsgIfNotToggle || (g->Flags & GADGETFL_TOGGLE)) {
+      SendMsgGadget(g);
+    }
   }
 }
 
@@ -1936,8 +1949,9 @@ void Sgadget::WriteTexts(byte bitmap, dat t_width, dat t_height, const char *cha
     g_height--;
   }
 
-  if (!G_USE(g, USETEXT) || left >= g_width || up >= g_height)
+  if (!G_USE(g, USETEXT) || left >= g_width || up >= g_height) {
     return;
+  }
 
   if (left < 0) {
     left += g_width - t_width + 1;
@@ -2005,9 +2019,9 @@ void Sgadget::WriteTRunes(byte bitmap, dat t_width, dat t_height, //
     g_height--;
   }
 
-  if (!G_USE(g, USETEXT) || left >= g_width || up >= g_height)
+  if (!G_USE(g, USETEXT) || left >= g_width || up >= g_height) {
     return;
-
+  }
   if (left < 0) {
     left += g_width - t_width + 1;
     if (left < 0) {
@@ -2061,20 +2075,22 @@ void Sgadget::WriteTRunes(byte bitmap, dat t_width, dat t_height, //
 }
 
 void SyncMenu(Tmenu Menu) {
-  Tmenuitem I, PrevI = (Tmenuitem)0;
+  Tmenuitem item, prev = (Tmenuitem)0;
   Tscreen screen;
 
   if (Menu) {
-    for (I = Menu->FirstI; I; I = I->Next()) {
-      if (PrevI)
-        I->Left = PrevI->Left + PrevI->Len;
-      else
-        I->Left = 1;
-      PrevI = I;
+    for (item = Menu->Items.First; item; item = item->NextItem()) {
+      if (prev) {
+        item->Left = prev->Left + prev->Len;
+      } else {
+        item->Left = 1;
+      }
+      prev = item;
     }
-    for (screen = All->FirstScreen; screen; screen = screen->Next()) {
-      if (screen->FindMenu() == Menu)
+    for (screen = All->Screens.First; screen; screen = screen->NextScreen()) {
+      if (screen->FindMenu() == Menu) {
         screen->DrawMenu(0, TW_MAXDAT);
+      }
     }
   }
 }

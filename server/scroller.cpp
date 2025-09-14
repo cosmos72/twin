@@ -35,8 +35,8 @@ Tmsg Do_Scroll, Dont_Scroll;
 
 byte InitScroller(void) {
   if ((Scroller_MsgPort =
-           New(msgport)(16, "builtin scroller", (tany)0, 401 MilliSECs, (byte)0, ScrollerH)) &&
-      (Do_Scroll = New(msg)(0, 0)) && (Dont_Scroll = New(msg)(0, 0))) {
+           Smsgport::Create(16, "builtin scroller", (tany)0, 401 MilliSECs, (byte)0, ScrollerH)) &&
+      (Do_Scroll = Smsg::Create(0, 0)) && (Dont_Scroll = Smsg::Create(0, 0))) {
 
     return ttrue;
   }
@@ -69,7 +69,7 @@ static void ScrollerH(Tmsgport MsgPort) {
   byte State, FlagDeskScroll, FlagWinScroll, WinScrolled = tfalse;
   Twindow FocusWindow;
 
-  while ((msg = Scroller_MsgPort->FirstMsg)) {
+  while ((msg = Scroller_MsgPort->Msgs.First)) {
     msg->Remove();
     if (msg == Do_Scroll || msg == Dont_Scroll)
       saved_msg = msg;
@@ -84,7 +84,7 @@ static void ScrollerH(Tmsgport MsgPort) {
 
   Mouse = &All->MouseDisplay->MouseState;
 
-  FocusWindow = (Twindow)All->FirstScreen->FocusW();
+  FocusWindow = (Twindow)All->Screens.First->FocusW();
   if (FocusWindow && !IS_WINDOW(FocusWindow))
     FocusWindow = (Twindow)0;
 
@@ -138,7 +138,7 @@ static void ScrollerH(Tmsgport MsgPort) {
     if (!WinScrolled)
       ScrollerAutoRepeat();
 
-    StdAddMouseEvent(MOVE_MOUSE | Mouse->keys, Mouse->x, Mouse->y);
+    StdAddMouseEvent((Tdisplay)0, MOVE_MOUSE | Mouse->keys, Mouse->x, Mouse->y);
   } else {
     if (!WinScrolled)
       ScrollerDelayRepeat();

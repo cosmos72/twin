@@ -50,9 +50,8 @@ inline bool equalvec(const T1 *left, size_t left_n, const T2 *right, size_t righ
   const void *right_v = static_cast<const void *>(right);
 
   return sizeof(T1) == sizeof(T2) && left_n == right_n &&
-         (left_v == right_v ||
-          !std::memcmp(left_v, right_v,
-                       right_n * sizeof(sizeof_T1_equals_sizeof_T2) / sizeof(char)));
+         (left_v == right_v || left_n == 0 ||
+          !std::memcmp(left_v, right_v, left_n * sizeof(sizeof_T1_equals_sizeof_T2)));
 }
 
 template <class Vec1, class Vec2>
@@ -63,8 +62,10 @@ inline bool equalvec(const Vec1 &left, const Vec2 &right) NOTHROW {
 template <class T1, class T2>
 void copyvec(const T1 *src, size_t src_n, T2 *dst, size_t dst_n) NOTHROW {
   typedef char sizeof_T1_equals_sizeof_T2[sizeof(T1) == sizeof(T2) ? sizeof(T2) : -1];
-  std::memmove(static_cast<void *>(dst), static_cast<const void *>(src),
-               dst_n * sizeof(sizeof_T1_equals_sizeof_T2) / sizeof(char));
+  if (dst_n) {
+    std::memmove(static_cast<void *>(dst), static_cast<const void *>(src),
+                 dst_n * sizeof(sizeof_T1_equals_sizeof_T2) / sizeof(char));
+  }
 }
 
 template <class Vec1, class Vec2> inline void copyvec(const Vec1 &src, Vec2 &dst) NOTHROW {

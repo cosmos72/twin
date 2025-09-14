@@ -101,8 +101,9 @@ static void HandleSignalChild(void) {
   int status;
   GotSignalChild = false;
   while ((pid = Tw_wait3(&status, WNOHANG, (struct rusage *)0)) != 0 && pid != (pid_t)-1) {
-    if (WIFEXITED(status) || WIFSIGNALED(status))
+    if (WIFEXITED(status) || WIFSIGNALED(status)) {
       RemotePidIsDead(pid);
+    }
   }
 }
 
@@ -119,18 +120,21 @@ static void HandleSignalHangup(void) {
   GotSignalHangup = false;
   if (DisplayHWCTTY && DisplayHWCTTY != HWCTTY_DETACHED && DisplayHWCTTY->DisplayIsCTTY) {
 
-    DisplayHWCTTY->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+    DisplayHWCTTY->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW;
   }
 }
 
 void HandleSignals(void) {
   GotSignals = tfalse;
-  if (GotSignalWinch)
+  if (GotSignalWinch) {
     HandleSignalWinch();
-  if (GotSignalChild)
+  }
+  if (GotSignalChild) {
     HandleSignalChild();
-  if (GotSignalHangup)
+  }
+  if (GotSignalHangup) {
     HandleSignalHangup();
+  }
 }
 
 #ifndef TW_DONT_TRAP_SIGNALS
@@ -207,10 +211,12 @@ bool InitSignals(void) NOTHROW {
   signal(SIGWINCH, SignalWinch);
   signal(SIGCHLD, SignalChild);
   signal(SIGHUP, SignalHangup);
-  for (i = 0; i < N_OF(signals_ignore); i++)
+  for (i = 0; i < N_OF(signals_ignore); i++) {
     signal(signals_ignore[i], SIG_IGN);
-  for (i = 0; i < N_OF(signals_fatal); i++)
+  }
+  for (i = 0; i < N_OF(signals_fatal); i++) {
     signal(signals_fatal[i], SignalFatal);
+  }
   return true;
 }
 
@@ -218,10 +224,12 @@ void QuitSignals(void) NOTHROW {
   uldat i;
   signal(SIGWINCH, SIG_IGN);
   signal(SIGCHLD, SIG_IGN);
-  for (i = 0; i < N_OF(signals_ignore); i++)
+  for (i = 0; i < N_OF(signals_ignore); i++) {
     signal(signals_ignore[i], SIG_IGN);
-  for (i = 0; i < N_OF(signals_fatal); i++)
+  }
+  for (i = 0; i < N_OF(signals_fatal); i++) {
     signal(signals_fatal[i], SIG_DFL);
+  }
 }
 
 void AllDefaultSignals(void) NOTHROW {
@@ -229,10 +237,12 @@ void AllDefaultSignals(void) NOTHROW {
   signal(SIGWINCH, SIG_DFL);
   signal(SIGCHLD, SIG_DFL);
   signal(SIGHUP, SIG_DFL);
-  for (i = 0; i < N_OF(signals_ignore); i++)
+  for (i = 0; i < N_OF(signals_ignore); i++) {
     signal(signals_ignore[i], SIG_DFL);
-  for (i = 0; i < N_OF(signals_fatal); i++)
+  }
+  for (i = 0; i < N_OF(signals_fatal); i++) {
     signal(signals_fatal[i], SIG_DFL);
+  }
 }
 
 void MoveToXY(dat x, dat y) NOTHROW {
@@ -249,18 +259,18 @@ void SetCursorType(uldat type) NOTHROW {
   CursorType = type;
 }
 
-void NeedRedrawVideo(dat Left, dat Up, dat Right, dat Down) NOTHROW {
-  if (HW->RedrawVideo) {
-    HW->RedrawLeft = Min2(HW->RedrawLeft, Left);
-    HW->RedrawUp = Min2(HW->RedrawUp, Up);
-    HW->RedrawRight = Max2(HW->RedrawRight, Right);
-    HW->RedrawDown = Max2(HW->RedrawDown, Down);
+void NeedRedrawVideo(Tdisplay hw, dat Left, dat Up, dat Right, dat Down) NOTHROW {
+  if (hw->RedrawVideo) {
+    hw->RedrawLeft = Min2(hw->RedrawLeft, Left);
+    hw->RedrawUp = Min2(hw->RedrawUp, Up);
+    hw->RedrawRight = Max2(hw->RedrawRight, Right);
+    hw->RedrawDown = Max2(hw->RedrawDown, Down);
   } else {
-    HW->RedrawVideo = ttrue;
-    HW->RedrawLeft = Left;
-    HW->RedrawUp = Up;
-    HW->RedrawRight = Right;
-    HW->RedrawDown = Down;
+    hw->RedrawVideo = true;
+    hw->RedrawLeft = Left;
+    hw->RedrawUp = Up;
+    hw->RedrawRight = Right;
+    hw->RedrawDown = Down;
   }
 }
 

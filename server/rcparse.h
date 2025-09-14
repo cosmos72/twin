@@ -176,7 +176,9 @@ static void yyerror(const char *s) {
              << "\n";
 }
 
-#define NEW() (node) my_malloc(sizeof(struct s_node))
+static inline node NEW() {
+  return (node)my_malloc(sizeof(struct s_node));
+}
 
 static node ReverseList(node l) {
   node base = NULL, v;
@@ -189,13 +191,13 @@ static node ReverseList(node l) {
   return base;
 }
 
-inline node MakeNode(str name) {
+static inline node MakeNode(str name) {
   node n = NEW();
   n->name = name; /* this is my_malloc()ed memory (done by rcparse.l) */
   return n;
 }
 
-inline node MakeBuiltinFunc(ldat id) {
+static inline node MakeBuiltinFunc(ldat id) {
   node n = NEW();
   n->id = id;
   return n;
@@ -206,7 +208,7 @@ inline node MakeBuiltinFunc(ldat id) {
  * do nothing in that case
  * (it's a way to eat empty lines, they are coded as NULL nodes)
  */
-inline node AddtoNodeList(node l, node n) {
+static inline node AddtoNodeList(node l, node n) {
   if (n) {
     n->next = l;
     return n;
@@ -369,13 +371,12 @@ static byte ImmDeleteScreen(str name) {
 static byte ImmGlobalFlags(node l) {
   ldat i, j;
 
-  while (l) {
+  for (; l; l = l->next) {
     switch (l->id) {
     case ALTFONT: /*ignored for compatibility*/
       return ttrue;
-    case BLINK:
-      i = setup_blink;
-      break;
+    case BLINK: /*ignored for compatibility*/
+      continue;
     case CURSOR_ALWAYS:
       i = setup_cursor_always;
       break;
@@ -406,7 +407,7 @@ static byte ImmGlobalFlags(node l) {
     default:
       return tfalse;
     }
-    if (i > 0)
+    if (i > 0) {
       switch (l->x.f.flag) {
       case FL_ON:
       case '+':
@@ -434,16 +435,16 @@ static byte ImmGlobalFlags(node l) {
       default:
         return tfalse;
       }
-    else {
+    } else {
       /* ButtonSelection or ButtonPaste */
 
       j = l->x.f.flag;
-      if (j >= 1 && j <= BUTTON_N_MAX)
+      if (j >= 1 && j <= BUTTON_N_MAX) {
         GlobalFlags[i + 3] = HOLD_CODE(j - 1);
-      else
+      } else {
         GlobalFlags[i + 3] = HOLD_LEFT;
+      }
     }
-    l = l->next;
   }
   return ttrue;
 }
@@ -507,8 +508,9 @@ static node LookupBind(ldat label, ldat ctx, node l) {
 }
 
 static str toString(ldat i) {
-  str s = (str)my_malloc(2 + 3 * sizeof(ldat));
-  sprintf(s, "%d", (int)i);
+  size_t s_len = 2 + 3 * sizeof(ldat);
+  str s = (str)my_malloc(s_len);
+  snprintf(s, s_len, "%d", (int)i);
   return s;
 }
 
@@ -1119,9 +1121,10 @@ static void WriteGlobals(void) {
 
 static Tscreen FindNameInScreens(dat len, const char *name, Tscreen screen) {
   while (screen) {
-    if (len == screen->NameLen && !memcmp(name, screen->Name, len))
+    if (len == screen->NameLen && !memcmp(name, screen->Name, len)) {
       return screen;
-    screen = screen->Next();
+    }
+    screen = screen->NextScreen();
   }
   return NULL;
 }
@@ -1138,7 +1141,7 @@ static node FindNameInList(uldat len, const char *name, node list) {
 static void DeleteScreens(Tscreen first) {
   Tscreen s = first, next;
   while (s) {
-    next = s->Next();
+    next = s->NextScreen();
     s->Delete();
     s = next;
   }
@@ -1184,7 +1187,7 @@ static byte CreateNeededScreens(node list, Tscreen *res_Screens) {
         }
         h++;
       }
-      s = New(screen)(strlen(list->name), list->name, w, h, attr);
+      s = Sscreen::Create(strlen(list->name), list->name, w, h, attr);
 
       FreeMem(attr);
     }
@@ -1192,12 +1195,13 @@ static byte CreateNeededScreens(node list, Tscreen *res_Screens) {
       DeleteScreens(top);
       return tfalse;
     }
-    if (prev)
-      prev->Next(s);
+    if (prev) {
+      prev->SetNextScreen(s);
+    }
     prev = s;
-    if (!top)
+    if (!top) {
       top = s;
-
+    }
     list = list->next;
   }
   *res_Screens = top;
@@ -1211,20 +1215,21 @@ static byte CreateNeededScreens(node list, Tscreen *res_Screens) {
 static void UpdateVisibleScreens(Tscreen new_Screens) {
   Tscreen screen, next, orig;
   for (screen = new_Screens; screen; screen = next) {
-    next = screen->Next();
-    screen->Next((Tscreen)0);
+    next = screen->NextScreen();
+    screen->SetNextScreen((Tscreen)0);
 
-    if ((orig = FindNameInScreens(screen->NameLen, screen->Name, All->FirstScreen))) {
+    if ((orig = FindNameInScreens(screen->NameLen, screen->Name, All->Screens.First))) {
       orig->USE.B.BgWidth = screen->USE.B.BgWidth;
       orig->USE.B.BgHeight = screen->USE.B.BgHeight;
-      if (orig->USE.B.Bg)
+      if (orig->USE.B.Bg) {
         FreeMem(orig->USE.B.Bg);
+      }
       orig->USE.B.Bg = screen->USE.B.Bg;
       screen->USE.B.Bg = NULL;
       screen->Delete();
-    } else
-      InsertLast(Screen, screen, All);
-
+    } else {
+      InsertLast(Screens, screen, All);
+    }
     screen = next;
   }
 }
@@ -1234,8 +1239,8 @@ static void UpdateVisibleScreens(Tscreen new_Screens) {
  */
 static void DeleteUnneededScreens(node list) {
   Tscreen screen, next;
-  for (screen = All->FirstScreen; screen; screen = next) {
-    next = screen->Next();
+  for (screen = All->Screens.First; screen; screen = next) {
+    next = screen->NextScreen();
     if ((screen->NameLen != 1 || screen->Name[0] != '1') &&
         !FindNameInList(screen->NameLen, screen->Name, list)) {
       screen->Delete();
@@ -1287,18 +1292,19 @@ static byte NewCommonMenu(void *const *shm_M, Tmenu *res_CommonMenu, node **res_
   new_MenuBindsMax = 0;
   new_MenuList = (node)(*(shm_M + (&MenuList - Globals)));
 
-  if (!(Menu = New(menu)(Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0,
-                         (tcolor)0, ttrue)))
+  if (!(Menu = Smenu::Create(Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0,
+                             (tcolor)0, (tcolor)0, ttrue)))
     return tfalse;
 
   /* ok, now create the CommonMenu. Fill new_MenuBinds[] as we proceed */
 
   for (M = new_MenuList; M; M = M->next) {
-    if ((w = Win4Menu(Menu)) && (item = Item4Menu(Menu, w, ttrue, strlen(M->name), M->name))) {
+    if ((w = Swindow::Create4Menu(Menu)) &&
+        (item = Smenuitem::Create4Menu(Menu, w, 0, ttrue, strlen(M->name), M->name))) {
 
-      if (!item->Prev())
+      if (!item->PrevItem()) {
         item->Left = 0; /* remove padding */
-
+      }
       maxlen = 0;
 
       for (N = M->body; N; N = N->next) {
@@ -1417,7 +1423,7 @@ static byte ReadGlobals(void) {
 
 static byte rcparse(cstr path);
 
-static bool rcload(void) {
+static bool rcload(Tdisplay hw) {
   str path;
   uldat len;
 #ifndef DEBUG_FORK

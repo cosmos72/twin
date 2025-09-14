@@ -12,6 +12,7 @@
 
 #include "twin.h"
 #include "alloc.h"
+#include "builtin.h" // ColorFill
 #include "data.h"
 #include "methods.h"
 #include "obj/id.h" // Id2Obj()
@@ -48,18 +49,16 @@ static void termShutDown(Twidget w) {
 static Twindow newTermWindow(const char *title) {
   Twindow Window;
 
-  Window = New(window)(Term_MsgPort, strlen(title), title, NULL, Term_Menu, TCOL(twhite, tblack),
-                       LINECURSOR,
-                       WINDOW_WANT_KEYS | WINDOW_DRAG | WINDOW_RESIZE | WINDOW_Y_BAR | WINDOW_CLOSE,
-                       WINDOWFL_CURSOR_ON | WINDOWFL_USECONTENTS,
-                       /*width*/ 80, /*height*/ 25, /*scrollbacklines*/ 1000);
+  Window = Swindow::Create(
+      Term_MsgPort, strlen(title), title, NULL, Term_Menu, TCOL(twhite, tblack), LINECURSOR,
+      WINDOW_WANT_KEYS | WINDOW_DRAG | WINDOW_RESIZE | WINDOW_Y_BAR | WINDOW_CLOSE,
+      WINDOWFL_CURSOR_ON | WINDOWFL_USECONTENTS,
+      /*width*/ 80, /*height*/ 25, /*scrollbacklines*/ 1000);
 
   if (Window) {
-    Window->SetColors(0x1FF, TCOL(thigh | tyellow, tcyan), TCOL(thigh | tgreen, thigh | tblue),
-                      TCOL(twhite, thigh | tblue), TCOL(thigh | twhite, thigh | tblue),
-                      TCOL(thigh | twhite, thigh | tblue), TCOL(twhite, tblack),
-                      TCOL(thigh | tblack, thigh | twhite), TCOL(thigh | tblack, tblack),
-                      TCOL(tblack, thigh | tblack));
+    Window->SetColors(0x1FF, TCOL(tYELLOW, tcyan), TCOL(tGREEN, tBLUE), TCOL(twhite, tBLUE),
+                      TCOL(tWHITE, tBLUE), TCOL(tWHITE, tBLUE), TCOL(twhite, tblack),
+                      TCOL(tBLACK, tWHITE), TCOL(tBLACK, tblack), TCOL(tblack, tBLACK));
 
     Window->Configure((1 << 2) | (1 << 3), 0, 0, 7, 3, 0, 0);
   }
@@ -87,7 +86,7 @@ static Twindow OpenTerm(const char *arg0, const char *const *argv) {
     if (spawnInWindow(Window, arg0, argv)) {
       if (RegisterWindowFdIO(Window, TwinTermIO)) {
         Window->ShutDownHook = termShutDown;
-        Window->Map((Twidget)All->FirstScreen);
+        Window->Map((Twidget)All->Screens.First);
         return Window;
       }
       close(Window->RemoteData.Fd);
@@ -103,7 +102,7 @@ static void TwinTermH(Tmsgport MsgPort) {
   udat Code /*, Repeat*/;
   Twindow Win;
 
-  while ((msg = Term_MsgPort->FirstMsg)) {
+  while ((msg = Term_MsgPort->Msgs.First)) {
     msg->Remove();
 
     Event = &msg->Event;
@@ -129,12 +128,13 @@ static void TwinTermH(Tmsgport MsgPort) {
       }
     } else if (msg->Type == msg_widget_mouse) {
       if (Win) {
-        char buf[10];
-        byte len = CreateXTermMouseEvent(&Event->EventMouse, 10, buf);
+        char buf[24];
+        byte len = CreateMouseEvent(&Event->EventMouse, sizeof(buf), buf);
 
         /* send mouse movements using xterm mouse protocol */
-        if (len)
+        if (len) {
           (void)RemoteWindowWriteQueue(Win, len, buf);
+        }
       }
     } else if (msg->Type == msg_widget_gadget) {
       if (Win && Event->EventGadget.Code == 0 /* Close Code */) {
@@ -191,7 +191,6 @@ static void TwinTermIO(int Fd, Twindow Window) {
 static void OverrideMethods(bool enter) {
   if (enter) {
     OverrideMethod(widget, KbdFocus, FakeKbdFocus, TtyKbdFocus);
-    OverrideMethod(gadget, KbdFocus, FakeKbdFocus, TtyKbdFocus);
     OverrideMethod(window, KbdFocus, FakeKbdFocus, TtyKbdFocus);
     OverrideMethod(window, TtyWriteCharset, FakeWriteCharset, TtyWriteCharset);
     OverrideMethod(window, TtyWriteUtf8, FakeWriteUtf8, TtyWriteUtf8);
@@ -204,32 +203,36 @@ static void OverrideMethods(bool enter) {
     OverrideMethod(window, TtyWriteUtf8, TtyWriteUtf8, FakeWriteUtf8);
     OverrideMethod(window, TtyWriteCharset, TtyWriteCharset, FakeWriteCharset);
     OverrideMethod(window, KbdFocus, TtyKbdFocus, FakeKbdFocus);
-    OverrideMethod(gadget, KbdFocus, TtyKbdFocus, FakeKbdFocus);
     OverrideMethod(widget, KbdFocus, TtyKbdFocus, FakeKbdFocus);
   }
 }
 
 EXTERN_C byte InitModule(Tmodule Module) {
+  tcolor color[19];
   Twindow Window;
   const char *shellpath, *shell;
+
+  ColorFill(color, 19, TCOL(tblack, twhite));
+  color[14] = color[9] = color[1] = TCOL(tred, twhite);
 
   if (((shellpath = getenv("SHELL")) || (shellpath = "/bin/sh")) &&
       (default_args[0] = CloneStr(shellpath)) &&
       (default_args[1] =
            (shell = strrchr(shellpath, '/')) ? CloneStr(shell) : CloneStr(shellpath)) &&
 
-      (Term_MsgPort = New(msgport)(14, "builtin twterm", (uldat)0, (udat)0, (byte)0, TwinTermH)) &&
-      (Term_Menu = New(menu)(Term_MsgPort, TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                             TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
-                             TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
-      Info4Menu(Term_Menu, ROW_ACTIVE, (uldat)19, " Builtin Twin Term ",
-                (const tcolor *)"ptppppppptpppptpppp") &&
+      (Term_MsgPort =
+           Smsgport::Create(14, "builtin twterm", (uldat)0, (udat)0, (byte)0, TwinTermH)) &&
+      (Term_Menu = Smenu::Create(Term_MsgPort, TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                                 TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), TCOL(tred, twhite),
+                                 TCOL(tred, tgreen), (byte)0)) &&
+      Term_Menu->SetInfo(ROW_ACTIVE, (uldat)19, " Builtin Twin Term ", color) &&
 
-      (Window = Win4Menu(Term_Menu)) && Row4Menu(Window, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&
+      (Window = Swindow::Create4Menu(Term_Menu)) &&
+      Row4Menu(Window, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&
       Row4Menu(Window, COD_QUIT, tfalse, 6, " Exit ") &&
-      Item4Menu(Term_Menu, Window, ttrue, 6, " File ") &&
+      Smenuitem::Create4Menu(Term_Menu, Window, 0, ttrue, 6, " File ") &&
 
-      Item4MenuCommon(Term_Menu)) {
+      Smenuitem::Create4MenuCommon(Term_Menu)) {
 
     RegisterExt(Term, Open, OpenTerm);
     OverrideMethods(true);

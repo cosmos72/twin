@@ -6,7 +6,7 @@ typedef struct {
 } utf32_hash_entry;
 
 typedef struct {
-  TUTF_CONST trune *charset; /* charset -> utf32 conversion */
+  const trune *charset; /* charset -> utf32 conversion */
   utf32_hash_entry *base;
   trune cache_utf32;
   udat n_power_of_2;
@@ -60,8 +60,7 @@ TUTF_INLINE void *align_address(void *address) {
   return (void *)(((size_t)address + alignment_mask) & ~(size_t)alignment_mask);
 }
 
-static utf32_hash_table *utf32_hash_create(TUTF_CONST trune charset[0x100], udat n,
-                                           udat n_power_of_2) {
+static utf32_hash_table *utf32_hash_create(const trune charset[0x100], udat n, udat n_power_of_2) {
   utf32_hash_table *table =
       calloc(1, (sizeof(utf32_hash_table) +
                  (n ? n : 1) * sizeof(utf32_hash_entry) /* ensure at least one utf32_hash_entry */
@@ -90,7 +89,7 @@ static utf32_hash_table *utf32_hash_create(TUTF_CONST trune charset[0x100], udat
 
 static trune utf32_hash_search(utf32_hash_table *table, trune utf32, byte ascii_is_preserved) {
   if (table != NULL) {
-    TUTF_CONST utf32_hash_entry *base, *e;
+    const utf32_hash_entry *base, *e;
     byte ch, key0_visited;
 
     if (utf32 == table->cache_utf32)

@@ -14,16 +14,18 @@ class Chars;
 bool DlOpen(Tmodule Module);
 void DlClose(Tmodule Module);
 
-#define MainSo ((uldat)0)
-#define TermSo ((uldat)2)
-#define SocketSo ((uldat)3)
-#define RCParseSo ((uldat)4)
-#define MAX_So ((uldat)5)
+enum IdSo {
+  MainSo = 0,
+  TermSo = 2,
+  SocketSo = 3,
+  RCParseSo = 4,
+  MAX_So = 5,
+};
 
-Tmodule DlLoad(uldat code);
-void DlUnload(uldat code);
-Tmodule DlIsLoaded(uldat code);
-udat DlName2Code(const char *name);
+Tmodule DlLoad(IdSo code);
+void DlUnload(IdSo code);
+Tmodule DlIsLoaded(IdSo code);
+IdSo DlName2Code(const char *name);
 
 Tmodule DlLoadAny(Chars name);
 

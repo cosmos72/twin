@@ -21,7 +21,8 @@
 
 /* functions to manage Ids */
 
-struct s_idvec {
+class s_idvec {
+public:
   Tobj *Vec;
   uldat Bottom, Top, Size;
 
@@ -152,9 +153,8 @@ bool AssignId(const e_id class_id, Tobj o) {
 }
 
 void DropId(Tobj o) {
-  TobjEntry e = (TobjEntry)o;
-  if (o && e->Fn) {
-    const e_class_byte class_byte = e_class_byte(e->Id >> class_byte_shift);
+  if (o) {
+    const e_class_byte class_byte = e_class_byte(o->Id >> class_byte_shift);
 
     switch (class_byte) {
     case Tobj_class_byte:

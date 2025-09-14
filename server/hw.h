@@ -10,16 +10,16 @@
 #define TWIN_HW_H
 
 #include "compiler.h" // VOLATILE
+#include "obj/display.h"
 
-#define setFlush() (HW->NeedHW |= NEEDFlushHW)
-#define clrFlush() (HW->NeedHW &= ~NEEDFlushHW)
-
-#define HW_KBDAPPLIC 0x0001
-#define HW_ALTCURSKEYS 0x0002
-#define HW_BELLPITCH 0x0003
-#define HW_BELLDURATION 0x0004
-#define HW_MOUSEMOTIONEVENTS 0x0005
-#define HW_CONFIGURE_MAX 0x0006
+enum {
+  HW_KBDAPPLIC = 0x0001,
+  HW_ALTCURSKEYS = 0x0002,
+  HW_BELLPITCH = 0x0003,
+  HW_BELLDURATION = 0x0004,
+  HW_MOUSEMOTIONEVENTS = 0x0005,
+  HW_CONFIGURE_MAX = 0x0006
+};
 
 extern Tdisplay DisplayHWCTTY;
 #define HWCTTY_DETACHED ((Tdisplay)1)

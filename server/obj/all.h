@@ -18,10 +18,12 @@
 #include "obj/window.h" /* BUTTON_MAX */
 #include "tty.h"        /* USER_MAP */
 #include "stl_types.h"  /* String */
+#include "stl/list.h"
 
 #include <Tw/Tw.h> /* TW_MAX_MIMELEN */
 
-struct Ssetup {
+class Ssetup {
+public:
   dat MaxMouseSnap;
   udat MinAllocSize;
   byte Flags;
@@ -32,7 +34,7 @@ struct Ssetup {
 /* All->Setup->Flags */
 enum e_setup_flag {
   setup_shadows = 0x01,
-  setup_blink = 0x02,
+  /* setup_blink = 0x02, no longer used */
   setup_cursor_always = 0x04,
   setup_menu_hide = 0x08,
   setup_menu_info = 0x10,
@@ -78,7 +80,8 @@ typedef struct s_button_vec {
   byte changed;
 } button_vec;
 
-struct Sselection {
+class Sselection {
+public:
   timevalue Time;
   Tmsgport Owner;
   Tdisplay OwnerOnce;
@@ -90,19 +93,21 @@ struct Sselection {
   void paste();
 };
 
-struct Sall : public Sobj {
-  TobjFn Fn;
+class Sall : public Sobj {
+public:
   Tobj Prev, Next, Parent;
 
   /* Tall */
-  Tscreen FirstScreen, LastScreen;
-  Tmsgport FirstMsgPort, LastMsgPort, RunMsgPort;
-  Tmutex FirstMutex, LastMutex;
+  List<Tscreen> Screens;
+  List<Tmsgport> MsgPorts;
+  Tmsgport RunMsgPort;
+  List<Tmutex> Mutexes;
 
-  Tmodule FirstModule, LastModule;
+  List<Tmodule> Modules;
   HookData HookModule;
 
-  Tdisplay FirstDisplay, LastDisplay, MouseDisplay, ExclusiveDisplay;
+  List<Tdisplay> Displays;
+  Tdisplay MouseDisplay, ExclusiveDisplay;
   HookData HookDisplay;
 
   dat DisplayWidth, DisplayHeight;

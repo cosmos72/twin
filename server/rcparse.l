@@ -177,7 +177,7 @@ Bold|High    return COL_HIGH;
 [\(\)\+\-]    return (unsigned char)yytext[0];
 
 ({ALPHA}|{DEC})+ {
-            sprintf(errbuf, "twin: %.200s:%d: invalid identifier `%s'\n",
+            snprintf(errbuf, sizeof(errbuf), "twin: %.200s:%d: invalid identifier `%s'\n",
                 FILE_NAME, LINE_NO, yytext);
             YY_FATAL_ERROR(errbuf);
         }
@@ -239,9 +239,10 @@ Bold|High    return COL_HIGH;
         }
 
 \"([^\"]|(\\.))* {
-        char *buf = (char *)AllocMem(256 + strlen(yytext));
+        size_t buf_len = 256 + strlen(yytext);
+        char *buf = (char *)AllocMem(buf_len);
         if (buf) {
-            sprintf(buf, "twin: %.200s:%d: unterminated string:\n%s\n",
+            snprintf(buf, buf_len, "twin: %.200s:%d: unterminated string:\n%s\n",
                 FILE_NAME, LINE_NO, yytext);
                 YY_FATAL_ERROR(buf);
             } else {
@@ -254,12 +255,15 @@ Bold|High    return COL_HIGH;
 
 .        {
             unsigned char ch = yytext[0];
-            sprintf(errbuf, "twin: %.200s:%d: illegal character 0x%02X",
+            snprintf(errbuf, sizeof(errbuf), "twin: %.200s:%d: illegal character 0x%02X",
                 FILE_NAME, LINE_NO, ch);
-                    if (ch >= 32 && ch < 127) {
-            sprintf(errbuf + strlen(errbuf), " `%c'\n", ch);
-                    } else
-            strcat(errbuf, "\n");
+            size_t errbuf_len = strlen(errbuf);
+            if (ch >= 32 && ch < 127 && errbuf_len <= sizeof(errbuf) - 6) {
+              snprintf(errbuf + errbuf_len, 6, " `%c'\n", ch);
+            } else if (errbuf_len <= sizeof(errbuf) - 2) {
+              errbuf[errbuf_len++] = '\n';
+              errbuf[errbuf_len++] = '\0';
+            }
             YY_FATAL_ERROR(errbuf);
         }
 

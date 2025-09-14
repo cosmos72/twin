@@ -22,6 +22,7 @@
 #include "alloc.h"
 #include "common.h"
 #include "data.h"
+#include "palette.h"
 #include "dl_helper.h"
 #include "fdlist.h"
 #include "hw.h"
@@ -54,37 +55,11 @@ static const char *MYname;
 static dat TryDisplayWidth, TryDisplayHeight;
 static byte ValidVideo;
 
-const char *TWDisplay, *origTWDisplay, *origTERM;
+const char *TWDisplay, *origTWDisplay, *origTERM, *origCOLORTERM;
 
 char printk_buf[TW_BIGBUFF];
 
 String HOME;
-
-#define L 0x55
-#define M 0xAA
-#define H 0xFF
-
-#ifdef TWIN_PALETTE_SOLARIZED
-#define DARK 0x04, 0x08, 0x10
-#define LIGHT 0xBB, 0xBB, 0xBB
-#else
-#define DARK 0, 0, 0
-#define LIGHT M, M, M
-#endif
-
-rgb Palette[tmaxcol + 1] = {
-    /* the default colour table, for VGA+ colour systems */
-    {DARK},    {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {LIGHT},
-    {L, L, L}, {L, L, H}, {L, H, L}, {L, H, H}, {H, L, L}, {H, L, H}, {H, H, L}, {H, H, H}};
-
-rgb defaultPalette[tmaxcol + 1] = {
-    /* the default colour table, for VGA+ colour systems */
-    {DARK},    {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {LIGHT},
-    {L, L, L}, {L, L, H}, {L, H, L}, {L, H, H}, {H, L, L}, {H, L, H}, {H, H, L}, {H, H, H}};
-
-#undef H
-#undef M
-#undef L
 
 static fdlist FdList[5];
 static uldat FdSize = 5, FdTop, FdBottom, FdWQueued;
@@ -108,11 +83,11 @@ void Quit(int status);
 
 void NoOp(void) {
 }
-byte AlwaysFalse(void) {
-  return tfalse;
+bool AlwaysFalse(void) {
+  return false;
 }
-byte AlwaysTrue(void) {
-  return ttrue;
+bool AlwaysTrue(void) {
+  return true;
 }
 void *AlwaysNull(void) {
   return NULL;
@@ -121,17 +96,6 @@ void *AlwaysNull(void) {
 void gainPrivileges(void) {
 }
 void RemotePidIsDead(pid_t pid) {
-}
-
-int printk(const char *format, ...) {
-  int i = 0;
-#ifdef TW_HAVE_VPRINTF
-  va_list ap;
-  va_start(ap, format);
-  i = vfprintf(stderr, format, ap);
-  va_end(ap);
-#endif
-  return i;
 }
 
 void printk_str(const char *s, size_t len) {
@@ -152,7 +116,7 @@ inline uldat FdListGet(void) {
   return NOSLOT;
 }
 
-uldat RegisterRemote(int Fd, Tobj HandlerData, handler_io_d HandlerIO) {
+uldat RegisterRemote(int fd, Tobj HandlerData, handler_io_d HandlerIO) {
   uldat Slot, j;
 
   if ((Slot = FdListGet()) == NOSLOT)
@@ -160,7 +124,7 @@ uldat RegisterRemote(int Fd, Tobj HandlerData, handler_io_d HandlerIO) {
 
   memset(&LS, 0, sizeof(fdlist));
 
-  LS.Fd = Fd;
+  LS.Fd = fd;
   LS.pairSlot = NOSLOT;
   if ((LS.HandlerData = HandlerData))
     LS.HandlerIO.D = HandlerIO;
@@ -175,10 +139,10 @@ uldat RegisterRemote(int Fd, Tobj HandlerData, handler_io_d HandlerIO) {
       break;
   FdBottom = j;
 
-  if (Fd >= 0) {
-    FD_SET(Fd, &save_rfds);
-    if (max_fds < Fd)
-      max_fds = Fd;
+  if (fd >= 0) {
+    FD_SET(fd, &save_rfds);
+    if (max_fds < fd)
+      max_fds = fd;
   }
   return Slot;
 }
@@ -237,13 +201,12 @@ void Sobj::Delete() {
 ////////////////////////////////////////////////////////////////////////////////
 /// Smodule methods
 
-static struct SmoduleFn _FnModule = {
-    (bool (*)(Tmodule))NoOp, /* DlOpen       */
-    (void (*)(Tmodule))NoOp, /* DlClose      */
+static SmoduleFn _FnModule = {
+    (bool (*)(Tmodule))AlwaysFalse, /* DlOpen       */
+    (void (*)(Tmodule))NoOp,        /* DlClose      */
 };
 
 Tmodule Smodule::Init(Chars /*name*/) {
-  Fn = &_FnModule;
   Sobj::Init(Tmodule_class_id);
   return this;
 }
@@ -255,7 +218,7 @@ void Smodule::Remove() {
 }
 
 static Smodule _Module;
-static Tmodule const GModule = (_Module.Fn = &_FnModule, _Module.Init(Chars()));
+static Tmodule const GModule = _Module.Init(Chars());
 
 static Tmodule DlLoadAny(Chars name) {
   byte (*init_func)(Tmodule);
@@ -286,7 +249,7 @@ static Tmodule DlLoadAny(Chars name) {
   return NULL;
 }
 
-static bool module_InitHW(Chars arg) {
+static bool module_InitHW(Tdisplay hw, Chars arg) {
   Tmodule m = NULL;
 
   if (arg.size() <= 4) {
@@ -313,12 +276,12 @@ static bool module_InitHW(Chars arg) {
   } else {
     log(INFO) << "twdisplay: starting display driver module `" << name << "'...\n";
 
-    bool (*InitD)(void);
-    if (!(InitD = m->DoInit) || !InitD()) {
+    bool (*fnInit)(Tdisplay hw);
+    if (!(fnInit = m->DoInit) || !fnInit(hw)) {
       log(ERROR) << "twdisplay: ...module `" << name << "' failed to start.\n";
     } else {
       log(INFO) << "twdisplay: ...module `" << name << "' successfully started.\n";
-      HW->Module = m;
+      hw->Module = m;
       m->Used++;
       return true;
     }
@@ -332,19 +295,16 @@ static bool module_InitHW(Chars arg) {
 
 static Tdisplay CreateDisplayHW(Chars name);
 
-static struct SobjFn _FnDisplay = {};
-
 Tdisplay Sdisplay::Init(Chars name) {
-  Fn = &_FnDisplay;
   if (!Sobj::Init(Tdisplay_class_id) || !Name.format(name)) {
     return NULL;
   }
   Module = NULL;
   /*
-   * ->Quitted will be set to tfalse only
+   * ->Quitted will be set to false only
    * after DisplayHW->InitHW() has succeeded.
    */
-  Quitted = ttrue;
+  Quitted = true;
   AttachSlot = NOSLOT;
   return this;
 }
@@ -365,11 +325,11 @@ void warn_NoHW(uldat len, const char *arg, uldat tried) {
   log(ERROR) << "\n";
 }
 
-static void UpdateFlagsHW(void) NOTHROW {
-  if (!HW->Quitted) {
-    NeedOldVideo = HW->FlagsHW & FlHWNeedOldVideo;
-    ExpensiveFlushVideo = HW->FlagsHW & FlHWExpensiveFlushVideo;
-    CanDragArea = !!HW->CanDragArea;
+static void UpdateFlagsHW(Tdisplay hw) NOTHROW {
+  if (!hw->Quitted) {
+    NeedOldVideo = (hw->FlagsHW & FlagNeedOldVideoHW) != 0;
+    ExpensiveFlushVideo = (hw->FlagsHW & FlagExpensiveFlushVideoHW) != 0;
+    CanDragArea = hw->fnCanDragArea != 0;
   }
 }
 
@@ -377,28 +337,26 @@ static void UpdateFlagsHW(void) NOTHROW {
  * InitDisplay runs HW specific InitXXX() functions, starting from best setup
  * and falling back in case some of them fails.
  */
-static bool InitDisplay(Tdisplay display) {
-  if (!display) {
+static bool InitDisplay(Tdisplay hw) {
+  if (!hw) {
     return false;
   }
-  Chars arg = display->Name;
+  Chars arg = hw->Name;
   uldat tried = 0;
   bool success;
 
-  SaveHW;
-  SetHW(display);
-
-  display->DisplayIsCTTY = display->NeedHW = display->FlagsHW = tfalse;
+  hw->DisplayIsCTTY = false;
+  hw->NeedHW = hw->FlagsHW = 0;
 
   if (arg.starts_with(Chars("-hw="))) {
     arg = arg.view(4, arg.size());
   } else {
     arg = Chars();
   }
-#define TRY4(hw_name) (tried++, module_InitHW(Chars(hw_name)))
+#define TRY4(hw_name) (tried++, module_InitHW(hw, Chars(hw_name)))
 
   if (arg) {
-    success = module_InitHW(display->Name);
+    success = module_InitHW(hw, hw->Name);
   } else {
     success = TRY4("-hw=xft") || TRY4("-hw=X11") || TRY4("-hw=twin") ||
 #if 0 /* cannot use `--hw=display' inside twdisplay! */
@@ -407,22 +365,20 @@ static bool InitDisplay(Tdisplay display) {
               TRY4("-hw=tty");
   }
   if (success) {
-    display->Quitted = tfalse;
-    if (!DisplayHWCTTY && display->DisplayIsCTTY)
-      DisplayHWCTTY = display;
-    UpdateFlagsHW();
-  } else
-    warn_NoHW(display->Name.size(), HW->Name.data(), tried);
-
-  RestoreHW;
-
+    hw->Quitted = false;
+    if (!DisplayHWCTTY && hw->DisplayIsCTTY) {
+      DisplayHWCTTY = hw;
+    }
+    UpdateFlagsHW(hw);
+  } else {
+    warn_NoHW(hw->Name.size(), hw->Name.data(), tried);
+  }
   return success;
 }
 
-static void QuitDisplay(Tdisplay display) {
-  if (display && display->QuitHW) {
-    HW = display;
-    display->QuitHW();
+static void QuitDisplay(Tdisplay hw) {
+  if (hw && hw->fnQuitHW) {
+    hw->QuitHW();
   }
 }
 
@@ -435,17 +391,17 @@ void Sdisplay::DoQuit() {
 }
 
 static Tdisplay CreateDisplayHW(Chars name) {
-  return HW = _HW.Init(name);
+  return _HW.Init(name);
 }
 
-static byte IsValidHW(Chars carg) NOTHROW {
+static bool IsValidNameHW(Chars carg) NOTHROW {
   const char *arg = carg.data();
   size_t len = carg.size();
   uldat i;
   byte b;
-  if (len >= 4 && !memcmp(arg, "-hw=", 4))
+  if (len >= 4 && !memcmp(arg, "-hw=", 4)) {
     arg += 4, len -= 4;
-
+  }
   for (i = 0; i < len; i++) {
     b = arg[i];
     if (b == '@' || b == ',')
@@ -454,10 +410,10 @@ static byte IsValidHW(Chars carg) NOTHROW {
     if ((b < '0' || b > '9') && (b < 'A' || b > 'Z') && (b < 'a' || b > 'z') && b != '_') {
       log(ERROR) << "twdisplay: invalid non-alphanumeric character 0x" << hex(b)
                  << " in display HW name: `" << Chars(arg, len) << "'\n";
-      return tfalse;
+      return false;
     }
   }
-  return ttrue;
+  return true;
 }
 
 static Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
@@ -465,64 +421,21 @@ static Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
     log(ERROR) << "twdisplay: specified `" << arg << "' is not `--hw=<display>'\n";
     return NULL;
   }
-  if (IsValidHW(arg) && CreateDisplayHW(arg)) {
-    HW->AttachSlot = slot;
-    if (HW->DoInit())
-      return HW;
+  Tdisplay hw;
+  if (IsValidNameHW(arg) && (hw = CreateDisplayHW(arg))) {
+    hw->AttachSlot = slot;
+    if (hw->DoInit()) {
+      return hw;
+    }
   }
   return NULL;
 }
 
-#if 0
-/* not needed, server-side hw_display already does optimization for us */
-inline void OptimizeChangedVideo(void) {
-    uldat _start, start, _end, end;
-    ldat i;
-
-    for (i=0; i<(ldat)DisplayHeight*2; i++) {
-        start = (uldat)ChangedVideo[i>>1][!(i&1)][0];
-
-        if (start != (uldat)-1) {
-
-            start += (i>>1) * (ldat)DisplayWidth;
-            _start = start;
-
-            _end = end = (uldat)ChangedVideo[i>>1][!(i&1)][1] + (i>>1) * (ldat)DisplayWidth;
-
-            while (start <= end && Video[start] == OldVideo[start])
-                start++;
-            while (start <= end && Video[end] == OldVideo[end])
-                end--;
-
-            if (start > end) {
-                if (i&1) {
-                    /*
-                     * this is the first area, to make it empty
-                     * copy the second on this.
-                     */
-                    if (ChangedVideo[i>>1][1][0] != -1) {
-                        ChangedVideo[i>>1][0][0] = ChangedVideo[i>>1][1][0];
-                        ChangedVideo[i>>1][0][1] = ChangedVideo[i>>1][1][1];
-                        ChangedVideo[i>>1][1][0] = -1;
-                    } else
-                        ChangedVideo[i>>1][0][0] = -1;
-                } else
-                    ChangedVideo[i>>1][1][0] = -1;
-                continue;
-            } else if (start > _start || end < _end) {
-                ChangedVideo[i>>1][!(i&1)][0] += start - _start;
-                ChangedVideo[i>>1][!(i&1)][1] -= _end - end;
-            }
-        }
-    }
+/* server-side hw_display already does optimization for us */
+static inline void OptimizeChangedVideo(void) {
 }
-#else
-#define OptimizeChangedVideo()                                                                     \
-  do {                                                                                             \
-  } while (0)
-#endif
 
-inline void SyncOldVideo(void) NOTHROW {
+static inline void SyncOldVideo(void) NOTHROW {
   ldat start, len;
   ldat i;
 
@@ -543,42 +456,40 @@ inline void SyncOldVideo(void) NOTHROW {
 }
 
 void FlushHW(void) {
-
-  if (!ValidVideo)
+  if (!ValidVideo) {
     return;
+  }
+  Tdisplay hw = &_HW;
 
   if (QueuedDrawArea2FullScreen) {
     QueuedDrawArea2FullScreen = false;
     DirtyVideo(0, 0, DisplayWidth - 1, DisplayHeight - 1);
-    ValidOldVideo = tfalse;
-  } else if (HW->RedrawVideo) {
-    DirtyVideo(HW->RedrawLeft, HW->RedrawUp, HW->RedrawRight, HW->RedrawDown);
-    ValidOldVideo = tfalse;
-  } else if (NeedOldVideo && ValidOldVideo)
+    ValidOldVideo = false;
+  } else if (hw->RedrawVideo) {
+    DirtyVideo(hw->RedrawLeft, hw->RedrawUp, hw->RedrawRight, hw->RedrawDown);
+    ValidOldVideo = false;
+  } else if (NeedOldVideo && ValidOldVideo) {
     OptimizeChangedVideo();
+  }
+  hw->FlushVideo();
 
-  HW->FlushVideo();
+  hw->RedrawVideo = false;
 
-  HW->RedrawVideo = tfalse;
-
-  if (HW->NeedHW & NEEDFlushHW)
-    HW->FlushHW();
-
-  if (NeedHW & NEEDFlushStdout)
-    fflush(stdout), NeedHW &= ~NEEDFlushStdout;
-
+  if (hw->NeedHW & NeedFlushHW) {
+    hw->FlushHW();
+  }
+  if (NeedHW & NeedFlushStdout) {
+    fflush(stdout), NeedHW &= ~NeedFlushStdout;
+  }
   SyncOldVideo();
 
-  ChangedVideoFlag = tfalse;
-  ValidOldVideo = ttrue;
+  ChangedVideoFlag = false;
+  ValidOldVideo = true;
 }
 
-void ResizeDisplayPrefer(Tdisplay display) {
-  SaveHW;
-  SetHW(display);
-  display->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
-  NeedHW |= NEEDResizeDisplay;
-  RestoreHW;
+void ResizeDisplayPrefer(Tdisplay hw) {
+  hw->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
+  NeedHW |= NeedResizeDisplay;
 }
 
 static byte ReAllocVideo(dat Width, dat Height) {
@@ -619,18 +530,19 @@ static byte ReAllocVideo(dat Width, dat Height) {
  * return ttrue if DisplayWidth or DisplayHeight were changed
  */
 static byte ResizeDisplay(void) {
-  byte change = tfalse;
+  Tdisplay hw = &_HW;
   tmsg tw_msg;
+  byte change = tfalse;
 
   if (!TryDisplayWidth || !TryDisplayHeight)
-    HW->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
+    hw->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
 
-  HW->CheckResize(&TryDisplayWidth, &TryDisplayHeight);
-  HW->Resize(TryDisplayWidth, TryDisplayHeight);
+  hw->CheckResize(&TryDisplayWidth, &TryDisplayHeight);
+  hw->Resize(TryDisplayWidth, TryDisplayHeight);
 
   change = ReAllocVideo(TryDisplayWidth, TryDisplayHeight);
 
-  NeedHW &= ~NEEDResizeDisplay;
+  NeedHW &= ~NeedResizeDisplay;
 
   TryDisplayWidth = TryDisplayHeight = 0;
 
@@ -645,32 +557,27 @@ static byte ResizeDisplay(void) {
 }
 
 byte AllHWCanDragAreaNow(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-  return (CanDragArea && HW->CanDragArea && HW->CanDragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp));
+  Tdisplay hw = &_HW;
+  return (CanDragArea && hw->fnCanDragArea && hw->CanDragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp));
 }
 
 void DragAreaHW(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-  HW->DragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp);
+  Tdisplay hw = &_HW;
+  hw->DragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp);
 }
 
 void SetPaletteHW(udat N, udat R, udat G, udat B) {
-  if (N <= tmaxcol) {
-    rgb c;
-    c.Red = R;
-    c.Green = G;
-    c.Blue = B;
-    if (memcmp(&Palette[N], &c, sizeof(rgb))) {
-      Palette[N] = c;
-      HW->SetPalette(N, R, G, B);
-    }
-  }
+  /* nop */
 }
 
 void ResetPaletteHW(void) {
-  HW->ResetPalette();
+  Tdisplay hw = &_HW;
+  hw->ResetPalette();
 }
 
 static void HandleMsg(tmsg msg) {
   tevent_display EventD;
+  Tdisplay hw = &_HW;
 
   switch (msg->Type) {
   case TW_MSG_SELECTION:
@@ -690,8 +597,8 @@ static void HandleMsg(tmsg msg) {
      * Cast it to (Tobj) as expected by HW displays...
      * we will cast it back when needed
      */
-    HW->HWSelectionRequest((Tobj)(topaque)msg->Event.EventSelectionRequest.Requestor,
-                           msg->Event.EventSelectionRequest.ReqPrivate);
+    hw->SelectionRequest((Tobj)(topaque)msg->Event.EventSelectionRequest.Requestor,
+                         msg->Event.EventSelectionRequest.ReqPrivate);
     break;
   case TW_MSG_SELECTIONNOTIFY:
 #if 0
@@ -699,7 +606,7 @@ static void HandleMsg(tmsg msg) {
 #endif
     /* notify selection to underlying HW */
 
-    HW->HWSelectionNotify(
+    hw->SelectionNotify(
         msg->Event.EventSelectionNotify.ReqPrivate,                                 //
         e_id(msg->Event.EventSelectionNotify.Magic),                                //
         Chars::from_c_maxlen(msg->Event.EventSelectionNotify.MIME, TW_MAX_MIMELEN), //
@@ -745,12 +652,12 @@ static void HandleMsg(tmsg msg) {
        * (if it is meaningful and different from current)
        */
       if (EventD->X != DisplayWidth || EventD->Y != DisplayHeight) {
-        HW->Resize(EventD->X, EventD->Y);
+        hw->Resize(EventD->X, EventD->Y);
         ReAllocVideo(EventD->X, EventD->Y);
       }
       break;
     case TW_EV_DPY_SelectionExport:
-      NeedHW |= NEEDSelectionExport;
+      NeedHW |= NeedSelectionExport;
       break;
     case TW_EV_DPY_DragArea:
 #define c(index) (deserialize<udat>(EventD->Data, (index) * sizeof(udat)))
@@ -759,21 +666,21 @@ static void HandleMsg(tmsg msg) {
 #undef c
       break;
     case TW_EV_DPY_Beep:
-      HW->Beep();
+      hw->Beep();
       break;
     case TW_EV_DPY_Configure:
       if (EventD->X == HW_MOUSEMOTIONEVENTS)
         MouseMotionN = EventD->Y > 0;
-      HW->Configure(EventD->X, EventD->Y == -1, EventD->Y);
+      hw->Configure(EventD->X, EventD->Y == -1, EventD->Y);
       break;
     case TW_EV_DPY_SetPalette:
 #define c(index) (deserialize<udat>(EventD->Data, (index) * sizeof(udat)))
       if (EventD->Len == 3 * sizeof(udat))
-        HW->SetPalette(EventD->X, c(0), c(1), c(2));
+        hw->SetPalette(EventD->X, c(0), c(1), c(2));
 #undef c
       break;
     case TW_EV_DPY_ResetPalette:
-      HW->ResetPalette();
+      hw->ResetPalette();
       break;
     case TW_EV_DPY_Helper:
       tw_helper = deserialize<uldat>(EventD->Data);
@@ -789,13 +696,15 @@ static void HandleMsg(tmsg msg) {
 
 static void SocketIO(void) {
   tmsg msg;
-  while ((msg = TwReadMsg(tfalse)))
+  while ((msg = TwReadMsg(tfalse))) {
     HandleMsg(msg);
+  }
 }
 
 void SelectionExport(void) {
-  HW->HWSelectionExport();
-  NeedHW &= ~NEEDSelectionExport;
+  Tdisplay hw = &_HW;
+  hw->SelectionExport();
+  NeedHW &= ~NeedSelectionExport;
 }
 
 /* HW back-end function: get selection owner */
@@ -841,13 +750,13 @@ void TwinSelectionRequest(Tobj Requestor, uldat ReqPrivate, Tobj Owner) {
   TwRequestSelection((topaque)Owner, ReqPrivate);
 }
 
-static byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
+static byte StdAddMouseEvent(Tdisplay hw, udat Code, dat MouseX, dat MouseY) {
   tevent_mouse Event;
   tmsg msg;
 
-  if (HW->FlagsHW & FlHWNoInput)
+  if (hw && (hw->FlagsHW & FlagNoInputHW)) {
     return ttrue;
-
+  }
   if ((msg = TwCreateMsg(TW_MSG_WIDGET_MOUSE, sizeof(event_mouse)))) {
     Event = &msg->Event.EventMouse;
 
@@ -862,14 +771,14 @@ static byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
   return tfalse;
 }
 
-byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
+byte MouseEventCommon(Tdisplay hw, dat x, dat y, dat dx, dat dy, udat Buttons) {
   dat prev_x, prev_y;
   udat OldButtons, i;
   mouse_state *OldState;
   udat result;
   byte ret = ttrue;
 
-  OldState = &HW->MouseState;
+  OldState = &hw->MouseState;
   OldButtons = OldState->keys;
   prev_x = OldState->x;
   prev_y = OldState->y;
@@ -882,9 +791,9 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
   y = Min2(y, DisplayHeight - 1);
   OldState->delta_y = y == 0 ? Min2(dy, 0) : y == DisplayHeight - 1 ? Max2(dy, 0) : 0;
 
-  if (x != prev_x || y != prev_y)
-    HW->FlagsHW |= FlHWChangedMouseFlag;
-
+  if (x != prev_x || y != prev_y) {
+    hw->FlagsHW |= FlagChangedMouseFlagHW;
+  }
   OldState->x = x;
   OldState->y = y;
 
@@ -893,27 +802,27 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
   if (Buttons != OldButtons || ((MouseMotionN || OldButtons) && (x != prev_x || y != prev_y))) {
 
     if ((MouseMotionN || OldButtons) && (x != prev_x || y != prev_y)) {
-      ret = StdAddMouseEvent(MOVE_MOUSE | OldButtons, x, y);
+      ret = StdAddMouseEvent(hw, MOVE_MOUSE | OldButtons, x, y);
     }
     for (i = 0; i < BUTTON_N_MAX && ret; i++) {
       if ((Buttons & HOLD_CODE(i)) != (OldButtons & HOLD_CODE(i))) {
         result = (Buttons & HOLD_CODE(i) ? PRESS_CODE(i) : RELEASE_CODE(i)) |
                  (OldButtons &= ~HOLD_CODE(i));
         OldButtons |= Buttons & HOLD_CODE(i);
-        ret = StdAddMouseEvent(result, x, y);
+        ret = StdAddMouseEvent(hw, result, x, y);
       }
     }
   }
   return ret;
 }
 
-byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) {
+bool KeyboardEventCommon(Tdisplay hw, udat Code, udat ShiftFlags, udat Len, const char *Seq) {
   tevent_keyboard Event;
   tmsg msg;
 
-  if (HW->FlagsHW & FlHWNoInput)
-    return ttrue;
-
+  if (hw->FlagsHW & FlagNoInputHW) {
+    return true;
+  }
   if ((msg = TwCreateMsg(TW_MSG_WIDGET_KEY, Len + 1 + sizeof(s_tevent_keyboard)))) {
     Event = &msg->Event.EventKeyboard;
 
@@ -924,56 +833,57 @@ byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) 
     Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
 
     TwBlindSendMsg(tw_helper, msg);
-    return ttrue;
+    return true;
   }
-  return tfalse;
+  return false;
 }
 
-static void MainLoop(int Fd) {
+static void MainLoop(Tdisplay hw, int fd) {
   struct timeval sel_timeout;
   fd_set read_fds, write_fds, *pwrite_fds;
   uldat err, detail;
   int sys_errno, num_fds = 0;
 
   for (;;) {
-    if (GotSignals)
+    if (GotSignals) {
       HandleSignals();
-
-    if (NeedHW & NEEDResizeDisplay)
+    }
+    if (NeedHW & NeedResizeDisplay) {
       ResizeDisplay();
-
-    if (NeedHW & NEEDSelectionExport)
+    }
+    if (NeedHW & NeedSelectionExport) {
       SelectionExport();
-
+    }
     /*
      * don't FlushHW() unconditionalluy here,
      * as it gets called syncronously
      * with the main twin from HandleEvent()...
      * just update what is needed.
      */
-    if (HW->RedrawVideo)
+    if (hw->RedrawVideo) {
       FlushHW();
-    else {
-      HW->UpdateMouseAndCursor();
-
-      if (HW->NeedHW & NEEDFlushHW)
-        HW->FlushHW();
-      if (NeedHW & NEEDFlushStdout)
-        fflush(stdout), NeedHW &= ~NEEDFlushStdout;
+    } else {
+      hw->UpdateMouseAndCursor();
+      if (hw->NeedHW & NeedFlushHW) {
+        hw->FlushHW();
+      }
+      if (NeedHW & NeedFlushStdout) {
+        fflush(stdout), NeedHW &= ~NeedFlushStdout;
+      }
     }
 
     read_fds = save_rfds;
 
-    if (!FdWQueued)
+    if (!FdWQueued) {
       pwrite_fds = NULL;
-    else {
+    } else {
       write_fds = save_wfds;
       pwrite_fds = &write_fds;
     }
 
-    if (!TwFlush())
+    if (!TwFlush()) {
       break;
-
+    }
     /*
      * messages can arrive during Tw* function calls,
      * so the FD_ISSET() test alone does not suffice.
@@ -982,15 +892,15 @@ static void MainLoop(int Fd) {
     sel_timeout.tv_sec = TwPendingMsg() ? 0 : 120;
     sel_timeout.tv_usec = 0;
 
-    if (NeedHW & NEEDPanicHW)
+    if (NeedHW & NeedPanicHW) {
       break;
-
+    }
     num_fds = OverrideSelect(max_fds + 1, &read_fds, pwrite_fds, NULL, &sel_timeout);
 
-    if (num_fds < 0 && errno != EINTR)
+    if (num_fds < 0 && errno != EINTR) {
       /* ach, problem. */
       break;
-
+    }
     if (num_fds == 0 && !TwPendingMsg()) {
       /*
        * no activity during timeout delay && no pending messages..
@@ -998,52 +908,54 @@ static void MainLoop(int Fd) {
        * however, if width <= 0 : means we lost connection, so exit..
        */
       if (TwGetDisplayWidth() <= 0) {
-        QuitDisplay(HW);
+        QuitDisplay(hw);
         log(ERROR) << "twdisplay: lost connection to TWIN.. \n";
         exit(1);
       }
     }
 
-    if ((num_fds > 0 && FD_ISSET(Fd, &read_fds)) || TwPendingMsg()) {
+    if ((num_fds > 0 && FD_ISSET(fd, &read_fds)) || TwPendingMsg()) {
       /*
        * messages can arrive during Tw* function calls,
        * so the FD_ISSET() test alone does not suffice.
        */
-      if (FD_ISSET(Fd, &read_fds)) {
+      if (FD_ISSET(fd, &read_fds)) {
         num_fds--;
-        FD_CLR(Fd, &read_fds);
+        FD_CLR(fd, &read_fds);
       }
       SocketIO();
     }
-    if (num_fds > 0)
+    if (num_fds > 0) {
       RemoteEvent(num_fds, &read_fds);
+    }
   }
 
-  if (NeedHW & NEEDPanicHW)
+  if (NeedHW & NeedPanicHW) {
     Quit(0);
-
+  }
   if (num_fds < 0 && errno != EINTR) {
-    QuitDisplay(HW);
+    QuitDisplay(hw);
     log(ERROR) << "twdisplay: select(): " << Chars::from_c(strerror(errno)) << "\n";
     exit(1);
   }
   if (TwInPanic()) {
     err = TwErrno;
     detail = TwErrnoDetail;
-    QuitDisplay(HW);
-    printk("" SS ": libtw error: " SS "" SS "\n", MYname, TwStrError(err),
-           TwStrErrorDetail(err, detail));
+    QuitDisplay(hw);
+    fprintf(stderr, "" SS ": libtw error: " SS "" SS "\n", MYname, TwStrError(err),
+            TwStrErrorDetail(err, detail));
     exit(1);
   }
   err = TwErrno;
   detail = TwErrnoDetail;
   sys_errno = errno;
-  QuitDisplay(HW);
-  printk("" SS ": shouldn't happen! Please report:\n"
-         "\tlibtw TwErrno: %d(%d),\t" SS "" SS "\n"
-         "\tsystem  errno: %d,\t" SS "\n",
-         MYname, err, detail, TwStrError(err), TwStrErrorDetail(err, detail), sys_errno,
-         strerror(sys_errno));
+  QuitDisplay(hw);
+  fprintf(stderr,
+          "" SS ": shouldn't happen! Please report:\n"
+          "\tlibtw TwErrno: %d(%d),\t" SS "" SS "\n"
+          "\tsystem  errno: %d,\t" SS "\n",
+          MYname, err, detail, TwStrError(err), TwStrErrorDetail(err, detail), sys_errno,
+          strerror(sys_errno));
   exit(1);
 }
 
@@ -1125,8 +1037,8 @@ TW_DECL_MAGIC(display_magic);
 int main(int argc, char *argv[]) {
   const char *tty = ttyname(0);
   const char *dpy = NULL, *client_dpy = NULL;
-  char *arg_hw = NULL;
-  int Fd;
+  const char *arg_hw = NULL;
+  int fd;
   byte flags = TW_ATTACH_HW_REDIRECT;
   byte ret = 0, ourtty = 0;
   bool force = false;
@@ -1136,60 +1048,59 @@ int main(int argc, char *argv[]) {
   MYname = argv[0];
 
   while (*++argv) {
-    char *argi = *argv;
-    if (!strcmp(argi, "-V") || !strcmp(argi, "-version")) {
+    Chars argi = Chars::from_c(*argv);
+    if (argi == Chars("-V") || argi == Chars("-version")) {
       ShowVersion();
       return 0;
-    } else if (!strcmp(argi, "-h") || !strcmp(argi, "-help")) {
+    } else if (argi == Chars("-h") || argi == Chars("-help")) {
       Usage();
       return 0;
-    } else if (!strcmp(argi, "-x") || !strcmp(argi, "-excl"))
+    } else if (argi == Chars("-x") || argi == Chars("-excl")) {
       flags |= TW_ATTACH_HW_EXCLUSIVE;
-    else if (!strcmp(argi, "-s") || !strcmp(argi, "-share"))
+    } else if (argi == Chars("-s") || argi == Chars("-share")) {
       flags &= ~TW_ATTACH_HW_EXCLUSIVE;
-    else if (!strcmp(argi, "-v") || !strcmp(argi, "-verbose"))
+    } else if (argi == Chars("-v") || argi == Chars("-verbose")) {
       flags |= TW_ATTACH_HW_REDIRECT;
-    else if (!strcmp(argi, "-q") || !strcmp(argi, "-quiet"))
+    } else if (argi == Chars("-q") || argi == Chars("-quiet")) {
       flags &= ~TW_ATTACH_HW_REDIRECT;
-    else if (!strcmp(argi, "-f") || !strcmp(argi, "-force"))
+    } else if (argi == Chars("-f") || argi == Chars("-force")) {
       force = true;
-    else if (!strncmp(argi, "-plugindir=", 11)) {
-      plugindir = Chars::from_c(argi + 11);
-    } else if (!strncmp(argi, "-twin@", 6))
-      dpy = argi + 6;
-    else if (!strncmp(argi, "-hw=", 4)) {
-      if (!strncmp(argi + 4, "display", 7)) {
-        printk("" SS ": argument `--hw=display' is for internal use only.\n", MYname);
+    } else if (argi.starts_with(Chars("-plugindir="))) {
+      plugindir = argi.view(11, argi.size());
+    } else if (argi.starts_with(Chars("-twin@"))) {
+      dpy = argi.data() + 6;
+    } else if (argi.starts_with(Chars("-hw="))) {
+      if (argi.size() >= 11 && argi.view(4, 11) == Chars("display")) {
+        fprintf(stderr, SS ": argument `--hw=display' is for internal use only.\n", MYname);
         TryUsage(NULL);
         return 1;
       }
-      if (!strncmp(argi + 4, "tty", 3)) {
+      if (argi.size() >= 7 && argi.view(4, 7) == Chars("tty")) {
         const char *cs = "";
-        char *opt = argi + 7;
-        char *s = strchr(opt, ',');
-        if (s)
+        const char *opt = argi.data() + 7;
+        char *s = (char *)(void *)strchr(opt, ',');
+        if (s) {
           *s = '\0';
-
-        if (!*opt)
+        }
+        if (!*opt) {
           /* attach twin to our tty */
           ourtty = 1;
-        else if (opt[0] == '@' && opt[1]) {
+        } else if (opt[0] == '@' && opt[1]) {
           if (opt[1] == '-') {
-            /*
-             * using server controlling tty makes no sense for twdisplay
-             */
-            printk("" SS ": `" SS "' makes sense only with twattach.\n", MYname, argi);
+            /* using server controlling tty makes no sense for twattach */
+            fprintf(stderr, SS ": `" SS "' makes sense only with twattach.\n", MYname, argi.data());
             return 1;
           } else if (tty) {
-            if (!strcmp(opt + 1, tty))
+            if (!strcmp(opt + 1, tty)) {
               /* attach twin to our tty */
               ourtty = 1;
+            }
           } else {
-            printk("" SS ": ttyname() failed: cannot find controlling tty!\n", MYname);
+            fprintf(stderr, SS ": ttyname() failed: cannot find controlling tty!\n", MYname);
             return 1;
           }
         } else {
-          printk("" SS ": malformed display hw `" SS "'\n", MYname, argi);
+          fprintf(stderr, SS ": malformed display hw `" SS "'\n", MYname, argi.data());
           return 1;
         }
 
@@ -1200,27 +1111,39 @@ int main(int argc, char *argv[]) {
 
         if (ourtty) {
           const char *term = getenv("TERM");
-          if (term && !*term)
+          if (term && !*term) {
             term = NULL;
-
-          arg_hw = (char *)malloc(strlen(tty) + 9 + strlen(cs) + (term ? 6 + strlen(term) : 0));
-
-          sprintf(arg_hw, "-hw=tty%s%s%s", (term ? ",TERM=" : term), term, cs);
-        } else
-          arg_hw = argi;
-      } else if ((argi)[4]) {
-        arg_hw = argi;
-        if (!strncmp(argi + 4, "twin@", 5)) {
-          client_dpy = argi + 9;
-        } else if (!strcmp(argi + 4, "twin")) {
-          client_dpy = "";
+          }
+          const char *colorterm = getenv("COLORTERM");
+          bool truecolor = colorterm && !strcmp(colorterm, "truecolor");
+          size_t arg_hw_len =
+              strlen(tty) + 9 + strlen(cs) + (term ? 6 + strlen(term) : 0) + (truecolor ? 9 : 0);
+          char *arg_alloc = (char *)malloc(arg_hw_len);
+          if (!arg_alloc) {
+            fputs("twdisplay: out of memory!\n", stderr);
+            return 1;
+          }
+          snprintf(arg_alloc, arg_hw_len, "-hw=tty%s%s%s%s", (term ? ",TERM=" : term),
+                   (term ? term : ""), (truecolor ? ",colors=16m" : ""), cs);
+          arg_hw = arg_alloc;
+        } else {
+          arg_hw = argi.data();
+        }
+      } else if (argi.size() > 4) {
+        arg_hw = argi.data();
+        if (argi.size() >= 8 && argi.view(4, 8) == Chars("twin")) {
+          if (arg_hw[8] == '@') {
+            client_dpy = arg_hw + 9;
+          } else {
+            client_dpy = "";
+          }
         }
       } else {
-        TryUsage(argi);
+        TryUsage(argi.data());
         return 1;
       }
     } else {
-      TryUsage(argi);
+      TryUsage(argi.data());
       return 1;
     }
   }
@@ -1234,8 +1157,10 @@ int main(int argc, char *argv[]) {
 #endif
 
   origTWDisplay = CloneStr(getenv("TWDISPLAY"));
-  TWDisplay = dpy ? CloneStr(dpy) : origTWDisplay;
   origTERM = CloneStr(getenv("TERM"));
+  origCOLORTERM = CloneStr(getenv("COLORTERM"));
+
+  TWDisplay = dpy ? CloneStr(dpy) : origTWDisplay;
   {
     const char *home = getenv("HOME");
     if (!home) {
@@ -1253,7 +1178,8 @@ int main(int argc, char *argv[]) {
       (client_dpy && *client_dpy && TWDisplay && !strcmp(client_dpy, TWDisplay))) {
 
     if (!force) {
-      printk("twdisplay: refusing to display twin inside itself. Use option `-f' to override.\n");
+      fprintf(stderr,
+              "twdisplay: refusing to display twin inside itself. Use option `-f' to override.\n");
       TwClose();
       return 1;
     }
@@ -1266,54 +1192,58 @@ int main(int argc, char *argv[]) {
   TwConfigMalloc(AllocMem, ReAllocMem, free);
 #endif
 
-  if (TwCheckMagic(display_magic) && TwOpen(TWDisplay))
+  if (TwCheckMagic(display_magic) && TwOpen(TWDisplay)) {
     do {
       char *buf;
 
       if (!VersionsMatch(force)) {
         if (!force) {
-          printk("twdisplay: Aborting. Use option `-f' to ignore versions check.\n");
+          fprintf(stderr, "twdisplay: Aborting. Use option `-f' to ignore versions check.\n");
           TwClose();
           return 1;
         }
       }
 
-      if (RegisterRemote(Fd = TwConnectionFd(), NULL, (handler_io_d)NoOp) == NOSLOT) {
+      if (RegisterRemote(fd = TwConnectionFd(), NULL, (handler_io_d)NoOp) == NOSLOT) {
         TwClose();
         OutOfMemory();
         return 1;
       }
 
-      if (!(TMsgPort = TwCreateMsgPort(9, "twdisplay")))
+      if (!(TMsgPort = TwCreateMsgPort(9, "twdisplay"))) {
         break;
+      }
 
       DisplayWidth = TryDisplayWidth = TwGetDisplayWidth();
       DisplayHeight = TryDisplayHeight = TwGetDisplayHeight();
 
+      Tdisplay hw;
+
       /* if user did not specify any `--hw=<dpy>', autoprobe */
-      if (!(HW = AttachDisplayHW(Chars::from_c(arg_hw), NOSLOT, 0))) {
+      if (!(hw = AttachDisplayHW(Chars::from_c(arg_hw), NOSLOT, 0))) {
         TwClose();
         return 1;
       }
-      if (!(buf = (char *)AllocMem(HW->Name.size() + 80))) {
-        QuitDisplay(HW);
+      size_t buf_len = hw->Name.size() + 80;
+      if (!(buf = (char *)AllocMem(buf_len))) {
+        QuitDisplay(hw);
         TwClose();
         OutOfMemory();
         return 1;
       }
 
-      sprintf(buf, "-hw=display@(%.*s),x=%d,y=%d%s%s%s", (int)HW->Name.size(), HW->Name.data(),
-              (int)HW->X, (int)HW->Y, HW->CanResize ? ",resize" : "",
-              /* CanDragArea */ ttrue ? ",drag" : "", ExpensiveFlushVideo ? ",slow" : "");
+      snprintf(buf, buf_len, "-hw=display@(%.*s),x=%d,y=%d%s%s%s", (int)hw->Name.size(),
+               hw->Name.data(), (int)hw->X, (int)hw->Y, hw->CanResize ? ",resize" : "",
+               /* CanDragArea */ ttrue ? ",drag" : "", ExpensiveFlushVideo ? ",slow" : "");
 
       TwAttachHW(strlen(buf), buf, flags);
       TwFlush();
 
       flags &= TW_ATTACH_HW_REDIRECT;
 
-      if (flags)
-        printk("messages reported by twin server...\n");
-
+      if (flags) {
+        fprintf(stderr, "messages reported by twin server...\n");
+      }
       for (;;) {
         uldat len;
         const char *reply = TwAttachGetReply(&len);
@@ -1357,21 +1287,23 @@ int main(int argc, char *argv[]) {
          * twin told us to stay and sit on the display
          * until it is quitted.
          */
-        MainLoop(Fd);
+        MainLoop(hw, fd);
       else if (ret)
         log(WARNING) << Chars::from_c(MYname) << ": twin said we can quit... strange!\n";
 
       Quit(!ret);
     } while (0);
-
+  }
   log(ERROR) << Chars::from_c(MYname) << ": libtw error: " << Chars::from_c(TwStrError(TwErrno))
              << " " << Chars::from_c(TwStrErrorDetail(TwErrno, TwErrnoDetail)) << "\n";
   return 1;
 }
 
 void Quit(int status) {
-  QuitDisplay(HW);
-  if (status < 0)
+  Tdisplay hw = &_HW;
+  QuitDisplay(hw);
+  if (status < 0) {
     return; /* give control back to signal handler */
+  }
   exit(status);
 }

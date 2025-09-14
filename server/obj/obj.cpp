@@ -11,18 +11,16 @@
  */
 
 #include "alloc.h" // AllocMem0()
-#include "fn.h"    // Fn_Tobj
 #include "id.h"    // AssignId()
 #include "obj/obj.h"
 
 #include <new>
 
 Tobj Sobj::Create() {
-  TobjEntry o = NULL;
   void *addr = AllocMem0(sizeof(SobjEntry));
+  Tobj o = NULL;
   if (addr) {
     o = new (addr) SobjEntry();
-    o->Fn = Fn_Tobj;
     if (!o->Init(Tobj_class_id)) {
       o->Delete();
       o = NULL;

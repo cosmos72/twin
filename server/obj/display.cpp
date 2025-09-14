@@ -13,7 +13,7 @@
 #include "obj/all.h" // extern All
 #include "obj/display.h"
 #include "alloc.h"    // AllocMem0(), CloneStrL()
-#include "methods.h"  // InsertGeneric(), InsertLast(), RemoveGeneric()
+#include "methods.h"  // InsertLast()
 #include "twin.h"     // NOSLOT
 #include "hw.h"       // DisplayHWCTTY
 #include "hw_multi.h" // ResizeDisplay(), RunNoHW()
@@ -25,7 +25,6 @@ Tdisplay Sdisplay::Create(Chars name) {
   void *addr = AllocMem0(sizeof(Sdisplay));
   if (addr) {
     d = new (addr) Sdisplay();
-    d->Fn = Fn_Tobj;
     if (!d->Init(name)) {
       d->Delete();
       d = NULL;
@@ -39,19 +38,19 @@ Tdisplay Sdisplay::Init(Chars name) {
     return NULL;
   }
   Module = NULL;
-  Quitted = ttrue;
+  Quitted = true;
   AttachSlot = NOSLOT;
   /*
    * ->Quitted will be set to tfalse only
    * after InitHW() has succeeded
    */
-  InsertLast(Display, this, ::All);
+  InsertLast(Displays, this, ::All);
   return this;
 }
 
 void Sdisplay::Delete() {
   byte isCTTY = DisplayIsCTTY && this == DisplayHWCTTY;
-  byte quitted = Quitted;
+  bool quitted = Quitted;
 
   if (!quitted) {
     DoQuit();
@@ -68,9 +67,9 @@ void Sdisplay::Delete() {
   Sobj::Delete();
 
   if (!quitted) {
-    if (!::All->FirstDisplay || isCTTY) {
+    if (!::All->Displays.First || isCTTY) {
       RunNoHW(tfalse);
-    } else if (::All->FirstDisplay && ResizeDisplay()) {
+    } else if (::All->Displays.First && ResizeDisplay()) {
       QueuedDrawArea2FullScreen = true;
     }
   }
@@ -78,8 +77,7 @@ void Sdisplay::Delete() {
 
 void Sdisplay::Insert(Tall parent, Tdisplay prev, Tdisplay next) {
   if (parent && !All) {
-    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstDisplay, //
-                  (TobjEntry)prev, (TobjEntry)next, NULL);
+    parent->Displays.Insert(this, prev, next);
     All = parent;
 #if 0
     /*
@@ -93,7 +91,7 @@ void Sdisplay::Insert(Tall parent, Tdisplay prev, Tdisplay next) {
 
 void Sdisplay::Remove() {
   if (All) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstDisplay, NULL);
+    All->Displays.Remove(this);
     All = (Tall)0;
 
     ::All->HookDisplay();

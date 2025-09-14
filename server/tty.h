@@ -10,8 +10,9 @@
 #define TWIN_TTY_H
 
 #include <Tw/datatypes.h>
+#include "stl/string.h"
 
-/* ttydata->Flags */
+/* tty_data->Flags */
 enum tty_flag /*: uldat*/ {
   TTY_STOPPED = 0x0001,
   TTY_AUTOWRAP = 0x0002,
@@ -25,14 +26,22 @@ enum tty_flag /*: uldat*/ {
   TTY_ALTCURSKEYS = 0x0200,
   TTY_RELORIG = 0x0400,
   TTY_SETMETA = 0x0800,
-  TTY_UPDATECURSOR = 0x1000,
-  TTY_REPORTMOUSE_TWTERM = 0x2000,
-  TTY_REPORTMOUSE_XTERM = 0x4000,
-  TTY_REPORTMOUSE_ALSO_MOVE = 0x8000,
-  TTY_NEEDREFOCUS = 0x10000,
+
+  TTY_REPORTMOUSE_STYLE = 0x3000,
+  TTY_REPORTMOUSE_X10 = 0x1000,
+  TTY_REPORTMOUSE_XTERM = 0x2000,
+  TTY_REPORTMOUSE_TWTERM = 0x3000,
+
+  TTY_REPORTMOUSE_RELEASE = 0x4000,
+  TTY_REPORTMOUSE_DRAG = 0x8000,
+  TTY_REPORTMOUSE_MOVE = 0x10000,
+  TTY_REPORTMOUSE_DECIMAL = 0x20000,
+
+  TTY_UPDATECURSOR = 0x40000,
+  TTY_NEEDREFOCUS = 0x80000,
 };
 
-/* ttydata->Effects */
+/* tty_data->Effects */
 enum tty_effect /*: udat*/ {
   EFF_INTENSITY = 0x0001,
   EFF_HALFINTENS = 0x0002,
@@ -41,12 +50,12 @@ enum tty_effect /*: udat*/ {
   EFF_REVERSE = 0x0010,
 };
 
-/* ttydata->nPar */
+/* tty_data->nPar */
 enum tty_par /*: byte*/ {
   NPAR = 16,
 };
 
-/* ttydata->*G? */
+/* tty_data->*G? */
 enum tty_charmap /*: byte*/ {
   VT100GR_MAP = 0,
   LATIN1_MAP = 1,
@@ -54,7 +63,7 @@ enum tty_charmap /*: byte*/ {
   USER_MAP = 3,
 };
 
-enum ttystate /*: udat*/ {
+enum tty_state /*: udat*/ {
   ESnormal = 0,
   ESesc,
   ESsquare,
@@ -64,6 +73,8 @@ enum ttystate /*: udat*/ {
   EShash,
   ESsetG0,
   ESsetG1,
+  ESsetG2,
+  ESsetG3,
   ESpercent,
   ESignore,
   ESnonstd,
@@ -76,8 +87,10 @@ enum ttystate /*: udat*/ {
   ESques = 0x100
 };
 
-struct ttydata {
-  ttystate State;
+class tty_data {
+public:
+  Twindow Win;
+  tty_state State;
   uldat Flags;
   udat Effects;
   dat ScrollBack;   /* Number of scrollback lines */
@@ -89,16 +102,16 @@ struct ttydata {
                         /* AfterSplit is just Window->Contents */
   tcell *Pos;           /* Pointer to cursor position in buffer */
   tcolor Color, DefColor, saveColor, Underline, HalfInten;
-  uldat TabStop[5];
   uldat nPar, Par[NPAR];
 
-  byte currG, G, G0, G1, saveG, saveG0, saveG1;
+  byte Gv[4], saveGv[4], Gi, saveGi;
   byte utf8, utf8_count;
   trune utf8_char;
+  trune curr_rune;            /* for ESC [ NNN b i.e. repeat last char NNN times */
   trune (*InvCharset)(trune); /* pointer to trune -> byte translation function */
 
-  dat newLen, newMax;
-  char *newName; /* buffer for xterm set window title escape seq */
+  String newName;    /* buffer for xterm set window title escape seq */
+  byte TabStop[128]; /* Allow tab stops in positions 0-1023 */
 };
 
 bool TtyWriteCharset(Twindow Window, uldat Len, const char *charset_bytes);

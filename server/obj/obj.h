@@ -20,14 +20,9 @@
 
 #include <Tw/datatypes.h>
 
-typedef struct Sobj *Tobj;
-typedef struct SobjFn *TobjFn;
-typedef struct SobjEntry *TobjEntry;
-typedef struct SobjList *TobjList;
+typedef class Sobj *Tobj;
 
-struct SobjFn {};
-
-struct Sobj {
+class Sobj {
 protected:
   Sobj() {
   }
@@ -36,7 +31,6 @@ protected:
 
 public:
   uldat Id;
-  //  TobjFn Fn;
 
   static Tobj Create();
   Tobj Init(e_id class_id);
@@ -55,17 +49,13 @@ public:
   }
 };
 
-inline uldat Obj2Id(Tobj o) {
-  return o ? o->Id : NOID;
-}
-
-struct SobjEntry : public Sobj {
-  TobjFn Fn;
+class SobjEntry : public Sobj {
+public:
   TobjEntry Prev, Next, Parent;
 };
 
-struct SobjList {
-  TobjEntry First, Last;
-};
+inline uldat Obj2Id(Tobj o) {
+  return o ? o->Id : NOID;
+}
 
 #endif /* TWIN_OBJ_H */

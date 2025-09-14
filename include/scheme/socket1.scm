@@ -43,12 +43,17 @@
 
 
 (define (ARGS_CALL func_flag args)
-  (let ((start (if (eqv? 2 func_flag) 2 1))
-        (args  (if (eqv? 2 func_flag) (cdr args) args)))
+  (let* ((start     (if (eqv? 2 func_flag) 2 1))
+         (args      (if (eqv? 2 func_flag) (cdr args) args))
+         (need_ctx? (not (memv func_flag '(1 2)))))
+
+    (when need_ctx?
+      (display "ctx"))
+
     (do ((i start (+ i 1))
          (l args (cdr l)))
         ((null? l))
-      (unless (eq? l args)
+      (when (or need_ctx? (not (eq? l args)))
         (display ", "))
       (ARG_CALL (car l) i))))
 

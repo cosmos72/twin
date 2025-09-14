@@ -13,7 +13,7 @@
 #include "alloc.h"   // AllocMem0()
 #include "obj/all.h" // extern All
 #include "obj/mutex.h"
-#include "methods.h" // Act(), InsertLast()
+#include "methods.h" // InsertLast()
 #include "twin.h"    // IS_ALL(), IS_MUTEX()
 
 #include <new>
@@ -26,7 +26,7 @@ Tmutex Smutex::Create(Tmsgport owner, byte namelen, const char *name, byte perm)
   if (!perm || !owner)
     return x;
 
-  curr = ::All->FirstMutex;
+  curr = ::All->Mutexes.First;
   while (curr && mask) {
     if (namelen == curr->NameLen && !memcmp(name, curr->Name, namelen)) {
       if (curr->Owner == owner) {
@@ -46,7 +46,6 @@ Tmutex Smutex::Create(Tmsgport owner, byte namelen, const char *name, byte perm)
       void *addr = AllocMem0(sizeof(Smutex));
       if (addr) {
         x = new (addr) Smutex();
-        x->Fn = Fn_Tobj;
         if (!x->Init(owner, namelen, name, perm)) {
           x->Delete();
           x = NULL;
@@ -62,7 +61,7 @@ Tmutex Smutex::Init(Tmsgport owner, byte namelen, const char *name, byte perm) {
     return NULL;
   }
   Perm = perm;
-  InsertLast(Mutex, this, ::All);
+  InsertLast(Mutexes, this, ::All);
   // Owner = NULL;
   Own(owner);
   return this;
@@ -76,28 +75,27 @@ void Smutex::Delete() {
 
 void Smutex::Insert(Tall parent, Tmutex prev, Tmutex next) {
   if (parent && !All) {
-    InsertGeneric((TobjEntry)this, (TobjList)&All->FirstMutex, //
-                  (TobjEntry)prev, (TobjEntry)next, NULL);
+    parent->Mutexes.Insert(this, prev, next);
     All = parent;
   }
 }
 
 void Smutex::Remove() {
   if (All) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstMutex, NULL);
+    All->Mutexes.Remove(this);
     All = (Tall)0;
   }
 }
 
 void Smutex::Own(Tmsgport parent) {
   if (parent && !Owner) {
-    if ((O_Prev = parent->LastMutex))
-      parent->LastMutex->O_Next = this;
-    else
-      parent->FirstMutex = this;
-
+    if ((O_Prev = parent->Mutexes.Last)) {
+      parent->Mutexes.Last->O_Next = this;
+    } else {
+      parent->Mutexes.First = this;
+    }
     O_Next = (Tmutex)0;
-    parent->LastMutex = this;
+    parent->Mutexes.Last = this;
 
     Owner = parent;
   }
@@ -106,16 +104,16 @@ void Smutex::Own(Tmsgport parent) {
 void Smutex::DisOwn() {
   Tmsgport parent = Owner;
   if (parent) {
-    if (O_Prev)
+    if (O_Prev) {
       O_Prev->O_Next = O_Next;
-    else if (parent->FirstMutex == this)
-      parent->FirstMutex = O_Next;
-
-    if (O_Next)
+    } else if (parent->Mutexes.First == this) {
+      parent->Mutexes.First = O_Next;
+    }
+    if (O_Next) {
       O_Next->O_Prev = O_Prev;
-    else if (parent->LastMutex == this)
-      parent->LastMutex = O_Prev;
-
+    } else if (parent->Mutexes.Last == this) {
+      parent->Mutexes.Last = O_Prev;
+    }
     O_Prev = O_Next = (Tmutex)0;
 
     Owner = (Tmsgport)0;

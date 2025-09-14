@@ -106,6 +106,7 @@ static char *fix_tty(char *arg, byte is_our_tty[1], byte err[1]) {
   char *target = NULL;
   char *opts = arg + 7;
   char *comma = strchr(opts, ',');
+  const char *rest;
   const char *tty = ttyname(0);
   byte is_srv_tty = 0;
   if (!tty) {
@@ -131,24 +132,28 @@ static char *fix_tty(char *arg, byte is_our_tty[1], byte err[1]) {
     return NULL;
   }
 
-  if (comma)
+  if (comma) {
     *comma = ',';
-  else
-    comma = "";
+    rest = comma;
+  } else {
+    rest = "";
+  }
 
   if (*is_our_tty) {
     const char *term = getenv("TERM");
     if (!term) {
       term = "";
     }
-    target = (char *)malloc(strlen(tty) + 9 + strlen(comma) + (*term ? 6 + strlen(term) : 0));
+    size_t target_len = strlen(tty) + 9 + strlen(rest) + (*term ? 6 + strlen(term) : 0);
+    target = (char *)malloc(target_len);
     if (target) {
-      sprintf(target, "-hw=tty@%s%s%s%s", tty, (*term ? ",TERM=" : ""), term, comma);
+      snprintf(target, target_len, "-hw=tty@%s%s%s%s", tty, (*term ? ",TERM=" : ""), term, rest);
     }
   } else if (is_srv_tty) {
-    target = malloc(8 + strlen(comma));
+    size_t target_len = 8 + strlen(rest);
+    target = malloc(target_len);
     if (target) {
-      sprintf(target, "-hw=tty%s", comma);
+      snprintf(target, target_len, "-hw=tty%s", rest);
     }
   } else {
     target = strdup(arg);
@@ -165,9 +170,9 @@ static char *fix_x11(char *arg) {
   char *target = NULL;
   char *opts = NULL;
 
-  if (!strncmp(arg, "-hw=xft", 7) || !strncmp(arg, "-hw=X11", 7)) {
+  if (!strncmp(arg, "-hw=xft", 7) || !strncmp(arg, "-hw=X11", 7) || !strncmp(arg, "-hw=x11", 7)) {
     opts = arg + 7;
-  } else /* if (!strncmp(arg, "-hw=X", 5)) */ {
+  } else /* if (!strncmp(arg, "-hw=X", 5) || !strncmp(arg, "-hw=x", 5)) */ {
     opts = arg + 5;
   }
 
@@ -183,9 +188,10 @@ static char *fix_x11(char *arg) {
   }
 
   if (our_xdisplay) {
-    target = (char *)malloc(strlen(arg) + 2 + strlen(our_xdisplay));
+    size_t target_len = strlen(arg) + 2 + strlen(our_xdisplay);
+    target = (char *)malloc(target_len);
     if (target) {
-      sprintf(target, "%.*s@%s%s", (int)(opts - arg), arg, our_xdisplay, opts);
+      snprintf(target, target_len, "%.*s@%s%s", (int)(opts - arg), arg, our_xdisplay, opts);
     }
   } else {
     target = strdup(arg);
@@ -219,23 +225,23 @@ int main(int argc, char *argv[]) {
     } else if (!strcmp(arg, "-h") || !strcmp(arg, "-help")) {
       Usage(detach);
       return 0;
-    } else if (!strcmp(arg, "-x") || !strcmp(arg, "-excl"))
+    } else if (!strcmp(arg, "-x") || !strcmp(arg, "-excl")) {
       flags |= TW_ATTACH_HW_EXCLUSIVE;
-    else if (!strcmp(arg, "-s") || !strcmp(arg, "-share"))
+    } else if (!strcmp(arg, "-s") || !strcmp(arg, "-share")) {
       flags &= ~TW_ATTACH_HW_EXCLUSIVE;
-    else if (!strcmp(arg, "-a"))
+    } else if (!strcmp(arg, "-a")) {
       detach = 0;
-    else if (!strcmp(arg, "-d"))
+    } else if (!strcmp(arg, "-d")) {
       detach = 1;
-    else if (!strcmp(arg, "-v") || !strcmp(arg, "-verbose"))
+    } else if (!strcmp(arg, "-v") || !strcmp(arg, "-verbose")) {
       flags |= TW_ATTACH_HW_REDIRECT;
-    else if (!strcmp(arg, "-q") || !strcmp(arg, "-quiet"))
+    } else if (!strcmp(arg, "-q") || !strcmp(arg, "-quiet")) {
       flags &= ~TW_ATTACH_HW_REDIRECT;
-    else if (!strcmp(arg, "-f") || !strcmp(arg, "-force"))
+    } else if (!strcmp(arg, "-f") || !strcmp(arg, "-force")) {
       force = 1;
-    else if (!strncmp(arg, "-twin@", 6))
+    } else if (!strncmp(arg, "-twin@", 6)) {
       dpy = arg + 6;
-    else if (!strncmp(arg, "-hw=", 4)) {
+    } else if (!strncmp(arg, "-hw=", 4)) {
       if (target) {
         fprintf(stderr, "%s: only a single --hw=... argument is supported\n", MYname);
         return 1;
@@ -245,7 +251,7 @@ int main(int argc, char *argv[]) {
         if (err != 0 || !target) {
           return 1;
         }
-      } else if (arg[4] == 'X' || !strncmp(arg + 4, "xft", 3)) {
+      } else if (arg[4] == 'X' || arg[4] == 'x') {
         target = fix_x11(arg);
         if (!target) {
           return 1;

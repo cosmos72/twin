@@ -17,8 +17,8 @@
 
 /* Trow */
 
-struct Srow : public Sobj {
-  TobjFn Fn;
+class Srow : public Sobj {
+public:
   Trow Prev, Next;
   Tobj Parent;
 

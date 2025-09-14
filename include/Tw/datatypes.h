@@ -13,6 +13,10 @@
 #include <stdint.h> /* for uint8_t, uint32_t */
 #endif
 
+#ifdef TW_HAVE_STRING_H
+#include <string.h> /* for memcpy() */
+#endif
+
 #include <Tw/compiler.h> // for TW_INLINE
 
 #ifdef __cplusplus
@@ -31,23 +35,82 @@ typedef unsigned int uldat;
 
 typedef uldat tobj;
 typedef size_t topaque;
-typedef size_t tany;
 
-/* tcolor, trune, tcell */
-
-#ifdef TW_HAVE_STDINT_H
-typedef uint8_t tcolor;
-typedef uint32_t trune;
-typedef uint32_t tcell;
-#else
-typedef byte tcolor;
-typedef uldat trune;
-typedef uldat tcell;
-#endif
+/* tbool */
 
 typedef enum { tfalse, ttrue } tbool;
 
+/* trgb, tcolor, trune, tcell, tany */
+
+#if defined(UINT32_MAX) || defined(uint32_t)
+typedef uint32_t trgb;
+typedef uint32_t trune;
+#else
+typedef uldat trgb;
+typedef uldat trune;
+#endif
+
+#if defined(UINT64_MAX) || defined(uint64_t)
+
+typedef uint64_t tcolor; /* pair: trgb fg; trgb bg */
+typedef uint64_t tcell;
+#if defined(TW_SIZEOF_SIZE_T) && TW_SIZEOF_SIZE_T < 8
+typedef uint64_t tany;
+#else
+typedef size_t tany;
+#endif
+
+#elif defined(TW_SIZEOF_UNSIGNED_LONG_LONG) && TW_SIZEOF_UNSIGNED_LONG_LONG >= 8
+
+typedef unsigned long long tcolor; /* pair: trgb fg; trgb bg */
+typedef unsigned long long tcell;
+#if defined(TW_SIZEOF_SIZE_T) && TW_SIZEOF_SIZE_T < TW_SIZEOF_UNSIGNED_LONG_LONG
+typedef unsigned long long tany;
+#else
+typedef size_t tany;
+#endif
+
+#else
+#error "no 64-bit unsigned integer type found"
+#endif
+
 /* miscellaneous types and constants */
+
+/* tcell <-> tcolor+trune conversion */
+#define TCELL(col, rune) ((tcell)(col) << 22 | (tcell)(rune))
+#define TCOLOR(cell) ((tcolor)((cell) >> 22))
+#define TRUNE(cell) ((trune)((cell) & 0x3FFFFF))
+
+/* foreground / background colors handling */
+/*
+ * NOTE: draw.c:DoShadowColor() assumes that
+ * TCOL(fg1, bg1) | TCOL(fg2, bg2) == TCOL(fg1|fg2, bg1|bg2)
+ * and
+ * TCOL(fg1, bg1) & TCOL(fg2, bg2) == TCOL(fg1&fg2, bg1&bg2)
+ */
+#define TCOL0 ((tcolor)0)
+#define TCOL(fg, bg) ((tcolor)(fg) | (tcolor)(bg) << 21)
+#define TCOLBG(col) ((trgb)((col) >> 21) & 0x1fffff)
+#define TCOLFG(col) ((trgb)(col) & 0x1fffff)
+
+#define TRGB(red, green, blue)                                                                     \
+  ((trgb)((red) & 0xFE) << 13 | (trgb)((green) & 0xFE) << 6 | (trgb)((blue) & 0xFE) >> 1)
+
+TW_INLINE byte TRED(trgb rgb) {
+  const byte red = (rgb >> 13) & 0xFE;
+  return red | (red != 0);
+}
+TW_INLINE byte TGREEN(trgb rgb) {
+  const byte green = (rgb >> 6) & 0xFE;
+  return green | (green != 0);
+}
+TW_INLINE byte TBLUE(trgb rgb) {
+  const byte blue = (rgb << 1) & 0xFE;
+  return blue | (blue != 0);
+}
+
+#define TCELL_COLMASK(cell) ((cell) & 0xFFFFFFFFFFC00000ull)
+#define TCELL_RUNEMASK(cell) ((cell) & 0x3FFFFF)
 
 #define TW_NOID ((uldat)0)
 #define TW_BADID ((uldat) - 1)
@@ -58,19 +121,6 @@ typedef enum { tfalse, ttrue } tbool;
   static byte id[10 + sizeof(uldat)] = {                                                           \
       10 + sizeof(uldat), sizeof(byte), sizeof(udat),  sizeof(uldat), sizeof(tcolor),              \
       sizeof(topaque),    sizeof(tany), sizeof(trune), sizeof(tcell), 0}
-
-/* tcell bytes are { 'utf21_low', 'utf21_mid', 'utf21_high', 'color' } */
-
-/* tcell <-> tcolor+trune conversion */
-#define TCELL(col, font) ((tcell)(font) | ((tcell)(byte)(col) << 24))
-#define TCELL_COLMASK(attr) ((attr) & 0xFF000000)
-#define TCELL_FONTMASK(attr) ((attr) & 0x00FFFFFF)
-#define TCOLOR(attr) ((tcolor)((attr) >> 24))
-#define TRUNEEXTRA(attr) ((attr) & 0x00FFFFFF)
-
-#define TRUNE(attr) Tw_trune(attr)
-
-trune Tw_trune(tcell attr);
 
 /*
  * Notes about the timevalue struct:

@@ -11,7 +11,6 @@
  */
 
 #include "alloc.h"   // AllocMem0()
-#include "fn.h"      // Fn_Tobj
 #include "methods.h" // InsertLast()
 #include "obj/group.h"
 #include "obj/msgport.h"
@@ -25,7 +24,6 @@ Tgroup Sgroup::Create(Tmsgport owner) {
     void *addr = AllocMem0(sizeof(Sgroup));
     if (addr) {
       g = new (addr) Sgroup();
-      g->Fn = Fn_Tobj;
       if (!g->Init(owner)) {
         g->Delete();
         g = NULL;
@@ -39,29 +37,28 @@ Tgroup Sgroup::Init(Tmsgport owner) {
   if (!owner || !Sobj::Init(Tgroup_class_id)) {
     return NULL;
   }
-  InsertLast(Group, this, owner);
+  InsertLast(Groups, this, owner);
   return this;
 }
 
 void Sgroup::Insert(Tmsgport parent, Tgroup prev, Tgroup next) {
   if (parent && !MsgPort) {
-    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstGroup, //
-                  (TobjEntry)prev, (TobjEntry)next, NULL);
+    parent->Groups.Insert(this, prev, next);
     MsgPort = parent;
   }
 }
 
 void Sgroup::Remove() {
   if (MsgPort) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&MsgPort->FirstGroup, NULL);
+    MsgPort->Groups.Remove(this);
     MsgPort = NULL;
   }
 }
 
 void Sgroup::Delete() {
   Remove();
-  while (FirstG) {
-    RemoveGadget(FirstG);
+  while (Gadgets.First) {
+    RemoveGadget(Gadgets.First);
   }
   Sobj::Delete();
 }
@@ -69,12 +66,12 @@ void Sgroup::Delete() {
 void Sgroup::InsertGadget(Tgadget g) {
   Tgroup group = this;
   if (g && !g->Group && !g->G_Prev && !g->G_Next) {
-    if ((g->G_Next = group->FirstG))
-      group->FirstG->G_Prev = g;
+    if ((g->G_Next = group->Gadgets.First))
+      group->Gadgets.First->G_Prev = g;
     else
-      group->LastG = g;
+      group->Gadgets.Last = g;
 
-    group->FirstG = g;
+    group->Gadgets.First = g;
     g->Group = group;
   }
 }
@@ -84,13 +81,13 @@ void Sgroup::RemoveGadget(Tgadget g) {
   if (g && g->Group == group) {
     if (g->G_Prev)
       g->G_Prev->G_Next = g->G_Next;
-    else if (group->FirstG == g)
-      group->FirstG = g->G_Next;
+    else if (group->Gadgets.First == g)
+      group->Gadgets.First = g->G_Next;
 
     if (g->G_Next)
       g->G_Next->G_Prev = g->G_Prev;
-    else if (group->LastG == g)
-      group->LastG = g->G_Prev;
+    else if (group->Gadgets.Last == g)
+      group->Gadgets.Last = g->G_Prev;
 
     g->G_Prev = g->G_Next = (Tgadget)0;
     g->Group = (Tgroup)0;

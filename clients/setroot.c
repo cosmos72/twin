@@ -34,11 +34,19 @@ tcell *load_ascii_art(FILE *aaFILE, uldat *x, uldat *y, uldat padX, uldat padY);
 
 TW_DECL_MAGIC(setroot_magic);
 
+TW_INLINE tcolor DefColor(void) {
+  return TCOL(twhite, tblack);
+}
+#define Underline() TCOL(tWHITE, tblack)
+#define HalfInten() TCOL(tBLACK, tblack)
+
+static tcolor ColText, Color;
+
 int main(int argc, char *argv[]) {
   tcell *image;
   uldat X, Y, padX = 0, padY = 0, err;
   enum { def, aa, padx, pady } state = def;
-  char *aafile = NULL;
+  const char *aafile = NULL;
 
   name = *argv;
 
@@ -77,6 +85,9 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
+  ColText = DefColor();
+  Color = DefColor();
+
   if (TwCheckMagic(setroot_magic) && TwOpen(NULL)) {
 
     FILE *aaFILE = aafile ? fopen(aafile, "r") : stdin;
@@ -104,12 +115,7 @@ int main(int argc, char *argv[]) {
   return 1;
 }
 
-#define DefColor TCOL(twhite, tblack)
-#define Underline TCOL(thigh | twhite, tblack)
-#define HalfInten TCOL(thigh | tblack, tblack)
-
 static tcell *image;
-static tcolor ColText = DefColor, Color = DefColor;
 static uldat X, Y, Xmax, Ymax, Xreal, Yreal, max;
 static enum { ESnormal, ESesc, ESsquare, ESgetpars, ESgotpars } State = ESnormal;
 #define NPAR 16
@@ -126,10 +132,11 @@ TW_INLINE void update_eff(void) {
   udat effects = Effects;
   tcolor fg = TCOLFG(ColText), bg = TCOLBG(ColText);
 
-  if (effects & EFF_UNDERLINE)
-    fg = TCOLFG(Underline);
-  else if (effects & EFF_HALFINTENS)
-    fg = TCOLFG(HalfInten);
+  if (effects & EFF_UNDERLINE) {
+    fg = TCOLFG(Underline());
+  } else if (effects & EFF_HALFINTENS) {
+    fg = TCOLFG(HalfInten());
+  }
   if (effects & EFF_REVERSE) {
     tcolor tmp = TCOL(bg & ~thigh, fg & ~thigh) | TCOL(fg & thigh, bg & thigh);
     fg = TCOLFG(tmp);
@@ -151,8 +158,8 @@ TW_INLINE void csi_m(void) {
     switch (Par[i]) {
     case 0:
       /* all attributes off */
-      fg = TCOLFG(DefColor);
-      bg = TCOLBG(DefColor);
+      fg = TCOLFG(DefColor());
+      bg = TCOLBG(DefColor());
       effects = 0;
       break;
     case 1:
@@ -190,7 +197,7 @@ TW_INLINE void csi_m(void) {
               * with white underscore
               * (Linux - use default foreground).
               */
-      fg = TCOLFG(DefColor);
+      fg = TCOLFG(DefColor());
       effects |= EFF_UNDERLINE;
       break;
     case 39: /* ANSI X3.64-1979 (SCO-ish?)
@@ -198,18 +205,25 @@ TW_INLINE void csi_m(void) {
               * Reset colour to default? It did this
               * before...
               */
-      fg = TCOLFG(DefColor);
+      fg = TCOLFG(DefColor());
       effects &= ~EFF_UNDERLINE;
       break;
     case 49: /* restore default bg */
-      bg = TCOLBG(DefColor);
+      bg = TCOLBG(DefColor());
       break;
-    default:
-      if (Par[i] >= 30 && Par[i] <= 37)
-        Par[i] -= 30, fg = TANSI2VGA(Par[i]);
-      else if (Par[i] >= 40 && Par[i] <= 47)
-        Par[i] -= 40, bg = TANSI2VGA(Par[i]);
+    default: {
+      const uldat par = Par[i];
+      if (par >= 30 && par <= 37) {
+        fg = par - 30;
+      } else if (par >= 40 && par <= 47) {
+        bg = par - 40;
+      } else if (par >= 90 && par <= 97) {
+        fg = thigh | (par - 90);
+      } else if (par >= 100 && par <= 107) {
+        bg = thigh | (par - 100);
+      }
       break;
+    }
     }
   Effects = effects;
   ColText = TCOL(fg, bg);

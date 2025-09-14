@@ -7,6 +7,10 @@
    supported. */
 #undef ATTR_FN_CONST
 
+/* Define to compiler's variant of __attribute__((visiibility("hidden"))), or
+   to empty if not supported. */
+#undef ATTR_HIDDEN
+
 /* Define to compiler's variant of __attribute__((aligned(1))), or to empty if
    not supported. */
 #undef ATTR_PTR_ALIGNED_1
@@ -306,6 +310,9 @@
 /* Define to 1 if you have the <signal.h> header file. */
 #undef HAVE_SIGNAL_H
 
+/* Define to 1 if you have the 'snprintf' function. */
+#undef HAVE_SNPRINTF
+
 /* Define to 1 if you have the 'socket' function. */
 #undef HAVE_SOCKET
 
@@ -462,15 +469,6 @@
 /* Define to 1 if compiler supports 'volatile' keyword. */
 #undef HAVE_VOLATILE
 
-/* Define to 1 if you have the 'vprintf' function. */
-#undef HAVE_VPRINTF
-
-/* Define to 1 if you have the 'vsnprintf' function. */
-#undef HAVE_VSNPRINTF
-
-/* Define to 1 if you have the 'vsprintf' function. */
-#undef HAVE_VSPRINTF
-
 /* Define to 1 if you have the 'wait3' function. */
 #undef HAVE_WAIT3
 
@@ -563,6 +561,9 @@
 /* The size of 'size_t', as computed by sizeof. */
 #undef SIZEOF_SIZE_T
 
+/* The size of 'unsigned long long', as computed by sizeof. */
+#undef SIZEOF_UNSIGNED_LONG_LONG
+
 /* The size of 'void *', as computed by sizeof. */
 #undef SIZEOF_VOID_P
 
@@ -601,6 +602,11 @@
    <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
    #define below would cause a syntax error. */
 #undef _UINT32_T
+
+/* Define for Solaris 2.5.1 so the uint64_t typedef from <sys/synch.h>,
+   <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
+   #define below would cause a syntax error. */
+#undef _UINT64_T
 
 /* Define for Solaris 2.5.1 so the uint8_t typedef from <sys/synch.h>,
    <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
@@ -662,6 +668,10 @@
 /* Define to the type of an unsigned integer type of width exactly 32 bits if
    such a type exists and the standard includes do not define it. */
 #undef uint32_t
+
+/* Define to the type of an unsigned integer type of width exactly 64 bits if
+   such a type exists and the standard includes do not define it. */
+#undef uint64_t
 
 /* Define to the type of an unsigned integer type of width exactly 8 bits if
    such a type exists and the standard includes do not define it. */

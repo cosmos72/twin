@@ -598,13 +598,13 @@ typedef const trune *Tutf_array;
 typedef trune (*Tutf_function)(trune);
 
 /* get the charset `id' (opaque) from a charset alias */
-uldat Tutf_charset_id(TUTF_CONST char *alias);
+uldat Tutf_charset_id(const char *alias);
 
 /* get the canonical name from the charset `id' */
-TUTF_CONST char *Tutf_charset_name(uldat id);
+const char *Tutf_charset_name(uldat id);
 
 /* get the canonical name from a charset alias */
-TUTF_CONST char *Tutf_charset_alias(TUTF_CONST char *alias);
+const char *Tutf_charset_alias(const char *alias);
 
 /* return a function capable to translate from UTF-32 to given charset */
 Tutf_function Tutf_UTF_32_to_charset_function(uldat id);

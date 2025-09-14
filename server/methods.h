@@ -9,7 +9,6 @@
 #ifndef TWIN_METHODS_H
 #define TWIN_METHODS_H
 
-#include "obj/fn.h"
 #include "obj/window.h" // tpos
 
 byte FindInfo(Tmenu Menu, dat i);
@@ -24,16 +23,6 @@ tpos FakeFindBorderWindow(Twindow w, dat u, dat v, byte border, tcell *ptr_cell)
 void IncMouseMotionN(void);
 void DecMouseMotionN(void);
 
-void InsertGeneric(TobjEntry obj, TobjList parent, TobjEntry prev, TobjEntry next, ldat *objcount);
-void RemoveGeneric(TobjEntry obj, TobjList parent, ldat *objcount);
-
-#define Do(command, objtype) (S##objtype::command)
-
-#define New(objtype) S##objtype::Create
-
-#define SKIP_FIRST_ARG(arg, ...) (__VA_ARGS__)
-#define Act(command, obj) (obj)->command SKIP_FIRST_ARG
-
 #define DeleteList(First)                                                                          \
   do {                                                                                             \
     while (First) {                                                                                \
@@ -41,32 +30,23 @@ void RemoveGeneric(TobjEntry obj, TobjList parent, ldat *objcount);
     }                                                                                              \
   } while (0)
 
-#define InsertOnly(obj_name, obj, parent) (obj)->Insert((parent), NULL, NULL)
+#define InsertOnly(list, obj, parent) (obj)->Insert((parent), NULL, NULL)
 
-#define InsertFirst(obj_name, obj, parent) (obj)->Insert((parent), NULL, (parent)->First##obj_name)
+#define InsertFirst(list, obj, parent) (obj)->Insert((parent), NULL, (parent)->list.First)
 
-#define InsertMiddle(obj_name, obj, parent, prev_obj, next_obj)                                    \
+#define InsertMiddle(list, obj, parent, prev_obj, next_obj)                                        \
   (obj)->Insert((parent), (prev_obj), (next_obj))
 
-#define InsertLast(obj_name, obj, parent) (obj)->Insert((parent), (parent)->Last##obj_name, NULL)
+#define InsertLast(list, obj, parent) (obj)->Insert((parent), (parent)->list.Last, NULL)
 
-#define MoveFirst(obj_name, parent, obj) ((obj)->Remove(), InsertFirst(obj_name, obj, parent))
+#define MoveFirst(list, parent, obj) ((obj)->Remove(), InsertFirst(list, obj, parent))
 
-#define MoveLast(obj_name, parent, obj) ((obj)->Remove(), InsertLast(obj_name, obj, parent))
+#define MoveLast(list, parent, obj) ((obj)->Remove(), InsertLast(list, obj, parent))
 
-#define SendMsg(msgport, whichmsg) (InsertLast(Msg, (whichmsg), (msgport)))
-
-#define Info4Menu(menu, flags, len, text, coltext) (menu)->SetInfo(flags, len, text, coltext)
-
-#define Win4Menu(menu) Swindow::Create4Menu(menu)
+#define SendMsg(msgport, whichmsg) InsertLast(Msgs, (whichmsg), (msgport))
 
 #define Row4Menu(w, code, flags, len, name)                                                        \
   ((Trow)Smenuitem::Create4Menu((Tobj)(w), (Twindow)0, (code), (flags), (len), (name)))
-
-#define Item4Menu(menu, w, flags, len, name)                                                       \
-  Smenuitem::Create4Menu((Tobj)(menu), (w), (udat)0, (flags), (len), (name))
-
-#define Item4MenuCommon(Menu) Smenuitem::Create4MenuCommon(Menu)
 
 void *OverrideMth(void **where, void *OldMethod, void *NewMethod);
 

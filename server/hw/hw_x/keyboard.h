@@ -28,8 +28,8 @@
  *
  * Suppose twin is running on X, and you also have twdisplay running on the same X.
  * You select something inside a twterm. Twin will export the selection on all displays,
- * in this case hw_X11 and hw_display (which talks to twdisplay and its other hw_X11).
- * Both the hw_X11 will do a XSetSelectionOwner, causing a race: one wins,
+ * in this case hw_x11 and hw_display (which talks to twdisplay and its other hw_x11).
+ * Both the hw_x11 will do a XSetSelectionOwner, causing a race: one wins,
  * the other receives a SelectionClear event from X.
  *
  * Suppose twdisplay wins.
@@ -42,11 +42,11 @@
  *   |      |
  *   v      v
  * twdisplay   receives a "Selection Request" from X (xterm), and knows twin Selection owner is twin
- * -> hw_X11 (twdisplay) so it forwards the request to twin
+ * -> hw_x11 (twdisplay) so it forwards the request to twin
  *
  *  twin       receives a "Selection Request" from twdisplay, and knows twin Selection owner is twin
- * -> hw_X11 (twdisplay) so it resets the Selection owner (displays hold selection only for a single
- * request) and forwards the request to hw_X11 (twdisplay), so that twdisplay receives the request
+ * -> hw_x11 (twdisplay) so it resets the Selection owner (displays hold selection only for a single
+ * request) and forwards the request to hw_x11 (twdisplay), so that twdisplay receives the request
  * AS AN X11 SELECTION REQUEST!
  *
  *   twdisplay receives a "Selection Request" from X (twin), and knows twin Selection owner is None
@@ -86,35 +86,31 @@
 #define CXX_STD_MAP std::map
 #endif
 
-/* Display variables */
-
-static void XSYM(SelectionNotify_up)(Window win, Atom prop);
-static void XSYM(SelectionRequest_up)(XSelectionRequestEvent *req);
-
-static void XSYM(Beep)(void) {
-  XBell(xdisplay, 0);
-  setFlush();
+TW_ATTR_HIDDEN void XDRIVER::Beep(Tdisplay hw) {
+  XBell(xdriver(hw)->xdisplay, 0);
+  hw->setFlush();
 }
 
-static void XSYM(Configure)(udat resource, byte todefault, udat value) {
+TW_ATTR_HIDDEN void XDRIVER::Configure(Tdisplay hw, udat resource, byte todefault, udat value) {
+  XDRIVER *self = xdriver(hw);
   XKeyboardControl xctrl;
 
   switch (resource) {
   case HW_KBDAPPLIC:
-    xnumkeypad = todefault || !value;
+    self->xnumkeypad = todefault || !value;
     break;
   case HW_ALTCURSKEYS:
-    /* TODO */
+    self->xaltcursorkeys = !todefault && value;
     break;
   case HW_BELLPITCH:
     xctrl.bell_pitch = todefault ? -1 : value;
-    XChangeKeyboardControl(xdisplay, KBBellPitch, &xctrl);
-    setFlush();
+    XChangeKeyboardControl(self->xdisplay, KBBellPitch, &xctrl);
+    hw->setFlush();
     break;
   case HW_BELLDURATION:
     xctrl.bell_duration = todefault ? -1 : value;
-    XChangeKeyboardControl(xdisplay, KBBellDuration, &xctrl);
-    setFlush();
+    XChangeKeyboardControl(self->xdisplay, KBBellDuration, &xctrl);
+    hw->setFlush();
     break;
   case HW_MOUSEMOTIONEVENTS:
     /* nothing to do */
@@ -129,45 +125,30 @@ static void XSYM(Configure)(udat resource, byte todefault, udat value) {
  * so we implement a manual translation using a map from X11 KeySym to Twkey + char sequence.
  */
 
-struct XSYM(key_to_TW) {
-  Twkey tkey;
-  char seq[6];
-
-  // reuse termination byte seq[5] as length to save space
-  byte len() const {
-    return seq[5];
-  }
-};
-
-struct XSYM(key_to_TW_entry) {
-  uldat xkey; // actually KeySym
-  XSYM(key_to_TW) tmapping;
-};
-
-static const XSYM(key_to_TW_entry) XSYM(keys_impl)[] = {
+static const XDRIVER::key_to_tw_entry XSYM(keys_impl)[] = {
 #define IS(sym, l, s) {XK_##sym, {TW_##sym, s}},
 #include "hw_keys.h"
 #undef IS
 };
 
-typedef CXX_STD_MAP<KeySym, XSYM(key_to_TW)> XSYM(keymap_to_TW);
+typedef CXX_STD_MAP<KeySym, XDRIVER::key_to_tw> XSYM(keymap_to_tw);
 
-static XSYM(keymap_to_TW) XSYM(keys);
+static XSYM(keymap_to_tw) XSYM(keys);
 
-static void XSYM(init_keys)(void) {
+TW_ATTR_HIDDEN void XDRIVER::InitKeys() {
   for (size_t i = 0; i < N_OF(XSYM(keys_impl)); i++) {
     KeySym xkey = XSYM(keys_impl)[i].xkey;
-    XSYM(key_to_TW) &entry = XSYM(keys)[xkey];
+    key_to_tw &entry = XSYM(keys)[xkey];
     entry = XSYM(keys_impl)[i].tmapping;
     entry.seq[5] = strlen(entry.seq); // reuse termination byte seq[5] as length
   }
 }
 
 #ifdef DEBUG_HW_X11
-void X_DEBUG_SHOW_KEY(const char *prefix, KeySym sym, udat len, const char *seq) {
+static void X_DEBUG_SHOW_KEY(const char *prefix, KeySym sym, udat len, const char *seq) {
   udat i;
   byte ch;
-  printf(XSYM_STR(LookupKey) "(): %s xkeysym=%d[%s] string=[", prefix, (int)sym,
+  printf(XSTR(XDRIVER) ".LookupKey(): %s xkeysym=%d[%s] string=[", prefix, (int)sym,
          XKeysymToString(sym));
   for (i = 0; i < len; i++) {
     ch = (byte)seq[i];
@@ -182,15 +163,15 @@ void X_DEBUG_SHOW_KEY(const char *prefix, KeySym sym, udat len, const char *seq)
 #define X_DEBUG_SHOW_KEY(prefix, sym, len, seq) ((void)0)
 #endif
 
-static byte XSYM(IsNumericKeypad)(Twkey key) {
+TW_ATTR_HIDDEN bool XDRIVER::IsNumericKeypad(Twkey key) {
   return key >= TW_KP_Begin && key <= TW_KP_9;
 }
 
 /* convert an X11 KeySym into a libtw key code and ASCII sequence */
 
-static Twkey XSYM(LookupKey)(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
-  KeySym sym = XK_VoidSymbol;
+TW_ATTR_HIDDEN Twkey XDRIVER::LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
   XKeyEvent *kev = &ev->xkey;
+  KeySym sym = XK_VoidSymbol;
 
   uldat maxlen = *len;
 
@@ -201,12 +182,12 @@ static Twkey XSYM(LookupKey)(XEvent *ev, udat *ShiftFlags, udat *len, char *seq)
                 ((kev->state & Mod2Mask) ? KBD_NUM_LOCK : 0);             /* Num_Lock */
 
 #ifdef TW_FEATURE_X11_XIM_XIC
-  if (xic) {
+  if (this->xic) {
     Status status_return;
 #ifdef TW_FEATURE_X11_Xutf8LookupString
-    *len = Xutf8LookupString(xic, kev, seq, maxlen, &sym, &status_return);
+    *len = Xutf8LookupString(this->xic, kev, seq, maxlen, &sym, &status_return);
 #else
-    *len = XmbLookupString(xic, kev, seq, maxlen, &sym, &status_return);
+    *len = XmbLookupString(this->xic, kev, seq, maxlen, &sym, &status_return);
 #endif
     if (XFilterEvent(ev, None)) {
       return TW_Null;
@@ -218,7 +199,7 @@ static Twkey XSYM(LookupKey)(XEvent *ev, udat *ShiftFlags, udat *len, char *seq)
   }
 #endif
   if (sym == XK_VoidSymbol || sym == 0) {
-    *len = XLookupString(kev, seq, maxlen, &sym, &xcompose);
+    *len = XLookupString(kev, seq, maxlen, &sym, &this->xcompose);
   }
   X_DEBUG_SHOW_KEY("", sym, *len, seq);
 
@@ -244,9 +225,9 @@ static Twkey XSYM(LookupKey)(XEvent *ev, udat *ShiftFlags, udat *len, char *seq)
     return (Twkey)sym;
   }
 
-  const XSYM(key_to_TW) *tkey_entry = NULL;
+  const key_to_tw *tkey_entry = NULL;
   {
-    XSYM(keymap_to_TW)::const_iterator iter = XSYM(keys).find(sym);
+    XSYM(keymap_to_tw)::const_iterator iter = XSYM(keys).find(sym);
     if (iter != XSYM(keys).end()) {
       tkey_entry = &iter->second;
     }
@@ -254,36 +235,38 @@ static Twkey XSYM(LookupKey)(XEvent *ev, udat *ShiftFlags, udat *len, char *seq)
   Twkey tkey = tkey_entry ? tkey_entry->tkey : TW_Null;
 
   if (tkey != TW_Null && *len == 1 && (*ShiftFlags & ~KBD_CAPS_LOCK) == KBD_NUM_LOCK &&
-      xnumkeypad && XSYM(IsNumericKeypad)(tkey)) {
+      this->xnumkeypad && IsNumericKeypad(tkey)) {
     /* xnumkeypad = ttrue and only NumLock led is set (ignoring CapsLock):
      * honor X11 numeric keypad mapping to numbers 0..9 and to / * - + . ENTER */
 
   } else if (tkey_entry != NULL && tkey_entry->len() &&
              (*len == 0 || (*ShiftFlags & ~(KBD_CAPS_LOCK | KBD_NUM_LOCK)) == 0)) {
-    /* XLookupString() returned empty string, or no ShiftFlags (ignoring CapsLock/NumLock): use the
-     * sequence stated in hw_keys.h */
-    if (tkey_entry->len() < maxlen) {
-      CopyMem(tkey_entry->seq, seq, *len = tkey_entry->len());
+    /* XLookupString() returned empty string, or no ShiftFlags (ignoring CapsLock/NumLock):
+     * use the sequence stated in hw_keys.h */
 
-      X_DEBUG_SHOW_KEY("replaced(2)", sym, *len, seq);
+    if (xaltcursorkeys && tkey >= TW_Left && tkey <= TW_Down) {
+      const char *altkeys = "\033OD\033OA\033OC\033OB";
+      CopyMem(altkeys + 3 * (tkey - TW_Left), seq, *len = 3);
+    } else if (tkey_entry->len() < maxlen) {
+      CopyMem(tkey_entry->seq, seq, *len = tkey_entry->len());
     }
+    X_DEBUG_SHOW_KEY("replaced(2)", sym, *len, seq);
   }
   return tkey == TW_Null && *len != 0 ? TW_Other : tkey;
 }
 
-static void XSYM(HandleEvent)(XEvent *event) {
-  /* this can stay static, XSYM(HandleEvent)() is not reentrant */
-  static char seq[TW_SMALLBUFF];
+TW_ATTR_HIDDEN void XDRIVER::HandleEvent(XEvent *event) {
+  char seq[TW_SMALLBUFF];
   dat x, y, dx, dy;
   udat len = sizeof(seq), ShiftFlags;
   Twkey TW_key;
 
-  if (event->xany.window == xwindow)
+  if (event->xany.window == this->xwindow)
     switch (event->type) {
     case KeyPress:
-      TW_key = XSYM(LookupKey)(event, &ShiftFlags, &len, seq);
+      TW_key = LookupKey(event, &ShiftFlags, &len, seq);
       if (TW_key != TW_Null) {
-        KeyboardEventCommon(TW_key, ShiftFlags, len, seq);
+        KeyboardEventCommon(hw, TW_key, ShiftFlags, len, seq);
       }
       break;
     case KeyRelease:
@@ -291,36 +274,34 @@ static void XSYM(HandleEvent)(XEvent *event) {
     case MotionNotify:
     case ButtonPress:
     case ButtonRelease:
-      x = event->xbutton.x / xwfont + xhw_startx;
+      x = event->xbutton.x / this->xwfont + this->xhw_startx;
       if (x < 0)
         x = 0;
       else if (x >= DisplayWidth)
         x = DisplayWidth - 1;
 
-      y = event->xbutton.y / xhfont + xhw_starty;
+      y = event->xbutton.y / this->xhfont + this->xhw_starty;
       if (y < 0)
         y = 0;
       else if (y >= DisplayHeight)
         y = DisplayHeight - 1;
 
       if (event->type == MotionNotify) {
-        dx = event->xbutton.x < xwfont / 2 ? -1 : xwidth - event->xbutton.x <= xwfont / 2 ? 1 : 0;
-        dy = event->xbutton.y < xhfont / 2 ? -1 : xheight - event->xbutton.y <= xhfont / 2 ? 1 : 0;
-        if (dx || dy || x != HW->MouseState.x || y != HW->MouseState.y)
-          MouseEventCommon(x, y, dx, dy, HW->MouseState.keys);
+        dx = event->xbutton.x < this->xwfont / 2                   ? -1
+             : this->xwidth - event->xbutton.x <= this->xwfont / 2 ? 1
+                                                                   : 0;
+        dy = event->xbutton.y < this->xhfont / 2                    ? -1
+             : this->xheight - event->xbutton.y <= this->xhfont / 2 ? 1
+                                                                    : 0;
+        if (dx || dy || x != hw->MouseState.x || y != hw->MouseState.y)
+          MouseEventCommon(hw, x, y, dx, dy, hw->MouseState.keys);
         break;
       }
 
       dx = event->xbutton.state;
       dy = (dx & Button1Mask ? HOLD_LEFT : 0) | (dx & Button2Mask ? HOLD_MIDDLE : 0) |
-           (dx & Button3Mask ? HOLD_RIGHT : 0) |
-#ifdef HOLD_WHEEL_REV
-           (dx & Button4Mask ? HOLD_WHEEL_REV : 0) |
-#endif
-#ifdef HOLD_WHEEL_FWD
-           (dx & Button5Mask ? HOLD_WHEEL_FWD : 0) |
-#endif
-           0;
+           (dx & Button3Mask ? HOLD_RIGHT : 0) | (dx & Button4Mask ? HOLD_WHEEL_REV : 0) |
+           (dx & Button5Mask ? HOLD_WHEEL_FWD : 0);
 
       /*
        * when sending ButtonRelease event, X11 reports that button
@@ -335,66 +316,63 @@ static void XSYM(HandleEvent)(XEvent *event) {
       dx = (dx == Button1   ? HOLD_LEFT
             : dx == Button2 ? HOLD_MIDDLE
             : dx == Button3 ? HOLD_RIGHT
-            :
-#ifdef HOLD_WHEEL_REV
-            dx == Button4 ? HOLD_WHEEL_REV
-            :
-#endif
-#ifdef HOLD_WHEEL_FWD
-            dx == Button5 ? HOLD_WHEEL_FWD
-                          :
-#endif
-                          0);
+            : dx == Button4 ? HOLD_WHEEL_REV
+            : dx == Button5 ? HOLD_WHEEL_FWD
+                            : 0);
       if (event->type == ButtonPress) {
         dy |= dx;
       } else {
         dy &= ~dx;
       }
-      MouseEventCommon(x, y, 0, 0, dy);
+      MouseEventCommon(hw, x, y, 0, 0, dy);
 
       break;
     case ConfigureNotify:
-      if (!xhw_view) {
-        if (HW->X != event->xconfigure.width / xwfont ||
-            HW->Y != event->xconfigure.height / xhfont) {
+      if (!this->xhw_view) {
+        if (hw->X != event->xconfigure.width / this->xwfont ||
+            hw->Y != event->xconfigure.height / this->xhfont) {
 
-          HW->X = (xwidth = event->xconfigure.width) / xwfont;
-          HW->Y = (xheight = event->xconfigure.height) / xhfont;
-          ResizeDisplayPrefer(HW);
+          hw->X = (this->xwidth = event->xconfigure.width) / this->xwfont;
+          hw->Y = (this->xheight = event->xconfigure.height) / this->xhfont;
+          ResizeDisplayPrefer(hw);
         }
       }
       break;
     case Expose:
-      x = event->xexpose.x / xwfont + xhw_startx;
-      y = event->xexpose.y / xhfont + xhw_starty;
-      dx = (event->xexpose.x + xhw_startx * xwfont + event->xexpose.width + xwfont - 2) / xwfont;
-      dy = (event->xexpose.y + xhw_starty * xhfont + event->xexpose.height + xhfont - 2) / xhfont;
+      x = event->xexpose.x / this->xwfont + this->xhw_startx;
+      y = event->xexpose.y / this->xhfont + this->xhw_starty;
+      dx = (event->xexpose.x + this->xhw_startx * this->xwfont + event->xexpose.width +
+            this->xwfont - 2) /
+           this->xwfont;
+      dy = (event->xexpose.y + this->xhw_starty * this->xhfont + event->xexpose.height +
+            this->xhfont - 2) /
+           this->xhfont;
 
-      NeedRedrawVideo(x, y, dx, dy);
+      NeedRedrawVideo(hw, x, y, dx, dy);
       /* must we redraw the cursor too ? */
-      if (HW->XY[0] >= x && HW->XY[0] <= dx && HW->XY[1] >= y && HW->XY[1] <= dy) {
-        HW->TT = NOCURSOR;
+      if (hw->XY[0] >= x && hw->XY[0] <= dx && hw->XY[1] >= y && hw->XY[1] <= dy) {
+        hw->TT = NOCURSOR;
       }
       break;
     case VisibilityNotify:
-      xwindow_AllVisible = event->xvisibility.state == VisibilityUnobscured;
+      this->xwindow_AllVisible = event->xvisibility.state == VisibilityUnobscured;
       break;
     case SelectionClear:
-      HW->HWSelectionPrivate = 0; /* selection now owned by some other X11 client */
-      TwinSelectionSetOwner((Tobj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
+      hw->SelectionPrivate = 0; /* selection now owned by some other X11 client */
+      TwinSelectionSetOwner((Tobj)hw, SEL_CURRENTTIME, SEL_CURRENTTIME);
       break;
     case SelectionRequest:
-      XSYM(SelectionRequest_up)(&event->xselectionrequest);
+      SelectionRequest_up(&event->xselectionrequest);
       break;
     case SelectionNotify:
-      XSYM(SelectionNotify_up)(event->xselection.requestor, event->xselection.property);
+      SelectionNotify_up(event->xselection.requestor, event->xselection.property);
       break;
     case ClientMessage:
-      if (event->xclient.message_type == xWM_PROTOCOLS && event->xclient.format == 32 &&
-          (Atom)event->xclient.data.l[0] == xWM_DELETE_WINDOW) {
+      if (event->xclient.message_type == this->xWM_PROTOCOLS && event->xclient.format == 32 &&
+          (Atom)event->xclient.data.l[0] == this->xWM_DELETE_WINDOW) {
 
         /* going to close this display */
-        HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+        hw->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW;
       }
       break;
     default:
@@ -402,15 +380,12 @@ static void XSYM(HandleEvent)(XEvent *event) {
     }
 }
 
-static void XSYM(KeyboardEvent)(int fd, Tdisplay D_HW) {
+TW_ATTR_HIDDEN void XDRIVER::KeyboardEvent(int fd, Tdisplay hw) {
   XEvent event;
-  SaveHW;
-  SetHW(D_HW);
+  XDRIVER *self = xdriver(hw);
 
-  while (XPending(xdisplay) > 0) {
-    XNextEvent(xdisplay, &event);
-    XSYM(HandleEvent)(&event);
+  while (XPending(self->xdisplay) > 0) {
+    XNextEvent(self->xdisplay, &event);
+    self->HandleEvent(&event);
   }
-
-  RestoreHW;
 }

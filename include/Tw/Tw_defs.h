@@ -43,35 +43,37 @@ enum {
 /* maximum number of arguments of a libtw function */
 #define TW_MAX_ARGS_N 20
 
-/* enum for VGA (not ANSI!) colors */
+/* enum for common colors represented as 21-bit RGB */
 enum tcolor_e {
+#ifdef TWIN_PALETTE_SOLARIZED
+  tblack = 0x2 << 14 | 0x4 << 7 | 0x8,
+#else
   tblack = 0,
-  tblue = 1,
-  tgreen = 2,
-  tcyan = tblue | tgreen,
-  tred = 4,
-  tmagenta = tblue | tred,
+#endif
+  tblue = 0x55,            /* */
+  tgreen = 0x55 << 7,      /* */
+  tcyan = tblue | tgreen,  /* */
+  tred = 0x55 << 14,       /* */
+  tmagenta = tblue | tred, /* */
   tyellow = tgreen | tred,
+#ifdef TWIN_PALETTE_SOLARIZED
+  twhite = 0x5d << 14 | 0x5d << 7 | 0x5d,
+#else
   twhite = tblue | tgreen | tred,
-  thigh = 8,
-  tmaxcol = 0xF,
+#endif
+  thigh = 0x2a << 14 | 0x2a << 7 | 0x2a,
+
+  tBLACK = thigh | tblack,
+  tBLUE = thigh | tblue,
+  tGREEN = thigh | tgreen,
+  tCYAN = thigh | tcyan,
+  tRED = thigh | tred,
+  tMAGENTA = thigh | tmagenta,
+  tYELLOW = thigh | tyellow,
+  tWHITE = thigh | twhite,
+
+  tpalette_n = 256,
 };
-
-#define TANSI2VGA(col) (((col)&0x1 ? tred : 0) | ((col)&0x2 ? tgreen : 0) | ((col)&0x4 ? tblue : 0))
-#define TVGA2ANSI(col) TANSI2VGA(col)
-
-/* foreground / background colors handling */
-/*
- * NOTE: draw.c:DoShadowColor() assumes that
- * TCOL(fg1, bg1) | TCOL(fg2, bg2) == TCOL(fg1|fg2, bg1|bg2)
- * and
- * TCOL(fg1, bg1) & TCOL(fg2, bg2) == TCOL(fg1&fg2, bg1&bg2)
- */
-#define TFG(col) (col)
-#define TBG(col) ((col) << 4)
-#define TCOL(fg, bg) (TFG(fg) | TBG(bg))
-#define TCOLBG(col) ((col) >> 4)
-#define TCOLFG(col) ((col)&0x0F)
 
 /**********************************/
 

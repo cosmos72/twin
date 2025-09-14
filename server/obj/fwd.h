@@ -13,41 +13,63 @@
 #ifndef TWIN_FWD_H
 #define TWIN_FWD_H
 
-typedef struct SobjList *TobjList;
-typedef struct SobjEntry *TobjEntry;
-struct ttydata;
-typedef struct Sremotedata Tremotedata;
+class tty_data;
+class Sremotedata;
+class SobjEntry;
 
-typedef struct Sobj *Tobj;
-typedef struct Swidget *Twidget;
-typedef struct Sgadget *Tgadget;
-typedef struct Swindow *Twindow;
-typedef struct Sscreen *Tscreen;
-typedef struct Sgroup *Tgroup;
-typedef struct Srow *Trow;
-typedef struct Smenuitem *Tmenuitem;
-typedef struct Smenu *Tmenu;
-typedef struct Smsg *Tmsg;
-typedef struct Smsgport *Tmsgport;
-typedef struct Smutex *Tmutex;
-typedef struct Smodule *Tmodule;
-typedef struct Sdisplay *Tdisplay;
+class Sobj;
+class Swidget;
+class Sgadget;
+class Swindow;
+class Sscreen;
+class Sgroup;
+class Srow;
+class Smenuitem;
+class Smenu;
+class Smsg;
+class Smsgport;
+class Smutex;
+class Smodule;
+class Sdisplay;
 
-typedef struct SobjFn *TobjFn;
-typedef struct SwidgetFn *TwidgetFn;
-typedef struct SwindowFn *TwindowFn;
-typedef struct SmsgFn *TmsgFn;
-typedef struct SmsgportFn *TmsgportFn;
-typedef struct SmutexFn *TmutexFn;
-typedef struct SmoduleFn *TmoduleFn;
+class SwidgetFn;
+class SwindowFn;
+class SmoduleFn;
 
-typedef struct Ssetup *Tsetup;
-typedef struct Sselection *Tselection;
-typedef struct Sall *Tall;
+class Ssetup;
+class Sselection;
+class Sall;
+
+typedef Sremotedata Tremotedata;
+typedef SobjEntry *TobjEntry;
+
+typedef Sobj *Tobj;
+typedef Swidget *Twidget;
+typedef Sgadget *Tgadget;
+typedef Swindow *Twindow;
+typedef Sscreen *Tscreen;
+typedef Sgroup *Tgroup;
+typedef Srow *Trow;
+typedef Smenuitem *Tmenuitem;
+typedef Smenu *Tmenu;
+typedef Smsg *Tmsg;
+typedef Smsgport *Tmsgport;
+typedef Smutex *Tmutex;
+typedef Smodule *Tmodule;
+typedef Sdisplay *Tdisplay;
+
+typedef SwidgetFn *TwidgetFn;
+typedef SwindowFn *TwindowFn;
+typedef SmoduleFn *TmoduleFn;
+
+typedef Ssetup *Tsetup;
+typedef Sselection *Tselection;
+typedef Sall *Tall;
 
 typedef void (*HookFn)(Twidget);
 
-struct HookData {
+class HookData {
+public:
   HookFn Fn;
   Twidget W;
 

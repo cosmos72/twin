@@ -15,8 +15,7 @@
 #include "algo.h"    // Max2()
 #include "alloc.h"   // AllocMem0(), CloneStrL()
 #include "data.h"    // DEFAULT_Col*
-#include "draw.h"    // ContainsCursor(), DrawAreaWidget(), DrawAreaWindow2()
-#include "fn.h"      // Fn_Twindow
+#include "draw.h"    // ContainsCursor(), DrawAreaWidget(), DrawAreaWindow()
 #include "methods.h" // IncMouseMotionN(), DecMouseMotionN()
 #include "resize.h"  // UpdateCursor(), RollUpWindow()
 #include "twin.h"    // NOFD, NOPID, NOSLOT
@@ -39,7 +38,6 @@ Twindow Swindow::Create(Tmsgport owner, dat titlelen, const char *title, const t
     void *addr = AllocMem0(sizeof(Swindow));
     if (addr) {
       window = new (addr) Swindow();
-      window->Fn = (TwidgetFn)Fn_Twindow;
       if (!window->Init(owner, titlelen, title, coltitle, m, coltext, cursortype, attr, flags,
                         xwidth, ywidth, scrollbacklines)) {
         window->Delete();
@@ -52,15 +50,15 @@ Twindow Swindow::Create(Tmsgport owner, dat titlelen, const char *title, const t
 
 Twindow Swindow::Create4Menu(Tmenu menu) {
   Twindow window = (Twindow)0;
-  if (menu && (window = New(window)(menu->MsgPort, 0, NULL, (tcolor *)0, menu, TCOL(tblack, twhite),
-                                    NOCURSOR, WINDOW_AUTO_KEYS,
-                                    WINDOWFL_MENU | WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL |
-                                        WINDOWFL_ROWS_SELCURRENT,
-                                    MIN_XWIN, MIN_YWIN, 0))) {
+  if (menu && (window = Swindow::Create(menu->MsgPort, 0, NULL, (tcolor *)0, menu,
+                                        TCOL(tblack, twhite), NOCURSOR, WINDOW_AUTO_KEYS,
+                                        WINDOWFL_MENU | WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL |
+                                            WINDOWFL_ROWS_SELCURRENT,
+                                        MIN_XWIN, MIN_YWIN, 0))) {
 
-    window->SetColors(0x1FF, TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(0, 0),
-                      TCOL(thigh | twhite, twhite), TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                      TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack));
+    window->SetColors(0x1FF, TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(tWHITE, twhite),
+                      TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
+                      TCOL(tBLACK, tblack));
     window->Configure(0x3F, 0, 1, MIN_XWIN, MIN_YWIN, TW_MAXDAT, TW_MAXDAT);
   }
   return window;
@@ -145,79 +143,94 @@ Twindow Swindow::Init(Tmsgport owner, dat titlelen, const char *title, const tco
   return this;
 }
 
-/* ttydata */
+/* tty_data */
 
 static bool InitTtyDataWindow(Twindow window, dat scrollbacklines) {
-  ttydata *Data = window->USE.C.TtyData;
+  tty_data *tty = window->USE.C.TtyData;
+
+  if (!tty && !(window->USE.C.TtyData = tty = (tty_data *)AllocMem(sizeof(tty_data)))) {
+    return false;
+  }
+
   ldat count = window->WLogic * window->HLogic;
   tcell *p = window->USE.C.Contents, h;
 
-  if (!Data && !(window->USE.C.TtyData = Data = (ttydata *)AllocMem(sizeof(ttydata))))
+  if (!p && !(window->USE.C.Contents = p = (tcell *)AllocMem(count * sizeof(tcell)))) {
+    FreeMem(tty);
     return false;
+  }
 
-  if (!p && !(window->USE.C.Contents = p = (tcell *)AllocMem(count * sizeof(tcell))))
-    return false;
+  new (&tty->newName) String();
 
   h = TCELL(TCOL(twhite, tblack), ' ');
-  while (count--)
+  while (count--) {
     *p++ = h;
-
+  }
   /*
    * this is a superset of reset_tty(),
    * but we don't want to call it from here
    */
-  Data->State = ESnormal;
-  Data->Flags = TTY_AUTOWRAP;
-  Data->Effects = 0;
-  window->YLogic = window->CurY = Data->ScrollBack = scrollbacklines;
+  tty->State = ESnormal;
+  tty->Flags = TTY_AUTOWRAP;
+  tty->Effects = 0;
+  window->YLogic = window->CurY = tty->ScrollBack = scrollbacklines;
   window->USE.C.HSplit = 0;
-  Data->SizeX = window->WLogic;
-  Data->SizeY = window->HLogic - scrollbacklines;
-  Data->Top = 0;
-  Data->Bottom = Data->SizeY;
-  Data->saveX = Data->X = window->CurX = 0;
-  Data->saveY = Data->Y = 0;
-  Data->Pos = Data->Start = window->USE.C.Contents + Data->ScrollBack * window->WLogic;
-  Data->Split = window->USE.C.Contents + window->WLogic * window->HLogic;
+  tty->SizeX = window->WLogic;
+  tty->SizeY = window->HLogic - scrollbacklines;
+  tty->Top = 0;
+  tty->Bottom = tty->SizeY;
+  tty->saveX = tty->X = window->CurX = 0;
+  tty->saveY = tty->Y = 0;
+  tty->Pos = tty->Start = window->USE.C.Contents + tty->ScrollBack * window->WLogic;
+  tty->Split = window->USE.C.Contents + window->WLogic * window->HLogic;
 
   window->CursorType = LINECURSOR;
   /* respect the WINDOWFL_CURSOR_ON set by the client and don't force it on */
 #if 0
   window->Flags |= WINDOWFL_CURSOR_ON;
 #endif
-  window->ColText = Data->Color = Data->DefColor = Data->saveColor = TCOL(twhite, tblack);
-  Data->Underline = TCOL(thigh | twhite, tblack);
-  Data->HalfInten = TCOL(thigh | tblack, tblack);
-  Data->TabStop[0] = 0x01010100;
-  Data->TabStop[1] = Data->TabStop[2] = Data->TabStop[3] = Data->TabStop[4] = 0x01010101;
-  Data->nPar = 0;
+  window->ColText = tty->Color = tty->DefColor = tty->saveColor = TCOL(twhite, tblack);
+  tty->Underline = TCOL(tWHITE, tblack);
+  tty->HalfInten = TCOL(tBLACK, tblack);
+  tty->Par[0] = tty->nPar = 0;
 
-  Data->G = Data->saveG = 0;
   /* default to latin1 charset */
-  Data->currG = Data->G0 = Data->saveG0 = LATIN1_MAP;
-  Data->G1 = Data->saveG1 = VT100GR_MAP;
+  std::memset(tty->Gv, LATIN1_MAP, sizeof(tty->Gv));
+  std::memset(tty->saveGv, LATIN1_MAP, sizeof(tty->saveGv));
+  tty->Gv[1] = tty->saveGv[1] = VT100GR_MAP;
+  tty->Gi = tty->saveGi = 0;
 
-  Data->utf8 = Data->utf8_count = Data->utf8_char = 0;
-  Data->InvCharset = Tutf_UTF_32_to_ISO_8859_1;
-  Data->newLen = Data->newMax = 0;
-  Data->newName = NULL;
+  /* default to UTF-8 mode */
+  tty->utf8 = 1;
+  tty->utf8_count = tty->utf8_char = 0;
+  window->Charset = Tutf_ISO_8859_1_to_UTF_32;
+  tty->InvCharset = Tutf_UTF_32_to_ISO_8859_1;
+
+  std::memset(tty->TabStop, 0x01, sizeof(tty->TabStop));
+  tty->TabStop[0] = 0x00;
 
   return true;
 }
 
 void Swindow::Delete() {
   UnMap();
-  if (Name)
+  if (Name) {
     FreeMem(Name);
-  if (ColName)
+  }
+  if (ColName) {
     FreeMem(ColName);
+  }
   if (W_USE(this, USECONTENTS)) {
-    if (USE.C.TtyData)
-      FreeMem(USE.C.TtyData);
-    if (USE.C.Contents)
+    tty_data *tty = USE.C.TtyData;
+    if (tty) {
+      tty->newName.~String();
+      FreeMem(tty);
+    }
+    if (USE.C.Contents) {
       FreeMem(USE.C.Contents);
+    }
   } else if (W_USE(this, USEROWS)) {
-    DeleteList(USE.R.FirstRow);
+    DeleteList(USE.R.Rows.First);
   }
   Swidget::Delete();
 }
@@ -340,7 +353,7 @@ void Swindow::SetXY(dat x, dat y) {
     prev = Prev;
     next = Next;
     Remove();
-    DrawAreaWindow2(this);
+    DrawAreaWindow(this);
   }
   Left = x;
   Up = y;
@@ -350,7 +363,7 @@ void Swindow::SetXY(dat x, dat y) {
       Up += parent->YLogic;
     }
     Insert(parent, prev, next);
-    DrawAreaWindow2(this);
+    DrawAreaWindow(this);
   }
 }
 
@@ -361,7 +374,7 @@ void Swindow::Expose(dat xwidth, dat ywidth, dat left, dat up, dat pitch, const 
 
 void Swindow::GotoXY(ldat x, ldat y) {
   if (W_USE(this, USECONTENTS)) {
-    ttydata *tt = USE.C.TtyData;
+    tty_data *tt = USE.C.TtyData;
 
     x = Max2(x, 0);
     y = Max2(y, 0);
@@ -452,7 +465,7 @@ void Swindow::Configure(byte bitmap, dat left, dat up, //
     prev = Prev;
     next = Next;
     Remove();
-    DrawAreaWindow2(this);
+    DrawAreaWindow(this);
   }
 
   if (bitmap & 1) {
@@ -491,8 +504,8 @@ void Swindow::Configure(byte bitmap, dat left, dat up, //
     YWidth = Min2(maxywidth, YWidth);
   }
   if (Parent) {
-    InsertMiddle(window, this, Parent, prev, next);
-    DrawAreaWindow2(this);
+    InsertMiddle(Widgets, this, Parent, prev, next);
+    DrawAreaWindow(this);
   }
 }
 
@@ -503,8 +516,8 @@ Trow Swindow::FindRow(ldat row_i) const {
 
   el_possible[0] = USE.R.RowOne;
   el_possible[1] = USE.R.RowSplit;
-  el_possible[2] = USE.R.FirstRow;
-  el_possible[3] = USE.R.LastRow;
+  el_possible[2] = USE.R.Rows.First;
+  el_possible[3] = USE.R.Rows.Last;
   el_row_n[0] = USE.R.NumRowOne;
   el_row_n[1] = USE.R.NumRowSplit;
   el_row_n[2] = (ldat)0;
@@ -535,13 +548,13 @@ Trow Swindow::FindRowByCode(udat Code, ldat *row_i) const {
   Trow row;
   ldat i = 0;
 
-  if ((row = USE.R.FirstRow))
+  if ((row = USE.R.Rows.First))
     while (row && row->Code != Code) {
       row = row->Next;
       i++;
     }
-  if (row && row_i)
+  if (row && row_i) {
     *row_i = i;
-
+  }
   return row;
 }

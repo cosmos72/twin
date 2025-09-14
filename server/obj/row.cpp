@@ -11,9 +11,8 @@
  */
 
 #include "alloc.h"        // AllocMem0()
+#include "builtin.h"      // ColorFill()
 #include "draw.h"         // DrawAreaWidget()
-#include "fn.h"           // Fn_Tobj
-#include "methods.h"      // RemoveGeneric()
 #include "obj/menuitem.h" // COD_RESERVED
 #include "obj/row.h"
 #include "obj/window.h"
@@ -29,7 +28,6 @@ Trow Srow::Create(udat code, byte flags) {
     void *addr = AllocMem0(sizeof(Srow));
     if (addr) {
       r = new (addr) Srow();
-      r->Fn = Fn_Tobj;
       if (!r->Init(code, flags, Trow_class_id)) {
         r->Delete();
         r = NULL;
@@ -58,10 +56,9 @@ Twindow Srow::Window() const {
 
 void Srow::Insert(Twindow parent, Trow prev, Trow next) {
   if (parent && W_USE(parent, USEROWS) && !Parent) {
-    InsertGeneric((TobjEntry)this, (TobjList)&parent->USE.R.FirstRow, (TobjEntry)prev,
-                  (TobjEntry)next, &parent->HLogic);
-    Parent = parent;
+    parent->USE.R.Rows.Insert(this, prev, next, &parent->HLogic);
     parent->USE.R.NumRowOne = parent->USE.R.NumRowSplit = (ldat)0;
+    Parent = parent;
   }
 }
 
@@ -69,7 +66,7 @@ void Srow::Remove() {
   Twindow w = Window();
   if (w && W_USE(w, USEROWS)) {
     w->USE.R.NumRowOne = w->USE.R.NumRowSplit = (ldat)0;
-    RemoveGeneric((TobjEntry)this, (TobjList)&w->USE.R.FirstRow, &w->HLogic);
+    w->USE.R.Rows.Remove(this, &w->HLogic);
   }
   Parent = NULL;
 }
@@ -99,9 +96,9 @@ bool Srow::SetText(uldat len, const char *text, bool default_color) {
     while (i-- > 0) {
       *row_text++ = Tutf_CP437_to_UTF_32[(byte)*text++];
     }
-    if (!(row->Flags & ROW_DEFCOL) && !default_color)
-      /* will not work correctly if sizeof(tcolor) != 1 */
-      memset(row->ColText, TCOL(twhite, tblack), len * sizeof(tcolor));
+    if (!(row->Flags & ROW_DEFCOL) && !default_color) {
+      ColorFill(row->ColText, len, TCOL(twhite, tblack));
+    }
   }
   row->Len = len;
   row->Gap = row->LenGap = 0;
@@ -115,10 +112,11 @@ bool Srow::SetTRune(uldat len, const trune *runes, bool default_color) {
   } else if (len) {
     CopyMem(runes, row->Text, len * sizeof(trune));
     if (!(row->Flags & ROW_DEFCOL) && !default_color) {
-      /* memset() will not work correctly if sizeof(tcolor) != 1 */
-      typedef char sizeof_tcolor_is_1[sizeof(tcolor) == 1 ? 1 : -1];
-
-      memset(row->ColText, TCOL(twhite, tblack), len * sizeof(tcolor));
+      tcolor col = TCOL(twhite, tblack);
+      uldat i;
+      for (i = 0; i < len; i++) {
+        row->ColText[i] = col;
+      }
     }
   }
   row->Len = len;
@@ -134,16 +132,16 @@ void Srow::Raise() {
 
   } else if (IS_MENU(parent) && IS_MENUITEM(row)) {
     Tmenu menu = (Tmenu)parent;
-    if (row != menu->FirstI) {
+    if (row != menu->Items.First) {
       row->Remove();
-      ((Tmenuitem)row)->Insert(menu, (Tmenuitem)0, menu->FirstI);
+      ((Tmenuitem)row)->Insert(menu, (Tmenuitem)0, menu->Items.First);
       SyncMenu(menu);
     }
   } else if (IS_WINDOW(parent) && W_USE((Twindow)parent, USEROWS)) {
     Twindow window = (Twindow)parent;
-    if (row != window->USE.R.FirstRow) {
+    if (row != window->USE.R.Rows.First) {
       row->Remove();
-      row->Insert(window, (Trow)0, window->USE.R.FirstRow);
+      row->Insert(window, (Trow)0, window->USE.R.Rows.First);
       DrawAreaWidget(window);
     }
   }
@@ -156,16 +154,16 @@ void Srow::Lower() {
     return;
   } else if (IS_MENU(parent) && IS_MENUITEM(row)) {
     Tmenu menu = (Tmenu)parent;
-    if (row != menu->LastI) {
+    if (row != menu->Items.Last) {
       row->Remove();
-      ((Tmenuitem)row)->Insert(menu, menu->LastI, (Tmenuitem)0);
+      ((Tmenuitem)row)->Insert(menu, menu->Items.Last, (Tmenuitem)0);
       SyncMenu(menu);
     }
   } else if (IS_WINDOW(parent) && W_USE((Twindow)parent, USEROWS)) {
     Twindow window = (Twindow)parent;
-    if (row != window->USE.R.LastRow) {
+    if (row != window->USE.R.Rows.Last) {
       row->Remove();
-      row->Insert(window, window->USE.R.LastRow, (Trow)0);
+      row->Insert(window, window->USE.R.Rows.Last, (Trow)0);
       DrawAreaWidget(window);
     }
   }

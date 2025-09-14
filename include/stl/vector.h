@@ -150,14 +150,25 @@ public:
     (void)resize(0);
   }
 
+  void shrink_to_fit() NOTHROW {
+    T *olddata = data();
+    size_t newcap = size_;
+    if (olddata && newcap < cap_) {
+      T *newdata = mem::realloc(olddata, cap_, newcap);
+      if (newdata) {
+        data_ = newdata;
+        cap_ = newcap;
+      }
+    }
+  }
+
   bool resize(size_t n) NOTHROW {
     return resize0(n, true);
   }
 
   bool reserve(size_t newcap) NOTHROW {
     if (newcap > cap_) {
-      T *olddata = fail() ? (T *)0 : data();
-      T *newdata = mem::realloc(olddata, cap_, newcap);
+      T *newdata = mem::realloc(data(), cap_, newcap);
       if (!newdata) {
         if (cap_ == 0) {
           data_ = NULL;

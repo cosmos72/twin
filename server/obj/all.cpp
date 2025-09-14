@@ -47,7 +47,7 @@ void Sselection::dup(const Tselection other) {
 
 void Sselection::paste() {
   Twidget w;
-  if (Data && (w = All->FirstScreen->FocusW()) && w->Owner) {
+  if (Data && (w = All->Screens.First->FocusW()) && w->Owner) {
     TwinSelectionNotify(w->Owner, w->Id, e_id(Magic), MIME, Data);
   }
 }
@@ -70,6 +70,6 @@ void Sall::Remove() {
 void Sall::Delete() {
 }
 
-static struct Sall _All;
+static Sall _All;
 
 Tall const All = _All.Init();

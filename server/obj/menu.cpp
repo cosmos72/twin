@@ -11,7 +11,6 @@
  */
 
 #include "alloc.h"   // AllocMem0()
-#include "fn.h"      // Fn_Tobj
 #include "hw.h"      // QueuedDrawArea2FullScreen
 #include "methods.h" // InsertLast()
 #include "twin.h"    // IS_SCREEN(), IS_WINDOW()
@@ -28,7 +27,6 @@ Tmenu Smenu::Create(Tmsgport owner, tcolor colitem, tcolor colselect, tcolor col
     void *addr = AllocMem0(sizeof(Smenu));
     if (addr) {
       m = new (addr) Smenu();
-      m->Fn = Fn_Tobj;
       if (!m->Init(owner, colitem, colselect, coldisabled, colselectdisabled, colshtcut,
                    colselshtcut, flagdefcolinfo)) {
         m->Delete();
@@ -51,11 +49,11 @@ Tmenu Smenu::Init(Tmsgport owner, tcolor colitem, tcolor colselect, tcolor coldi
   ColSelectDisabled = colselectdisabled;
   ColShtCut = colshtcut;
   ColSelShtCut = colselshtcut;
-  // FirstI = LastI = SelectI = NULL;
+  // Items.First = Items.Last = SelectI = NULL;
   CommonItems = tfalse;
   FlagDefColInfo = flagdefcolinfo;
   // Info = NULL;
-  InsertLast(Menu, this, owner);
+  InsertLast(Menus, this, owner);
   return this;
 }
 
@@ -63,7 +61,7 @@ void Smenu::Delete() {
   uldat count = 30;
 
   Tmsgport msgport = MsgPort;
-  Twidget w, WNext;
+  Twidget w, wnext;
 
   /*
    * warning:
@@ -77,8 +75,8 @@ void Smenu::Delete() {
    * calls do not have to redraw every time.
    */
   if (!QueuedDrawArea2FullScreen) {
-    for (w = msgport->FirstW; w && count; w = WNext) {
-      WNext = w->O_Next;
+    for (w = msgport->Widgets.First; w && count; w = wnext) {
+      wnext = w->O_Next;
       if (IS_WINDOW(w) && ((Twindow)w)->Menu == this) {
         if (w->Parent && IS_SCREEN(w->Parent)) {
           count--;
@@ -89,8 +87,8 @@ void Smenu::Delete() {
       QueuedDrawArea2FullScreen = true;
     }
   }
-  for (w = msgport->FirstW; w; w = WNext) {
-    WNext = w->O_Next;
+  for (w = msgport->Widgets.First; w; w = wnext) {
+    wnext = w->O_Next;
     if (IS_WINDOW(w) && ((Twindow)w)->Menu == this) {
       if (w->Parent && IS_SCREEN(w->Parent)) {
         w->UnMap();
@@ -99,7 +97,7 @@ void Smenu::Delete() {
     }
   }
   Remove();
-  DeleteList(FirstI);
+  DeleteList(Items.First);
   if (Info) {
     Info->Delete();
   }
@@ -107,23 +105,22 @@ void Smenu::Delete() {
 }
 
 void Smenu::Insert(Tmsgport parent, Tmenu prev, Tmenu next) {
-  if (!MsgPort && parent) {
-    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstMenu, (TobjEntry)prev, (TobjEntry)next,
-                  NULL);
+  if (parent && !MsgPort) {
+    parent->Menus.Insert(this, prev, next);
     MsgPort = parent;
   }
 }
 
 void Smenu::Remove() {
   if (MsgPort) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&MsgPort->FirstMenu, NULL);
+    MsgPort->Menus.Remove(this);
     MsgPort = (Tmsgport)0;
   }
 }
 
 Trow Smenu::SetInfo(byte flags, ldat len, const char *text, const tcolor *coltext) {
   Tmenu menu = this;
-  Trow row = New(row)(0, flags);
+  Trow row = Srow::Create(0, flags);
   if (row) {
     if ((!text || (row->Text = CloneStr2TRune(text, len))) &&
         (!coltext || (row->ColText = (tcolor *)CloneMem(coltext, len * sizeof(tcolor))))) {
@@ -143,25 +140,28 @@ Tmenuitem Smenu::FindItem(dat i) const {
   Tmenuitem item = (Tmenuitem)0;
 
   if (menu) {
-    for (item = menu->FirstI; item; item = item->Next()) {
-      if (i >= item->Left && (uldat)(i - item->Left) < item->Len)
+    for (item = menu->Items.First; item; item = item->NextItem()) {
+      if (i >= item->Left && (uldat)(i - item->Left) < item->Len) {
         break;
+      }
     }
 
     if (!item && menu->CommonItems && All->CommonMenu) {
 
-      item = menu->LastI;
+      item = menu->Items.Last;
 
       if (!item || (i >= item->Left && (uldat)(i - item->Left) >= item->Len)) {
         /* search in All->CommonMenu */
         if (item)
           i -= item->Left + (dat)item->Len;
-        for (item = All->CommonMenu->FirstI; item; item = item->Next()) {
-          if (i >= item->Left && (uldat)(i - item->Left) < item->Len)
+        for (item = All->CommonMenu->Items.First; item; item = item->NextItem()) {
+          if (i >= item->Left && (uldat)(i - item->Left) < item->Len) {
             break;
+          }
         }
-      } else
+      } else {
         item = (Tmenuitem)0;
+      }
     }
   }
   return item;
@@ -182,7 +182,7 @@ Tmenuitem Smenu::RecursiveGetSelectedItem(dat *depth) const {
   const Smenu *menu = this;
   Tmenuitem item = NULL, prev = menu->GetSelectedItem();
   Twindow w = (Twindow)0;
-  Twidget focus_w = All->FirstScreen->FocusW();
+  Twidget focus_w = All->Screens.First->FocusW();
   dat d = -1;
 
   while (prev && IS_MENUITEM(prev)) {
@@ -219,6 +219,6 @@ void Smenu::SetSelectedItem(Tmenuitem item) {
         All->CommonMenu->SelectI = item;
     }
 
-    All->FirstScreen->DrawMenu(0, TW_MAXDAT);
+    All->Screens.First->DrawMenu(0, TW_MAXDAT);
   }
 }

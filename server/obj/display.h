@@ -18,14 +18,36 @@
 #include "obj/obj.h"
 #include "stl_types.h"
 
-struct mouse_state {
+/* Sdisplay::FlagsHW */
+enum FlagHW {
+  FlagSoftMouseHW = 0x01,
+  FlagChangedMouseFlagHW = 0x02,
+  FlagNeedOldVideoHW = 0x04,
+  FlagExpensiveFlushVideoHW = 0x08,
+  FlagNoInputHW = 0x10,
+};
+
+/* Sdisplay::NeedHW and global NeedHW */
+enum NeedHW {
+  NeedFlushStdout = 0x01,
+  NeedFlushHW = 0x02,
+  NeedResizeDisplay = 0x04,
+  NeedSelectionExport = 0x08,
+  NeedPanicHW = 0x10,
+  NeedPersistentSlot = 0x20,
+  NeedFromPreviousFlushHW = 0x40,
+  NeedBeepHW = 0x80,
+};
+
+class mouse_state {
+public:
   dat x, y;
   dat delta_x, delta_y;
   byte keys;
 };
 
-struct Sdisplay : public Sobj {
-  TobjFn Fn;
+class Sdisplay : public Sobj {
+public:
   Tdisplay Prev, Next; /* in the same All */
   Tall All;
 
@@ -35,33 +57,35 @@ struct Sdisplay : public Sobj {
 
   void *Private; /* used to store HW-specific data */
 
-  void (*FlushVideo)(void);
-  void (*FlushHW)(void);
+  void (*fnFlushVideo)(Tdisplay hw);
+  void (*fnFlushHW)(Tdisplay hw);
 
-  void (*KeyboardEvent)(int fd, Tdisplay hw);
-  void (*MouseEvent)(int fd, Tdisplay hw);
+  void (*fnKeyboardEvent)(int fd, Tdisplay hw);
+  void (*fnMouseEvent)(int fd, Tdisplay hw);
 
-  void (*ShowMouse)(void);
-  void (*HideMouse)(void);
-  void (*UpdateMouseAndCursor)(void);
+  void (*fnShowMouse)(Tdisplay hw);
+  void (*fnHideMouse)(Tdisplay hw);
+  void (*fnUpdateMouseAndCursor)(Tdisplay hw);
 
   /* just detect size */
-  void (*DetectSize)(dat *x, dat *y);
+  void (*fnDetectSize)(Tdisplay hw, dat *x, dat *y);
 
   /* check if size (x,y) is possible. if not, decrease (x,y) to the nearest possible size */
-  void (*CheckResize)(dat *x, dat *y);
+  void (*fnCheckResize)(Tdisplay hw, dat *x, dat *y);
 
   /* unconditionally resize to (x,y). it is guaranteed that CheckResize returned this (x,y) */
-  void (*Resize)(dat x, dat y);
+  void (*fnResize)(Tdisplay hw, dat x, dat y);
 
-  byte (*HWSelectionImport)(void);
-  void (*HWSelectionExport)(void);
-  void (*HWSelectionRequest)(Tobj requestor, uldat reqprivate);
-  void (*HWSelectionNotify)(uldat reqprivate, e_id magic, Chars mime, Chars data);
-  tany HWSelectionPrivate;
+  bool (*fnSelectionImport)(Tdisplay hw);
+  void (*fnSelectionExport)(Tdisplay hw);
+  void (*fnSelectionRequest)(Tdisplay hw, Tobj requestor, uldat reqprivate);
+  void (*fnSelectionNotify)(Tdisplay hw, uldat reqprivate, e_id magic, Chars mime, Chars data);
+  tany SelectionPrivate;
 
-  byte (*CanDragArea)(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
-  void (*DragArea)(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
+  bool (*fnCanDragArea)(Tdisplay hw, dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart,
+                        dat DstYstart);
+  void (*fnDragArea)(Tdisplay hw, dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart,
+                     dat DstYstart);
   /*
    * if the display HW is capable of doing BLiTs (BLock image Transfers) under
    * certain conditions (tipically X11's XCopyArea()), set canDragArea to a
@@ -70,33 +94,193 @@ struct Sdisplay : public Sobj {
    * (it will very probably need to FlushVideo() first)
    */
 
-  void (*Beep)(void);
-  void (*Configure)(udat resource, byte todefault, udat value);
-  void (*ConfigureKeyboard)(udat resource, byte todefault, udat value);
-  void (*ConfigureMouse)(udat resource, byte todefault, udat value);
-  void (*SetPalette)(udat N, udat R, udat G, udat B);
-  void (*ResetPalette)(void);
+  void (*fnBeep)(Tdisplay hw);
+  void (*fnConfigure)(Tdisplay hw, udat resource, byte todefault, udat value);
+  void (*fnConfigureKeyboard)(Tdisplay hw, udat resource, byte todefault, udat value);
+  void (*fnConfigureMouse)(Tdisplay hw, udat resource, byte todefault, udat value);
+  void (*fnSetPalette)(Tdisplay hw, udat N, udat R, udat G, udat B);
+  void (*fnResetPalette)(Tdisplay hw);
 
-  void (*QuitHW)(void);
-  void (*QuitKeyboard)(void);
-  void (*QuitMouse)(void);
-  void (*QuitVideo)(void);
+  void (*fnQuitHW)(Tdisplay hw);
+  void (*fnQuitKeyboard)(Tdisplay hw);
+  void (*fnQuitMouse)(Tdisplay hw);
+  void (*fnQuitVideo)(Tdisplay hw);
 
-  byte DisplayIsCTTY; /* set to ttrue if display is the controlling terminal */
-  byte Quitted;       /* used internally: set to ttrue before InitHW() and after QuitHW() */
+  void setFlush() {
+    NeedHW |= NeedFlushHW;
+  }
+
+  void clrFlush() {
+    NeedHW &= ~NeedFlushHW;
+  }
+
+  void FlushVideo() {
+    if (fnFlushVideo) {
+      fnFlushVideo(this);
+    }
+  }
+  void FlushHW() {
+    if (fnFlushHW) {
+      fnFlushHW(this);
+    }
+  }
+
+  void KeyboardEvent(int fd) {
+    if (fnKeyboardEvent) {
+      fnKeyboardEvent(fd, this);
+    }
+  }
+  void MouseEvent(int fd) {
+    if (fnMouseEvent) {
+      fnMouseEvent(fd, this);
+    }
+  }
+
+  void ShowMouse() {
+    if (fnShowMouse) {
+      fnShowMouse(this);
+    }
+  }
+  void HideMouse() {
+    if (fnHideMouse) {
+      fnHideMouse(this);
+    }
+  }
+  void UpdateMouseAndCursor() {
+    if (fnUpdateMouseAndCursor) {
+      fnUpdateMouseAndCursor(this);
+    }
+  }
+
+  /* just detect size */
+  void DetectSize(dat *x, dat *y) {
+    if (fnDetectSize) {
+      fnDetectSize(this, x, y);
+    }
+  }
+
+  /* check if size (x,y) is possible. if not, decrease (x,y) to the nearest possible size */
+  void CheckResize(dat *x, dat *y) {
+    if (fnCheckResize) {
+      fnCheckResize(this, x, y);
+    }
+  }
+
+  /* unconditionally resize to (x,y). it is guaranteed that CheckResize returned this (x,y) */
+  void Resize(dat x, dat y) {
+    if (fnResize) {
+      fnResize(this, x, y);
+    }
+  }
+
+  bool SelectionImport() {
+    if (fnSelectionImport) {
+      return fnSelectionImport(this);
+    }
+    return false;
+  }
+  void SelectionExport() {
+    if (fnSelectionExport) {
+      fnSelectionExport(this);
+    }
+  }
+  void SelectionRequest(Tobj requestor, uldat reqprivate) {
+    if (fnSelectionRequest) {
+      fnSelectionRequest(this, requestor, reqprivate);
+    }
+  }
+  void SelectionNotify(uldat reqprivate, e_id magic, Chars mime, Chars data) {
+    if (fnSelectionNotify) {
+      fnSelectionNotify(this, reqprivate, magic, mime, data);
+    }
+  }
+
+  byte CanDragArea(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart) {
+    if (fnCanDragArea) {
+      return fnCanDragArea(this, Xstart, Ystart, Xend, Yend, DstXstart, DstYstart);
+    }
+    return false;
+  }
+  void DragArea(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart) {
+    if (fnDragArea) {
+      fnDragArea(this, Xstart, Ystart, Xend, Yend, DstXstart, DstYstart);
+    }
+  }
+  /*
+   * if the display HW is capable of doing BLiTs (BLock image Transfers) under
+   * certain conditions (tipically X11's XCopyArea()), set canDragArea to a
+   * function that checks if the HW can do the BLiT with the given coordinates,
+   * and set DragArea to a function that unconditionally does the BLiT
+   * (it will very probably need to FlushVideo() first)
+   */
+
+  void Beep() {
+    if (fnBeep) {
+      fnBeep(this);
+    }
+  }
+  void Configure(udat resource, byte todefault, udat value) {
+    if (fnConfigure) {
+      fnConfigure(this, resource, todefault, value);
+    }
+  }
+  void ConfigureKeyboard(udat resource, byte todefault, udat value) {
+    if (fnConfigureKeyboard) {
+      fnConfigureKeyboard(this, resource, todefault, value);
+    }
+  }
+  void ConfigureMouse(udat resource, byte todefault, udat value) {
+    if (fnConfigureMouse) {
+      fnConfigureMouse(this, resource, todefault, value);
+    }
+  }
+  void SetPalette(udat N, udat R, udat G, udat B) {
+    if (fnSetPalette) {
+      fnSetPalette(this, N, R, G, B);
+    }
+  }
+  void ResetPalette() {
+    if (fnResetPalette) {
+      fnResetPalette(this);
+    }
+  }
+
+  void QuitHW() {
+    if (fnQuitHW) {
+      fnQuitHW(this);
+    }
+  }
+  void QuitKeyboard() {
+    if (fnQuitKeyboard) {
+      fnQuitKeyboard(this);
+    }
+  }
+  void QuitMouse() {
+    if (fnQuitMouse) {
+      fnQuitMouse(this);
+    }
+  }
+  void QuitVideo() {
+    if (fnQuitVideo) {
+      fnQuitVideo(this);
+    }
+  }
+
+  bool DisplayIsCTTY; /* set to true if display is the controlling terminal */
+  bool Quitted;       /* used internally: set to true before InitHW() and after QuitHW() */
 
   /*
    * various display HW flags:
    *
-   * FlHWSoftMouse         : set if display HW has to manually hide/show the mouse pointer
-   * FlHWChangedMouseFlag  : set after a mouse event that requires redrawing mouse pointer
-   * FlHWNeedOldVideo      : set if FlushVideo() is a bit expensive, and it's better to cache the
+   * FlagSoftMouseHW         : set if display HW has to manually hide/show the mouse pointer
+   * FlagChangedMouseFlagHW  : set after a mouse event that requires redrawing mouse pointer
+   * FlagNeedOldVideoHW      : set if FlushVideo() is a bit expensive, and it's better to cache the
    *                         actual display contents in OldVideo[] and send only what effectively
    *                         changed, instead of all the dirty areas.
-   * FlHWExpensiveFlushVideo : set if FlushVideo() is SO expensive that it's better to sleep
+   * FlagExpensiveFlushVideoHW : set if FlushVideo() is SO expensive that it's better to sleep
    *                         a little before flushing, hoping to receive more data in the meantime,
    *                         in order to merge the flush operations.
-   * FlHWNoInput           : set if the display HW should be used as view-only, ignoring all input
+   * FlagNoInputHW           : set if the display HW should be used as view-only, ignoring all input
    *                         from it.
    */
   byte FlagsHW;
@@ -107,13 +291,13 @@ struct Sdisplay : public Sobj {
    * set to ttrue if the display can actually resize itself (example: X11)
    * set to tfalse if it can only live with the externally set size (example: ttys)
    */
-  byte CanResize;
+  bool CanResize;
 
   /*
    * set to ttrue if the display was corrupted by some external event
-   * example: hw_X11.c sets this when its window gets Expose events
+   * example: hw_x11.c sets this when its window gets Expose events
    */
-  byte RedrawVideo;
+  bool RedrawVideo;
 
   /*
    * the dirty area that needs to be redrawn.
@@ -129,18 +313,6 @@ struct Sdisplay : public Sobj {
   dat X, Y;           /* real display size, in character cells. */
   dat usedX, usedY;   /* used display size (i.e. ScreenWidth, ScreenHeight) */
   dat Last_x, Last_y; /* position of last mouse event */
-
-  /*
-   * if sending many small draw commands to the HW is more expensive
-   * than sending fewer, bigger ones even considering you will also send
-   * intermediate, clean areas, set merge_Threshold to a reasonable value
-   * for merge: dirty areas less far than this will be considered as merged
-   * by Threshold_isDirtyVideo().
-   * Anyway, it's up to your FlushVideo() to actually merge them.
-   *
-   * Otherwise, set this to zero.
-   */
-  dat merge_Threshold;
 
   uldat AttachSlot; /* slot of client that told us to attach to this display */
 
@@ -160,22 +332,5 @@ struct Sdisplay : public Sobj {
   bool DoInit(); // defined in hw_multi.cpp
   void DoQuit(); // defined in hw_multi.cpp
 };
-
-/* DisplayHW->FlagsHW */
-#define FlHWSoftMouse ((byte)0x01)
-#define FlHWChangedMouseFlag ((byte)0x02)
-#define FlHWNeedOldVideo ((byte)0x04)
-#define FlHWExpensiveFlushVideo ((byte)0x08)
-#define FlHWNoInput ((byte)0x10)
-
-/* DisplayHW->NeedHW and global NeedHW */
-#define NEEDFlushStdout ((byte)0x01)
-#define NEEDFlushHW ((byte)0x02)
-#define NEEDResizeDisplay ((byte)0x04)
-#define NEEDSelectionExport ((byte)0x08)
-#define NEEDPanicHW ((byte)0x10)
-#define NEEDPersistentSlot ((byte)0x20)
-#define NEEDFromPreviousFlushHW ((byte)0x40)
-#define NEEDBeepHW ((byte)0x80)
 
 #endif /* TWIN_DISPLAY_H */

@@ -44,12 +44,14 @@
 #include <Tutf/Tutf.h>
 #include <Tutf/Tutf_defs.h>
 
-#define MAX_RUNCYCLE 1024 /* kill a queue after this number of steps */
+enum {
+  MAX_RUNCYCLE = 1024, /* kill a queue after this number of steps */
 
-#define MAX_RUNSTACK 28
-typedef struct run run;
+  MAX_RUNSTACK = 28,
+};
 
-struct run {
+class run {
+public:
   run *next;
   uldat W;     /* the current Twidget (id) */
   uldat depth; /* index of last used stack element;
@@ -352,24 +354,26 @@ static ldat applyflagy(node n) {
 static Twindow RCFindWindowName(cstr name) {
   uldat len = strlen(name);
   Twindow w;
-  Tscreen screen = All->FirstScreen;
+  Tscreen screen = All->Screens.First;
 
   while (screen) {
     /* search among mapped windows */
-    w = (Twindow)screen->FirstW;
+    w = (Twindow)screen->Widgets.First;
     while (w) {
-      if (IS_WINDOW(w) && w->NameLen >= 0 && (udat)w->NameLen == len && !memcmp(w->Name, name, len))
+      if (IS_WINDOW(w) && w->NameLen >= 0 && (udat)w->NameLen == len &&
+          !memcmp(w->Name, name, len)) {
         return w;
+      }
       w = (Twindow)w->Next;
     }
-    screen = screen->Next();
+    screen = screen->NextScreen();
   }
   return NULL;
 }
 
 static Tscreen RCFindScreenName(cstr name) {
   uldat len = strlen(name);
-  Tscreen screen = All->FirstScreen;
+  Tscreen screen = All->Screens.First;
   while (screen) {
     if (screen->NameLen >= 0 && (udat)screen->NameLen == len && !memcmp(screen->Name, name, len))
       break;
@@ -385,13 +389,15 @@ inline Twidget RCCheck4WidgetId(run *r) {
   return w;
 }
 
-#define Snext 0
-#define Sfunc 1
-#define Sbody 2
-#define Ssleep 3
-#define Swait 4
-#define Sinter 5
-#define Serr 6
+enum {
+  Snext = 0,
+  Sfunc = 1,
+  Sbody = 2,
+  Ssleep = 3,
+  Swait = 4,
+  Sinter = 5,
+  Serr = 6,
+};
 
 inline Twidget ForwardWindow(Twidget w) {
   while (w) {
@@ -476,7 +482,7 @@ static byte RCSteps(run *r) {
       case INTERACTIVE:
         C->W = w;
         if (!C->Screen && !(C->Screen = screen))
-          C->Screen = All->FirstScreen;
+          C->Screen = All->Screens.First;
 
         ret = tfalse;
         switch (n->x.f.flag) {
@@ -507,19 +513,21 @@ static byte RCSteps(run *r) {
         ActivateCtx(C, state_menu);
         break;
       case MODULE:
-        if (n->x.f.a == -1)
+        if (n->x.f.a == -1) {
           n->x.f.a = DlName2Code(n->name);
-        if (n->x.f.flag == FL_ON)
-          DlLoad(n->x.f.a);
-        else
-          DlUnload(n->x.f.a);
+        }
+        if (n->x.f.flag == FL_ON) {
+          DlLoad((IdSo)n->x.f.a);
+        } else {
+          DlUnload((IdSo)n->x.f.a);
+        }
         break;
       case MOVE:
         if (w && IS_WINDOW(w))
           DragWindow((Twindow)w, applyflagx(n), applyflagy(n));
         break;
       case MOVESCREEN:
-        if (screen && screen != All->FirstScreen)
+        if (screen && screen != All->Screens.First)
           screen->Focus();
         DragFirstScreen(applyflagx(n), applyflagy(n));
         break;
@@ -541,7 +549,7 @@ static byte RCSteps(run *r) {
         }
         break;
       case RESIZESCREEN:
-        if (screen && screen != All->FirstScreen)
+        if (screen && screen != All->Screens.First)
           screen->Focus();
         ResizeFirstScreen(applyflagx(n));
         break;
@@ -600,39 +608,42 @@ static byte RCSteps(run *r) {
 
           if (flag == 0) {
             if (i == 0) {
-              w = All->FirstScreen->FocusW();
+              w = All->Screens.First->FocusW();
               if (w && !IS_WINDOW(w))
                 w = (Twidget)0;
             } else {
               if (i > 0)
                 i--;
-              w = ForwardWindow(All->FirstScreen->FirstW);
+              w = ForwardWindow(All->Screens.First->Widgets.First);
             }
           }
 
           if (w) {
             while (i > 0 && w) {
               i--;
-              if ((SkipW = ForwardWindow(w->Next)))
+              if ((SkipW = ForwardWindow(w->Next))) {
                 w = SkipW;
-              else {
+              } else {
                 screen = ScreenOf(w);
                 w = NULL;
                 if (screen)
-                  while ((screen = screen->Next()) && !(w = ForwardWindow(screen->FirstW)))
+                  while ((screen = screen->NextScreen()) &&
+                         !(w = ForwardWindow(screen->Widgets.First)))
                     ;
               }
             }
             while (i < 0 && w) {
               i++;
-              if ((SkipW = BackwardWindow(w->Prev)))
+              if ((SkipW = BackwardWindow(w->Prev))) {
                 w = SkipW;
-              else {
+              } else {
                 screen = ScreenOf(w);
                 w = NULL;
-                if (screen)
-                  while ((screen = screen->Prev()) && !(w = BackwardWindow(screen->LastW)))
-                    ;
+                if (screen) {
+                  while ((screen = screen->PrevScreen()) &&
+                         !(w = BackwardWindow(screen->Widgets.Last))) {
+                  }
+                }
               }
             }
           }
@@ -691,7 +702,7 @@ static byte RCSteps(run *r) {
           if (flag == FL_TOGGLE)
             flag = (screen->FocusW() == (Twidget)w) ? FL_OFF : FL_ON;
 
-          if (flag == FL_ON && screen != All->FirstScreen)
+          if (flag == FL_ON && screen != All->Screens.First)
             screen->Focus();
 
           if (flag == FL_ON) {
@@ -708,34 +719,39 @@ static byte RCSteps(run *r) {
         break;
       case LOWER:
         if (w && screen)
-          LowerWidget(w, tfalse);
+          LowerWidget(w, false);
         break;
       case RAISE:
-        if (w && screen)
-          RaiseWidget(w, tfalse);
+        if (w && screen) {
+          RaiseWidget(w, false);
+        }
         break;
       case RAISELOWER:
         if (w && screen) {
-          if ((Twidget)w == screen->FirstW)
-            LowerWidget(w, ttrue);
-          else
-            RaiseWidget(w, ttrue);
+          if ((Twidget)w == screen->Widgets.First) {
+            LowerWidget(w, true);
+          } else {
+            RaiseWidget(w, true);
+          }
         }
         break;
       case ROLL:
         if (w && IS_WINDOW(w)) {
           flag = n->x.f.flag;
-          if (flag == FL_TOGGLE)
+          if (flag == FL_TOGGLE) {
             flag = w->Attr & WINDOW_ROLLED_UP ? FL_OFF : FL_ON;
+          }
           RollUpWindow((Twindow)w, flag == FL_ON);
         }
         break;
       case USERFUNC:
-        if (n->x.func || ((f = LookupNodeName(n->name, FuncList)) && (n->x.func = f->body)))
+        if (n->x.func || ((f = LookupNodeName(n->name, FuncList)) && (n->x.func = f->body))) {
           /* stored into n->f.func to speedup future references */
           state = Sfunc;
-        else /* user function not found. abort. */
+        } else {
+          /* user function not found. abort. */
           state = Serr;
+        }
         break;
       default:
         /* unknown command. abort. */
@@ -747,18 +763,20 @@ static byte RCSteps(run *r) {
       /* next instruction */
       if (!n || !(n = n->next)) {
         /* end of function. pop the stack. */
-        if (r->depth)
+        if (r->depth) {
           n = r->stack[--r->depth];
-        else /* stack empty. exit. */
-          break;
+        } else {
+          break; /* stack empty. exit. */
+        }
       }
     } else if (state == Sfunc || state == Sbody) {
       /* enter f or n->body */
       if (r->depth < MAX_RUNSTACK) {
         r->stack[r->depth++] = n->next;
         n = (state == Sfunc) ? n->x.func : n->body;
-      } else /* stack overflow */
-        break;
+      } else {
+        break; /* stack overflow */
+      }
     } else if (state == Ssleep || state == Swait || state == Sinter) {
       /* prepare to resume from next instruction after sleeping */
       r->stack[r->depth] = n->next;
@@ -839,7 +857,7 @@ static byte RCSleep(timevalue *_t) {
  */
 static void RCReload(void) {
   Tmodule M;
-  bool (*mod_rcload)(void) = NULL;
+  bool (*mod_rcload)(Tdisplay) = NULL;
   byte success;
 
   if ((M = DlLoad(RCParseSo))) {
@@ -851,7 +869,7 @@ static void RCReload(void) {
   }
 #endif
 
-  success = mod_rcload && mod_rcload();
+  success = mod_rcload && mod_rcload(NULL);
 
   if (M)
     DlUnload(RCParseSo);
@@ -920,7 +938,7 @@ static byte MouseClickReleaseSameCtx(uldat W1, uldat W2, ldat clickCtx, ldat rel
 
 /* handle incoming messages */
 byte RC_VMQueue(const wm_ctx *C) {
-  uldat ClickWinId = All->FirstScreen->ClickWindow ? All->FirstScreen->ClickWindow->Id : NOID;
+  uldat ClickWinId = All->Screens.First->ClickWindow ? All->Screens.First->ClickWindow->Id : NOID;
   Twidget w;
   ldat ctx;
   node n;
@@ -988,7 +1006,7 @@ byte RC_VMQueue(const wm_ctx *C) {
       if (n && (r = RCNew(n))) {
         used = ttrue;
         CopyMem(C, &r->C, sizeof(wm_ctx));
-        w = All->FirstScreen->FocusW();
+        w = All->Screens.First->FocusW();
         r->W = w ? w->Id : NOID;
         r->C.ByMouse = false;
         /* to preserve execution orded, run it right now ! */
@@ -1017,24 +1035,25 @@ void QuitRC(void) {
   shm_quit();
 }
 
-#define COD_COMMON_FIRST COD_COMMON_DRAG
+enum {
+  COD_COMMON_DRAG = COD_RESERVED,
+  COD_COMMON_RESIZE = COD_RESERVED + 1,
+  COD_COMMON_SCROLL = COD_RESERVED + 2,
+  COD_COMMON_CENTER = COD_RESERVED + 3,
+  COD_COMMON_MAXIMIZE = COD_RESERVED + 4,
+  COD_COMMON_FULLSCREEN = COD_RESERVED + 5,
+  COD_COMMON_ROLLTOGGLE = COD_RESERVED + 6,
+  COD_COMMON_RAISELOWER = COD_RESERVED + 7,
+  COD_COMMON_UNFOCUS = COD_RESERVED + 8,
+  COD_COMMON_NEXT = COD_RESERVED + 9,
+  COD_COMMON_WINDOWLIST = COD_RESERVED + 10,
+  COD_COMMON_REFRESH = COD_RESERVED + 11,
+  COD_COMMON_HOTKEY = COD_RESERVED + 12,
+  COD_COMMON_CLOSE = COD_RESERVED + 13,
 
-#define COD_COMMON_DRAG (COD_RESERVED)
-#define COD_COMMON_RESIZE (COD_RESERVED + 1)
-#define COD_COMMON_SCROLL (COD_RESERVED + 2)
-#define COD_COMMON_CENTER (COD_RESERVED + 3)
-#define COD_COMMON_MAXIMIZE (COD_RESERVED + 4)
-#define COD_COMMON_FULLSCREEN (COD_RESERVED + 5)
-#define COD_COMMON_ROLLTOGGLE (COD_RESERVED + 6)
-#define COD_COMMON_RAISELOWER (COD_RESERVED + 7)
-#define COD_COMMON_UNFOCUS (COD_RESERVED + 8)
-#define COD_COMMON_NEXT (COD_RESERVED + 9)
-#define COD_COMMON_WINDOWLIST (COD_RESERVED + 10)
-#define COD_COMMON_REFRESH (COD_RESERVED + 11)
-#define COD_COMMON_HOTKEY (COD_RESERVED + 12)
-#define COD_COMMON_CLOSE (COD_RESERVED + 13)
-
-#define COD_COMMON_LAST COD_COMMON_CLOSE
+  COD_COMMON_FIRST = COD_COMMON_DRAG,
+  COD_COMMON_LAST = COD_COMMON_CLOSE,
+};
 
 static byte USEDefaultCommonMenu(void) {
   Tmenu Menu;
@@ -1042,11 +1061,12 @@ static byte USEDefaultCommonMenu(void) {
   Twindow w;
   Trow Row;
 
-  if (!(Menu = New(menu)(Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0,
-                         (tcolor)0, ttrue)))
+  if (!(Menu = Smenu::Create(Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0,
+                             (tcolor)0, (tcolor)0, ttrue)))
     return tfalse;
 
-  if ((w = Win4Menu(Menu)) && (item = Item4Menu(Menu, w, ttrue, 8, " Window ")) &&
+  if ((w = Swindow::Create4Menu(Menu)) &&
+      (item = Smenuitem::Create4Menu(Menu, w, 0, ttrue, 8, " Window ")) &&
 
       /* we cannot create rows with codes >= COD_RESERVED... */
       (Row = Row4Menu(w, 0, ROW_ACTIVE, 13, " Move        ")) && (Row->Code = COD_COMMON_DRAG) &&
@@ -1373,7 +1393,7 @@ byte InitRC(void) {
     UpdateOptionWin();
     FillButtonWin();
     HideMenu(!!(All->SetUp->Flags & setup_menu_hide));
-    All->FirstScreen->DrawMenu(0, TW_MAXDAT);
+    All->Screens.First->DrawMenu(0, TW_MAXDAT);
 
     return ttrue;
   }

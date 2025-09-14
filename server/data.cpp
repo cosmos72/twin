@@ -36,32 +36,6 @@ Chars confdir = CONFDIR;
 
 /* First, some structures */
 
-#define L 0x55
-#define M 0xAA
-#define H 0xFF
-
-#ifdef TWIN_PALETTE_SOLARIZED
-#define DARK 0x04, 0x08, 0x10
-#define LIGHT 0xBB, 0xBB, 0xBB
-#else
-#define DARK 0, 0, 0
-#define LIGHT M, M, M
-#endif
-
-rgb Palette[tmaxcol + 1] = {
-    /* the default colour table, for VGA+ colour systems */
-    {DARK},    {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {LIGHT},
-    {L, L, L}, {L, L, H}, {L, H, L}, {L, H, H}, {H, L, L}, {H, L, H}, {H, H, L}, {H, H, H}};
-
-rgb defaultPalette[tmaxcol + 1] = {
-    /* the default colour table, for VGA+ colour systems */
-    {DARK},    {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {LIGHT},
-    {L, L, L}, {L, L, H}, {L, H, L}, {L, H, H}, {H, L, L}, {H, L, H}, {H, H, L}, {H, H, H}};
-
-#undef H
-#undef M
-#undef L
-
 keylist TW_KeyList[] = {
 #define IS(key, len, seq) {#key, TW_##key, len, seq},
 #include "hw_keys.h"
@@ -77,13 +51,10 @@ trune StdBorder[2][9] = {{0xC9, 0xCD, 0xBB, 0xBA, 0x20, 0xBA, 0xC8, 0xCD, 0xBC},
                          {0xDA, 0xC4, 0xBF, 0xB3, 0x20, 0xB3, 0xC0, 0xC4, 0xD9}};
 trune Screen_Back[2] = {0x12, 0x12};
 
-tcolor DEFAULT_ColGadgets = TCOL(thigh | tyellow, tcyan),
-       DEFAULT_ColArrows = TCOL(thigh | tgreen, thigh | tblue),
-       DEFAULT_ColBars = TCOL(twhite, thigh | tblue),
-       DEFAULT_ColTabs = TCOL(thigh | twhite, thigh | tblue),
-       DEFAULT_ColBorder = TCOL(thigh | twhite, thigh | tblue),
-       DEFAULT_ColDisabled = TCOL(thigh | tblack, tblack),
-       DEFAULT_ColSelectDisabled = TCOL(tblack, thigh | tblack);
+tcolor DEFAULT_ColGadgets = TCOL(tYELLOW, tcyan), DEFAULT_ColArrows = TCOL(tGREEN, tBLUE),
+       DEFAULT_ColBars = TCOL(twhite, tBLUE), DEFAULT_ColTabs = TCOL(tWHITE, tBLUE),
+       DEFAULT_ColBorder = TCOL(tWHITE, tBLUE), DEFAULT_ColDisabled = TCOL(tBLACK, tblack),
+       DEFAULT_ColSelectDisabled = TCOL(tblack, tBLACK);
 
 bool InitData(void) {
   trune *vec[] = {GadgetResize, ScrollBarX,   ScrollBarY,   &TabX,

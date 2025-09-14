@@ -16,7 +16,7 @@
  */
 
 extern dat (*ChangedVideo)[2][2];
-extern byte ChangedVideoFlag;
+extern bool ChangedVideoFlag;
 
 extern dat CursorX, CursorY;
 extern uldat CursorType;
@@ -26,16 +26,7 @@ extern dat DisplayWidth, DisplayHeight;
 extern struct termios ttysave;
 
 void FillOldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, tcell Attr);
-void saveDisplaySize(void);
 
-void NeedRedrawVideo(dat Left, dat Up, dat Right, dat Down);
-
-extern Tdisplay HW;
-
-#define SaveHW Tdisplay s_hw = HW
-
-#define SetHW(hw) (HW = (hw))
-
-#define RestoreHW (HW = s_hw)
+void NeedRedrawVideo(Tdisplay hw, dat Left, dat Up, dat Right, dat Down);
 
 #endif /* TWIN_HW_PRIVATE_H */

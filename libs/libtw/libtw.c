@@ -115,7 +115,8 @@ typedef tw_errno s_tw_errno_vec;
 typedef struct s_fn_list {
   void *Fn;
   byte len, formatlen;
-  char *name, *format;
+  const char *name;
+  const char *format;
 } fn_list;
 
 static fn_list Functions[] = {
@@ -175,7 +176,7 @@ typedef struct s_tw_d {
    * while Qstart[QgzWRITE] is not used at all.
    */
 
-  uldat *r;
+  byte *r;
   byte *s;
 
   int Fd;
@@ -417,8 +418,9 @@ static uldat AddQueue(tw_d TwD, byte i, uldat len, void *data) {
 }
 
 TW_INLINE byte *GetQueue(tw_d TwD, byte i, uldat *len) {
-  if (len)
+  if (len) {
     *len = Qlen[i];
+  }
   return Queue[i] + Qstart[i];
 }
 
@@ -527,7 +529,7 @@ static uldat Grow(tw_d TwD, byte i, uldat len) {
     if (!t)
       return 0;
     if (i == QWRITE) {
-      r = (uldat *)(t + ((byte *)r - Queue[i]));
+      r = t + (r - Queue[i]);
       s = t + (s - Queue[i]);
     }
     Queue[i] = t;
@@ -536,15 +538,15 @@ static uldat Grow(tw_d TwD, byte i, uldat len) {
   return Qlen[i] += len;
 }
 
-static uldat *InitRS(tw_d TwD) {
+static byte *InitRS(tw_d TwD) {
   uldat len;
   if (WQLeft(3 * sizeof(uldat))) {
     s = GetQueue(TwD, QWRITE, &len);
     s += len;
-    return r = (uldat *)s - 3;
+    return r = s - 3 * sizeof(uldat);
   }
   Errno = TW_ESYS_NO_MEM;
-  return (uldat *)0;
+  return NULL;
 }
 
 TW_INLINE uldat DeQueue(tw_d TwD, byte i, uldat len) {
@@ -648,7 +650,7 @@ byte Tw_InPanic(tw_d TwD) {
 /* cancel the last request packet */
 /* you can (must) call Fail() ONLY after a failed WQLeft() */
 static void Fail(tw_d TwD) {
-  DeQueue(TwD, QWRITE, s - (byte *)r);
+  DeQueue(TwD, QWRITE, s - r);
 }
 
 static byte Flush(tw_d TwD, byte Wait) {
@@ -814,12 +816,13 @@ static uldat TryRead(tw_d TwD, const timevalue *Timeout) {
   /* for ioctl(int, FIONREAD, int *) */
   sel = 0;
   mayread = ioctl(Fd, FIONREAD, &sel) >= 0;
-  if (!mayread || !sel)
+  if (!mayread || !sel) {
     len = TW_SMALLBUFF;
-  else if (sel > TW_HUGEBUFF)
+  } else if (sel > TW_HUGEBUFF) {
     len = TW_HUGEBUFF;
-  else
+  } else {
     len = sel;
+  }
 
   if (QLeft(Q, len)) {
     t = GetQueue(TwD, Q, &got);
@@ -2116,15 +2119,16 @@ static void FailedCall(tw_d TwD, uldat err, uldat order) {
 }
 
 TW_INLINE uldat NextSerial(tw_d TwD) {
-  if (++RequestN == tmsg_magic)
+  if (++RequestN == tmsg_magic) {
     ++RequestN;
+  }
   return RequestN;
 }
 
 TW_INLINE void Send(tw_d TwD, uldat Serial, uldat idFN) {
   /* be careful with aligmnent!! */
-  byte *R = (byte *)r;
-  Push(R, uldat, s - (byte *)(r + 1));
+  byte *R = r;
+  Push(R, uldat, s - (r + sizeof(uldat)));
   Push(R, uldat, Serial);
   Push(R, uldat, idFN);
 }

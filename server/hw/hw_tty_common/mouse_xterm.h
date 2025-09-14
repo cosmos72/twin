@@ -7,89 +7,88 @@
  * it is always compiled in.
  */
 
-static void xterm_QuitMouse(void);
-static void xterm_MouseEvent(int fd, Tdisplay hw);
-static void xterm_ConfigureMouse(udat resource, byte todefault, udat value);
-
-/* return tfalse if failed */
-static byte xterm_InitMouse(byte force) {
-  const char *term = tty_TERM.data(); // guaranteed to be '\0' terminated
+/* return false if failed */
+TW_ATTR_HIDDEN bool tty_driver::xterm_InitMouse(Tdisplay hw, byte force) {
+  tty_driver *self = ttydriver(hw);
+  Chars term = self->tty_term; // guaranteed to be '\0' terminated
 
   if (force == ttrue) {
     log(WARNING) << "      xterm_InitMouse(): xterm-style mouse FORCED.\n"
                     "      Assuming terminal has xterm compatible mouse reporting.\n";
-    term = "xterm";
+    term = Chars("xterm");
   } else if (force == ttrue + ttrue) {
     log(WARNING) << "      xterm_InitMouse(): twterm-style mouse FORCED.\n"
                     "      Assuming terminal has twterm compatible mouse reporting.\n";
-    term = "twterm";
+    term = Chars("twterm");
   }
 
-  if (!term) {
+  if (term.empty()) {
     log(ERROR) << "      xterm_InitMouse() failed: unknown terminal type.\n";
-    return tfalse;
+    return false;
   }
 
-  mouse_start_seq = "\033[?9h";
-  mouse_end_seq = "\033[?9l";
-  mouse_motion_seq = "\033[?999h";
+  self->mouse_start_seq = "\033[?9h";
+  self->mouse_end_seq = "\033[?9l";
+  self->mouse_motion_seq = "\033[?999h";
 
-  if (!strcmp(term, "twterm")) {
+  if (term == Chars("twterm")) {
     ;
-  } else if (!strcmp(term, "linux")) {
+  } else if (term == Chars("linux")) {
     /*
      * additional check: out-of-the box linux
      * doesn't have twterm-style mouse reporting
      */
-    if (ttypar[0] < 6 || (ttypar[0] == 6 && ttypar[1] < 3)) {
+    if (self->ttypar[0] < 6 || (self->ttypar[0] == 6 && self->ttypar[1] < 3)) {
       log(ERROR) << "      xterm_InitMouse() failed: this `linux' terminal\n"
                     "      has no support for xterm-style mouse reporting.\n";
-      return tfalse;
+      return false;
     }
-    if (ttypar[0] == 6 && ttypar[1] < 4) {
+    if (self->ttypar[0] == 6 && self->ttypar[1] < 4) {
       log(WARNING) << "      xterm_InitMouse() warning: this `linux' terminal\n"
                       "      can only report click, drag and release, not motion.\n";
-      mouse_motion_seq = mouse_start_seq;
+      self->mouse_motion_seq = self->mouse_start_seq;
     }
-  } else if (!strncmp(term, "xterm", 5) || !strncmp(term, "rxvt", 4) ||
-             !strncmp(term, "alacritty", 9) || !strncmp(term, "Eterm", 5)) {
+  } else if (term.starts_with(Chars("xterm")) || term.starts_with(Chars("mlterm")) ||
+             term.starts_with(Chars("rxvt")) || term.starts_with(Chars("alacritty")) ||
+             term.starts_with(Chars("Eterm"))) {
     /* try to enable more common protocols first,
      * then try to enable progressively more complete protocols */
-    mouse_start_seq = "\033[?1001s\033[?1000h\033[?1002h\033[?1006h";
-    mouse_end_seq = "\033[?1006l\033[?1002l\033[?1000l\033[?1001r";
-    mouse_motion_seq = mouse_start_seq;
+    self->mouse_start_seq = "\033[?1001s\033[?1000h\033[?1002h\033[?1006h";
+    self->mouse_end_seq = "\033[?1006l\033[?1002l\033[?1000l\033[?1001r";
+    self->mouse_motion_seq = self->mouse_start_seq;
   } else {
-    log(ERROR) << "      xterm_InitMouse() failed: terminal `" << Chars::from_c(term)
-               << "' is not supported.\n";
-    return tfalse;
+    log(ERROR) << "      xterm_InitMouse() failed: terminal `" << term << "' is not supported.\n";
+    return false;
   }
 
-  fputs(mouse_start_seq, stdOUT);
-  setFlush();
+  fputs(self->mouse_start_seq, self->out);
+  hw->setFlush();
 
-  HW->mouse_slot = NOSLOT; /* shared with keyboard */
+  hw->mouse_slot = NOSLOT; /* shared with keyboard */
+  hw->fnMouseEvent = &tty_driver::xterm_MouseEvent;
+  hw->fnConfigureMouse = &tty_driver::xterm_ConfigureMouse;
+  hw->fnQuitMouse = &tty_driver::xterm_QuitMouse;
+  hw->FlagsHW &= ~FlagSoftMouseHW; /* no need to Hide/Show it */
+                                   /* override the ones set by InitVideo() */
+  hw->fnShowMouse = hw->fnHideMouse = NULL;
 
-  HW->MouseEvent = xterm_MouseEvent;
-  HW->ConfigureMouse = xterm_ConfigureMouse;
-  HW->QuitMouse = xterm_QuitMouse;
-
-  HW->FlagsHW &= ~FlHWSoftMouse;        /* no need to Hide/Show it */
-  HW->ShowMouse = HW->HideMouse = NoOp; /* override the ones set by InitVideo() */
-
-  return ttrue;
+  return true;
 }
 
-static void xterm_QuitMouse(void) {
-  fputs(mouse_end_seq, stdOUT);
-  HW->QuitMouse = NoOp;
+TW_ATTR_HIDDEN void tty_driver::xterm_QuitMouse(Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
+  fputs(self->mouse_end_seq, self->out);
+  hw->fnQuitMouse = NULL;
 }
 
-static void xterm_ConfigureMouse(udat resource, byte todefault, udat value) {
+TW_ATTR_HIDDEN void tty_driver::xterm_ConfigureMouse(Tdisplay hw, udat resource, byte todefault,
+                                                     udat value) {
+  tty_driver *self = ttydriver(hw);
   switch (resource) {
   case HW_MOUSEMOTIONEVENTS:
     /* either enable new style + mouse motion, or switch back to new style */
-    fputs(value && !todefault ? mouse_motion_seq : mouse_start_seq, stdOUT);
-    setFlush();
+    fputs(value && !todefault ? self->mouse_motion_seq : self->mouse_start_seq, self->out);
+    hw->setFlush();
     break;
   default:
     break;
@@ -142,17 +141,18 @@ static udat xterm_ParseBase10(const char **s_ptr, byte *len_ptr) {
   return val;
 }
 
-static void xterm_MouseEvent(int fd, Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::xterm_MouseEvent(int fd, Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
+  const char *s = self->xterm_mouse_seq;
   udat buttons = 0, id;
   dat x, y, dx, dy;
-  dat prev_x = xterm_prev_x, prev_y = xterm_prev_y;
-  const char *s = xterm_mouse_seq;
-  byte len = xterm_mouse_len;
+  dat prev_x = self->xterm_prev_x, prev_y = self->xterm_prev_y;
+  byte len = self->xterm_mouse_len;
   bool release_buttons = false;
 
-  if (s[0] != '\033' || s[1] != '[')
+  if (s[0] != '\033' || s[1] != '[') {
     return;
-
+  }
   if (len == 6 && s[2] == 'M' && (id = (byte)s[3]) >= 32) {
     /* classic xterm mouse reporting: X11 specs, ESC [?1002h */
     buttons = xterm_Id2Buttons(id);
@@ -217,12 +217,12 @@ static void xterm_MouseEvent(int fd, Tdisplay hw) {
   else
     dy = 0;
 
-  xterm_prev_x = x;
-  xterm_prev_y = y;
+  self->xterm_prev_x = x;
+  self->xterm_prev_y = y;
 
-  MouseEventCommon(x, y, dx, dy, buttons);
+  MouseEventCommon(hw, x, y, dx, dy, buttons);
   if (release_buttons) {
     // we never get xterm events 'wheel back/fwd release' => synthetize them
-    MouseEventCommon(x, y, 0, 0, 0);
+    MouseEventCommon(hw, x, y, 0, 0, 0);
   }
 }

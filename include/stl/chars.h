@@ -56,6 +56,10 @@ public:
     return starts_with0(*this, substr);
   }
 
+  bool ends_with(Chars substr) const NOTHROW {
+    return ends_with0(*this, substr);
+  }
+
   /* return a subview of this chars */
   Chars view(size_t start, size_t end) const NOTHROW {
     return Chars(Base::view(start, end));
@@ -64,6 +68,7 @@ public:
 private:
   static size_t find0(Chars str, Chars substr) NOTHROW;
   static bool starts_with0(Chars str, Chars substr) NOTHROW;
+  static bool ends_with0(Chars str, Chars substr) NOTHROW;
 };
 
 #endif /* TWIN_STL_CHARS_H */

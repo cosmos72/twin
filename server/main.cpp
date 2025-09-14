@@ -44,7 +44,7 @@
 fd_set save_rfds, save_wfds;
 int max_fds;
 byte lenTWDisplay;
-char *TWDisplay, *origTWDisplay, *origTERM, *origHW;
+char *TWDisplay, *origTWDisplay, *origTERM, *origCOLORTERM;
 char **main_argv, **orig_argv;
 uldat main_argv_usable_len;
 byte flag_secure, flag_envrc;
@@ -79,7 +79,7 @@ inline struct timeval *CalcSleepTime(struct timeval *sleeptime, Tmsgport Port, t
 
   if (got != 2)
     while (Port) {
-      if (Port->FirstMsg) {
+      if (Port->Msgs.First) {
         sleeptime->tv_sec = (time_t)0;
         sleeptime->tv_usec = 0;
         got = 2;
@@ -91,33 +91,34 @@ inline struct timeval *CalcSleepTime(struct timeval *sleeptime, Tmsgport Port, t
   return got ? sleeptime : (struct timeval *)0;
 }
 
-static Tmsgport RunMsgPort(Tmsgport CurrPort) {
-  Tmsgport NextPort;
+static Tmsgport RunMsgPort(Tmsgport curr) {
+  Tmsgport next;
 
-  if ((CurrPort->WakeUp & (TIMER_ALWAYS | TIMER_ONCE)) && CmpTime(&CurrPort->CallTime, Now) <= 0)
-    CurrPort->WakeUp &= ~TIMER_ONCE;
-  else if (!CurrPort->FirstMsg)
+  if ((curr->WakeUp & (TIMER_ALWAYS | TIMER_ONCE)) && CmpTime(&curr->CallTime, Now) <= 0)
+    curr->WakeUp &= ~TIMER_ONCE;
+  else if (!curr->Msgs.First)
     return NULL;
 
-  All->RunMsgPort = CurrPort;
+  All->RunMsgPort = curr;
 
-  if (CurrPort->Handler) {
-    CurrPort->Handler(CurrPort);
+  if (curr->Handler) {
+    curr->Handler(curr);
 
-    if (All->RunMsgPort == CurrPort) {
-      if (CurrPort->WakeUp & (TIMER_ALWAYS | TIMER_ONCE))
-        SumTime(&CurrPort->CallTime, Now, &CurrPort->PauseDuration);
-
+    if (All->RunMsgPort == curr) {
+      if (curr->WakeUp & (TIMER_ALWAYS | TIMER_ONCE)) {
+        SumTime(&curr->CallTime, Now, &curr->PauseDuration);
+      }
       /* get ->Next *BEFORE* re-sorting!!! */
-      NextPort = CurrPort->Next;
-      SortMsgPortByCallTime(CurrPort);
-    } else
-      NextPort = All->RunMsgPort;
+      next = curr->Next;
+      SortMsgPortByCallTime(curr);
+    } else {
+      next = All->RunMsgPort;
+    }
   } else {
-    DeleteList(CurrPort->FirstMsg);
-    NextPort = CurrPort->Next;
+    DeleteList(curr->Msgs.First);
+    next = curr->Next;
   }
-  return NextPort;
+  return next;
 }
 
 static void Usage(void) {
@@ -167,7 +168,7 @@ static byte Check4SpecialArgs(int argc, char *argv[]) {
   return tfalse;
 }
 
-static byte Init(void) {
+static bool Init(void) {
   FD_ZERO(&save_rfds);
   FD_ZERO(&save_wfds);
 
@@ -175,10 +176,15 @@ static byte Init(void) {
 
   CheckPrivileges();
 
-  if ((origTWDisplay = getenv("TWDISPLAY")))
+  if ((origTWDisplay = getenv("TWDISPLAY"))) {
     origTWDisplay = strdup(origTWDisplay);
-  if ((origTERM = getenv("TERM")))
+  }
+  if ((origTERM = getenv("TERM"))) {
     origTERM = strdup(origTERM);
+  }
+  if ((origCOLORTERM = getenv("COLORTERM"))) {
+    origCOLORTERM = strdup(origCOLORTERM);
+  }
 
   /*
    * WARNING:
@@ -202,29 +208,30 @@ static byte Init(void) {
 void Quit(int status) {
   RemoteFlushAll();
 
-  if (All->AtQuit)
+  if (All->AtQuit) {
     All->AtQuit();
-
-  SuspendHW(tfalse);
+  }
+  SuspendHW(false);
   /* not QuitHW() as it would fire up socket.so and maybe fork() in bg */
 
-  if (status < 0)
+  if (status < 0) {
     return; /* give control back to signal handler */
+  }
   exit(status);
 }
 
-void NoOp(void) {
+void NoOp() {
 }
 
-byte AlwaysTrue(void) {
-  return ttrue;
+bool AlwaysTrue() {
+  return true;
 }
 
-byte AlwaysFalse(void) {
-  return tfalse;
+bool AlwaysFalse() {
+  return false;
 }
 
-void *AlwaysNull(void) {
+void *AlwaysNull() {
   return NULL;
 }
 
@@ -241,7 +248,7 @@ static void MergeHyphensArgv(int argc, char **argv) {
 #define MINDELAY 10000
 
 int main(int argc, char *argv[]) {
-  Tmsgport CurrPort;
+  Tmsgport curr;
   timevalue Old, Cut;
   fd_set read_fds, write_fds, *pwrite_fds;
   struct timeval sel_timeout, *this_timeout;
@@ -271,9 +278,9 @@ int main(int argc, char *argv[]) {
   Now = &All->Now;
   InstantNow(Now); /* needed by various InitXXX() */
 
-  if (!Init())
+  if (!Init()) {
     Quit(0);
-
+  }
   /* not needed... done by InitHW() */
   /* QueuedDrawArea2FullScreen = true; */
 
@@ -292,7 +299,7 @@ int main(int argc, char *argv[]) {
      * the system is very heavily loaded and our 'more accurate sleep time'
      * would just further increase the load
      */
-    this_timeout = CalcSleepTime(&sel_timeout, All->FirstMsgPort, Now);
+    this_timeout = CalcSleepTime(&sel_timeout, All->MsgPorts.First, Now);
 
     if (ExpensiveFlushVideo) {
       /* decide what to do... sleep a little if we can (HW_DELAY),
@@ -317,12 +324,12 @@ int main(int argc, char *argv[]) {
       if (GotSignals)
         HandleSignals();
 
-      if (NeedHW & NEEDResizeDisplay) {
+      if (NeedHW & NeedResizeDisplay) {
         ResizeDisplay();
         QueuedDrawArea2FullScreen = true;
       }
 
-      if (NeedHW & NEEDSelectionExport)
+      if (NeedHW & NeedSelectionExport)
         SelectionExport();
 
       /*
@@ -335,13 +342,13 @@ int main(int argc, char *argv[]) {
        *
        * So first call PanicHW(), then FlushHW()
        */
-      if (NeedHW & NEEDPanicHW)
+      if (NeedHW & NeedPanicHW)
         PanicHW();
 
       if (StrategyFlag != HW_DELAY)
         FlushHW();
 
-      if (NeedHW & NEEDPanicHW || All->FirstMsgPort->FirstMsg) {
+      if (NeedHW & NeedPanicHW || All->MsgPorts.First->Msgs.First) {
         /*
          * hmm... displays are rotting quickly today!
          * we called PanicHW() just above, so don't call again,
@@ -403,11 +410,11 @@ int main(int argc, char *argv[]) {
      * MsgPorts are ordered: runnable ones first, then non-runnable ones.
      * So bail out at the first non-runnable port.
      */
-    CurrPort = All->FirstMsgPort;
+    curr = All->MsgPorts.First;
 
-    while (CurrPort)
-      CurrPort = RunMsgPort(CurrPort);
-
+    while (curr) {
+      curr = RunMsgPort(curr);
+    }
     All->RunMsgPort = (Tmsgport)0;
   }
   /* NOTREACHED */

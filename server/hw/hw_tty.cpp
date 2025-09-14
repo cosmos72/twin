@@ -57,103 +57,141 @@
 #include "hw_tty_common/driver_termcap_decls.h"
 #endif
 
-struct tty_data {
-  String tty_NAME, tty_TERM;
-  int tty_fd, VcsaFd, tty_number;
-  uldat tty_charset;
+enum tty_colormode {
+  tty_color_autodetect = 0,
+  tty_color8 = 1,
+  tty_color256 = 2,
+  tty_color16m = 3,
+};
+
+class tty_driver {
+public:
+  String tty_name, tty_term;
+  FILE *out;
   Tutf_function tty_UTF_32_to_charset;
   Tutf_array tty_charset_to_UTF_32;
-  byte tty_use_utf8, tty_is_xterm;
+  Tdisplay hw;
+  tcolor col;  /* current color */
+  trgb fg, bg; /* current fg, bg colors */
+  int tty_fd, tty_number;
+  uldat tty_charset;
   dat ttypar[3];
-  FILE *stdOUT;
-  uldat saveCursorType;
   dat saveX, saveY;
+  bool tty_use_utf8, tty_is_xterm;
 
-  udat (*LookupKey)(udat *ShiftFlags, byte *slen, char *s, byte *retlen, const char **ret);
+  udat (*fnLookupKey)(Tdisplay hw, udat *ShiftFlags, byte *slen, char *s, byte *retlen,
+                      const char **ret);
 
   const char *mouse_start_seq, *mouse_end_seq, *mouse_motion_seq;
 #ifdef CONF_HW_TTY_LINUX
-  Gpm_Connect GPM_Conn;
-  int GPM_fd;
-  int GPM_keys;
+  Gpm_Connect gpm_conn;
+  int gpm_fd;
+  int gpm_keys;
 #endif
   char xterm_mouse_seq[31];
   byte xterm_mouse_len;
   dat xterm_prev_x, xterm_prev_y;
 
-#ifdef CONF_HW_TTY_TERMCAP
-  char *tc_cap[tc_cap_N];
-  byte colorbug, wrapglitch;
-#else
   char *tc_scr_clear;
+#ifdef CONF_HW_TTY_TERMCAP
+  char *tc[tc_seq_N];
+  byte wrapglitch, colormode, altcurskeys;
 #endif
+
+  static void DrawRune(Tdisplay hw, trune h);
+  static void FlushHW(Tdisplay hw);
+  static bool InitHW(Tdisplay hw);
+  static void QuitHW(Tdisplay hw);
+
+  static void gpm_ConfigureMouse(Tdisplay hw, udat resource, byte todefault, udat value);
+  static bool gpm_InitMouse(Tdisplay hw);
+  static void gpm_MouseEvent(int fd, Tdisplay hw);
+  static int gpm_Open(Tdisplay hw);
+  static void gpm_QuitMouse(Tdisplay hw);
+
+  static void linux_Beep(Tdisplay hw);
+  static void linux_Configure(Tdisplay hw, udat resource, byte todefault, udat value);
+  static void linux_ConfigureKeyboard(Tdisplay hw, udat resource, byte todefault, udat value);
+  static bool linux_CanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
+                                dat DstUp);
+  static void linux_DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
+                             dat DstUp);
+  static void linux_DrawSome(Tdisplay hw, dat x, dat y, uldat len);
+  static void linux_DrawStart(Tdisplay hw);
+  static void linux_DrawTCell(Tdisplay hw, dat x, dat y, tcell V);
+  static void linux_FlushVideo(Tdisplay hw);
+  static void linux_HideMouse(Tdisplay hw);
+  static udat linux_LookupKey(Tdisplay hw, udat *ShiftFlags, byte *slen, char *s, byte *retlen,
+                              const char **ret);
+  static void linux_ResetPalette(Tdisplay hw);
+  static void linux_SetColor(Tdisplay hw, tcolor col);
+  static void linux_SetPalette(Tdisplay hw, udat N, udat R, udat G, udat B);
+  static void linux_ShowMouse(Tdisplay hw);
+  static void linux_QuitVideo(Tdisplay hw);
+  static void linux_UpdateCursor(Tdisplay hw);
+  static void linux_UpdateMouseAndCursor(Tdisplay hw);
+
+  static bool lrawkbd_InitKeyboard(Tdisplay hw);
+  static void lrawkbd_QuitKeyboard(Tdisplay hw);
+  static void lrawkbd_ConfigureKeyboard(Tdisplay hw, udat resource, byte todefault, udat value);
+  static udat lrawkbd_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen, char **ret);
+  static void lrawkbd_KeyboardEvent(int fd, Tdisplay hw);
+  static bool lrawkbd_GetKeyboard(Tdisplay hw);
+  static bool lrawkbd_SetKeyboard(Tdisplay hw);
+  static void lrawkbd_RestoreKeyboard(Tdisplay hw);
+  static bool lrawkbd_LoadKeymaps();
+  static void lrawkbd_FreeKeymaps();
+  static bool lrawkbd_GrabConsole(Tdisplay hw);
+  static void lrawkbd_ReleaseConsole(Tdisplay hw);
+  static void lrawkbd_InitSignals();
+  static void lrawkbd_QuitSignals();
+  static void lrawkbd_ReactSignalIn(int sig);
+  static void lrawkbd_ReactSignalOut(int sig);
+
+  static void null_InitMouse(Tdisplay hw);
+  static bool null_InitMouseConfirm(Tdisplay hw);
+
+  static void stdin_CheckResize(Tdisplay hw, dat *x, dat *y);
+  static void stdin_DetectSize(Tdisplay hw, dat *x, dat *y);
+  static void stdin_KeyboardEvent(int fd, Tdisplay hw);
+  static bool stdin_InitKeyboard(Tdisplay hw);
+  static void stdin_Resize(Tdisplay hw, dat x, dat y);
+  static void stdin_QuitKeyboard(Tdisplay hw);
+  static bool stdin_TestTty(Tdisplay hw);
+
+  static void termcap_Beep(Tdisplay hw);
+  static void termcap_Cleanup(Tdisplay hw);
+  static void termcap_Configure(Tdisplay hw, udat resource, byte todefault, udat value);
+  static void termcap_ConfigureKeyboard(Tdisplay hw, udat resource, byte todefault, udat value);
+  static bool termcap_CanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
+                                  dat DstUp);
+  static void termcap_DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
+                               dat DstUp);
+  static void termcap_DrawSome(Tdisplay hw, dat x, dat y, uldat len);
+  static void termcap_DrawTCell(Tdisplay hw, dat x, dat y, tcell V);
+  static void termcap_HideMouse(Tdisplay hw);
+  static bool termcap_InitVideo(Tdisplay hw);
+  static udat termcap_LookupKey(Tdisplay hw, udat *ShiftFlags, byte *slen, char *s, byte *retlen,
+                                const char **ret);
+  static void termcap_FlushVideo(Tdisplay hw);
+  static void termcap_MoveToXY(Tdisplay hw, udat x, udat y);
+  static void termcap_QuitVideo(Tdisplay hw);
+  static void termcap_SetColor(Tdisplay hw, tcolor col);
+  static void termcap_SetColor8(Tdisplay hw, tcolor col);
+  static void termcap_SetColor256(Tdisplay hw, tcolor col);
+  static void termcap_SetColor16m(Tdisplay hw, tcolor col);
+  static void termcap_SetCursorType(Tdisplay hw, uldat type);
+  static void termcap_ShowMouse(Tdisplay hw);
+  static void termcap_UpdateCursor(Tdisplay hw);
+  static void termcap_UpdateMouseAndCursor(Tdisplay hw);
+
+  static void xterm_ConfigureMouse(Tdisplay hw, udat resource, byte todefault, udat value);
+  static bool xterm_InitMouse(Tdisplay hw, byte force);
+  static void xterm_MouseEvent(int fd, Tdisplay hw);
+  static void xterm_QuitMouse(Tdisplay hw);
 };
 
-#define ttydata ((struct tty_data *)HW->Private)
-#define tty_fd (ttydata->tty_fd)
-#define VcsaFd (ttydata->VcsaFd)
-#define tty_number (ttydata->tty_number)
-#define tty_NAME (ttydata->tty_NAME)
-#define tty_TERM (ttydata->tty_TERM)
-#define tty_charset (ttydata->tty_charset)
-#define tty_UTF_32_to_charset (ttydata->tty_UTF_32_to_charset)
-#define tty_charset_to_UTF_32 (ttydata->tty_charset_to_UTF_32)
-#define tty_use_utf8 (ttydata->tty_use_utf8)
-#define tty_is_xterm (ttydata->tty_is_xterm)
-#define ttypar (ttydata->ttypar)
-#define stdOUT (ttydata->stdOUT)
-#define saveCursorType (ttydata->saveCursorType)
-#define saveX (ttydata->saveX)
-#define saveY (ttydata->saveY)
-#define LookupKey (ttydata->LookupKey)
-#define mouse_start_seq (ttydata->mouse_start_seq)
-#define mouse_end_seq (ttydata->mouse_end_seq)
-#define mouse_motion_seq (ttydata->mouse_motion_seq)
-#define GPM_Conn (ttydata->GPM_Conn)
-#define GPM_fd (ttydata->GPM_fd)
-#define GPM_keys (ttydata->GPM_keys)
-
-#define xterm_mouse_seq (ttydata->xterm_mouse_seq)
-#define xterm_mouse_len (ttydata->xterm_mouse_len)
-#define xterm_prev_x (ttydata->xterm_prev_x)
-#define xterm_prev_y (ttydata->xterm_prev_y)
-
-#ifdef CONF_HW_TTY_TERMCAP
-#define tc_cap (ttydata->tc_cap)
-#define tc_scr_clear (tc_cap[tc_seq_scr_clear])
-#define tc_cursor_goto (tc_cap[tc_seq_cursor_goto])
-#define tc_cursor_on (tc_cap[tc_seq_cursor_on])
-#define tc_cursor_off (tc_cap[tc_seq_cursor_off])
-#define tc_bold_on (tc_cap[tc_seq_bold_on])
-#define tc_blink_on (tc_cap[tc_seq_blink_on])
-#define tc_attr_off (tc_cap[tc_seq_attr_off])
-#define tc_kpad_on (tc_cap[tc_seq_kpad_on])
-#define tc_kpad_off (tc_cap[tc_seq_kpad_off])
-#define tc_audio_bell (tc_cap[tc_seq_audio_bell])
-#define tc_charset_start (tc_cap[tc_seq_charset_start])
-#define tc_charset_end (tc_cap[tc_seq_charset_end])
-#define tc_audio_bell (tc_cap[tc_seq_audio_bell])
-#define tc_charset_start (tc_cap[tc_seq_charset_start])
-#define tc_charset_end (tc_cap[tc_seq_charset_end])
-#define colorbug (ttydata->colorbug)
-#define wrapglitch (ttydata->wrapglitch)
-#else
-#define tc_scr_clear (ttydata->tc_scr_clear)
-#endif
-
-static void null_InitMouse(void);
-static byte null_InitMouseConfirm(void);
-static void stdin_DetectSize(dat *x, dat *y);
-static void stdin_CheckResize(dat *x, dat *y);
-static void stdin_Resize(dat x, dat y);
-static void stdout_FlushHW(void);
-
-static void tty_DrawRune(trune h);
-
-/* this can stay static, as it's used only as temporary storage */
-static tcolor _col;
-
-static void tty_QuitHW(void);
+#define ttydriver(hw) ((tty_driver *)(hw)->Private)
 
 #include "hw_tty_common/kbd_stdin.h"
 
@@ -167,20 +205,23 @@ static void tty_QuitHW(void);
 #include "hw_tty_common/driver_termcap.h"
 #endif
 
-static void null_InitMouse(void) {
-  HW->mouse_slot = NOSLOT; /* no mouse at all :( */
-  HW->ConfigureMouse = (void (*)(udat, byte, udat))NoOp;
-  HW->MouseEvent = (void (*)(int, Tdisplay))NoOp;
-  HW->QuitMouse = NoOp;
+TW_ATTR_HIDDEN void tty_driver::null_InitMouse(Tdisplay hw) {
+  hw->mouse_slot = NOSLOT; /* no mouse at all :( */
+  hw->fnConfigureMouse = (void (*)(Tdisplay, udat, byte, udat))NoOp;
+  hw->fnMouseEvent = NULL;
+  hw->fnQuitMouse = NULL;
 
-  HW->FlagsHW &= ~FlHWSoftMouse;        /* no need to Hide/Show it */
-  HW->ShowMouse = HW->HideMouse = NoOp; /* override the ones set by *_InitVideo() */
+  hw->FlagsHW &= ~FlagSoftMouseHW; /* no need to Hide/Show it */
+
+  /* override the ones set by *_InitVideo() */
+  hw->fnShowMouse = hw->fnHideMouse = NULL;
 }
 
-static byte null_InitMouseConfirm(void) {
+TW_ATTR_HIDDEN bool tty_driver::null_InitMouseConfirm(Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
   byte c = '\0';
 
-  fflush(stdOUT);
+  fflush(self->out);
   log(ERROR) << "\n"
                 "      \033[1m  ALL  MOUSE  DRIVERS  FAILED.\033[0m\n"
                 "\n"
@@ -190,107 +231,118 @@ static byte null_InitMouseConfirm(void) {
   flushk();
 
   SetAlarm(10);
-  read(tty_fd, &c, 1);
+  read(self->tty_fd, &c, 1);
   SetAlarm(0);
 
   if (c == '\n' || c == '\r') {
-
-    null_InitMouse();
-
-    return ttrue;
+    null_InitMouse(hw);
+    return true;
   }
-  return tfalse;
+  return false;
 }
 
-static void stdin_DetectSize(dat *x, dat *y) {
+TW_ATTR_HIDDEN void tty_driver::stdin_DetectSize(Tdisplay hw, dat *x, dat *y) {
   struct winsize wsiz;
+  tty_driver *self = ttydriver(hw);
 
-  if (ioctl(tty_fd, TIOCGWINSZ, &wsiz) >= 0 && wsiz.ws_row > 0 && wsiz.ws_col > 0) {
-    HW->X = wsiz.ws_col;
-    HW->Y = wsiz.ws_row;
+  if (ioctl(self->tty_fd, TIOCGWINSZ, &wsiz) >= 0 && wsiz.ws_row > 0 && wsiz.ws_col > 0) {
+    hw->X = wsiz.ws_col;
+    hw->Y = wsiz.ws_row;
   }
-
-  *x = HW->X;
-  *y = HW->Y;
+  *x = hw->X;
+  *y = hw->Y;
 }
 
-static void stdin_CheckResize(dat *x, dat *y) {
-  *x = Min2(*x, HW->X);
-  *y = Min2(*y, HW->Y);
+TW_ATTR_HIDDEN void tty_driver::stdin_CheckResize(Tdisplay hw, dat *x, dat *y) {
+  *x = Min2(*x, hw->X);
+  *y = Min2(*y, hw->Y);
 }
 
-static void stdin_Resize(dat x, dat y) {
-  if (x < HW->usedX || y < HW->usedY) {
+TW_ATTR_HIDDEN void tty_driver::stdin_Resize(Tdisplay hw, dat x, dat y) {
+  if (x < hw->usedX || y < hw->usedY) {
+    tty_driver *self = ttydriver(hw);
     /*
      * can't resize the tty, just clear it so that
      * extra size will get padded with blanks
      */
-    fprintf(stdOUT, "\033[0m%s", tc_scr_clear);
-    fflush(stdOUT);
+    fprintf(self->out, "\033[m%s", self->tc_scr_clear);
+    fflush(self->out);
     /*
      * flush now not to risk arriving late
      * and clearing the screen AFTER *_FlushVideo()
      */
-    NeedRedrawVideo(0, 0, x - 1, y - 1);
+    NeedRedrawVideo(hw, 0, 0, x - 1, y - 1);
   }
-  HW->usedX = x;
-  HW->usedY = y;
+  hw->usedX = x;
+  hw->usedY = y;
 }
 
-static void stdout_FlushHW(void) {
-  if (fflush(stdOUT) != 0)
-    HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
-  clrFlush();
+TW_ATTR_HIDDEN void tty_driver::FlushHW(Tdisplay hw) {
+  tty_driver *self = ttydriver(hw);
+  if (fflush(self->out) != 0)
+    hw->NeedHW |= NeedPanicHW, NeedHW |= NeedPanicHW;
+  hw->clrFlush();
 }
 
-static void tty_DrawRune(trune h) {
-  char buf[5];
+TW_ATTR_HIDDEN void tty_driver::DrawRune(Tdisplay hw, trune h) {
+  uldat len;
+  char buf[4];
 
   if (h <= 0x7FF) {
     buf[0] = (h >> 6) | 0xC0;
     buf[1] = (h & 0x3F) | 0x80;
-    buf[2] = 0;
+    len = 2;
   } else if (h <= 0xFFFF) {
     buf[0] = (h >> 12) | 0xE0;
     buf[1] = ((h >> 6) & 0x3F) | 0x80;
     buf[2] = (h & 0x3F) | 0x80;
-    buf[3] = 0;
+    len = 3;
   } else {
     buf[0] = (h >> 18) | 0xF0;
     buf[1] = ((h >> 12) & 0x3F) | 0x80;
     buf[2] = ((h >> 6) & 0x3F) | 0x80;
     buf[3] = (h & 0x3F) | 0x80;
-    buf[4] = 0;
+    len = 4;
   }
-  fputs(buf, stdOUT);
+  tty_driver *self = ttydriver(hw);
+  fwrite(buf, 1, len, self->out);
 }
 
 /*
  * note: during xxx_InitHW() initialization, DON'T use DisplayWidth/DisplayHeight
  * as they may be not up to date. Use GetDisplayWidth() / GetDisplayHeight().
  */
-static bool tty_InitHW(void) {
+TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
   String charset;
-  Chars arg = HW->Name;
+  Chars arg = hw->Name;
+  tty_driver *self;
   enum /*: byte*/ { NEVER = 0, MAYBE = 1, ALWAYS = 2 };
   byte autotry_video = MAYBE, try_stdout = MAYBE, try_termcap = MAYBE, autotry_kbd = MAYBE,
-       try_lrawkbd = MAYBE, force_mouse = tfalse, tc_colorbug = tfalse,
-       need_persistent_slot = tfalse, try_ctty = tfalse, display_is_ctty = tfalse;
+       try_lrawkbd = MAYBE;
+  bool force_mouse = false, need_persistent_slot = false, try_ctty = false, is_ctty = false,
+       term_override = false;
 
-  if (!(HW->Private = (struct tty_data *)AllocMem0(sizeof(struct tty_data)))) {
-    log(ERROR) << "      tty_InitHW(): Out of memory!\n";
+  if (!(hw->Private = self = (tty_driver *)AllocMem0(sizeof(tty_driver)))) {
+    log(ERROR) << "      tty.InitHW(): Out of memory!\n";
     return false;
   }
-  saveCursorType = (uldat)-1;
-  tty_charset = (uldat)-1;
-  tty_use_utf8 = ttrue + ttrue; /* i.e. unknown */
-  saveX = saveY = 0;
-  stdOUT = NULL;
-  tty_fd = -1;
-  new (&tty_TERM) String();
-  new (&tty_NAME) String();
+  self->hw = hw;
+  self->tty_charset = (uldat)-1;
+  self->out = NULL;
+  self->col = ~TCOL0; // i.e. unknown
+  self->fg = self->bg = ~(trgb)0;
+  /*
+   * nowadays almost all terminals support UTF-8
+   * => enable it by default, can be disabled with option "utf8=no"
+   */
+  self->tty_use_utf8 = true;
+  self->saveX = self->saveY = 0;
+  self->tty_fd = -1;
+  self->colormode = tty_color_autodetect;
+  new (&self->tty_term) String();
+  new (&self->tty_name) String();
 
-  HW->QuitHW = tty_QuitHW;
+  hw->fnQuitHW = &tty_driver::QuitHW;
 
   if (arg.size() > 4) {
     arg = arg.view(4, arg.size()); // skip -hw=
@@ -306,8 +358,8 @@ static bool tty_InitHW(void) {
       if (comma == size_t(-1)) {
         comma = end;
       }
-      if (!tty_NAME.format(arg.view(1, comma))) {
-        log(ERROR) << "      tty_InitHW(): out of memory!\n";
+      if (!self->tty_name.format(arg.view(1, comma))) {
+        log(ERROR) << "      tty.InitHW(): out of memory!\n";
         return false;
       }
       arg = arg.view(comma, end);
@@ -325,13 +377,14 @@ static bool tty_InitHW(void) {
       /* parse options */
       Chars arg0 = arg.view(0, comma);
       if (arg0.starts_with(Chars(",TERM="))) {
-        if (!tty_TERM.format(arg0.view(6, comma))) {
-          log(ERROR) << "      tty_InitHW(): out of memory!\n";
+        if (!self->tty_term.format(arg0.view(6, comma))) {
+          log(ERROR) << "      tty.InitHW(): out of memory!\n";
           return false;
         }
+        term_override = true;
       } else if (arg0.starts_with(Chars(",charset="))) {
         if (!charset.format(arg0.view(9, comma))) {
-          log(ERROR) << "      tty_InitHW(): out of memory!\n";
+          log(ERROR) << "      tty.InitHW(): out of memory!\n";
           return false;
         }
       } else if (arg0.starts_with(Chars(",stdout"))) {
@@ -341,29 +394,44 @@ static bool tty_InitHW(void) {
       } else if (arg0.starts_with(Chars(",raw"))) {
         try_lrawkbd = !(autotry_kbd = arg0.view(4, comma) == Chars("=no")) << 1;
       } else if (arg0 == Chars(",ctty")) {
-        try_ctty = ttrue;
-      } else if (arg0 == Chars(",colorbug")) {
-        tc_colorbug = ttrue;
+        try_ctty = true;
+      } else if (arg0.starts_with(Chars(",colors="))) {
+        arg0 = arg0.view(8, comma);
+        if (arg0 == Chars("8")) {
+          self->colormode = tty_color8;
+        } else if (arg0 == Chars("256")) {
+          self->colormode = tty_color256;
+        } else if (arg0 == Chars("16m")) {
+          self->colormode = tty_color16m;
+        } else {
+          log(ERROR) << "      tty.InitHW(): unsupported 'colors=" << arg0
+                     << "', expecting one of: 8, 256 or 16m\n";
+          return false;
+        }
       } else if (arg0.starts_with(Chars(",mouse="))) {
         arg0 = arg0.view(7, comma);
         if (arg0 == Chars("xterm")) {
           force_mouse = ttrue;
         } else if (arg0 == Chars("twterm")) {
           force_mouse = ttrue + ttrue;
+        } else {
+          log(ERROR) << "      tty.InitHW(): unsupported 'mouse=" << arg0
+                     << "', expecting one of: xterm twterm\n";
+          return false;
         }
       } else if (arg0 == Chars(",noinput")) {
-        HW->FlagsHW |= FlHWNoInput;
+        hw->FlagsHW |= FlagNoInputHW;
       } else if (arg0 == Chars(",slow")) {
-        HW->FlagsHW |= FlHWExpensiveFlushVideo;
+        hw->FlagsHW |= FlagExpensiveFlushVideoHW;
       } else if (arg0.starts_with(Chars(",utf8"))) {
-        tty_use_utf8 = arg0.view(5, comma) != Chars("=no");
+        self->tty_use_utf8 = arg0.view(5, comma) != Chars("=no");
       } else {
         log(INFO)
             << "   --hw=tty options:\n"
                "      @/dev/SOME_TTY_NAME   attach to specified tty device (must be first option)\n"
                "      ,charset=CHARSET_NAME use specified charset encoding\n"
                "      ,ctty[=no]            set tty device as the controlling tty\n"
-               "      ,colorbug             assume terminal has colorbug\n"
+               "      ,colors=[8|256|16m]   assume terminal supports this many colors\n"
                "      ,help                 show this help\n"
                "      ,mouse=[xterm|twterm] assume specified mouse reporting protocol\n"
                "      ,noinput              open a view-only display on tty - ignore input\n"
@@ -371,14 +439,16 @@ static bool tty_InitHW(void) {
                "      ,slow                 assume terminal is slow\n"
                "      ,stdout[=no]          use hard-coded escape sequences\n"
                "      ,TERM=TERM_NAME       assume terminal type is TERM_NAME\n"
-               "      ,termcap[=no]         use libtermcap escape sequences\n";
+               "      ,termcap[=no]         use libtermcap escape sequences\n"
+               "      ,truecolor            same as colors=16m\n"
+               "      ,utf8[=no]            assume terminal supports UTF-8\n";
         return false;
       }
       arg = arg.view(comma, end);
     }
   }
 
-  if (tty_NAME) {
+  if (self->tty_name) {
     /*
      * open user-specified tty as display
      */
@@ -389,35 +459,35 @@ static bool tty_InitHW(void) {
      * that was not our controlling tty
      * (even if we grab it as our new controlling tty)
      */
-    need_persistent_slot = ttrue;
+    need_persistent_slot = true;
 
-    if ((tty_fd = open(tty_NAME.data(), O_RDWR)) >= 0) {
+    if ((self->tty_fd = open(self->tty_name.data(), O_RDWR)) >= 0) {
       /*
        * try to set this tty as our controlling tty if user asked us.
        * this will greatly help detecting tty resizes,
        * but may hangup other processes running on that tty.
        */
-      if ((display_is_ctty = try_ctty && (!DisplayHWCTTY || DisplayHWCTTY == HWCTTY_DETACHED) &&
+      if ((is_ctty = try_ctty && (!DisplayHWCTTY || DisplayHWCTTY == HWCTTY_DETACHED) &&
 #ifdef TIOCSCTTY
-                             ioctl(tty_fd, TIOCSCTTY, 1) >= 0
+                     ioctl(self->tty_fd, TIOCSCTTY, 1) >= 0
 #else
-                             0
+                     0
 #endif
            )) {
 
-        if (tty_fd != 0) {
+        if (self->tty_fd != 0) {
           close(0);
-          dup2(tty_fd, 0);
-          close(tty_fd);
-          tty_fd = 0;
+          dup2(self->tty_fd, 0);
+          close(self->tty_fd);
+          self->tty_fd = 0;
         }
       }
 
-      fcntl(tty_fd, F_SETFD, FD_CLOEXEC);
-      stdOUT = fdopen(tty_fd, "r+");
+      fcntl(self->tty_fd, F_SETFD, FD_CLOEXEC);
+      self->out = fdopen(self->tty_fd, "r+");
     }
-    if (tty_fd == -1 || !stdOUT) {
-      log(ERROR) << "      tty_InitHW(): open(\"" << tty_NAME
+    if (self->tty_fd == -1 || !self->out) {
+      log(ERROR) << "      tty.InitHW(): open(\"" << self->tty_name
                  << "\") failed: " << Chars::from_c(strerror(errno)) << "\n";
       return false;
     }
@@ -426,53 +496,51 @@ static bool tty_InitHW(void) {
      * open our controlling tty as display
      */
     if (DisplayHWCTTY) {
-      log(ERROR) << "      tty_InitHW() failed: controlling tty "
+      log(ERROR) << "      tty.InitHW() failed: controlling tty "
                  << (DisplayHWCTTY == HWCTTY_DETACHED ? Chars("not usable after Detach\n")
                                                       : Chars("is already in use as display\n"));
       return false;
     } else {
-      display_is_ctty = ttrue;
-      tty_fd = 0;
-      stdOUT = stdout;
-      if (!tty_NAME.format(Chars::from_c(ttyname(0)))) {
-        log(ERROR) << "      tty_InitHW(): out of memory!\n";
+      is_ctty = true;
+      self->tty_fd = 0;
+      self->out = stdout;
+      if (!self->tty_name.format(Chars::from_c(ttyname(0)))) {
+        log(ERROR) << "      tty.InitHW(): out of memory!\n";
         return false;
       }
-      if (!tty_TERM) {
-        if (!tty_TERM.format(Chars::from_c(origTERM))) {
-          log(ERROR) << "      tty_InitHW(): out of memory!\n";
+      if (!self->tty_term) {
+        if (!self->tty_term.format(Chars::from_c(origTERM))) {
+          log(ERROR) << "      tty.InitHW(): out of memory!\n";
           return false;
         }
       }
     }
   }
-  fflush(stdOUT);
-  setvbuf(stdOUT, NULL, _IOFBF, BUFSIZ);
+  fflush(self->out);
+  setvbuf(self->out, NULL, _IOFBF, BUFSIZ);
 
-  tty_number = 0;
-  if (tty_NAME.starts_with(Chars("/dev/tty")) || tty_NAME.starts_with(Chars("/dev/vc/"))) {
-    const char *s = tty_NAME.data() + 8;
-    const char *end = tty_NAME.end();
+  self->tty_number = 0;
+  if (self->tty_name.starts_with(Chars("/dev/tty")) ||
+      self->tty_name.starts_with(Chars("/dev/vc/"))) {
+    const char *s = self->tty_name.data() + 8;
+    const char *end = self->tty_name.end();
     while (s < end && *s >= '0' && *s <= '9') {
-      tty_number *= 10;
-      tty_number += *s++ - '0';
+      self->tty_number *= 10;
+      self->tty_number += *s++ - '0';
     }
   }
 
-#ifdef CONF_HW_TTY_TERMCAP
-  colorbug = tc_colorbug;
-#endif
-
   if (charset) {
     /* honor user-specified charset */
-    if ((tty_charset = Tutf_charset_id(charset.data())) == (uldat)-1) {
-      log(ERROR) << "      tty_InitHW(): libtutf warning: unknown charset `" << charset
+    if ((self->tty_charset = Tutf_charset_id(charset.data())) == (uldat)-1) {
+      log(ERROR) << "      tty.InitHW(): libtutf warning: unknown charset `" << charset
                  << "', assuming `ASCII'\n";
-    } else if (tty_charset == Tutf_charset_id(T_NAME(UTF_32))) {
-      log(ERROR) << "      tty_InitHW(): charset `" << charset
+      self->tty_use_utf8 = false;
+    } else if (self->tty_charset == Tutf_charset_id(T_NAME(UTF_32))) {
+      log(ERROR) << "      tty.InitHW(): charset `" << charset
                  << "' is Unicode, assuming terminal supports UTF-8\n";
-      tty_use_utf8 = ttrue;
-      tty_charset = (uldat)-1;
+      self->tty_use_utf8 = true;
+      self->tty_charset = (uldat)-1;
     }
   }
 
@@ -483,7 +551,7 @@ static bool tty_InitHW(void) {
    * ORDERING IS CRITICAL HERE!
    *
    * xterm_InitMouse() does not need to manually hide/show the mouse pointer,
-   * so it overrides HW->ShowMouse and HW->HideMouse installed by *_InitVideo()
+   * so it overrides hw->ShowMouse and hw->HideMouse installed by *_InitVideo()
    *
    * Thus mouse initialization must come *AFTER* video initialization
    *
@@ -494,122 +562,149 @@ static bool tty_InitHW(void) {
    * Thus mouse initialization must come *BEFORE* keyboard initialization
    */
 
-  if (!stdin_TestTty()) {
-    log(ERROR) << "      tty_InitHW() failed: unable to read from the terminal: " << Errstr << "\n";
+  if (!stdin_TestTty(hw)) {
+    log(ERROR) << "      tty.InitHW() failed: unable to read from the terminal: " << Errstr << "\n";
   } else if (
 
 #if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
-      (TRY_V(stdout) && linux_InitVideo()) ||
+      (TRY_V(stdout) && linux_InitVideo(hw)) ||
 #endif
 #ifdef CONF_HW_TTY_TERMCAP
-      (TRY_V(termcap) && termcap_InitVideo()) ||
+      (TRY_V(termcap) && termcap_InitVideo(hw)) ||
 #endif
       false) {
 
     if (
 #ifdef CONF_HW_TTY_LINUX
-        GPM_InitMouse() ||
+        gpm_InitMouse(hw) ||
 #else
-        (log(WARNING) << "      tty_InitHW(): gpm mouse support not compiled, skipping it.\n",
+        (log(WARNING) << "      tty.InitHW(): gpm mouse support not compiled, skipping it.\n",
          false) ||
 #endif
-        xterm_InitMouse(force_mouse) || null_InitMouseConfirm()) {
+        xterm_InitMouse(hw, force_mouse) || null_InitMouseConfirm(hw)) {
 
       if (
 #if defined(CONF_HW_TTY_LINUX) && defined(CONF_HW_TTY_LRAWKBD)
-          (TRY_K(lrawkbd) && lrawkbd_InitKeyboard()) ||
+          (TRY_K(lrawkbd) && lrawkbd_InitKeyboard(hw)) ||
 #endif
-          (autotry_kbd && stdin_InitKeyboard())) {
+          (autotry_kbd && stdin_InitKeyboard(hw))) {
 
-        if (tty_charset == (uldat)-1) {
-          tty_UTF_32_to_charset = Tutf_UTF_32_to_ASCII;
-          tty_charset_to_UTF_32 = Tutf_ASCII_to_UTF_32;
+        if (self->tty_charset == (uldat)-1) {
+          self->tty_UTF_32_to_charset = Tutf_UTF_32_to_ASCII;
+          self->tty_charset_to_UTF_32 = Tutf_ASCII_to_UTF_32;
         } else {
-          tty_UTF_32_to_charset = Tutf_UTF_32_to_charset_function(tty_charset);
-          tty_charset_to_UTF_32 = Tutf_charset_to_UTF_32_array(tty_charset);
+          self->tty_UTF_32_to_charset = Tutf_UTF_32_to_charset_function(self->tty_charset);
+          self->tty_charset_to_UTF_32 = Tutf_charset_to_UTF_32_array(self->tty_charset);
         }
 
         /*
-         * must be deferred until now, as HW-specific functions
-         * can clobber HW->NeedHW
+         * must be deferred until now, as termcap_InitVideo() can detect truecolor support
          */
-        if (need_persistent_slot)
-          HW->NeedHW |= NEEDPersistentSlot;
-        if (display_is_ctty) {
-          HW->DisplayIsCTTY = ttrue;
-          DisplayHWCTTY = HW;
+        if (self->colormode == tty_color_autodetect) {
+          Chars env_colorterm;
+          if (!term_override &&
+              ((env_colorterm = Chars::from_c(origCOLORTERM)) == Chars("truecolor") ||
+               env_colorterm == Chars("24bit"))) {
+            self->colormode = tty_color16m;
+          } else if (self->tty_term.ends_with(Chars("256")) ||
+                     self->tty_term.ends_with(Chars("256color"))) {
+            self->colormode = tty_color256;
+          } else {
+            self->colormode = tty_color8;
+          }
         }
-        HW->MouseState.x = HW->MouseState.y = HW->MouseState.keys = HW->Last_x = HW->Last_y = 0;
+
+        /*
+         * must be deferred until now, as hw-specific functions
+         * can clobber hw->NeedHW
+         */
+        if (need_persistent_slot) {
+          hw->NeedHW |= NeedPersistentSlot;
+        }
+        if (is_ctty) {
+          hw->DisplayIsCTTY = true;
+          DisplayHWCTTY = hw;
+        }
+        hw->MouseState.x = hw->MouseState.y = hw->MouseState.keys = hw->Last_x = hw->Last_y = 0;
 
         /*
          * we must draw everything on our new shiny window
          * without forcing all other displays
          * to redraw everything too.
          */
-        stdin_DetectSize(&HW->usedX, &HW->usedY);
-        HW->usedX = GetDisplayWidth();
-        HW->usedY = GetDisplayHeight();
+        stdin_DetectSize(hw, &hw->usedX, &hw->usedY);
+        hw->usedX = GetDisplayWidth();
+        hw->usedY = GetDisplayHeight();
 
-        HW->RedrawVideo = tfalse;
-        NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
+        hw->RedrawVideo = false;
+        NeedRedrawVideo(hw, 0, 0, hw->X - 1, hw->Y - 1);
 
-        if (tc_scr_clear)
-          fputs(tc_scr_clear, stdOUT);
-        fflush(stdOUT);
+        if (self->tc_scr_clear) {
+          fputs(self->tc_scr_clear, self->out);
+        }
+        fflush(self->out);
 
         return true;
       }
-      HW->QuitMouse();
+      hw->QuitMouse();
     }
-    HW->QuitVideo();
+    hw->QuitVideo();
   }
-  if (tty_fd >= 0)
-    tty_setioctl(tty_fd, &ttysave);
-  if (tty_fd > 0)
-    close(tty_fd);
-  if (stdOUT && stdOUT != stdout)
-    fclose(stdOUT);
+  if (self->tty_fd >= 0) {
+    tty_setioctl(self->tty_fd, &ttysave);
+  }
+  if (self->tty_fd > 0) {
+    close(self->tty_fd);
+  }
+  if (self->out && self->out != stdout) {
+    fclose(self->out);
+  }
   return false;
 }
 
-static void tty_QuitHW(void) {
-  HW->QuitMouse();
-  HW->QuitKeyboard();
-  HW->QuitVideo();
-  HW->QuitHW = NoOp;
+TW_ATTR_HIDDEN void tty_driver::QuitHW(Tdisplay hw) {
+  hw->QuitMouse();
+  hw->QuitKeyboard();
+  hw->QuitVideo();
+  hw->fnQuitHW = NULL;
 
-  // destroy tty_NAME and tty_TERM
-  String().swap(tty_NAME);
-  String().swap(tty_TERM);
+  tty_driver *self = ttydriver(hw);
 
-  if (HW->DisplayIsCTTY && DisplayHWCTTY == HW)
+  // destroy tty_name and tty_term
+  String().swap(self->tty_name);
+  String().swap(self->tty_term);
+
+  if (hw->DisplayIsCTTY && DisplayHWCTTY == hw) {
     DisplayHWCTTY = NULL;
-
-  fflush(stdOUT);
-  if (stdOUT != stdout) {
+  }
+  FILE *out = self->out;
+  fflush(out);
+  if (out != stdout) {
 
     /* if we forced tty_fd to be fd 0, release it while keeping fd 0 busy */
-    if (tty_fd == 0) {
-      if ((tty_fd = open("/dev/null", O_RDWR)) != 0) {
-        fclose(stdOUT);
+    if (self->tty_fd == 0) {
+      if ((self->tty_fd = open("/dev/null", O_RDWR)) != 0) {
+        fclose(out);
 
-        dup2(tty_fd, 0);
-        close(tty_fd);
+        dup2(self->tty_fd, 0);
+        close(self->tty_fd);
       }
       /*
-       * else we don't fclose(stdOUT) to avoid having fd 0 unused...
+       * else we don't fclose(out) to avoid having fd 0 unused...
        * it causes leaks, but much better than screwing up badly when
        * fd 0 will get used by something else (say a socket) and then
-       * abruptly closed by tty_InitHW()
+       * abruptly closed by tty.InitHW()
        */
-    } else
-      fclose(stdOUT);
+    } else {
+      fclose(out);
+    }
   }
-  FreeMem(HW->Private);
+  FreeMem(hw->Private);
+  hw->Private = NULL;
 }
 
 EXTERN_C byte InitModule(Tmodule Module) {
-  Module->DoInit = tty_InitHW;
+  Module->DoInit = &tty_driver::InitHW;
   return ttrue;
 }
 

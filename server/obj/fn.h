@@ -15,21 +15,16 @@
 
 #include "obj/fwd.h"
 
-struct SstructFn {
-  TobjFn Obj;
+class SstructFn {
+public:
   TwidgetFn Widget;
-  TwidgetFn Gadget;
   TwindowFn Window;
-  TwidgetFn Screen;
   TmoduleFn Module;
 };
 
 extern SstructFn FnStruct;
-#define Fn_Tobj (FnStruct.Obj)
 #define Fn_Twidget (FnStruct.Widget)
-#define Fn_Tgadget (FnStruct.Gadget)
 #define Fn_Twindow (FnStruct.Window)
-#define Fn_Tscreen (FnStruct.Screen)
 #define Fn_Tmodule (FnStruct.Module)
 
 #endif /* TWIN_FN_H */

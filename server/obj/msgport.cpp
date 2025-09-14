@@ -28,7 +28,6 @@ Tmsgport Smsgport::Create(byte namelen, const char *name, tany pausesec, tany pa
     void *addr = AllocMem0(sizeof(Smsgport));
     if (addr) {
       p = new (addr) Smsgport();
-      p->Fn = Fn_Tobj;
       if (!p->Init(namelen, name, pausesec, pausefraction, wakeup, handler)) {
         p->Delete();
         p = NULL;
@@ -58,17 +57,17 @@ Tmsgport Smsgport::Init(byte namelen, const char *name, tany pausesec, tany paus
   RemoteData.ChildPid = NOPID;
   RemoteData.FdSlot = NOSLOT;
   /*
-  FirstMsg = LastMsg = NULL;
-  FirstMenu = LastMenu = NULL;
-  FirstW = LastW = NULL;
-  FirstGroup = LastGroup = NULL;
-  FirstMutex = LastMutex = NULL;
+  Msgs.First = Msgs.Last = NULL;
+  Menus.First = Menus.Last = NULL;
+  Widgets.First = Widgets.Last = NULL;
+  Groups.First = Groups.Last = NULL;
+  Mutexes.First = Mutexes.Last = NULL;
   CountE = SizeE = (uldat)0;
   Es = NULL;
   AttachHW = NULL;
   */
-  InsertMiddle(MsgPort, this, ::All, WakeUp ? (Tmsgport)0 : ::All->LastMsgPort,
-               WakeUp ? ::All->FirstMsgPort : (Tmsgport)0);
+  InsertMiddle(MsgPorts, this, ::All, WakeUp ? (Tmsgport)0 : ::All->MsgPorts.Last,
+               WakeUp ? ::All->MsgPorts.First : (Tmsgport)0);
   SortMsgPortByCallTime(this);
   return this;
 }
@@ -82,7 +81,7 @@ void Smsgport::Delete() {
    * we set QueuedDrawArea2FullScreen = true, so that the UnMap()
    * calls do not have to redraw every time.
    */
-  for (w = FirstW; w && count; w = w->O_Next) {
+  for (w = Widgets.First; w && count; w = w->O_Next) {
     if (IS_WINDOW(w) && w->Parent && IS_SCREEN(w->Parent)) {
       count--;
     }
@@ -94,15 +93,14 @@ void Smsgport::Delete() {
     ShutDownHook(this);
   }
   /*
-   * must delete the Menus first, as among widgets there are also
-   * Tmenuitem windows, which cannot be deleted before deleting
-   * the corresponding Tmenuitem.
+   * must delete the Menus first, as widgets also contain Tmenuitem's windows,
+   * which can only be deleted after deleting the corresponding Tmenuitem.
    */
-  DeleteList(FirstMsg);
-  DeleteList(FirstMenu);
-  DeleteList(FirstW);
-  DeleteList(FirstGroup);
-  DeleteList(FirstMutex);
+  DeleteList(Msgs.First);
+  DeleteList(Menus.First);
+  DeleteList(Widgets.First);
+  DeleteList(Groups.First);
+  DeleteList(Mutexes.First);
 
   Remove();
   if (Name) {
@@ -113,8 +111,7 @@ void Smsgport::Delete() {
 
 void Smsgport::Insert(Tall parent, Tmsgport prev, Tmsgport next) {
   if (parent && !All) {
-    InsertGeneric((TobjEntry)this, (TobjList)&parent->FirstMsgPort, (TobjEntry)prev,
-                  (TobjEntry)next, NULL);
+    parent->MsgPorts.Insert(this, prev, next);
     All = parent;
   }
 }
@@ -124,7 +121,7 @@ void Smsgport::Remove() {
     ::All->RunMsgPort = Next;
   }
   if (All) {
-    RemoveGeneric((TobjEntry)this, (TobjList)&All->FirstMsgPort, NULL);
+    All->MsgPorts.Remove(this);
     All = (Tall)0;
   }
 }

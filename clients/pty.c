@@ -309,7 +309,7 @@ int Spawn(twindow Window, pid_t *ppid, dat X, dat Y, const char *arg0, const cha
     signal(SIGHUP, SIG_DFL); // restore default SIGHUP behavior
     closeAllFds(ttyfd);
     if (switchToTty()) {
-      execvp(arg0, (char *const *)argv);
+      execvp(arg0, (char *const *)(const void *)argv);
     }
     exit(1);
     break;

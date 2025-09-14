@@ -227,7 +227,7 @@ static void FreeStringVec(char **cmd) {
 }
 
 static char **default_args;
-static char *default_title = "Twin Term";
+static const char *default_title = "Twin Term";
 
 static twindow newTermWindow(const char *title) {
   twindow Window =
@@ -237,11 +237,9 @@ static twindow newTermWindow(const char *title) {
                      TW_WINDOWFL_CURSOR_ON | TW_WINDOWFL_USECONTENTS, 80, 25, 200);
 
   if (Window != TW_NOID) {
-    TwSetColorsWindow(Window, 0x1FF, TCOL(thigh | tyellow, tcyan),
-                      TCOL(thigh | tgreen, thigh | tblue), TCOL(twhite, thigh | tblue),
-                      TCOL(thigh | twhite, thigh | tblue), TCOL(thigh | twhite, thigh | tblue),
-                      TCOL(twhite, tblack), TCOL(thigh | tblack, thigh | twhite),
-                      TCOL(thigh | tblack, tblack), TCOL(tblack, thigh | tblack));
+    TwSetColorsWindow(Window, 0x1FF, TCOL(tYELLOW, tcyan), TCOL(tGREEN, tBLUE), TCOL(twhite, tBLUE),
+                      TCOL(tWHITE, tBLUE), TCOL(tWHITE, tBLUE), TCOL(twhite, tblack),
+                      TCOL(tBLACK, tWHITE), TCOL(tBLACK, tblack), TCOL(tblack, tBLACK));
 
     TwConfigureWindow(Window, (1 << 2) | (1 << 3), 0, 0, 5, 1, 0, 0);
   }
@@ -343,6 +341,8 @@ static byte Add_Spawn_Row4Menu(twindow Window) {
 TW_DECL_MAGIC(term_magic);
 
 static byte InitTerm(void) {
+  const tcolor b = TCOL(tblack, twhite), r = TCOL(tred, twhite);
+  const tcolor color_array[18] = {b, r, b, b, b, b, b, b, r, b, b, b, b, r, b, b, b, b};
   twindow Window;
   uldat err;
 
@@ -351,18 +351,18 @@ static byte InitTerm(void) {
   signal(SIGCHLD, SignalChild);
 
 #if defined(TW_HAVE_SETENV)
-  setenv("TERM", "linux", 1);
+  setenv("TERM", "xterm-256color", 1);
+  setenv("COLORTERM", "truecolor", 1);
 #elif defined(TW_HAVE_PUTENV)
-  putenv("TERM=linux");
+  putenv("TERM=xterm-256color");
+  putenv("COLORTERM=truecolor");
 #endif
 
   if (TwCheckMagic(term_magic) && TwOpen(NULL) && (Term_MsgPort = TwCreateMsgPort(6, "twterm")) &&
-      (Term_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                                TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
-                                TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
-      (TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ",
-                   (const tcolor *)"ptpppppptpppptpppp"),
-       ttrue) &&
+      (Term_Menu =
+           TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
+                        TCOL(tBLACK, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
+      (TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ", color_array), ttrue) &&
       (Window = TwWin4Menu(Term_Menu)) && Add_Spawn_Row4Menu(Window) &&
       TwRow4Menu(Window, COD_QUIT, tfalse, 6, " Exit ") &&
       TwItem4Menu(Term_Menu, Window, ttrue, 6, " File ") && TwItem4MenuCommon(Term_Menu) &&

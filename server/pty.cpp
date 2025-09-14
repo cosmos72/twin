@@ -65,7 +65,7 @@
 #include "main.h"
 #include "log.h"
 #include "util.h"
-#include "hw.cpp" // AllDefaultSignals()
+#include "hw.h" // AllDefaultSignals()
 
 /* pseudo-teletype connections handling functions */
 
@@ -141,11 +141,9 @@ static byte getPty(void) {
   ptydev = pty_name;
   ttydev = tty_name;
 
-#define PTYCHAR1 "pqrstuvwxyzabcde"
-#define PTYCHAR2 "0123456789abcdef"
-  for (c1 = PTYCHAR1; *c1; c1++) {
+  for (c1 = "pqrstuvwxyzabcde"; *c1; c1++) {
     ptydev[len - 2] = ttydev[len - 2] = *c1;
-    for (c2 = PTYCHAR2; *c2; c2++) {
+    for (c2 = "0123456789abcdef"; *c2; c2++) {
       ptydev[len - 1] = ttydev[len - 1] = *c2;
       if ((fd = open(ptydev, O_RDWR | O_NOCTTY)) >= 0) {
         if ((sfd = open(ttydev, O_RDWR | O_NOCTTY)) >= 0)
@@ -194,7 +192,7 @@ static void setupPtyError(const char *f, const char *arg) {
  * do it before the fork() and NOT in the child to avoid
  * races with future tty resizes performed by the parent!
  */
-static byte setupTty(ttydata *Data) {
+static byte setupTty(tty_data *Data) {
   struct winsize wsiz;
 
   if (All->SetUp->Flags & setup_terminals_utf8) {

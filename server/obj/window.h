@@ -16,6 +16,7 @@
 #include <Tw/autoconf.h>
 
 #include "obj/widget.h"
+#include "obj/fn.h"
 #include "resize.h" // RowWrite*Window()
 
 #ifdef TW_HAVE_SYS_TYPES_H
@@ -46,13 +47,15 @@ enum tpos /*: byte*/ {
   POS_ROOT = 30,
 };
 
-struct Sremotedata {
+class Sremotedata {
+public:
   int Fd;
   pid_t ChildPid;
   uldat FdSlot; /* index in the FdList array (remote.c) */
 };
 
-struct SwindowFn {
+class SwindowFn {
+public:
   /* Twidget */
   Twidget (*KbdFocus)(Twidget);
   /* Twindow */
@@ -63,7 +66,8 @@ struct SwindowFn {
   tpos (*FindBorder)(Twindow w, dat u, dat v, byte border, tcell *ptrattr);
 };
 
-struct Swindow : public Swidget {
+class Swindow : public Swidget {
+public:
   /* Twindow */
   Tmenu Menu;
   Tmenuitem MenuItem; /* from which the Twindow depends */
@@ -81,7 +85,7 @@ struct Swindow : public Swidget {
   dat MinXWidth, MinYWidth;
   dat MaxXWidth, MaxYWidth;
   ldat WLogic, HLogic;  /* Twindow interior logic size */
-  trune const *Charset; /* the byte -> trune translation to use */
+  const trune *Charset; /* the byte -> trune translation to use */
 
 private:
   Twindow Init(Tmsgport owner, dat titlelen, const char *title, const tcolor *coltitle, Tmenu menu,
@@ -106,21 +110,18 @@ public:
                       const trune *runes, const tcell *cells) OVERRIDE;
 
   /* Twindow */
-  const TwindowFn fn() const {
-    return (TwindowFn)Fn;
-  }
 
   bool TtyWriteCharset(uldat len, const char *charset_bytes) {
-    return fn()->TtyWriteCharset(this, len, charset_bytes);
+    return Fn_Twindow->TtyWriteCharset(this, len, charset_bytes);
   }
   bool TtyWriteUtf8(uldat len, const char *utf8_bytes) {
-    return fn()->TtyWriteUtf8(this, len, utf8_bytes);
+    return Fn_Twindow->TtyWriteUtf8(this, len, utf8_bytes);
   }
   bool TtyWriteTRune(uldat len, const trune *runes) {
-    return fn()->TtyWriteTRune(this, len, runes);
+    return Fn_Twindow->TtyWriteTRune(this, len, runes);
   }
   bool TtyWriteTCell(dat x, dat y, uldat len, const tcell *cells) {
-    return fn()->TtyWriteTCell(this, x, y, len, cells);
+    return Fn_Twindow->TtyWriteTCell(this, x, y, len, cells);
   }
 
   bool RowWriteCharset(uldat len, const char *charset_bytes) {
@@ -145,7 +146,7 @@ public:
   void Configure(byte bitmap, dat left, dat up, dat minxwidth, dat minywidth, dat maxxwidth,
                  dat maxywidth);
   tpos FindBorder(dat u, dat v, byte border, tcell *ptrattr) {
-    return fn()->FindBorder(this, u, v, border, ptrattr);
+    return Fn_Twindow->FindBorder(this, u, v, border, ptrattr);
   }
   Trow FindRow(ldat row_i) const;
   Trow FindRowByCode(udat code, ldat *row_i) const;

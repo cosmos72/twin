@@ -26,7 +26,7 @@ static tmenu Dialog_Menu;
 static twindow Dialog_Win;
 
 static byte separate_output;
-static char *title = "twdialog", *backtitle, *text, *input;
+static const char *title = "twdialog", *backtitle, *text, *input;
 
 static dat width = 80, height = 25, percent;
 
@@ -73,12 +73,12 @@ static void Usage(void) {
           "  --gauge     <text> <height> <width> <percent>\n");
 }
 
-static byte InitButtons(char *bt1, char *bt2) {
+static byte InitButtons(const char *bt1, const char *bt2) {
   return TwCreateButtonGadget(Dialog_Win, strlen(bt1), 1, bt1, 1, 0, TCOL(tblack, twhite),
-                              TCOL(tblack, tgreen), TCOL(thigh | tblack, tgreen),
+                              TCOL(tblack, tgreen), TCOL(tBLACK, tgreen),
                               width / 2 - (bt2 ? strlen(bt1) + 2 : strlen(bt1) / 2), height - 2) &&
          (!bt2 || TwCreateButtonGadget(Dialog_Win, strlen(bt2), 1, bt2, 2, 0, TCOL(tblack, twhite),
-                                       TCOL(tblack, tgreen), TCOL(thigh | tblack, tgreen),
+                                       TCOL(tblack, tgreen), TCOL(tBLACK, tgreen),
                                        width / 2 + strlen(bt2) / 2, height - 2));
 }
 
@@ -86,7 +86,7 @@ static byte InitGadgets(byte radio) {
   return tfalse;
 }
 
-static int CountNewLines(char *s) {
+static int CountNewLines(const char *s) {
   int ret = 0;
   while (s) {
     if ((s = strchr(s, '\n'))) {
@@ -266,16 +266,16 @@ static byte ParseArgs(int argc, char *argv[]) {
 TW_DECL_MAGIC(dialog_magic);
 
 static byte InitDialog(void) {
+  const tcolor b = TCOL(tblack, twhite), r = TCOL(tred, twhite);
+  const tcolor color_array[13] = {b, r, b, b, b, b, r, b, b, b, b, b, b};
   twindow Window;
 
   return TwCheckMagic(dialog_magic) && TwOpen(NULL) &&
          (Dialog_MsgPort = TwCreateMsgPort(8, "twdialog")) &&
          (Dialog_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                                     TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
-                                     TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
-         (TwInfo4Menu(Dialog_Menu, TW_ROW_ACTIVE, 10, " Twin Dialog ",
-                      (const tcolor *)"ptpppptpppppp"),
-          ttrue) &&
+                                     TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), TCOL(tred, twhite),
+                                     TCOL(tred, tgreen), (byte)0)) &&
+         (TwInfo4Menu(Dialog_Menu, TW_ROW_ACTIVE, 13, " Twin Dialog ", color_array), ttrue) &&
          (Window = TwWin4Menu(Dialog_Menu)) &&
          TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 6, " Quit ") &&
          TwItem4Menu(Dialog_Menu, Window, ttrue, 6, " File ") && TwItem4MenuCommon(Dialog_Menu) &&
@@ -283,8 +283,7 @@ static byte InitDialog(void) {
               TwCreateWindow(strlen(title), title, NULL, Dialog_Menu, TCOL(tblack, twhite),
                              TW_LINECURSOR, TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_CLOSE,
                              TW_WINDOWFL_ROWS_DEFCOL, width, height, 0)) &&
-         (TwSetColorsWindow(Dialog_Win, 1 << 6, 0, 0, 0, 0, 0, 0, TCOL(thigh | twhite, tblue), 0,
-                            0),
+         (TwSetColorsWindow(Dialog_Win, 1 << 6, 0, 0, 0, 0, 0, 0, TCOL(tWHITE, tblue), 0, 0),
           ttrue) &&
          (*mode)() && (TwMapWindow(Dialog_Win, TwFirstScreen()), ttrue) && TwFlush();
 }

@@ -15,8 +15,8 @@
 
 #include "obj/obj.h"
 
-struct Smutex : public Sobj {
-  TobjFn Fn;
+class Smutex : public Sobj {
+public:
   Tmutex Prev, Next; /* in the same All */
   Tall All;
   /* Tmutex */

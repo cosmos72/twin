@@ -18,12 +18,12 @@
 
 /* Tgroup -- group of Tgadget:s */
 
-struct Sgroup : public Sobj {
-  TobjFn Fn;
-  Tgroup Prev, Next; /* list in the same Tmsgport */
+class Sgroup : public Sobj {
+public:
+  Tgroup Prev, Next; /* siblings in the same Tmsgport */
   Tmsgport MsgPort;
   /* Tgroup */
-  Tgadget FirstG, LastG; /* list in this Tgroup */
+  List<Tgadget> Gadgets; /* gadgets in this Tgroup */
   Tgadget SelectG;
 
 private:

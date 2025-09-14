@@ -44,8 +44,8 @@ byte SelectionAppend(Chars data);
 byte SelectionAppendRune(trune rune);
 byte SelectionAppendRunes(TRunes runes);
 
-byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq);
-byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons);
+bool KeyboardEventCommon(Tdisplay hw, udat Code, udat ShiftFlags, udat Len, const char *Seq);
+byte MouseEventCommon(Tdisplay hw, dat x, dat y, dat dx, dat dy, udat IdButtons);
 
 dat GetDisplayWidth(void) NOTHROW;
 dat GetDisplayHeight(void) NOTHROW;

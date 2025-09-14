@@ -138,14 +138,17 @@ dat CmpTime(timevalue *T1, timevalue *T2) {
 }
 
 static dat CmpCallTime(Tmsgport m1, Tmsgport m2) {
-  if ((!m1->FirstMsg) != (!m2->FirstMsg))
+  if ((!m1->Msgs.First) != (!m2->Msgs.First)) {
     /* one of the two doesn't have msgs */
-    return m1->FirstMsg ? (dat)-1 : (dat)1;
-  if ((!m1->WakeUp) != (!m2->WakeUp))
+    return m1->Msgs.First ? (dat)-1 : (dat)1;
+  }
+  if ((!m1->WakeUp) != (!m2->WakeUp)) {
     /* one doesn't need to be called */
     return m1->WakeUp ? (dat)-1 : (dat)1;
-  if ((!m1->WakeUp) && (!m2->WakeUp))
+  }
+  if ((!m1->WakeUp) && (!m2->WakeUp)) {
     return 0;
+  }
   return CmpTime(&m1->CallTime, &m2->CallTime);
 }
 
@@ -234,19 +237,21 @@ void SortMsgPortByCallTime(Tmsgport Port) {
     do {
       other = other->Next;
     } while (other && CmpCallTime(Port, other) > 0);
-    if (other)
-      InsertMiddle(MsgPort, Port, All, other->Prev, other);
-    else
-      InsertLast(MsgPort, Port, All);
+    if (other) {
+      InsertMiddle(MsgPorts, Port, All, other->Prev, other);
+    } else {
+      InsertLast(MsgPorts, Port, All);
+    }
   } else if ((other = Port->Prev) && CmpCallTime(Port, other) < 0) {
     Port->Remove();
     do {
       other = other->Prev;
     } while (other && CmpCallTime(Port, other) < 0);
-    if (other)
-      InsertMiddle(MsgPort, Port, All, other, other->Next);
-    else
-      InsertFirst(MsgPort, Port, All);
+    if (other) {
+      InsertMiddle(MsgPorts, Port, All, other, other->Next);
+    } else {
+      InsertFirst(MsgPorts, Port, All);
+    }
   }
 }
 
@@ -256,7 +261,7 @@ void SortMsgPortByCallTime(Tmsgport Port) {
  * we use a bubble sort... no need to optimize to death this
  */
 void SortAllMsgPortsByCallTime(void) {
-  Tmsgport Max, This, Port = All->FirstMsgPort;
+  Tmsgport Max, This, Port = All->MsgPorts.First;
   Tmsgport Start, End;
 
   Start = End = (Tmsgport)0;
@@ -284,19 +289,19 @@ void SortAllMsgPortsByCallTime(void) {
     if (!End)
       End = Max;
   }
-  All->FirstMsgPort = Start;
-  All->LastMsgPort = End;
+  All->MsgPorts.First = Start;
+  All->MsgPorts.Last = End;
 }
 
 byte SendControlMsg(Tmsgport MsgPort, udat Code, udat Len, const char *Data) {
   Tmsg msg;
-  event_control *Event;
+  event_control *event;
 
-  if (MsgPort && (msg = New(msg)(msg_control, Len))) {
-    Event = &msg->Event.EventControl;
-    Event->Code = Code;
-    Event->Len = Len;
-    CopyMem(Data, Event->Data, Len);
+  if (MsgPort && (msg = Smsg::Create(msg_control, Len))) {
+    event = &msg->Event.EventControl;
+    event->Code = Code;
+    event->Len = Len;
+    CopyMem(Data, event->Data, Len);
     SendMsg(MsgPort, msg);
 
     return ttrue;
@@ -386,7 +391,7 @@ bool SetSelectionFromWindow(Twindow w) {
 
     ok = SelectionStore(SEL_UTF8MAGIC, Chars(), Chars());
     if (ok) {
-      NeedHW |= NEEDSelectionExport;
+      NeedHW |= NeedSelectionExport;
     }
     return ok;
   }
@@ -476,7 +481,7 @@ bool SetSelectionFromWindow(Twindow w) {
       if (ok) {
         ok = appender.flush();
         if (ok) {
-          NeedHW |= NEEDSelectionExport;
+          NeedHW |= NeedSelectionExport;
         }
       }
     } while (false);
@@ -529,93 +534,250 @@ bool SetSelectionFromWindow(Twindow w) {
     }
   }
   if (ok) {
-    NeedHW |= NEEDSelectionExport;
+    NeedHW |= NeedSelectionExport;
   }
   return ok;
 }
 
-byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, char *buf) {
-  Twindow w;
-  udat Flags;
-  udat Code = Event->Code;
-  dat x = Event->X, y = Event->Y;
-  byte len = 0;
+/* twterm-style mouse reporting */
+static byte CreateMouseEventTwterm(event_mouse *event, byte buflen, char *buf, const uldat flags) {
+  udat code = event->Code;
 
-  if (!(w = (Twindow)Event->W) || !IS_WINDOW(w) || !W_USE(w, USECONTENTS) || !w->USE.C.TtyData)
-    return len;
-
-  Flags = w->USE.C.TtyData->Flags;
-
-  if (Flags & TTY_REPORTMOUSE_TWTERM) {
-    /* new-style reporting */
-
-    /* if TTY_REPORTMOUSE_ALSO_MOVE is set, also report motion */
-    if (buflen < 9 || (Code == MOVE_MOUSE && !(Flags & TTY_REPORTMOUSE_ALSO_MOVE))) {
-      /* buffer too small, or nothing to report */
-      return len;
-    } else if (isPRESS(Code)) {
-      /* report also button just pressed as down */
-      Code |= HOLD_CODE(PRESS_N(Code));
-    }
-
-    CopyMem("\033[5M", buf, 4);
-    buf[4] = ' ' + ((Code & HOLD_ANY) >> HOLD_BITSHIFT);
-    buf[5] = '!' + (x & 0x7f);
-    buf[6] = '!' + ((x >> 7) & 0x7f);
-    buf[7] = '!' + (y & 0x7f);
-    buf[8] = '!' + ((y >> 7) & 0x7f);
-    len = 9;
-  } else if (Flags & TTY_REPORTMOUSE_XTERM) {
-    /* classic xterm-style reporting */
-
-    if (buflen < 6)
-      /* buffer too small! */
-      return len;
-
-    CopyMem("\033[M", buf, 3);
-
-    if (isSINGLE_PRESS(Code)) {
-      switch (Code & PRESS_ANY) {
-      case PRESS_LEFT:
-        buf[3] = ' ';
-        break;
-      case PRESS_MIDDLE:
-        buf[3] = '!';
-        break;
-      case PRESS_RIGHT:
-        buf[3] = '\"';
-        break;
-        /* WHEEL_REV and WHEEL_FWD supported only at release */
-      }
-    } else if (isRELEASE(Code)) {
-      switch (Code & RELEASE_ANY) {
-#ifdef HOLD_WHEEL_REV
-      case RELEASE_WHEEL_REV:
-        buf[3] = '`';
-        break;
-#endif
-#ifdef HOLD_WHEEL_FWD
-      case RELEASE_WHEEL_FWD:
-        buf[3] = 'a';
-        break;
-#endif
-      default:
-        buf[3] = '#';
-        break;
-      }
-    } else if (Code != MOVE_MOUSE && (Flags & TTY_REPORTMOUSE_ALSO_MOVE)) {
-      /* also report mouse dragging */
-      buf[3] = '@';
-    } else {
-      /* pure mouse move (without pressed buttons) is not reported */
-      return len;
-    }
-
-    buf[4] = '!' + x;
-    buf[5] = '!' + y;
-    len = 6;
+  /* if TTY_REPORTMOUSE_MOVE is set, also report motion */
+  if (buflen < 9 || (code == MOVE_MOUSE && !(flags & TTY_REPORTMOUSE_MOVE))) {
+    /* buffer too small, or nothing to report */
+    return 0;
+  } else if (isPRESS(code)) {
+    /* report also button just pressed as down */
+    code |= HOLD_CODE(PRESS_N(code));
   }
-  return len;
+  CopyMem("\033[5M", buf, 4);
+
+  const dat x = event->X, y = event->Y;
+
+  buf[4] = ' ' + ((code & HOLD_ANY) >> HOLD_BITSHIFT);
+  buf[5] = '!' + (x & 0x7f);
+  buf[6] = '!' + ((x >> 7) & 0x7f);
+  buf[7] = '!' + (y & 0x7f);
+  buf[8] = '!' + ((y >> 7) & 0x7f);
+  return 9;
+}
+
+/* xterm-style mouse reporting */
+static byte CreateMouseEventXterm(event_mouse *event, byte buflen, char *buf, const uldat flags) {
+
+  if (buflen < 6) {
+    /* buffer too small! */
+    return 0;
+  }
+  CopyMem("\033[M", buf, 4);
+  const udat code = event->Code;
+  byte ch = 0;
+
+  if (isPRESS(code)) {
+    const udat press = code & PRESS_ANY;
+    if (press == PRESS_LEFT) {
+      ch = ' ';
+    } else if (press == PRESS_MIDDLE) {
+      ch = '!';
+    } else if (press == PRESS_RIGHT) {
+      ch = '"';
+    } else {
+      /* WHEEL_REV and WHEEL_FWD are reported only at release */
+      return 0;
+    }
+  } else if (isRELEASE(code)) {
+    const udat release = code & RELEASE_ANY;
+    if (release == RELEASE_WHEEL_REV) {
+      ch = '`';
+    } else if (release == RELEASE_WHEEL_FWD) {
+      ch = 'a';
+    } else {
+      ch = '#';
+    }
+  } else if (code == MOVE_MOUSE) {
+    if (!(flags & TTY_REPORTMOUSE_MOVE)) {
+      return 0;
+    }
+    /* also report mouse move */
+    ch = '@';
+  } else {
+    if (!(flags & TTY_REPORTMOUSE_DRAG)) {
+      return 0;
+    }
+    /* also report mouse drag */
+    const udat hold = code & HOLD_ANY;
+    if (hold == HOLD_LEFT) {
+      ch = '@';
+    } else if (hold == HOLD_MIDDLE) {
+      ch = 'A';
+    } else if (hold == HOLD_RIGHT) {
+      ch = 'B';
+    } else {
+      ch = '@';
+    }
+  }
+  buf[3] = ch;
+  const dat x = event->X, y = event->Y;
+  buf[4] = '!' + Clamp(0, x, 222);
+  buf[5] = '!' + Clamp(0, y, 222);
+  return 6;
+}
+
+static char *PrintUdat100k(char *dst, udat n) {
+  if (n < 10) {
+    dst[0] = n + '0';
+    return dst + 1;
+  }
+  if (n < 100) {
+    dst[0] = (n / 10) + '0';
+    dst[1] = (n % 10) + '0';
+    return dst + 2;
+  }
+  byte len;
+  if (n < 1000) {
+    len = 3;
+  } else if (n < 10000) {
+    len = 4;
+  } else {
+    len = 5;
+  }
+  char *ret = dst + len;
+  while (len--) {
+    dst[len] = (n % 10) + '0';
+    n /= 10;
+  }
+  return ret;
+}
+
+/* xterm-style mouse reporting, decimal coordinates */
+static byte CreateMouseEventXtermDecimal(event_mouse *event, byte buflen, char *buf,
+                                         const uldat flags) {
+  if (buflen < 18) {
+    /* buffer too small! */
+    return 0;
+  }
+  CopyMem("\033[<", buf, 4);
+
+  char *p = buf + 3;
+  const udat code = event->Code;
+
+  if (isPRESS(code)) {
+    const udat press = code & PRESS_ANY;
+    if (press == PRESS_LEFT) {
+      *p++ = '0';
+    } else if (press == PRESS_MIDDLE) {
+      *p++ = '1';
+    } else if (press == PRESS_RIGHT) {
+      *p++ = '2';
+    } else if (press == PRESS_WHEEL_REV) {
+      *p++ = '6';
+      *p++ = '4';
+    } else if (press == PRESS_WHEEL_FWD) {
+      *p++ = '6';
+      *p++ = '5';
+    } else {
+      return 0;
+    }
+  } else if (isRELEASE(code)) {
+    const udat release = code & RELEASE_ANY;
+    if (release == RELEASE_LEFT) {
+      *p++ = '0';
+    } else if (release == RELEASE_MIDDLE) {
+      *p++ = '1';
+    } else if (release == RELEASE_RIGHT) {
+      *p++ = '2';
+    } else {
+      // RELEASE_WHEEL_REV and RELEASE_WHEEL_FWD are not reported
+      return 0;
+    }
+  } else if (code == MOVE_MOUSE) {
+    if (!(flags & TTY_REPORTMOUSE_MOVE)) {
+      return 0;
+    }
+    /* also report mouse move */
+    *p++ = '3';
+    *p++ = '5';
+  } else {
+    if (!(flags & TTY_REPORTMOUSE_DRAG)) {
+      return 0;
+    }
+    *p++ = '3';
+    /* also report mouse dragging */
+    const udat hold = code & HOLD_ANY;
+    if (hold == HOLD_LEFT) {
+      *p++ = '2';
+    } else if (hold == HOLD_MIDDLE) {
+      *p++ = '3';
+    } else if (hold == HOLD_RIGHT) {
+      *p++ = '4';
+    } else {
+      *p++ = '2';
+    }
+  }
+  *p++ = ';';
+  const udat x = 1 + Clamp(0, event->X, 99998);
+  p = PrintUdat100k(p, x);
+  *p++ = ';';
+  const udat y = 1 + Clamp(0, event->Y, 99998);
+  p = PrintUdat100k(p, y);
+  *p++ = isRELEASE(code) ? 'm' : 'M';
+  return p - buf;
+}
+
+/* X10-style mouse reporting */
+static byte CreateMouseEventX10(event_mouse *event, byte buflen, char *buf, const uldat flags) {
+
+  const udat code = event->Code;
+
+  if (buflen < 6 || !isPRESS(code)) {
+    return 0;
+  }
+  CopyMem("\033[M", buf, 4);
+  char ch;
+  switch (code & PRESS_ANY) {
+  case PRESS_LEFT:
+    ch = ' ';
+    break;
+  case PRESS_MIDDLE:
+    ch = '!';
+    break;
+  case PRESS_RIGHT:
+    ch = '!';
+    break;
+  default:
+    /* WHEEL_REV and WHEEL_FWD are not reported */
+    return 0;
+  }
+  buf[3] = ch;
+  const dat x = event->X, y = event->Y;
+  buf[4] = '!' + Clamp(0, x, 222);
+  buf[5] = '!' + Clamp(0, y, 222);
+  return 6;
+}
+
+byte CreateMouseEvent(event_mouse *event, byte buflen, char *buf) {
+  Twindow w = (Twindow)event->W;
+
+  if (!w || !IS_WINDOW(w) || !W_USE(w, USECONTENTS) || !w->USE.C.TtyData) {
+    return 0;
+  }
+  const uldat flags = w->USE.C.TtyData->Flags;
+
+  switch (flags & TTY_REPORTMOUSE_STYLE) {
+  case TTY_REPORTMOUSE_TWTERM:
+    return CreateMouseEventTwterm(event, buflen, buf, flags);
+  case TTY_REPORTMOUSE_XTERM:
+    if (flags & TTY_REPORTMOUSE_DECIMAL) {
+      return CreateMouseEventXtermDecimal(event, buflen, buf, flags);
+    } else {
+      return CreateMouseEventXterm(event, buflen, buf, flags);
+    }
+  case TTY_REPORTMOUSE_X10:
+    return CreateMouseEventX10(event, buflen, buf, flags);
+  default:
+    return 0;
+  }
 }
 
 void closeAllFds(int tty_fd_to_dup) {
@@ -646,8 +808,8 @@ void ResetBorderPattern(void) {
   Tmsgport MsgP;
   Twidget w;
 
-  for (MsgP = All->FirstMsgPort; MsgP; MsgP = MsgP->Next) {
-    for (w = MsgP->FirstW; w; w = w->O_Next) {
+  for (MsgP = All->MsgPorts.First; MsgP; MsgP = MsgP->Next) {
+    for (w = MsgP->Widgets.First; w; w = w->O_Next) {
       if (IS_WINDOW(w))
         ((Twindow)w)->BorderPattern[0] = ((Twindow)w)->BorderPattern[1] = NULL;
     }
@@ -709,7 +871,7 @@ void FallBackKeyAction(Twindow w, event_keyboard *EventK) {
     default:
       break;
     }
-  else if ((G = (Tgadget)w->FirstW) && IS_GADGET(G)) {
+  else if ((G = (Tgadget)w->Widgets.First) && IS_GADGET(G)) {
     PressGadget(G);
     w->SelectW = (Twidget)G;
   } else
@@ -1040,7 +1202,7 @@ bool InitTWDisplay(void) {
     addr_unix.sun_family = AF_UNIX;
 
     for (i = 0; i < 0x1000; i++) {
-      sprintf(twd, ":%hx", i);
+      snprintf(twd, sizeof(twd), ":%hx", i);
 
       len = CopyToSockaddrUn(TmpDir.data(), &addr_unix, 0);
       len = CopyToSockaddrUn("/.Twin", &addr_unix, len);
@@ -1090,13 +1252,16 @@ bool InitTWDisplay(void) {
             CopyMem(TWDisplay, envTWD + 10, lenTWDisplay);
 #if defined(TW_HAVE_SETENV)
             setenv("TWDISPLAY", TWDisplay, 1);
-            setenv("TERM", "linux", 1);
+            setenv("TERM", "xterm-256color", 1);
+            setenv("COLORTERM", "truecolor", 1);
 #elif defined(TW_HAVE_PUTENV)
             putenv(envTWD);
-            putenv("TERM=linux");
+            putenv("TERM=xterm-256color");
+            putenv("COLORTERM=truecolor");
 #endif
-            if ((arg0 = (char *)AllocMem(strlen(TWDisplay) + 6))) {
-              sprintf(arg0, "twin %s", TWDisplay);
+            size_t arg0_len = strlen(TWDisplay) + 6;
+            if ((arg0 = (char *)AllocMem(arg0_len))) {
+              snprintf(arg0, arg0_len, "twin %s", TWDisplay);
               SetArgv0(main_argv, main_argv_usable_len, arg0);
               FreeMem(arg0);
             }
@@ -1170,16 +1335,16 @@ static bool SetEnvs(struct passwd *p) {
   setenv("HOME", HOME.data(), 1);
   setenv("SHELL", p->pw_shell, 1);
   setenv("LOGNAME", p->pw_name, 1);
-  sprintf(buf, "/var/mail/%.*s", (int)(TW_BIGBUFF - 11), p->pw_name);
+  snprintf(buf, TW_BIGBUFF, "/var/mail/%.*s", (int)(TW_BIGBUFF - 11), p->pw_name);
   setenv("MAIL", buf, 1);
 #elif defined(TW_HAVE_PUTENV)
-  sprintf(buf, "HOME=%.*s", (int)(TW_BIGBUFF - 6), HOME.data());
+  snprintf(buf, TW_BIGBUFF, "HOME=%.*s", (int)(TW_BIGBUFF - 6), HOME.data());
   putenv(buf);
-  sprintf(buf, "SHELL=%.*s", (int)(TW_BIGBUFF - 7), p->pw_shell);
+  snprintf(buf, TW_BIGBUFF, "SHELL=%.*s", (int)(TW_BIGBUFF - 7), p->pw_shell);
   putenv(buf);
-  sprintf(buf, "LOGNAME=%.*s", (int)(TW_BIGBUFF - 9), p->pw_name);
+  snprintf(buf, TW_BIGBUFF, "LOGNAME=%.*s", (int)(TW_BIGBUFF - 9), p->pw_name);
   putenv(buf);
-  sprintf(buf, "MAIL=/var/mail/%.*s", (int)(TW_BIGBUFF - 16) p->pw_name);
+  snprintf(buf, TW_BIGBUFF, "MAIL=/var/mail/%.*s", (int)(TW_BIGBUFF - 16), p->pw_name);
   putenv(buf);
 #endif
   return true;

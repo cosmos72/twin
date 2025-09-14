@@ -19,8 +19,8 @@
 
 #include <Tw/datatypes.h>
 
-struct Smsg : public Sobj {
-  TobjFn Fn;
+class Smsg : public Sobj {
+public:
   Tmsg Prev, Next;
   Tmsgport MsgPort;
   /* Tmsg */

@@ -17,10 +17,12 @@
 extern byte StrategyFlag;
 extern tany StrategyDelay;
 /* strategy */
-#define HW_UNSET 0
-#define HW_ACCEL 1
-#define HW_BUFFER 2
-#define HW_DELAY 3
+enum {
+  HW_UNSET = 0,
+  HW_ACCEL = 1,
+  HW_BUFFER = 2,
+  HW_DELAY = 3,
+};
 
 void StrategyReset(void) NOTHROW;
 byte Strategy4Video(dat Xstart, dat Ystart, dat Xend, dat Yend) NOTHROW;
@@ -28,8 +30,8 @@ byte Strategy4Video(dat Xstart, dat Ystart, dat Xend, dat Yend) NOTHROW;
 byte InitHW(void);
 void QuitHW(void);
 
-byte RestartHW(byte verbose);
-void SuspendHW(byte verbose);
+bool RestartHW(bool verbose);
+void SuspendHW(bool verbose);
 
 Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags);
 bool DetachDisplayHW(Chars arg, byte flags);
@@ -43,7 +45,7 @@ void UpdateFlagsHW(void) NOTHROW;
 
 void EnableMouseMotionEvents(byte enable);
 
-byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY);
+byte StdAddMouseEvent(Tdisplay hw, udat Code, dat MouseX, dat MouseY);
 void SyntheticKey(Twidget widget, udat Code, udat ShiftFlags, byte Len, const char *Seq);
 
 #endif /* TWIN_HW_MULTI_H */

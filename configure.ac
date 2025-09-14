@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.71])
-AC_INIT([twin],[0.9.1],[BUG-REPORT-ADDRESS])
+AC_INIT([twin],[1.0.0],[BUG-REPORT-ADDRESS])
 AC_CONFIG_SRCDIR([server/main.cpp])
 AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -73,21 +73,48 @@ AC_C_INLINE
 
 TW_C_FEATURES
 
-################################################################################
-
 # C++ flags '-g -O2' are already tested by AC_PROG_CC
 # C++ flags '-p -pg' are incompatible with -fomit-frame-pointer
 initial_CXXFLAGS="$CXXFLAGS"
-for try_flag in -std=c++98 -fomit-frame-pointer -fno-strict-aliasing \
-                -pipe -Wall -Wshadow -Wno-uninitialized -Wno-unused -Wundef \
-                -Wcast-qual -Wcast-align -Wpointer-arith -Wwrite-strings \
-                 # -Wstrict-prototypes -Wbad-function-cast -Wold-style-declaration -Wold-style-definition
-                 # -Wsign-compare
+for try_flag in -std=c++98 -fno-strict-aliasing -fwrapv -pipe \
+                -Wall -Wshadow -Wno-uninitialized -Wno-unused -Wundef \
+                -Wcast-qual -Wcast-align -Wpointer-arith -Wwrite-strings -Wsign-compare
 do
   save_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $try_flag"
   try_flag_id="`echo \"$try_flag\" | tr =+- _x_`"
-  AC_CACHE_CHECK(for C++ compiler flag $try_flag, ac_cv_cflag$try_flag_id, AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+  AC_CACHE_CHECK(for C++ compiler flag $try_flag, ac_cv_cxxflag$try_flag_id, AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+    int ret0(void) {
+      return 0;
+    }
+   ]], [[
+    int a = ret0();
+  ]])],[
+    eval "ac_cv_cxxflag$try_flag_id=yes"
+  ],[
+    eval "ac_cv_cxxflag$try_flag_id=no"
+    CXXFLAGS="$save_CXXFLAGS"
+  ]))
+done
+custom_CXXFLAGS="$CXXFLAGS"
+CXXFLAGS="$initial_CXXFLAGS"
+AC_LANG_POP([C++])
+
+################################################################################
+
+# C flags '-g -O2' are already tested by AC_PROG_CC
+# C flags '-p -pg' are incompatible with -fomit-frame-pointer
+initial_CFLAGS="$CFLAGS"
+for try_flag in -fno-strict-aliasing -fwrapv -pipe \
+                -Wall -Wshadow -Wno-uninitialized -Wno-unused -Wundef \
+                -Wcast-qual -Wcast-align -Wpointer-arith -Wwrite-strings \
+                -Wstrict-prototypes -Wbad-function-cast \
+                -Wold-style-declaration -Wold-style-definition -Wsign-compare
+do
+  save_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS $try_flag"
+  try_flag_id="`echo \"$try_flag\" | tr =+- _x_`"
+  AC_CACHE_CHECK(for C compiler flag $try_flag, ac_cv_cflag$try_flag_id, AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
     int ret0(void) {
       return 0;
     }
@@ -97,12 +124,11 @@ do
     eval "ac_cv_cflag$try_flag_id=yes"
   ],[
     eval "ac_cv_cflag$try_flag_id=no"
-    CXXFLAGS="$save_CXXFLAGS"
+    CFLAGS="$save_CFLAGS"
   ]))
 done
-custom_CXXFLAGS="$CXXFLAGS"
-CXXFLAGS="$initial_CXXFLAGS"
-AC_LANG_POP([C++])
+custom_CFLAGS="$CFLAGS"
+CFLAGS="$initial_CFLAGS"
 
 ################################################################################
 
@@ -142,7 +168,9 @@ AC_TYPE_INT32_T
 AC_TYPE_UINT8_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
 
+AC_CHECK_TYPE(unsigned long long)
 AC_CHECK_TYPE(gid_t,int)
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
@@ -167,6 +195,7 @@ AC_CHECK_SIZEOF([int])
 AC_CHECK_SIZEOF([long])
 AC_CHECK_SIZEOF([size_t])
 AC_CHECK_SIZEOF([void *])
+AC_CHECK_SIZEOF([unsigned long long])
 
 
 # Checks for functions and libraries.
@@ -182,9 +211,9 @@ dnl AC_FUNC_WAIT3
 AC_CHECK_FUNCS([ \
       alarm alphasort crypt dup2 ftime getenv gethostname getpagesize getpt getspnam gettimeofday \
       grantpt hstrerror initgroups lstat memchr memcmp memmove memset mkdir munmap posix_openpt \
-      ptsname putenv rename scandir select setenv setlocale sigaction socket strchr strdup strerror \
-      strrchr strspn strstr strtol strtoul sysconf tcsetpgrp uname unlockpt usleep \
-      versionsort vprintf vsprintf vsnprintf wait3 wait4])
+      ptsname putenv rename scandir select setenv setlocale sigaction socket snprintf \
+      strchr strdup strerror strrchr strspn strstr strtol strtoul sysconf tcsetpgrp \
+      uname unlockpt usleep versionsort wait3 wait4])
 
 AC_SEARCH_LIBS(crypt,          crypt)                 dnl crypt() is needed by twdm
 AC_SEARCH_LIBS(deflate,        z)
@@ -235,7 +264,7 @@ fi
 AC_DEFINE_UNQUOTED(ATTR_FN_CONST,      [`echo $ac_cv_c_attribute_const     | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((const)),      or to empty if not supported.])
 AC_DEFINE_UNQUOTED(ATTR_TYPE_PACKED,   [`echo $ac_cv_c_attribute_packed    | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((packed)),     or to empty if not supported.])
 AC_DEFINE_UNQUOTED(ATTR_PTR_ALIGNED_1, [`echo $ac_cv_c_attribute_aligned_1 | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((aligned(1))), or to empty if not supported.])
-
+AC_DEFINE_UNQUOTED(ATTR_HIDDEN,     [`echo $ac_cv_c_attribute_hidden    | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((visiibility("hidden"))), or to empty if not supported.])
 
 if test "$ac_cv_search_crypt" != "no" -o "$ac_cv_func_crypt" != "no"; then
   AC_DEFINE(HAVE_CRYPT, 1, [Define to 1 if you have the `crypt'  function.])
@@ -300,6 +329,8 @@ AM_CONDITIONAL(LIBHW_XFT_la,     [test "$enable_hw_xft"     = yes])
 AM_CONDITIONAL(LIBRCPARSE_la,    [test "$enable_wm_rc"      = yes])
 AM_CONDITIONAL(LIBSOCKET_la,     [test "$enable_socket"     = yes])
 AM_CONDITIONAL(LIBTERM_la,       [test "$enable_term"       = yes])
+
+CFLAGS="$custom_CFLAGS"
 
 CXXFLAGS="$custom_CXXFLAGS"
 
