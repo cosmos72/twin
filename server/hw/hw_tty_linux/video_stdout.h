@@ -193,13 +193,8 @@ TW_ATTR_HIDDEN void tty_driver::linux_DrawSome(Tdisplay hw, dat x, dat y, uldat 
           /* use utf-8 to output this non-ASCII glyph. */
           DrawRune(hw, r);
           continue;
-<<<<<<< HEAD
-        } else if (c > 255 || tty_charset_to_UTF_32[c] != c) {
-          c = tty_UTF_32_to_charset(_c);
-=======
         } else if (r > 255 || self->tty_charset_to_UTF_32[r] != r) {
           b = self->tty_UTF_32_to_charset(r);
->>>>>>> origin/truecolor
         }
       }
       if (self->tty_use_utf8 ? (b < 32 || b == 127)
@@ -233,13 +228,8 @@ TW_ATTR_HIDDEN void tty_driver::linux_DrawTCell(Tdisplay hw, dat x, dat y, tcell
       /* use utf-8 to output this non-ASCII glyph. */
       DrawRune(hw, r);
       return;
-<<<<<<< HEAD
-    } else if (c > 255 || tty_charset_to_UTF_32[c] != c) {
-      c = tty_UTF_32_to_charset(_c);
-=======
     } else if (r > 255 || self->tty_charset_to_UTF_32[r] != r) {
       b = self->tty_UTF_32_to_charset(r);
->>>>>>> origin/truecolor
     }
   }
   if (self->tty_use_utf8 ? (b < 32 || b == 127)

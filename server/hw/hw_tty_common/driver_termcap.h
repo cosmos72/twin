@@ -491,13 +491,8 @@ TW_ATTR_HIDDEN void tty_driver::termcap_DrawSome(Tdisplay hw, dat x, dat y, ulda
           /* use utf-8 to output this non-ASCII glyph */
           DrawRune(hw, r);
           continue;
-<<<<<<< HEAD
-        } else if (c > 255 || tty_charset_to_UTF_32[c] != c) {
-          c = tty_UTF_32_to_charset(_c);
-=======
         } else if (r > 255 || self->tty_charset_to_UTF_32[r] != r) {
           b = self->tty_UTF_32_to_charset(r);
->>>>>>> origin/truecolor
         }
       }
       if (b < 32 || b == 127 || b == 128 + 27) {
@@ -534,13 +529,8 @@ TW_ATTR_HIDDEN void tty_driver::termcap_DrawTCell(Tdisplay hw, dat x, dat y, tce
       /* use utf-8 to output this non-ASCII glyph */
       DrawRune(hw, r);
       return;
-<<<<<<< HEAD
-    } else if (c > 255 || tty_charset_to_UTF_32[c] != c) {
-      c = tty_UTF_32_to_charset(_c);
-=======
     } else if (r > 255 || self->tty_charset_to_UTF_32[r] != r) {
       b = self->tty_UTF_32_to_charset(r);
->>>>>>> origin/truecolor
     }
   }
   if (b < 32 || b == 127 || b == 128 + 27) {
