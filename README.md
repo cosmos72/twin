@@ -5,7 +5,7 @@ Twin - a Textmode WINdow environment
 Version 0.9.1
 
 Twin is text-based windowing environment with mouse support, window manager,
-terminal emulator, networked clients and the ability to attach/detach
+truecolor terminal emulator, networked clients and the ability to attach/detach
 mode displays on-the-fly.
 
 It supports a variety of displays:
