@@ -1166,7 +1166,11 @@ static void write_ctrl(tty_data *tty, byte c) {
     tty->State = ESnormal;
     return;
   case 27:
-    tty->State = ESesc;
+    if (tty->State == ESxterm_ignore) {
+      tty->State == ESxterm_ignore_esc;
+    } else {
+      tty->State = ESesc;
+    }
     return;
   case 127:
     del(tty);
@@ -1269,17 +1273,16 @@ static void write_ctrl(tty_data *tty, byte c) {
       tty->Par[0] = tty->nPar = 0;
       tty->State = ESrgb;
       return;
-    } else if (c == 'R') /* Reset palette */
+    } else if (c == 'R') { /* Reset palette */
       ResetPaletteHW();
-    else if (c == '1') {
-      /* may be xterm set window icon title */
-      tty->State = ESxterm_ignore_;
-      return;
     } else if (c == '0' || c == '2' || c == '7') {
-      /* may be xterm "set icon name & window title" or xterm "set window title" or OS tty->X "set
-       * current directory title"
-       */
+      /* may be xterm "set icon name & window title" or xterm "set window title"
+       * or xterm "set current directory title" */
       tty->State = ESxterm_title_;
+      return;
+    } else {
+      /* unsupported escape sequence */
+      tty->State = ESxterm_ignore;
       return;
     }
     break;
@@ -1554,15 +1557,12 @@ static void write_ctrl(tty_data *tty, byte c) {
     }
     break;
   }
-  case ESxterm_ignore_:
-    if (c == ';') {
-      tty->State = ESxterm_ignore;
-      return;
-    }
-    break;
-
   case ESxterm_ignore:
     /* ignore, cannot set icon name */
+    return;
+  case ESxterm_ignore_esc:
+    /* expecting '\\' but reset state on any character */
+    tty->State = ESnormal;
     return;
 
   case ESxterm_title_:
@@ -1573,8 +1573,9 @@ static void write_ctrl(tty_data *tty, byte c) {
     break;
 
   case ESxterm_title:
-    if (c >= ' ' && insert_newtitle(tty, c))
+    if (c >= ' ' && insert_newtitle(tty, c)) {
       return;
+    }
     break;
 
   default:

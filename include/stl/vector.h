@@ -59,7 +59,7 @@ protected:
     if (!ensure_capacity(n)) {
       return false;
     }
-    if (n > size_) {
+    if (zerofill && n > size_) {
       memset(data() + size_, '\0', (n - size_) * sizeof(T));
     }
     size_ = n;

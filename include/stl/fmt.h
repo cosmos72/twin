@@ -31,7 +31,7 @@ public:
  */
 template <> class Fmt<Void> : public FmtBase {
 public:
-  explicit Fmt(Void unused) NOTHROW {
+  explicit Fmt(Void /*unused*/) NOTHROW {
   }
 
   to_chars_result write_to(Span<char> dst) const NOTHROW OVERRIDE;
