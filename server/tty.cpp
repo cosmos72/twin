@@ -1167,7 +1167,7 @@ static void write_ctrl(tty_data *tty, byte c) {
     return;
   case 27:
     if (tty->State == ESxterm_ignore) {
-      tty->State == ESxterm_ignore_esc;
+      tty->State = ESxterm_ignore_esc;
     } else {
       tty->State = ESesc;
     }
