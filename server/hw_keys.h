@@ -27,14 +27,14 @@ IS(Sys_Req, 0, "")
 #endif
 IS(Escape, 1, "\x1B")
 
-IS(Home, 4, "\x1B[H")
+IS(Home, 4, "\x1B[1~")
 IS(Left, 3, "\x1B[D")
 IS(Up, 3, "\x1B[A")
 IS(Right, 3, "\x1B[C")
 IS(Down, 3, "\x1B[B")
 IS(Prior, 4, "\x1B[5~")
 IS(Next, 4, "\x1B[6~")
-IS(End, 4, "\x1B[F")
+IS(End, 4, "\x1B[4~")
 IS(Begin, 4, "\x1B[E") /* as KP_Begin */
 IS(Select, 0, "")
 IS(Print, 0, "")
@@ -62,31 +62,31 @@ IS(KP_F4, 4, "\x1BOS") /* as F4 */
 
 /* these are duplicates of KP_[0..9] but have different X11 keysim */
 #if defined(XK_KP_Home) && (XK_KP_Home != XK_KP_7)
-IS(KP_Home, 3, "\x1B[H")
+IS(KP_Home, 3, "\x1B[H") /* as KP_7 */
 #endif
 #if defined(XK_KP_Left) && (XK_KP_Left != XK_KP_4)
-IS(KP_Left, 3, "\x1B[D")
+IS(KP_Left, 3, "\x1B[D") /* as KP_4 */
 #endif
 #if defined(XK_KP_Up) && (XK_KP_Up != XK_KP_8)
-IS(KP_Up, 3, "\x1B[A")
+IS(KP_Up, 3, "\x1B[A") /* as KP_8 */
 #endif
 #if defined(XK_KP_Right) && (XK_KP_Right != XK_KP_6)
-IS(KP_Right, 3, "\x1B[C")
+IS(KP_Right, 3, "\x1B[C") /* as KP_6 */
 #endif
 #if defined(XK_KP_Down) && (XK_KP_Down != XK_KP_2)
-IS(KP_Down, 3, "\x1B[B")
+IS(KP_Down, 3, "\x1B[B") /* as KP_2 */
 #endif
 #if defined(XK_KP_Prior) && (XK_KP_Prior != XK_KP_9)
-IS(KP_Prior, 3, "\x1B[5~")
+IS(KP_Prior, 3, "\x1B[5~") /* as KP_9 */
 #endif
 #if defined(XK_KP_Next) && (XK_KP_Next != XK_KP_3)
-IS(KP_Next, 3, "\x1B[6~")
+IS(KP_Next, 3, "\x1B[6~") /* as KP_3 */
 #endif
 #if defined(XK_KP_End) && (XK_KP_End != XK_KP_1)
-IS(KP_End, 3, "\x1B[F")
+IS(KP_End, 3, "\x1B[F") /* as KP_1 */
 #endif
 #if defined(XK_KP_Begin) && (XK_KP_Begin != XK_KP_5)
-IS(KP_Begin, 3, "\x1B[E")
+IS(KP_Begin, 3, "\x1B[E") /* as KP_5 */
 #endif
 #if defined(XK_KP_Insert) && (XK_KP_Insert != XK_KP_0)
 IS(KP_Insert, 3, "\x1B[[2~") /* as KP_0 */
@@ -102,16 +102,16 @@ IS(KP_Subtract, 3, "\x1BOm")
 IS(KP_Decimal, 3, "\x1B[[3~")
 IS(KP_Divide, 3, "\x1BOo")
 
-IS(KP_0, 3, "\x1B[[2~")
+IS(KP_0, 4, "\x1B[2~")
 IS(KP_1, 3, "\x1B[F")
 IS(KP_2, 3, "\x1B[B")
-IS(KP_3, 3, "\x1B[6~")
+IS(KP_3, 4, "\x1B[6~")
 IS(KP_4, 3, "\x1B[D")
 IS(KP_5, 3, "\x1B[E")
 IS(KP_6, 3, "\x1B[C")
 IS(KP_7, 3, "\x1B[H")
 IS(KP_8, 3, "\x1B[A")
-IS(KP_9, 3, "\x1B[5~")
+IS(KP_9, 4, "\x1B[5~")
 
 IS(KP_Equal, 3, "\x1BOX")
 

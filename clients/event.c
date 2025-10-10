@@ -114,6 +114,7 @@ const char *twkeyname(udat Code) {
     IS(Caps_Lock);
     IS(Shift_Lock);
     IS(Num_Lock);
+    IS(KP_Begin);
     IS(KP_Home);
     IS(KP_Left);
     IS(KP_Up);

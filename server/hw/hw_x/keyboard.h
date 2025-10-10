@@ -144,8 +144,9 @@ TW_ATTR_HIDDEN void XDRIVER::InitKeys() {
   }
 }
 
+#undef DEBUG_HW_X11
 #ifdef DEBUG_HW_X11
-static void X_DEBUG_SHOW_KEY(const char *prefix, KeySym sym, udat len, const char *seq) {
+static void X_DEBUG_SHOW_KEY(XIM xim, const char *prefix, KeySym sym, udat len, const char *seq) {
   udat i;
   byte ch;
   printf(XSTR(XDRIVER) ".LookupKey(): %s xkeysym=%d[%s] string=[", prefix, (int)sym,
@@ -160,7 +161,7 @@ static void X_DEBUG_SHOW_KEY(const char *prefix, KeySym sym, udat len, const cha
   printf("] locale=%s\n", XLocaleOfIM(xim));
 }
 #else
-#define X_DEBUG_SHOW_KEY(prefix, sym, len, seq) ((void)0)
+#define X_DEBUG_SHOW_KEY(xim, prefix, sym, len, seq) ((void)0)
 #endif
 
 TW_ATTR_HIDDEN bool XDRIVER::IsNumericKeypad(Twkey key) {
@@ -201,7 +202,7 @@ TW_ATTR_HIDDEN Twkey XDRIVER::LookupKey(XEvent *ev, udat *ShiftFlags, udat *len,
   if (sym == XK_VoidSymbol || sym == 0) {
     *len = XLookupString(kev, seq, maxlen, &sym, &this->xcompose);
   }
-  X_DEBUG_SHOW_KEY("", sym, *len, seq);
+  X_DEBUG_SHOW_KEY(xim, "", sym, *len, seq);
 
   if (sym == XK_BackSpace && (kev->state & (ControlMask | Mod1Mask)) != 0) {
     /* generate escape sequences for Backspace and Ctrl+Backspace */
@@ -220,7 +221,7 @@ TW_ATTR_HIDDEN Twkey XDRIVER::LookupKey(XEvent *ev, udat *ShiftFlags, udat *len,
       seq[1] = seq[0];
       seq[0] = '\x1B';
 
-      X_DEBUG_SHOW_KEY("replaced(1)", sym, *len, seq);
+      X_DEBUG_SHOW_KEY(xim, "replaced(1)", sym, *len, seq);
     }
     return (Twkey)sym;
   }
@@ -245,12 +246,27 @@ TW_ATTR_HIDDEN Twkey XDRIVER::LookupKey(XEvent *ev, udat *ShiftFlags, udat *len,
      * use the sequence stated in hw_keys.h */
 
     if (xaltcursorkeys && tkey >= TW_Left && tkey <= TW_Down) {
-      const char *altkeys = "\033OD\033OA\033OC\033OB";
-      CopyMem(altkeys + 3 * (tkey - TW_Left), seq, *len = 3);
+      seq[0] = '\033';
+      seq[1] = 'O';
+      seq[2] = "DACB"[tkey - TW_Left];
+      *len = 3;
+    } else if (xaltcursorkeys && tkey >= TW_KP_Begin && tkey <= TW_KP_Insert) {
+      // these are actually vt220 and linux console sequences, but we want them to be unique,
+      // while xterm reuses some sequences: KP_Next = Next and KP_Prior = Prior
+      seq[0] = '\033';
+      seq[1] = 'O';
+      seq[2] = "uwtxvrysqp"[tkey - TW_KP_Begin];
+      *len = 3;
+    } else if (xaltcursorkeys && tkey >= TW_KP_0 && tkey <= TW_KP_9) {
+      // match KP_0 ... KP_9 to KP_Home ... KP_Insert
+      seq[0] = '\033';
+      seq[1] = 'O';
+      seq[2] = 'p' + (tkey - TW_KP_0);
+      *len = 3;
     } else if (tkey_entry->len() < maxlen) {
       CopyMem(tkey_entry->seq, seq, *len = tkey_entry->len());
     }
-    X_DEBUG_SHOW_KEY("replaced(2)", sym, *len, seq);
+    X_DEBUG_SHOW_KEY(xim, "replaced(2)", sym, *len, seq);
   }
   return tkey == TW_Null && *len != 0 ? TW_Other : tkey;
 }
