@@ -23,8 +23,8 @@ TW_ATTR_HIDDEN udat tty_driver::termcap_LookupKey(Tdisplay hw, udat *ShiftFlags,
   };
 #define IS(k, l, s) {CAT(TW_, k), l, s}
   static const xterm_keys keys[] = {
-      IS(F1, 4, "\033[[A"),     IS(F2, 4, "\033[[B"),     IS(F3, 4, "\033[[C"),
-      IS(F4, 4, "\033[[D"),     IS(F5, 4, "\033[[E"),     IS(F6, 5, "\033[17~"),
+      IS(F1, 3, "\033OP"),      IS(F2, 3, "\033OQ"),      IS(F3, 3, "\033OR"),
+      IS(F4, 3, "\033OS"),      IS(F5, 5, "\033[15~"),    IS(F6, 5, "\033[17~"),
       IS(F7, 5, "\033[18~"),    IS(F8, 5, "\033[19~"),    IS(F9, 5, "\033[20~"),
       IS(F10, 5, "\033[21~"),   IS(F11, 5, "\033[23~"),   IS(F12, 5, "\033[24~"),
       IS(Pause, 3, "\033[P"),   IS(Home, 4, "\033[1~"),   IS(End, 4, "\033[4~"),
@@ -65,8 +65,12 @@ TW_ATTR_HIDDEN udat tty_driver::termcap_LookupKey(Tdisplay hw, udat *ShiftFlags,
       if (*key && **key && (keylen = strlen(*key)) <= len && !memcmp(*key, s, keylen)) {
         lk = &keys[key - &self->tc[tc_key_first]];
         udat code = lk->k;
-        if (self->altcurskeys && code >= TW_Left && code <= TW_Down) {
-          lk = &altkeys[code - TW_Left];
+        if (self->altcurskeys) {
+          if (code >= TW_Left && code <= TW_Down) {
+            lk = &altkeys[code - TW_Left];
+          } else if (code >= TW_KP_Left && code <= TW_KP_Down) {
+            lk = &altkeys[code - TW_KP_Left];
+          }
         }
         *slen = keylen;
         *retlen = lk->l;
