@@ -263,6 +263,13 @@ TW_ATTR_HIDDEN Twkey XDRIVER::LookupKey(XEvent *ev, udat *ShiftFlags, udat *len,
       seq[1] = 'O';
       seq[2] = 'p' + (tkey - TW_KP_0);
       *len = 3;
+    } else if (xaltcursorkeys && (tkey == TW_KP_Delete || tkey == TW_KP_Decimal)) {
+      // this is actually a vt220 and linux console sequence,
+      // because xterm reuses some sequence: KP_Delete = KP_Decimal = Delete
+      seq[0] = '\033';
+      seq[1] = 'O';
+      seq[2] = 'n';
+      *len = 3;
     } else if (tkey_entry->len() < maxlen) {
       CopyMem(tkey_entry->seq, seq, *len = tkey_entry->len());
     }

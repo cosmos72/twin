@@ -92,7 +92,7 @@ IS(KP_Begin, 3, "\x1B[E") /* as KP_5 */
 IS(KP_Insert, 3, "\x1B[[2~") /* as KP_0 */
 #endif
 #if defined(XK_KP_Delete) && (XK_KP_Delete != XK_KP_Decimal)
-IS(KP_Delete, 3, "\x1B[[3~") /* as KP_Delete */
+IS(KP_Delete, 3, "\x1B[[3~") /* as KP_Decimal */
 #endif
 
 IS(KP_Multiply, 3, "\x1BOj")
