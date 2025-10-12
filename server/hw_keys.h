@@ -49,7 +49,8 @@ IS(Cancel, 0, "")
 IS(Help, 0, "")
 IS(Break, 0, "")
 /*IS(Mode_switch,0, "")*/ /* I don't want to receive this, it's AltGr */
-IS(Num_Lock, 3, "\x1BOP")
+IS(Num_Lock, 3, "\x1BON") /* xterm produces nothing,
+                           * vt220 produces "\x1BOP" duplicate of xterm F1 */
 
 IS(KP_Space, 1, " ")
 IS(KP_Tab, 1, "\x09")
