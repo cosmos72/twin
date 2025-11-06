@@ -95,8 +95,9 @@ public:
   char *tc_scr_clear;
 #ifdef CONF_HW_TTY_TERMCAP
   char *tc[tc_seq_N];
-  byte wrapglitch, colormode, altcurskeys;
+  byte wrapglitch, altcurskeys;
 #endif
+  byte colormode;
 
   static void DrawRune(Tdisplay hw, trune h);
   static void FlushHW(Tdisplay hw);
