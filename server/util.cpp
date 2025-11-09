@@ -1341,13 +1341,13 @@ static bool SetEnvs(struct passwd *p) {
   setenv("MAIL", buf, 1);
 #elif defined(TW_HAVE_PUTENV)
   snprintf(buf, TW_BIGBUFF, "HOME=%.*s", (int)(TW_BIGBUFF - 6), HOME.data());
-  putenv(buf);
+  putenv(CloneStr(buf));
   snprintf(buf, TW_BIGBUFF, "SHELL=%.*s", (int)(TW_BIGBUFF - 7), p->pw_shell);
-  putenv(buf);
+  putenv(CloneStr(buf));
   snprintf(buf, TW_BIGBUFF, "LOGNAME=%.*s", (int)(TW_BIGBUFF - 9), p->pw_name);
-  putenv(buf);
+  putenv(CloneStr(buf));
   snprintf(buf, TW_BIGBUFF, "MAIL=/var/mail/%.*s", (int)(TW_BIGBUFF - 16), p->pw_name);
-  putenv(buf);
+  putenv(CloneStr(buf));
 #endif
   return true;
 }
@@ -1475,7 +1475,7 @@ static void ReadTwEnvRC(int infd) {
       *eq++ = '\0';
       setenv(p, eq, 1);
 #elif defined(TW_HAVE_PUTENV)
-      putenv(p);
+      putenv(CloneStr(p));
 #endif
       p = q;
     }
