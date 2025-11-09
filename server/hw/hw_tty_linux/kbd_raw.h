@@ -82,7 +82,7 @@ TW_ATTR_HIDDEN bool tty_driver::lrawkbd_InitKeyboard(Tdisplay hw) {
                   "ioctl(KDSKBMODE, K_MEDIUMRAW) failed\n";
     goto failed_setkeyboard;
   }
-  log(INFO) << "      enabled Linux console raw keyboard mode\n";
+  log(INFO) << "      enabled Linux console raw keyboard mode.\n";
   return true;
 
 failed_setkeyboard:

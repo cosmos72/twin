@@ -1250,14 +1250,16 @@ bool InitTWDisplay(void) {
             TWDisplay = twd;
             lenTWDisplay = strlen(TWDisplay);
             CopyMem(TWDisplay, envTWD + 10, lenTWDisplay);
+            /**
+             * cannot set environment variable TERM=xterm-256color here:
+             * it confuses libgpm, used by --hw=tty
+             *
+             * solution: set it only in child processes, see spawnInWindow() in pty.cpp
+             */
 #if defined(TW_HAVE_SETENV)
             setenv("TWDISPLAY", TWDisplay, 1);
-            setenv("TERM", "xterm-256color", 1);
-            setenv("COLORTERM", "truecolor", 1);
 #elif defined(TW_HAVE_PUTENV)
             putenv(envTWD);
-            putenv("TERM=xterm-256color");
-            putenv("COLORTERM=truecolor");
 #endif
             size_t arg0_len = strlen(TWDisplay) + 6;
             if ((arg0 = (char *)AllocMem(arg0_len))) {

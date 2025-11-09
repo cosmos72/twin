@@ -44,6 +44,7 @@ TW_ATTR_HIDDEN int tty_driver::gpm_Open(Tdisplay hw) {
   if (self->gpm_fd >= 0) {
     /* gpm_consolefd is opened by GPM_Open() */
     fcntl(gpm_consolefd, F_SETFD, FD_CLOEXEC);
+    log(INFO) << "      enabled GPM mouse support.\n";
   } else {
     log(ERROR) << "      gpm_InitMouse() failed: unable to connect to `gpm'.\n"
                   "      make sure you started `twin' from the console\n"

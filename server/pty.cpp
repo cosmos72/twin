@@ -273,6 +273,17 @@ byte spawnInWindow(Twindow Window, const char *arg0, const char *const *argv) {
       AllDefaultSignals();
       closeAllFds(ttyfd);
       if (switchtoTty()) {
+        /**
+         * set environment variable TERM=xterm... only in child process:
+         * setting it in main process confuses libgpm, used by --hw=tty
+         */
+#if defined(TW_HAVE_SETENV)
+        setenv("TERM", "xterm-256color", 1);
+        setenv("COLORTERM", "truecolor", 1);
+#elif defined(TW_HAVE_PUTENV)
+        putenv("TERM=xterm-256color");
+        putenv("COLORTERM=truecolor");
+#endif
         execvp(arg0, (char *const *)RemoveConst(argv));
       }
       exit(1);
