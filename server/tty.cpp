@@ -1345,6 +1345,7 @@ static void write_ctrl(tty_data *tty, byte c) {
         tty->Win->CursorType = tty->Par[0] | (tty->Par[1] << 8) | (tty->Par[2] << 16);
         tty->Flags |= TTY_UPDATECURSOR;
       }
+      break;
     case 'J':
       /* ESC [ nnn J   is erase display */
       /* ESC [ ? nnn J is selective erase display */
