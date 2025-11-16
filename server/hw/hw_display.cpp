@@ -138,12 +138,13 @@ static void display_HandleEvent(Tdisplay hw) {
         log(ERROR) << "\ntwin: display_HandleEvent(): unexpected Display.RedrawVideo Message from "
                       "twdisplay!\n";
 #if 0
-                if (event->EventDisplay.Len == sizeof(dat) * 2)
-                    NeedRedrawVideo(hw, event->EventDisplay.X, event->EventDisplay.Y,
-                                    ((udat *)event->EventDisplay.Data)[0],
-                                    ((udat *)event->EventDisplay.Data)[1]);
-                break;
+        if (event->EventDisplay.Len == sizeof(dat) * 2) {
+          NeedRedrawVideo(hw, event->EventDisplay.X, event->EventDisplay.Y,
+                          ((udat *)event->EventDisplay.Data)[0],
+                          ((udat *)event->EventDisplay.Data)[1]);
+        }
 #endif
+        break;
       case ev_dpy_Resize:
         if (hw->X != event->EventDisplay.X || hw->Y != event->EventDisplay.Y) {
 
