@@ -97,12 +97,6 @@ AC_ARG_ENABLE(hw-tty-lrawkbd,dnl
 enable_hw_tty_lrawkbd=yes
 )dnl
 
-dnl the twterm terminal driver
-AC_ARG_ENABLE(hw-tty-twterm,dnl
-[  --enable-hw-tty-twterm[=yes|no]        enable the twterm terminal driver ],,
-enable_hw_tty_twterm=yes
-)dnl
-
 dnl the termcap terminal driver
 AC_ARG_ENABLE(hw-tty-termcap,dnl
 [  --enable-hw-tty-termcap[=yes|no]       enable the termcap/ncurses terminal driver ],,

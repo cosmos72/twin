@@ -36,17 +36,12 @@
 #include "hw_dirty.h"
 #include "common.h"
 #include "log.h"
+#include "hw_tty_common/driver_term_decls.h"
 
 #include <Tw/Twkeys.h>
 #include <Tutf/Tutf.h>
 
 #include <new> // placement new
-
-#if !defined(CONF_HW_TTY_LINUX) && !defined(CONF_HW_TTY_TWTERM) && !defined(CONF_HW_TTY_TERMCAP)
-#warning trying to compile hw_tty.c without support for any specific terminal.
-#warning twterm driver will be enabled by default.
-#define CONF_HW_TTY_TWTERM
-#endif
 
 #ifdef CONF_HW_TTY_LINUX
 /*void *_fxstat = __fxstat;*/
@@ -195,12 +190,8 @@ public:
 #define ttydriver(hw) ((tty_driver *)(hw)->Private)
 
 #include "hw_tty_common/kbd_stdin.h"
-
 #include "hw_tty_common/mouse_xterm.h"
-
-#if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
 #include "hw_tty_linux/driver_linux.h"
-#endif
 
 #if defined(CONF_HW_TTY_TERMCAP)
 #include "hw_tty_common/driver_termcap.h"
@@ -567,9 +558,7 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
     log(ERROR) << "      tty.InitHW() failed: unable to read from the terminal: " << Errstr << "\n";
   } else if (
 
-#if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
       (TRY_V(stdout) && linux_InitVideo(hw)) ||
-#endif
 #ifdef CONF_HW_TTY_TERMCAP
       (TRY_V(termcap) && termcap_InitVideo(hw)) ||
 #endif

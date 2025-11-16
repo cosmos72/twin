@@ -1078,7 +1078,7 @@ int main(int argc, char *argv[]) {
       if (argi.size() >= 7 && argi.view(4, 7) == Chars("tty")) {
         const char *cs = "";
         const char *opt = argi.data() + 7;
-        char *s = (char *)(void *)strchr(opt, ',');
+        char *s = const_cast<char *>(strchr(opt, ','));
         if (s) {
           *s = '\0';
         }

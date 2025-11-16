@@ -12,16 +12,13 @@
  * output through stdout
  *
  * CONF_HW_TTY_LINUX is for linux console support (gpm, stdout), while
- * CONF_HW_TTY_TWTERM is for twin terminal (xterm style mouse, stdout)
  */
 
 #ifdef CONF_HW_TTY_LINUX
 #include "mouse_gpm.h"
 #endif /* CONF_HW_TTY_LINUX */
 
-#if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
 #include "video_stdout.h"
-#endif /* defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM) */
 
 #if defined(CONF_HW_TTY_LINUX) && defined(CONF_HW_TTY_LRAWKBD)
 #include "kbd_raw.h"

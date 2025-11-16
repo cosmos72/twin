@@ -71,11 +71,8 @@ TW_ATTR_HIDDEN bool tty_driver::stdin_TestTty(Tdisplay hw) {
 TW_ATTR_HIDDEN bool tty_driver::stdin_InitKeyboard(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
 
-  if (self->fnLookupKey == NULL
-#if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
-      && self->tty_term != Chars("linux") && self->tty_term != Chars("twterm")
-#endif
-  )
+  if (self->fnLookupKey == NULL && self->tty_term != Chars("linux") &&
+      self->tty_term != Chars("twterm"))
     return false;
 
   hw->keyboard_slot =
@@ -357,7 +354,7 @@ TW_ATTR_HIDDEN void tty_driver::stdin_KeyboardEvent(int fd, Tdisplay hw) {
           break;
         }
         s += chunk;
-	got -= chunk;
+        got -= chunk;
         xterm_MouseEvent(fd, hw);
       }
     }

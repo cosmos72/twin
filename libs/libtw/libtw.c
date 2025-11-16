@@ -2171,7 +2171,7 @@ static tany _Tw_EncodeCall(byte flags, uldat o, tw_d TwD, ...) {
   if (Fd != TW_NOFD && (myId = id_Tw[o]) != TW_NOID &&
       (myId != TW_BADID || (myId = FindFunctionId(TwD, o)) != TW_NOID)) {
 
-    va_start(va, (void *)TwD);
+    va_start(va, TwD);
     N = EncodeArgs(o, &space, va, a);
     va_end(va);
 
