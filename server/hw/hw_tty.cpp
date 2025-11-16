@@ -223,7 +223,7 @@ TW_ATTR_HIDDEN bool tty_driver::nullInitMouse(Tdisplay hw) {
   /* override the ones set by *_InitVideo() */
   hw->fnShowMouse = hw->fnHideMouse = NULL;
 
-  log(INFO) << "     nullInitMouse() ok: continuing without mouse support.\n";
+  log(INFO) << "      nullInitMouse() ok: continuing without mouse support.\n";
   return true;
 }
 

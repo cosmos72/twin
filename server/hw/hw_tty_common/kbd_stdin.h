@@ -87,7 +87,7 @@ TW_ATTR_HIDDEN bool tty_driver::stdinInitKeyboard(Tdisplay hw) {
   if (self->fnLookupKey == NULL) {
     self->fnLookupKey = linuxLookupKey;
   }
-  log(INFO) << "     stdinInitKeyboard() ok.\n";
+  log(INFO) << "      stdinInitKeyboard() ok.\n";
   return true;
 }
 

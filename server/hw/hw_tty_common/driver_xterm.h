@@ -110,7 +110,7 @@ TW_ATTR_HIDDEN bool tty_driver::xtermInitVideo(Tdisplay hw) {
 
   self->fnLookupKey = &tty_driver::genericLookupKey;
 
-  log(INFO) << "     xtermInitVideo() ok.\n";
+  log(INFO) << "      xtermInitVideo() ok.\n";
   return true;
 }
 

@@ -72,7 +72,7 @@ TW_ATTR_HIDDEN bool tty_driver::xtermInitMouse(Tdisplay hw, byte force) {
                                    /* override the ones set by InitVideo() */
   hw->fnShowMouse = hw->fnHideMouse = NULL;
 
-  log(INFO) << "     xtermInitMouse() ok: enabled xterm mouse support.\n";
+  log(INFO) << "      xtermInitMouse() ok: enabled xterm mouse support.\n";
   return true;
 }
 

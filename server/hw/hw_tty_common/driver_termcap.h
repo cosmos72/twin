@@ -151,7 +151,7 @@ TW_ATTR_HIDDEN bool tty_driver::termcapInitVideo(Tdisplay hw) {
 
   self->fnLookupKey = &tty_driver::genericLookupKey;
 
-  log(INFO) << "     termcapInitVideo() ok.\n";
+  log(INFO) << "      termcapInitVideo() ok.\n";
   return true;
 }
 
