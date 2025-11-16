@@ -5,7 +5,7 @@
 
 #include "util.h" /* for SetAlarm(), AlarmReceived */
 
-TW_ATTR_HIDDEN bool tty_driver::stdin_TestTty(Tdisplay hw) {
+TW_ATTR_HIDDEN bool tty_driver::stdinTestTty(Tdisplay hw) {
   struct termios ttyb;
   tty_driver *self = ttydriver(hw);
   byte buf[16], *s = buf + 3, c;
@@ -67,8 +67,8 @@ TW_ATTR_HIDDEN bool tty_driver::stdin_TestTty(Tdisplay hw) {
   return ok;
 }
 
-/* return tfalse if failed */
-TW_ATTR_HIDDEN bool tty_driver::stdin_InitKeyboard(Tdisplay hw) {
+/* return false if failed */
+TW_ATTR_HIDDEN bool tty_driver::stdinInitKeyboard(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
 
   if (self->fnLookupKey == NULL && self->tty_term != Chars("linux") &&
@@ -76,21 +76,22 @@ TW_ATTR_HIDDEN bool tty_driver::stdin_InitKeyboard(Tdisplay hw) {
     return false;
 
   hw->keyboard_slot =
-      RegisterRemote(self->tty_fd, (Tobj)hw, (void (*)(int, Tobj))&tty_driver::stdin_KeyboardEvent);
+      RegisterRemote(self->tty_fd, (Tobj)hw, (void (*)(int, Tobj))&tty_driver::stdinKeyboardEvent);
   if (hw->keyboard_slot == NOSLOT) {
-    stdin_QuitKeyboard(hw);
+    stdinQuitKeyboard(hw);
     return false;
   }
-  hw->fnKeyboardEvent = &tty_driver::stdin_KeyboardEvent;
-  hw->fnQuitKeyboard = &tty_driver::stdin_QuitKeyboard;
+  hw->fnKeyboardEvent = &tty_driver::stdinKeyboardEvent;
+  hw->fnQuitKeyboard = &tty_driver::stdinQuitKeyboard;
 
   if (self->fnLookupKey == NULL) {
-    self->fnLookupKey = linux_LookupKey;
+    self->fnLookupKey = linuxLookupKey;
   }
+  log(INFO) << "     stdinInitKeyboard() ok.\n";
   return true;
 }
 
-TW_ATTR_HIDDEN void tty_driver::stdin_QuitKeyboard(Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::stdinQuitKeyboard(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
 
   tty_setioctl(self->tty_fd, &ttysave);
@@ -101,8 +102,8 @@ TW_ATTR_HIDDEN void tty_driver::stdin_QuitKeyboard(Tdisplay hw) {
 }
 
 /* kludge! this is ok for linux terminals only... */
-TW_ATTR_HIDDEN udat tty_driver::linux_LookupKey(Tdisplay hw, udat *ShiftFlags, byte *slen, char *s,
-                                                byte *retlen, const char **ret) {
+TW_ATTR_HIDDEN udat tty_driver::linuxLookupKey(Tdisplay hw, udat *ShiftFlags, byte *slen, char *s,
+                                               byte *retlen, const char **ret) {
   byte used = 0, len = *slen;
 
   *ShiftFlags = 0;
@@ -297,7 +298,7 @@ TW_ATTR_HIDDEN udat tty_driver::linux_LookupKey(Tdisplay hw, udat *ShiftFlags, b
   return TW_Null;
 }
 
-TW_ATTR_HIDDEN void tty_driver::stdin_KeyboardEvent(int fd, Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::stdinKeyboardEvent(int fd, Tdisplay hw) {
   char buf[TW_SMALLBUFF];
   fd_set rfds;
   struct timeval t;
@@ -328,7 +329,7 @@ TW_ATTR_HIDDEN void tty_driver::stdin_KeyboardEvent(int fd, Tdisplay hw) {
   s = buf;
 
   while (got > 0) {
-    if (hw->fnMouseEvent == &tty_driver::xterm_MouseEvent) {
+    if (hw->fnMouseEvent == &tty_driver::xtermMouseEvent) {
       while (got) {
         if (got >= 9 && !memcmp(s, "\033[5M", 4)) {
           /* twterm-style mouse reporting: twin specs */
@@ -355,7 +356,7 @@ TW_ATTR_HIDDEN void tty_driver::stdin_KeyboardEvent(int fd, Tdisplay hw) {
         }
         s += chunk;
         got -= chunk;
-        xterm_MouseEvent(fd, hw);
+        xtermMouseEvent(fd, hw);
       }
     }
 

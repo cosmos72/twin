@@ -2,6 +2,8 @@
 #ifndef TWIN_HW_TTY_TERMCAP_H
 #define TWIN_HW_TTY_TERMCAP_H
 
+#ifdef CONF_HW_TTY_TERMCAP
+
 /* this is the usual mess of ad-hoc includes and defines... */
 
 #if defined(__sun__) || defined(__SVR4)
@@ -32,5 +34,7 @@ extern char *tgetstr(char *id, char **area);
 #endif
 
 #endif /* rest of the world */
+
+#endif /* CONF_HW_TTY_TERMCAP */
 
 #endif /* TWIN_HW_TTY_TERMCAP_H */

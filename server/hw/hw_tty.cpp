@@ -36,7 +36,8 @@
 #include "hw_dirty.h"
 #include "common.h"
 #include "log.h"
-#include "hw_tty_common/driver_term_decls.h"
+#include "hw_tty_common/decls.h"
+#include "palette.h"
 
 #include <Tw/Twkeys.h>
 #include <Tutf/Tutf.h>
@@ -48,9 +49,7 @@
 #include <gpm.h>
 #endif
 
-#ifdef CONF_HW_TTY_TERMCAP
-#include "hw_tty_common/driver_termcap_decls.h"
-#endif
+#include "hw_tty_common/driver_termcap_includes.h"
 
 enum tty_colormode {
   tty_color_autodetect = 0,
@@ -78,117 +77,133 @@ public:
                       const char **ret);
 
   const char *mouse_start_seq, *mouse_end_seq, *mouse_motion_seq;
-#ifdef CONF_HW_TTY_LINUX
-  Gpm_Connect gpm_conn;
-  int gpm_fd;
-  int gpm_keys;
-#endif
   char xterm_mouse_seq[31];
   byte xterm_mouse_len;
   dat xterm_prev_x, xterm_prev_y;
 
   char *tc_scr_clear;
-#ifdef CONF_HW_TTY_TERMCAP
-  char *tc[tc_seq_N];
-  byte wrapglitch, altcurskeys;
+  const char *tc[tc_seq_N];
+  byte wrapglitch, altcurskeys, colormode;
+
+#ifdef CONF_HW_TTY_LINUX
+  Gpm_Connect gpm_conn;
+  int gpm_fd;
+  int gpm_keys;
 #endif
-  byte colormode;
 
   static void DrawRune(Tdisplay hw, trune h);
   static void FlushHW(Tdisplay hw);
   static bool InitHW(Tdisplay hw);
   static void QuitHW(Tdisplay hw);
 
-  static void gpm_ConfigureMouse(Tdisplay hw, udat resource, byte todefault, udat value);
-  static bool gpm_InitMouse(Tdisplay hw);
-  static void gpm_MouseEvent(int fd, Tdisplay hw);
-  static int gpm_Open(Tdisplay hw);
-  static void gpm_QuitMouse(Tdisplay hw);
+  static void genericConfigure(Tdisplay hw, udat resource, byte todefault, udat value);
+  static void genericBeep(Tdisplay hw);
+  static void genericConfigureKeyboard(Tdisplay hw, udat resource, byte todefault, udat value);
+  static bool genericCanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
+                                 dat DstUp);
+  static udat genericLookupKey(Tdisplay hw, udat *ShiftFlags, byte *slen, char *s, byte *retlen,
+                               const char **ret);
+  static void genericSetColor(Tdisplay hw, tcolor col);
+  static void genericSetColor8(Tdisplay hw, tcolor col);
+  static void genericSetColor256(Tdisplay hw, tcolor col);
+  static void genericSetColor16m(Tdisplay hw, tcolor col);
+  static void genericSetCursorType(Tdisplay hw, uldat type);
 
-  static void linux_Beep(Tdisplay hw);
-  static void linux_Configure(Tdisplay hw, udat resource, byte todefault, udat value);
-  static void linux_ConfigureKeyboard(Tdisplay hw, udat resource, byte todefault, udat value);
-  static bool linux_CanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
-                                dat DstUp);
-  static void linux_DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
-                             dat DstUp);
-  static void linux_DrawSome(Tdisplay hw, dat x, dat y, uldat len);
-  static void linux_DrawStart(Tdisplay hw);
-  static void linux_DrawTCell(Tdisplay hw, dat x, dat y, tcell V);
-  static void linux_FlushVideo(Tdisplay hw);
-  static void linux_HideMouse(Tdisplay hw);
-  static udat linux_LookupKey(Tdisplay hw, udat *ShiftFlags, byte *slen, char *s, byte *retlen,
-                              const char **ret);
-  static void linux_ResetPalette(Tdisplay hw);
-  static void linux_SetColor(Tdisplay hw, tcolor col);
-  static void linux_SetPalette(Tdisplay hw, udat N, udat R, udat G, udat B);
-  static void linux_ShowMouse(Tdisplay hw);
-  static void linux_QuitVideo(Tdisplay hw);
-  static void linux_UpdateCursor(Tdisplay hw);
-  static void linux_UpdateMouseAndCursor(Tdisplay hw);
+  static void gpmConfigureMouse(Tdisplay hw, udat resource, byte todefault, udat value);
+  static bool gpmInitMouse(Tdisplay hw);
+  static void gpmMouseEvent(int fd, Tdisplay hw);
+  static int gpmOpen(Tdisplay hw);
+  static void gpmQuitMouse(Tdisplay hw);
 
-  static bool lrawkbd_InitKeyboard(Tdisplay hw);
-  static void lrawkbd_QuitKeyboard(Tdisplay hw);
-  static void lrawkbd_ConfigureKeyboard(Tdisplay hw, udat resource, byte todefault, udat value);
-  static udat lrawkbd_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen, char **ret);
-  static void lrawkbd_KeyboardEvent(int fd, Tdisplay hw);
-  static bool lrawkbd_GetKeyboard(Tdisplay hw);
-  static bool lrawkbd_SetKeyboard(Tdisplay hw);
-  static void lrawkbd_RestoreKeyboard(Tdisplay hw);
-  static bool lrawkbd_LoadKeymaps();
-  static void lrawkbd_FreeKeymaps();
-  static bool lrawkbd_GrabConsole(Tdisplay hw);
-  static void lrawkbd_ReleaseConsole(Tdisplay hw);
-  static void lrawkbd_InitSignals();
-  static void lrawkbd_QuitSignals();
-  static void lrawkbd_ReactSignalIn(int sig);
-  static void lrawkbd_ReactSignalOut(int sig);
-
-  static void null_InitMouse(Tdisplay hw);
-  static bool null_InitMouseConfirm(Tdisplay hw);
-
-  static void stdin_CheckResize(Tdisplay hw, dat *x, dat *y);
-  static void stdin_DetectSize(Tdisplay hw, dat *x, dat *y);
-  static void stdin_KeyboardEvent(int fd, Tdisplay hw);
-  static bool stdin_InitKeyboard(Tdisplay hw);
-  static void stdin_Resize(Tdisplay hw, dat x, dat y);
-  static void stdin_QuitKeyboard(Tdisplay hw);
-  static bool stdin_TestTty(Tdisplay hw);
-
-  static void termcap_Beep(Tdisplay hw);
-  static void termcap_Cleanup(Tdisplay hw);
-  static void termcap_Configure(Tdisplay hw, udat resource, byte todefault, udat value);
-  static void termcap_ConfigureKeyboard(Tdisplay hw, udat resource, byte todefault, udat value);
-  static bool termcap_CanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
-                                  dat DstUp);
-  static void termcap_DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
+  static void linuxBeep(Tdisplay hw);
+  static void linuxConfigure(Tdisplay hw, udat resource, byte todefault, udat value);
+  static void linuxConfigureKeyboard(Tdisplay hw, udat resource, byte todefault, udat value);
+  static bool linuxCanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
                                dat DstUp);
-  static void termcap_DrawSome(Tdisplay hw, dat x, dat y, uldat len);
-  static void termcap_DrawTCell(Tdisplay hw, dat x, dat y, tcell V);
-  static void termcap_HideMouse(Tdisplay hw);
-  static bool termcap_InitVideo(Tdisplay hw);
-  static udat termcap_LookupKey(Tdisplay hw, udat *ShiftFlags, byte *slen, char *s, byte *retlen,
-                                const char **ret);
-  static void termcap_FlushVideo(Tdisplay hw);
-  static void termcap_MoveToXY(Tdisplay hw, udat x, udat y);
-  static void termcap_QuitVideo(Tdisplay hw);
-  static void termcap_SetColor(Tdisplay hw, tcolor col);
-  static void termcap_SetColor8(Tdisplay hw, tcolor col);
-  static void termcap_SetColor256(Tdisplay hw, tcolor col);
-  static void termcap_SetColor16m(Tdisplay hw, tcolor col);
-  static void termcap_SetCursorType(Tdisplay hw, uldat type);
-  static void termcap_ShowMouse(Tdisplay hw);
-  static void termcap_UpdateCursor(Tdisplay hw);
-  static void termcap_UpdateMouseAndCursor(Tdisplay hw);
+  static void linuxDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
+                            dat DstUp);
+  static void linuxDrawSome(Tdisplay hw, dat x, dat y, uldat len);
+  static void linuxDrawStart(Tdisplay hw);
+  static void linuxDrawTCell(Tdisplay hw, dat x, dat y, tcell V);
+  static void linuxFlushVideo(Tdisplay hw);
+  static void linuxHideMouse(Tdisplay hw);
+  static udat linuxLookupKey(Tdisplay hw, udat *ShiftFlags, byte *slen, char *s, byte *retlen,
+                             const char **ret);
+  static void linuxResetPalette(Tdisplay hw);
+  static void linuxSetColor(Tdisplay hw, tcolor col);
+  static void linuxSetPalette(Tdisplay hw, udat N, udat R, udat G, udat B);
+  static void linuxShowMouse(Tdisplay hw);
+  static void linuxQuitVideo(Tdisplay hw);
+  static void linuxUpdateCursor(Tdisplay hw);
+  static void linuxUpdateMouseAndCursor(Tdisplay hw);
 
-  static void xterm_ConfigureMouse(Tdisplay hw, udat resource, byte todefault, udat value);
-  static bool xterm_InitMouse(Tdisplay hw, byte force);
-  static void xterm_MouseEvent(int fd, Tdisplay hw);
-  static void xterm_QuitMouse(Tdisplay hw);
+  static bool lrawkbdInitKeyboard(Tdisplay hw);
+  static void lrawkbdQuitKeyboard(Tdisplay hw);
+  static void lrawkbdConfigureKeyboard(Tdisplay hw, udat resource, byte todefault, udat value);
+  static udat lrawkbdLookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen, char **ret);
+  static void lrawkbdKeyboardEvent(int fd, Tdisplay hw);
+  static bool lrawkbdGetKeyboard(Tdisplay hw);
+  static bool lrawkbdSetKeyboard(Tdisplay hw);
+  static void lrawkbdRestoreKeyboard(Tdisplay hw);
+  static bool lrawkbdLoadKeymaps();
+  static void lrawkbdFreeKeymaps();
+  static bool lrawkbdGrabConsole(Tdisplay hw);
+  static void lrawkbdReleaseConsole(Tdisplay hw);
+  static void lrawkbdInitSignals();
+  static void lrawkbdQuitSignals();
+  static void lrawkbdReactSignalIn(int sig);
+  static void lrawkbdReactSignalOut(int sig);
+
+  static bool nullInitMouse(Tdisplay hw);
+  static bool nullInitMouseConfirm(Tdisplay hw);
+
+  static void stdinCheckResize(Tdisplay hw, dat *x, dat *y);
+  static void stdinDetectSize(Tdisplay hw, dat *x, dat *y);
+  static void stdinKeyboardEvent(int fd, Tdisplay hw);
+  static bool stdinInitKeyboard(Tdisplay hw);
+  static void stdinResize(Tdisplay hw, dat x, dat y);
+  static void stdinQuitKeyboard(Tdisplay hw);
+  static bool stdinTestTty(Tdisplay hw);
+
+#ifdef CONF_HW_TTY_TERMCAP
+  static void termcapCleanup(Tdisplay hw);
+  static void termcapDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
+                              dat DstUp);
+  static void termcapDrawSome(Tdisplay hw, dat x, dat y, uldat len);
+  static void termcapDrawTCell(Tdisplay hw, dat x, dat y, tcell V);
+  static void termcapHideMouse(Tdisplay hw);
+  static bool termcapInitVideo(Tdisplay hw);
+  static void termcapFlushVideo(Tdisplay hw);
+  static void termcapMoveToXY(Tdisplay hw, udat x, udat y);
+  static void termcapQuitVideo(Tdisplay hw);
+  static void termcapShowMouse(Tdisplay hw);
+  static void termcapUpdateCursor(Tdisplay hw);
+  static void termcapUpdateMouseAndCursor(Tdisplay hw);
+#endif
+
+  static void xtermCleanup(Tdisplay hw);
+  static void xtermDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
+                            dat DstUp);
+  static void xtermDrawSome(Tdisplay hw, dat x, dat y, uldat len);
+  static void xtermDrawTCell(Tdisplay hw, dat x, dat y, tcell V);
+  static void xtermFlushVideo(Tdisplay hw);
+  static void xtermHideMouse(Tdisplay hw);
+  static bool xtermInitVideo(Tdisplay hw);
+  static void xtermQuitVideo(Tdisplay hw);
+  static void xtermShowMouse(Tdisplay hw);
+  static void xtermUpdateCursor(Tdisplay hw);
+  static void xtermUpdateMouseAndCursor(Tdisplay hw);
+
+  static void xtermConfigureMouse(Tdisplay hw, udat resource, byte todefault, udat value);
+  static bool xtermInitMouse(Tdisplay hw, byte force);
+  static void xtermMouseEvent(int fd, Tdisplay hw);
+  static void xtermQuitMouse(Tdisplay hw);
 };
 
 #define ttydriver(hw) ((tty_driver *)(hw)->Private)
 
+#include "hw_tty_common/driver_generic.h"
+#include "hw_tty_common/driver_xterm.h"
 #include "hw_tty_common/kbd_stdin.h"
 #include "hw_tty_common/mouse_xterm.h"
 #include "hw_tty_linux/driver_linux.h"
@@ -197,7 +212,7 @@ public:
 #include "hw_tty_common/driver_termcap.h"
 #endif
 
-TW_ATTR_HIDDEN void tty_driver::null_InitMouse(Tdisplay hw) {
+TW_ATTR_HIDDEN bool tty_driver::nullInitMouse(Tdisplay hw) {
   hw->mouse_slot = NOSLOT; /* no mouse at all :( */
   hw->fnConfigureMouse = (void (*)(Tdisplay, udat, byte, udat))NoOp;
   hw->fnMouseEvent = NULL;
@@ -207,9 +222,12 @@ TW_ATTR_HIDDEN void tty_driver::null_InitMouse(Tdisplay hw) {
 
   /* override the ones set by *_InitVideo() */
   hw->fnShowMouse = hw->fnHideMouse = NULL;
+
+  log(INFO) << "     nullInitMouse() ok: continuing without mouse support.\n";
+  return true;
 }
 
-TW_ATTR_HIDDEN bool tty_driver::null_InitMouseConfirm(Tdisplay hw) {
+TW_ATTR_HIDDEN bool tty_driver::nullInitMouseConfirm(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
   byte c = '\0';
 
@@ -227,13 +245,12 @@ TW_ATTR_HIDDEN bool tty_driver::null_InitMouseConfirm(Tdisplay hw) {
   SetAlarm(0);
 
   if (c == '\n' || c == '\r') {
-    null_InitMouse(hw);
-    return true;
+    return nullInitMouse(hw);
   }
   return false;
 }
 
-TW_ATTR_HIDDEN void tty_driver::stdin_DetectSize(Tdisplay hw, dat *x, dat *y) {
+TW_ATTR_HIDDEN void tty_driver::stdinDetectSize(Tdisplay hw, dat *x, dat *y) {
   struct winsize wsiz;
   tty_driver *self = ttydriver(hw);
 
@@ -245,12 +262,12 @@ TW_ATTR_HIDDEN void tty_driver::stdin_DetectSize(Tdisplay hw, dat *x, dat *y) {
   *y = hw->Y;
 }
 
-TW_ATTR_HIDDEN void tty_driver::stdin_CheckResize(Tdisplay hw, dat *x, dat *y) {
+TW_ATTR_HIDDEN void tty_driver::stdinCheckResize(Tdisplay hw, dat *x, dat *y) {
   *x = Min2(*x, hw->X);
   *y = Min2(*y, hw->Y);
 }
 
-TW_ATTR_HIDDEN void tty_driver::stdin_Resize(Tdisplay hw, dat x, dat y) {
+TW_ATTR_HIDDEN void tty_driver::stdinResize(Tdisplay hw, dat x, dat y) {
   if (x < hw->usedX || y < hw->usedY) {
     tty_driver *self = ttydriver(hw);
     /*
@@ -309,10 +326,10 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
   Chars arg = hw->Name;
   tty_driver *self;
   enum /*: byte*/ { NEVER = 0, MAYBE = 1, ALWAYS = 2 };
-  byte autotry_video = MAYBE, try_stdout = MAYBE, try_termcap = MAYBE, autotry_kbd = MAYBE,
-       try_lrawkbd = MAYBE;
-  bool force_mouse = false, need_persistent_slot = false, try_ctty = false, is_ctty = false,
-       term_override = false;
+  byte autotry_video = MAYBE, try_stdout = MAYBE, try_termcap = MAYBE, try_xterm = MAYBE;
+  byte autotry_kbd = MAYBE, try_lrawkbd = MAYBE;
+  bool force_mouse = false, need_persistent_slot = false;
+  bool try_ctty = false, is_ctty = false, term_override = false;
 
   if (!(hw->Private = self = (tty_driver *)AllocMem0(sizeof(tty_driver)))) {
     log(ERROR) << "      tty.InitHW(): Out of memory!\n";
@@ -383,6 +400,8 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
         try_stdout = !(autotry_video = arg0.view(7, comma) == Chars("=no")) << 1;
       } else if (arg0.starts_with(Chars(",termcap"))) {
         try_termcap = !(autotry_video = arg0.view(8, comma) == Chars("=no")) << 1;
+      } else if (arg0.starts_with(Chars(",xterm"))) {
+        try_xterm = !(autotry_video = arg0.view(6, comma) == Chars("=no")) << 1;
       } else if (arg0.starts_with(Chars(",raw"))) {
         try_lrawkbd = !(autotry_kbd = arg0.view(4, comma) == Chars("=no")) << 1;
       } else if (arg0 == Chars(",ctty")) {
@@ -542,42 +561,41 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
   /*
    * ORDERING IS CRITICAL HERE!
    *
-   * xterm_InitMouse() does not need to manually hide/show the mouse pointer,
+   * xtermInitMouse() does not need to manually hide/show the mouse pointer,
    * so it overrides hw->ShowMouse and hw->HideMouse installed by *_InitVideo()
    *
    * Thus mouse initialization must come *AFTER* video initialization
    *
-   * null_InitMouseConfirm() tries a blocking read() from tty_fd
+   * nullInitMouseConfirm() tries a blocking read() from tty_fd
    * (it asks user if he/she really wants to run without mouse),
-   * while lrawkbd_InitKeyboard() puts tty_fd in non-blocking mode.
+   * while lrawkbdInitKeyboard() puts tty_fd in non-blocking mode.
    *
    * Thus mouse initialization must come *BEFORE* keyboard initialization
    */
 
-  if (!stdin_TestTty(hw)) {
+  if (!stdinTestTty(hw)) {
     log(ERROR) << "      tty.InitHW() failed: unable to read from the terminal: " << Errstr << "\n";
-  } else if (
-
-      (TRY_V(stdout) && linux_InitVideo(hw)) ||
+  } else if ((TRY_V(stdout) && linuxInitVideo(hw)) //
+             || (TRY_V(xterm) && xtermInitVideo(hw))
 #ifdef CONF_HW_TTY_TERMCAP
-      (TRY_V(termcap) && termcap_InitVideo(hw)) ||
+             || (TRY_V(termcap) && termcapInitVideo(hw))
 #endif
-      false) {
+  ) {
 
     if (
 #ifdef CONF_HW_TTY_LINUX
-        gpm_InitMouse(hw) ||
+        gpmInitMouse(hw) ||
 #else
         (log(WARNING) << "      tty.InitHW(): gpm mouse support not compiled, skipping it.\n",
          false) ||
 #endif
-        xterm_InitMouse(hw, force_mouse) || null_InitMouseConfirm(hw)) {
+        xtermInitMouse(hw, force_mouse) || nullInitMouseConfirm(hw)) {
 
       if (
 #if defined(CONF_HW_TTY_LINUX) && defined(CONF_HW_TTY_LRAWKBD)
-          (TRY_K(lrawkbd) && lrawkbd_InitKeyboard(hw)) ||
+          (TRY_K(lrawkbd) && lrawkbdInitKeyboard(hw)) ||
 #endif
-          (autotry_kbd && stdin_InitKeyboard(hw))) {
+          (autotry_kbd && stdinInitKeyboard(hw))) {
 
         if (self->tty_charset == (uldat)-1) {
           self->tty_UTF_32_to_charset = Tutf_UTF_32_to_ASCII;
@@ -588,7 +606,7 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
         }
 
         /*
-         * must be deferred until now, as termcap_InitVideo() can detect truecolor support
+         * must be deferred until now, as termcapInitVideo() can detect truecolor support
          */
         if (self->colormode == tty_color_autodetect) {
           Chars env_colorterm;
@@ -622,7 +640,7 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
          * without forcing all other displays
          * to redraw everything too.
          */
-        stdin_DetectSize(hw, &hw->usedX, &hw->usedY);
+        stdinDetectSize(hw, &hw->usedX, &hw->usedY);
         hw->usedX = GetDisplayWidth();
         hw->usedY = GetDisplayHeight();
 

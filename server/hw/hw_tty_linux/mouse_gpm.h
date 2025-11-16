@@ -11,7 +11,7 @@ static bool gpm_used;
  * mouse input uses libgpm to connect to `gpm' mouse daemon
  * and read mouse state, but draws mouse pointer manually
  */
-TW_ATTR_HIDDEN int tty_driver::gpm_Open(Tdisplay hw) {
+TW_ATTR_HIDDEN int tty_driver::gpmOpen(Tdisplay hw) {
   /*
    * HACK! this works around a quirk in libgpm:
    * if Gpm_Open fails, it sets gpm_tried to non-zero
@@ -21,12 +21,12 @@ TW_ATTR_HIDDEN int tty_driver::gpm_Open(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
 
   if (!self->tty_name) {
-    log(ERROR) << "      gpm_InitMouse() failed: unable to detect tty device\n";
+    log(ERROR) << "      gpmInitMouse() failed: unable to detect tty device\n";
     return NOFD;
   }
   if (self->tty_number < 1 || self->tty_number > 63) {
-    log(ERROR) << "      gpm_InitMouse() failed: terminal `" << self->tty_name
-               << "'\n      is not a local linux console.\n";
+    log(ERROR) << "      gpmInitMouse() failed: terminal `" << self->tty_name
+               << "' is not a local linux console.\n";
     return NOFD;
   }
 
@@ -44,9 +44,8 @@ TW_ATTR_HIDDEN int tty_driver::gpm_Open(Tdisplay hw) {
   if (self->gpm_fd >= 0) {
     /* gpm_consolefd is opened by GPM_Open() */
     fcntl(gpm_consolefd, F_SETFD, FD_CLOEXEC);
-    log(INFO) << "      enabled GPM mouse support.\n";
   } else {
-    log(ERROR) << "      gpm_InitMouse() failed: unable to connect to `gpm'.\n"
+    log(ERROR) << "      gpmInitMouse() failed: unable to connect to `gpm'.\n"
                   "      make sure you started `twin' from the console\n"
                   "      and/or check that `gpm' is running.\n";
   }
@@ -54,12 +53,12 @@ TW_ATTR_HIDDEN int tty_driver::gpm_Open(Tdisplay hw) {
 }
 
 /* return tfalse if failed */
-TW_ATTR_HIDDEN bool tty_driver::gpm_InitMouse(Tdisplay hw) {
+TW_ATTR_HIDDEN bool tty_driver::gpmInitMouse(Tdisplay hw) {
   if (gpm_used) {
-    log(ERROR) << "      gpm_InitMouse() failed: already connected to `gpm'.\n";
+    log(ERROR) << "      gpmInitMouse() failed: already connected to `gpm'.\n";
     return false;
   }
-  if (gpm_Open(hw) < 0) {
+  if (gpmOpen(hw) < 0) {
     return false;
   }
   tty_driver *self = ttydriver(hw);
@@ -67,7 +66,7 @@ TW_ATTR_HIDDEN bool tty_driver::gpm_InitMouse(Tdisplay hw) {
   fcntl(self->gpm_fd, F_SETFD, FD_CLOEXEC);
   fcntl(self->gpm_fd, F_SETFL, O_NONBLOCK);
 
-  hw->mouse_slot = RegisterRemote(self->gpm_fd, (Tobj)hw, (void (*)(int, Tobj))gpm_MouseEvent);
+  hw->mouse_slot = RegisterRemote(self->gpm_fd, (Tobj)hw, (void (*)(int, Tobj))gpmMouseEvent);
   if (hw->mouse_slot == NOSLOT) {
     Gpm_Close();
     return false;
@@ -75,16 +74,17 @@ TW_ATTR_HIDDEN bool tty_driver::gpm_InitMouse(Tdisplay hw) {
 
   hw->FlagsHW |= FlagSoftMouseHW; /* _we_ Hide/Show it */
 
-  hw->fnMouseEvent = gpm_MouseEvent;
-  hw->fnConfigureMouse = gpm_ConfigureMouse;
-  hw->fnQuitMouse = gpm_QuitMouse;
+  hw->fnMouseEvent = gpmMouseEvent;
+  hw->fnConfigureMouse = gpmConfigureMouse;
+  hw->fnQuitMouse = gpmQuitMouse;
 
   gpm_used = true;
 
+  log(INFO) << "   gpmInitMouse() ok: enabled GPM mouse support.\n";
   return true;
 }
 
-TW_ATTR_HIDDEN void tty_driver::gpm_QuitMouse(Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::gpmQuitMouse(Tdisplay hw) {
 #if 0
   hw->HideMouse();
 #endif
@@ -98,8 +98,8 @@ TW_ATTR_HIDDEN void tty_driver::gpm_QuitMouse(Tdisplay hw) {
   hw->fnQuitMouse = NULL;
 }
 
-TW_ATTR_HIDDEN void tty_driver::gpm_ConfigureMouse(Tdisplay hw, udat resource, byte todefault,
-                                                   udat value) {
+TW_ATTR_HIDDEN void tty_driver::gpmConfigureMouse(Tdisplay hw, udat resource, byte todefault,
+                                                  udat value) {
   switch (resource) {
   case HW_MOUSEMOTIONEVENTS:
     /* nothing to do */
@@ -109,7 +109,7 @@ TW_ATTR_HIDDEN void tty_driver::gpm_ConfigureMouse(Tdisplay hw, udat resource, b
   }
 }
 
-TW_ATTR_HIDDEN void tty_driver::gpm_MouseEvent(int fd, Tdisplay hw) {
+TW_ATTR_HIDDEN void tty_driver::gpmMouseEvent(int fd, Tdisplay hw) {
   Gpm_Event ev;
   tty_driver *self = ttydriver(hw);
   int left = 0;
@@ -125,9 +125,9 @@ TW_ATTR_HIDDEN void tty_driver::gpm_MouseEvent(int fd, Tdisplay hw) {
   do {
     if ((left = Gpm_GetEvent(&ev)) <= 0) {
       if (loopN == 30) {
-        log(ERROR) << "gpm_MouseEvent(): connection to gpm lost. Continuing without mouse :-(\n";
+        log(ERROR) << "gpmMouseEvent(): connection to gpm lost. Continuing without mouse :-(\n";
         hw->QuitMouse();
-        null_InitMouse(hw);
+        nullInitMouse(hw);
       }
       break;
     }

@@ -595,7 +595,7 @@ static udat do_shift(byte value, byte up_flag) {
     npadch = -1;
   }
 
-  return (up_flag || value >= map_SHIFT_len) ? TW_Null : map_SHIFT[value];
+  return (up_flag || value >= map_SHIFT_len) ? (udat)TW_Null : map_SHIFT[value];
 }
 
 /* called after returning from RAW mode or when changing consoles -
@@ -798,7 +798,7 @@ static void set_lights(int lights) {
 
 static udat *lrawkbd_keymaps[lrawkbd_KEYMAPS_N];
 
-TW_ATTR_HIDDEN void tty_driver::lrawkbd_FreeKeymaps() {
+TW_ATTR_HIDDEN void tty_driver::lrawkbdFreeKeymaps() {
   udat *keymap;
   ldat table;
   for (table = 0; table < lrawkbd_KEYMAPS_N; table++) {
@@ -809,7 +809,7 @@ TW_ATTR_HIDDEN void tty_driver::lrawkbd_FreeKeymaps() {
   }
 }
 
-TW_ATTR_HIDDEN bool tty_driver::lrawkbd_LoadKeymaps() {
+TW_ATTR_HIDDEN bool tty_driver::lrawkbdLoadKeymaps() {
   struct kbentry ke;
   tty_driver *self = ttydriver(lrawkbd_hw);
   ldat table, keycode;
@@ -818,7 +818,7 @@ TW_ATTR_HIDDEN bool tty_driver::lrawkbd_LoadKeymaps() {
    * set UNICODE keyboard mode.
    * needed to get accurate results from ioctl(tty_fd, KDGKBENT, ...)
    *
-   * keyboard mode will be overridden in lrawkbd_SetKeyboard(),
+   * keyboard mode will be overridden in lrawkbdSetKeyboard(),
    * no need to restore it here.
    */
   if (ioctl(self->tty_fd, KDSKBMODE, K_UNICODE) < 0) {
@@ -951,8 +951,8 @@ static udat handle_keycode(byte keycode, byte up) {
   return twk;
 }
 
-TW_ATTR_HIDDEN udat tty_driver::lrawkbd_LookupKey(udat *ShiftFlags, byte *slen, char *s,
-                                                  byte *retlen, char **ret) {
+TW_ATTR_HIDDEN udat tty_driver::lrawkbdLookupKey(udat *ShiftFlags, byte *slen, char *s,
+                                                 byte *retlen, char **ret) {
   udat twk;
   byte k = (byte)*s;
 

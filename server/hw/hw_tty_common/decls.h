@@ -1,6 +1,6 @@
 
-#ifndef TWIN_HW_TTY_TERM_H
-#define TWIN_HW_TTY_TERM_H
+#ifndef TWIN_HW_TTY_DECLS_H
+#define TWIN_HW_TTY_DECLS_H
 
 /*
  * termcap names for special keys:
@@ -71,4 +71,4 @@ enum {
   tc_seq_N = tc_key_last
 };
 
-#endif /* TWIN_HW_TTY_TERMCAP_H */
+#endif /* TWIN_HW_TTY_DECLS_H */
