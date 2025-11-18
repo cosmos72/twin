@@ -54,6 +54,8 @@ TW_ATTR_HIDDEN void tty_driver::genericConfigureKeyboard(Tdisplay hw, udat resou
 
 TW_ATTR_HIDDEN bool tty_driver::genericCanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn,
                                                    dat DstLeft, dat DstUp) {
+  (void)Up;
+  (void)DstLeft;
   return Left == 0 && Rgt == hw->X - 1 && Dwn == hw->Y - 1 && DstUp == 0;
 }
 

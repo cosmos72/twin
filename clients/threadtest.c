@@ -112,9 +112,12 @@ void mainloop(twindow *Win) {
 }
 
 int main(int argc, char *argv[]) {
-  if (!InitThrd())
-    Quit();
+  (void)argc;
+  (void)argv;
 
+  if (!InitThrd()) {
+    Quit();
+  }
   fd = TwConnectionFd();
 
   seed = time(NULL);

@@ -570,13 +570,13 @@ static void HandleGadget(tevent_gadget E) {
 static void SignalPanic(int n) {
   signal(n, SIG_DFL);
   quit();
-  TW_RETFROMSIGNAL(0);
 }
 
 static void SignalChild(int n) {
   pid_t pid;
   int status;
 
+  (void)n;
   signal(SIGCHLD, SignalChild);
 
   while ((pid = Tw_wait3(&status, WNOHANG, (struct rusage *)0)) != 0 && pid != (pid_t)-1) {
@@ -585,7 +585,6 @@ static void SignalChild(int n) {
         AttachPid = (pid_t)-1;
     }
   }
-  TW_RETFROMSIGNAL(0);
 }
 
 static void InitSignals(void) {
@@ -617,6 +616,7 @@ int main(int argc, char *argv[]) {
   tmsg msg;
   uldat err;
 
+  (void)argc;
   Args = argv + 1;
 
   ParseArgs();
@@ -684,8 +684,8 @@ int main(int argc, char *argv[]) {
     /* wait for user to logout */
     while (AttachPid != (pid_t)-1 && ServerPid != (pid_t)-1 && logged_in == ttrue && !TwInPanic()) {
 
-      while ((msg = TwReadMsg(tfalse)))
-        ;
+      while ((msg = TwReadMsg(tfalse))) {
+      }
 
       /* sleep until a message or a signal arrives (as above) */
       FD_SET(fd, &fset);
@@ -697,10 +697,10 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if ((err = TwErrno))
+  if ((err = TwErrno) != 0) {
     fprintf(stderr, "%s: libtw error: %s%s\n", argv[0], TwStrError(err),
             TwStrErrorDetail(err, TwErrnoDetail));
-
+  }
   quit();
 
   /*NOTREACHED*/

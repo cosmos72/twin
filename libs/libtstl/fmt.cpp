@@ -16,6 +16,7 @@
 // Fmt<Void>
 
 to_chars_result Fmt<Void>::write_to(Span<char> dst) const NOTHROW {
+  (void)dst;
   return to_chars_result(0, SUCCESS);
 }
 

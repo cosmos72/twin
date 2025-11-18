@@ -298,17 +298,17 @@ TW_ATTR_HIDDEN void XDRIVER::HandleEvent(XEvent *event) {
     case ButtonPress:
     case ButtonRelease:
       x = event->xbutton.x / this->xwfont + this->xhw_startx;
-      if (x < 0)
+      if (x < 0) {
         x = 0;
-      else if (x >= DisplayWidth)
+      } else if (x >= DisplayWidth) {
         x = DisplayWidth - 1;
-
+      }
       y = event->xbutton.y / this->xhfont + this->xhw_starty;
-      if (y < 0)
+      if (y < 0) {
         y = 0;
-      else if (y >= DisplayHeight)
+      } else if (y >= DisplayHeight) {
         y = DisplayHeight - 1;
-
+      }
       if (event->type == MotionNotify) {
         dx = event->xbutton.x < this->xwfont / 2                   ? -1
              : this->xwidth - event->xbutton.x <= this->xwfont / 2 ? 1
@@ -316,8 +316,9 @@ TW_ATTR_HIDDEN void XDRIVER::HandleEvent(XEvent *event) {
         dy = event->xbutton.y < this->xhfont / 2                    ? -1
              : this->xheight - event->xbutton.y <= this->xhfont / 2 ? 1
                                                                     : 0;
-        if (dx || dy || x != hw->MouseState.x || y != hw->MouseState.y)
+        if (dx || dy || x != hw->MouseState.x || y != hw->MouseState.y) {
           MouseEventCommon(hw, x, y, dx, dy, hw->MouseState.keys);
+        }
         break;
       }
 
@@ -406,7 +407,7 @@ TW_ATTR_HIDDEN void XDRIVER::HandleEvent(XEvent *event) {
 TW_ATTR_HIDDEN void XDRIVER::KeyboardEvent(int fd, Tdisplay hw) {
   XEvent event;
   XDRIVER *self = xdriver(hw);
-
+  (void)fd;
   while (XPending(self->xdisplay) > 0) {
     XNextEvent(self->xdisplay, &event);
     self->HandleEvent(&event);

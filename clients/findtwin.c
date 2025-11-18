@@ -82,6 +82,7 @@ static void search_unix_socket(void) {
 #endif
 
 int main(int argc, char *argv[]) {
+  (void)argc;
 
   /* first: if given, check _ONLY_ command-line specified servers */
   if (*++argv) {

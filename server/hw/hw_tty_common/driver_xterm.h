@@ -1,6 +1,7 @@
 
 
 TW_ATTR_HIDDEN void tty_driver::xtermCleanup(Tdisplay hw) {
+  (void)hw;
 }
 
 TW_ATTR_HIDDEN bool tty_driver::xtermInitVideo(Tdisplay hw) {
@@ -264,6 +265,10 @@ TW_ATTR_HIDDEN void tty_driver::xtermDragArea(Tdisplay hw, dat Left, dat Up, dat
                                               dat DstLeft, dat DstUp) {
   tty_driver *self = ttydriver(hw);
   udat delta = Up - DstUp;
+
+  (void)Rgt;
+  (void)Left;
+  (void)DstLeft;
 
   hw->HideMouse();
   hw->FlagsHW |= FlagChangedMouseFlagHW;

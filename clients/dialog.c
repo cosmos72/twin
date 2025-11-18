@@ -83,6 +83,7 @@ static byte InitButtons(const char *bt1, const char *bt2) {
 }
 
 static byte InitGadgets(byte radio) {
+  (void)radio;
   return tfalse;
 }
 

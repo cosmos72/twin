@@ -106,6 +106,7 @@ TW_ATTR_HIDDEN udat tty_driver::linuxLookupKey(Tdisplay hw, udat *ShiftFlags, by
                                                byte *retlen, const char **ret) {
   byte used = 0, len = *slen;
 
+  (void)hw;
   *ShiftFlags = 0;
 
   if (len == 0) {

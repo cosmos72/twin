@@ -226,6 +226,7 @@ int main(int argc, char *argv[]) {
   tmsg msg;
   uldat err;
   udat Code;
+  (void)argc;
 
   if (InitEvent())
     while ((msg = TwReadMsg(ttrue))) {

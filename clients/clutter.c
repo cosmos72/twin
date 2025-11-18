@@ -63,6 +63,7 @@ static byte InitClutter(void) {
 int main(int argc, char *argv[]) {
   tmsg msg;
   uldat err;
+  (void)argc;
 
   if (!InitClutter()) {
     err = TwErrno;

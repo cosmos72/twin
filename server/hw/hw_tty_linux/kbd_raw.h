@@ -265,8 +265,6 @@ TW_ATTR_HIDDEN void tty_driver::lrawkbdReactSignalOut(int sig) {
 
   tty_driver *self = ttydriver(hw);
   ioctl(self->tty_fd, VT_RELDISP, 1);
-
-  TW_RETFROMSIGNAL(0);
 }
 
 TW_ATTR_HIDDEN void tty_driver::lrawkbdReactSignalIn(int sig) {
@@ -280,8 +278,6 @@ TW_ATTR_HIDDEN void tty_driver::lrawkbdReactSignalIn(int sig) {
   (void)ioctl(self->tty_fd, VT_RELDISP, 2);
 
   lrawkbdSetKeyboard(hw);
-
-  TW_RETFROMSIGNAL(0);
 }
 
 TW_ATTR_HIDDEN void tty_driver::lrawkbdInitSignals() {

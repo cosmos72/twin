@@ -27,9 +27,12 @@ int main(int argc, char *argv[]) {
   uldat id;
   tdisplay td;
   int err;
+  (void)argc;
+  (void)argv;
 
-  if (!(td = Tw_Open(NULL)) || !(id = Tw_GetAll(td)))
+  if (!(td = Tw_Open(NULL)) || !(id = Tw_GetAll(td))) {
     return errmsg(td);
+  }
 
   /*
    * race! we cannot use Tw_StatL() here, since the Tw_* calls below
@@ -61,20 +64,20 @@ int main(int argc, char *argv[]) {
             printf("%.*s\n", (int)NameLen, Name);
           }
         }
-        if (reply2)
+        if (reply2) {
           Tw_DeleteStat(td, reply2);
-        if (!fl)
+        }
+        if (!fl) {
           putchar('\n');
-
+        }
         data++;
       }
       fflush(stdout);
     }
   }
-
-  if (td && reply)
+  if (td && reply) {
     Tw_DeleteStat(td, reply);
-
+  }
   err = errmsg(td);
 
   Tw_Close(td);

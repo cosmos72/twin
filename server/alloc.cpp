@@ -104,8 +104,8 @@ volatile int AlarmReceived = 0;
 
 static void AlarmHandler(int sig) NOTHROW {
   AlarmReceived = 1;
-  TW_RETFROMSIGNAL(0);
 }
+
 void SetAlarm(unsigned seconds) NOTHROW {
   struct sigaction act;
   if (seconds != 0) {

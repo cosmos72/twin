@@ -286,6 +286,7 @@ static byte switchToTty(void) {
 
 /* 5. fork() a program in a pseudo-teletype */
 int Spawn(twindow Window, pid_t *ppid, dat X, dat Y, const char *arg0, const char *const *argv) {
+  (void)Window;
 
   TwGetPrivileges();
 

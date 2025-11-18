@@ -195,6 +195,8 @@ TW_ATTR_HIDDEN char *XDRIVER::AutodetectFont(const char *family, udat fontwidth,
 
 TW_ATTR_HIDDEN bool XDRIVER::AllocColor(Visual *xvisual, Colormap colormap, XColor *color,
                                         unsigned long *pixel, int color_num) {
+  (void)xvisual;
+  (void)color_num;
   if (XAllocColor(this->xdisplay, colormap, color)) {
     *pixel = color->pixel;
     return true;

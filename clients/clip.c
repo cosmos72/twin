@@ -65,6 +65,7 @@ static byte InitClip(void) {
 int main(int argc, char *argv[]) {
   tmsg msg;
   uldat err, WinN = 1;
+  (void)argc;
 
   if (InitClip())
     while ((msg = TwReadMsg(ttrue))) {
@@ -100,10 +101,10 @@ int main(int argc, char *argv[]) {
         }
       }
     }
-  if ((err = TwErrno))
+  if ((err = TwErrno) != 0) {
     fprintf(stderr, "%s: libtw error: %s%s\n", argv[0], TwStrError(err),
             TwStrErrorDetail(err, TwErrnoDetail));
-
+  }
   if (!TwInPanic()) {
     /* these are not strictly necessary, as the server would cleanup by itself... */
     TwDeleteMenu(Clip_Menu);

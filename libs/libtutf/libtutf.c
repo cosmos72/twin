@@ -282,6 +282,7 @@
 #undef TEMPLATE_REDEFINES_ASCII
 #undef TEMPLATE
 
+/* clang-format off */
 #define _NLIST(EL)                                                                                 \
   EL(T_MAP(ASCII))                                                                                 \
   EL(T_MAP(ISO8859_1))                                                                             \
@@ -373,6 +374,7 @@
   EL(T_MAP(KZ1048))                                                                                \
   EL(T_MAP(NEXTSTEP))                                                                              \
   EL(T_MAP(VT100GR))
+/* clang-format on */
 
 #define _LIST(EL) EL(T_MAP(UTF_32)) _NLIST(EL)
 
@@ -395,7 +397,8 @@ typedef struct {
 
 #define DECL_CH(ch) {T_CAT(names_, ch), T_CAT3(Tutf_, ch, _to_UTF_32), T_CAT(Tutf_UTF_32_to_, ch)},
 
-static Tutf_struct Tutf_structs[] = {{T_CAT(names_, UTF_32), NULL, NULL}, _NLIST(DECL_CH){NULL}};
+static Tutf_struct Tutf_structs[] = {{T_CAT(names_, UTF_32), NULL, NULL},
+                                     _NLIST(DECL_CH){NULL, NULL, NULL}};
 
 #undef DECL_CH
 
@@ -403,17 +406,18 @@ static int strloosecmp(const char *s1, const char *s2) {
   byte c1, c2;
 
   do {
-    while ((c1 = *s1++) && (c1 == ' ' || c1 == '-' || c1 == '_' || c1 == '.' || c1 == ':'))
-      ;
+    while ((c1 = *s1++) && (c1 == ' ' || c1 == '-' || c1 == '_' || c1 == '.' || c1 == ':')) {
+    }
 
-    while ((c2 = *s2++) && (c2 == ' ' || c2 == '-' || c2 == '_' || c2 == '.' || c2 == ':'))
-      ;
+    while ((c2 = *s2++) && (c2 == ' ' || c2 == '-' || c2 == '_' || c2 == '.' || c2 == ':')) {
+    }
 
-    if (c1 >= 'A' && c1 <= 'Z')
+    if (c1 >= 'A' && c1 <= 'Z') {
       c1 += 'a' - 'A';
-
-    if (c2 >= 'A' && c2 <= 'Z')
+    }
+    if (c2 >= 'A' && c2 <= 'Z') {
       c2 += 'a' - 'A';
+    }
 
   } while (c1 == c2 && c1 && c2);
 
@@ -423,13 +427,15 @@ static int strloosecmp(const char *s1, const char *s2) {
 uldat Tutf_charset_id(const char *alias) {
   Tutf_struct *CH;
   const char **names;
-  if (alias)
+  if (alias) {
     for (CH = Tutf_structs; (names = CH->names); CH++) {
       for (; *names; names++) {
-        if (!strloosecmp(alias, *names))
+        if (!strloosecmp(alias, *names)) {
           return (uldat)(CH - Tutf_structs);
+        }
       }
     }
+  }
   return (uldat)-1;
 }
 

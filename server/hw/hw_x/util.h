@@ -208,11 +208,14 @@ TW_ATTR_HIDDEN void XDRIVER::utf8_to_wchar(Chars src, Vector<wchar_t> &dst) {
 /*
  * notify our Selection to X11
  */
-TW_ATTR_HIDDEN void XDRIVER::SelectionNotify_X11(Tdisplay hw, uldat reqprivate, e_id Magic,
+TW_ATTR_HIDDEN void XDRIVER::SelectionNotify_X11(Tdisplay hw, uldat reqprivate, e_id magic,
                                                  Chars /*mime*/, Chars data) {
   XEvent ev;
   XDRIVER *self = xdriver(hw);
   Atom target;
+
+  (void)reqprivate;
+  (void)magic;
 
   if (self->XReqCount == 0) {
     log(ERROR) << THIS
@@ -421,10 +424,15 @@ TW_ATTR_HIDDEN void XDRIVER::SelectionRequest_up(XSelectionRequestEvent *req) {
 
 TW_ATTR_HIDDEN bool XDRIVER::CanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn,
                                          dat DstLeft, dat DstUp) {
-  return !hw->RedrawVideo /* if window is not up-to-date, XCopyArea() is unusable */
+  (void)DstLeft;
+  (void)DstUp;
+
+  /* if window is not up-to-date, XCopyArea() is unusable */
+  return !hw->RedrawVideo
          /* if window is partially covered, XCopyArea() cannot work */
-         && xdriver(hw)->xwindow_AllVisible         /**/
-         && (Rgt - Left + 1) * (Dwn - Up + 1) > 20; /* avoid XCopyArea() for very small areas */
+         && xdriver(hw)->xwindow_AllVisible
+         /* avoid XCopyArea() for very small areas */
+         && (ldat)(Rgt - Left + 1) * (ldat)(Dwn - Up + 1) > 20;
 }
 
 TW_ATTR_HIDDEN void XDRIVER::DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,

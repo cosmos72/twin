@@ -255,6 +255,7 @@ TW_ATTR_HIDDEN bool XDRIVER::AllocColor(Visual *visual, Colormap colormap, XColo
 }
 
 Tutf_function TW_ATTR_HIDDEN XDRIVER::UTF_32_to_charset_function(const char *charset) {
+  (void)charset;
   /* this is sufficient for XftDrawStringUtf8 */
   return UTF_32_identity;
 }

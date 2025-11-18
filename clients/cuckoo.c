@@ -95,16 +95,15 @@ static volatile int ReceivedFatalSignal = tfalse;
 
 static void SignalChild(int n) {
   pid_t pid;
+  (void)n;
   signal(SIGCHLD, SignalChild);
-  while ((pid = Tw_wait3(NULL, WNOHANG, NULL)) != 0 && pid != (pid_t)-1)
-    ;
-  TW_RETFROMSIGNAL(0);
+  while ((pid = Tw_wait3(NULL, WNOHANG, NULL)) != 0 && pid != (pid_t)-1) {
+  }
 }
 
 static void SignalFatal(int n) {
   ReceivedFatalSignal = n;
   signal(n, SIG_DFL);
-  TW_RETFROMSIGNAL(0);
 }
 
 byte InitSignals(void) {

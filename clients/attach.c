@@ -48,15 +48,14 @@ static void Usage(byte detach) {
 static TW_VOLATILE byte gotSignals, gotSignalWinch, gotSignalPanic;
 
 static void SignalWinch(int n) {
+  (void)n;
   signal(SIGWINCH, SignalWinch);
   gotSignals = gotSignalWinch = ttrue;
-  TW_RETFROMSIGNAL(0);
 }
 
 static void SignalPanic(int n) {
   signal(n, SIG_IGN);
   gotSignals = gotSignalPanic = ttrue;
-  TW_RETFROMSIGNAL(0);
 }
 
 static void ShowVersion(void) {

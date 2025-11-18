@@ -587,5 +587,6 @@ EXTERN_C byte InitModule(Tmodule mod) {
 }
 
 /* this MUST be defined, otherwise it seems to trigger a bug in dlsym() */
-EXTERN_C void QuitModule(Tmodule mod) {
+EXTERN_C void QuitModule(Tmodule m) {
+  (void)m;
 }

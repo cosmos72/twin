@@ -37,6 +37,7 @@ static event_display *ev;
 static uldat Used;
 
 inline void display_CreateMsg(Tdisplay hw, udat Code, udat Len) {
+  (void)hw;
   gmsg->Event.EventDisplay.Code = Code;
   gmsg->Event.EventDisplay.Len = Len;
 }
@@ -287,7 +288,9 @@ static void display_Resize(Tdisplay hw, dat x, dat y) {
 
 static bool display_CanDragArea(Tdisplay /*hw*/, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
                                 dat DstUp) {
-  return (Rgt - Left + 1) * (Dwn - Up + 1) > 20;
+  (void)DstLeft;
+  (void)DstUp;
+  return (ldat)(Rgt - Left + 1) * (ldat)(Dwn - Up + 1) > 20;
 }
 
 static void display_DragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
@@ -555,11 +558,12 @@ static bool display_InitHW(Tdisplay hw) {
   return true;
 }
 
-EXTERN_C byte InitModule(Tmodule Module) {
-  Module->DoInit = display_InitHW;
+EXTERN_C byte InitModule(Tmodule m) {
+  m->DoInit = display_InitHW;
   return ttrue;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-EXTERN_C void QuitModule(Tmodule Module) {
+EXTERN_C void QuitModule(Tmodule m) {
+  (void)m;
 }

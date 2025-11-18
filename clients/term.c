@@ -295,9 +295,9 @@ static void CloseTerm(uldat Slot) {
 static volatile byte ReceivedSignalChild;
 
 static void SignalChild(int n) {
+  (void)n;
   ReceivedSignalChild = ttrue;
   signal(SIGCHLD, SignalChild);
-  TW_RETFROMSIGNAL(0);
 }
 
 static void RemotePidIsDead(pid_t pid) {

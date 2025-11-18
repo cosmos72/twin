@@ -942,6 +942,7 @@ static void ExtractServProtocol(tw_d TwD, byte *servdata, uldat len) {
  * returns library protocol version
  */
 uldat Tw_LibraryVersion(tw_d TwD) {
+  (void)TwD;
   return TW_PROTOCOL_VERSION;
 }
 
@@ -1469,6 +1470,7 @@ tw_errno *Tw_ErrnoLocation(tw_d TwD) {
  * returns a string description of given error
  */
 TW_ATTR_FN_CONST const char *Tw_StrError(const tw_d TwD, uldat e) {
+  (void)TwD;
   switch (e) {
   case 0:
     return "success";
@@ -1531,6 +1533,7 @@ TW_ATTR_FN_CONST const char *Tw_StrError(const tw_d TwD, uldat e) {
  * returns a string description of given error detail
  */
 TW_ATTR_FN_CONST const char *Tw_StrErrorDetail(const tw_d TwD, uldat E, uldat S) {
+  (void)TwD;
   switch (E) {
   case TW_ESERVER_LOST_CONNECT:
     switch (S) {
@@ -2650,6 +2653,7 @@ tslist TwCloneStatL(tobj Id, uldat hN, ...) {
  * with one of the Tw_*Stat() functions
  */
 void Tw_DeleteStat(tw_d TwD, tslist TSL) {
+  (void)TwD;
   if (TSL) {
     if (TSL->flags & TWS_CLONE_MEM) {
       udat i;
@@ -2675,6 +2679,7 @@ tsfield Tw_FindStat(tw_d TwD, tslist TSL, udat label) {
   struct s_tsfield f;
 
   f.label = label;
+  (void)TwD;
 
   return (tsfield)bsearch(&f, TSL->TSF, TSL->N, sizeof(struct s_tsfield),
                           (int (*)(const void *, const void *))CompareTSF);
@@ -2909,7 +2914,7 @@ static void ParseReplies(tw_d TwD) {
 tmsg Tw_CreateMsg(tw_d TwD, uldat Type, uldat len) {
   tmsg msg;
   const uldat delta = (uldat)(size_t)&(((tmsg)NULL)->Event);
-
+  (void)TwD;
   if ((msg = (tmsg)Tw_AllocMem(len += delta))) {
     msg->Len = len;
     msg->Magic = tmsg_magic;
@@ -2924,8 +2929,10 @@ tmsg Tw_CreateMsg(tw_d TwD, uldat Type, uldat len) {
  * Tw_SendMsg() or Tw_BlindSendMsg()
  */
 void Tw_DeleteMsg(tw_d TwD, tmsg msg) {
-  if (msg && msg->Magic == tmsg_magic)
+  (void)TwD;
+  if (msg && msg->Magic == tmsg_magic) {
     Tw_FreeMem(msg);
+  }
 }
 
 /**
@@ -3018,13 +3025,16 @@ void Tw_MergeHyphensArgv(int argc, char **argv) {
 #ifdef CONF_SOCKET_GZ
 
 static voidpf Tw_ZAlloc(voidpf opaque, uInt items, uInt size) {
+  (void)opaque;
   void *ret = Tw_AllocMem(items * (size_t)size);
   return ret ? (voidpf)ret : Z_NULL;
 }
 
 static void Tw_ZFree(voidpf opaque, voidpf address) {
-  if (address != Z_NULL)
+  (void)opaque;
+  if (address != Z_NULL) {
     Tw_FreeMem((void *)address);
+  }
 }
 
 TW_INLINE byte *FillQueue(tw_d TwD, byte i, uldat *len) {

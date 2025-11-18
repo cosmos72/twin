@@ -78,22 +78,18 @@ static VOLATILE bool GotSignalHangup;
 static void SignalWinch(int n) NOTHROW {
   GotSignals = GotSignalWinch = true;
   signal(SIGWINCH, SignalWinch);
-  TW_RETFROMSIGNAL(0);
 }
 
 static void HandleSignalWinch(void) {
   GotSignalWinch = false;
   if (DisplayHWCTTY && DisplayHWCTTY != HWCTTY_DETACHED && DisplayHWCTTY->DisplayIsCTTY) {
-
     ResizeDisplayPrefer(DisplayHWCTTY);
   }
-  TW_RETFROMSIGNAL(0);
 }
 
 static void SignalChild(int n) NOTHROW {
   GotSignals = GotSignalChild = true;
   signal(SIGCHLD, SignalChild);
-  TW_RETFROMSIGNAL(0);
 }
 
 static void HandleSignalChild(void) {
@@ -113,7 +109,6 @@ static void HandleSignalChild(void) {
 static void SignalHangup(int n) {
   GotSignals = GotSignalHangup = true;
   signal(SIGHUP, SignalHangup);
-  TW_RETFROMSIGNAL(0);
 }
 
 static void HandleSignalHangup(void) {
@@ -150,8 +145,6 @@ static void SignalFatal(int n) {
   Quit(-n);
 
   kill(getpid(), n);
-
-  TW_RETFROMSIGNAL(0);
 }
 #endif
 

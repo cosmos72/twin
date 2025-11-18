@@ -33,13 +33,6 @@ enum {
 #define TW_BIGBUFF 4096
 #define TW_HUGEBUFF 16777216
 
-/* return from signal macros */
-
-#define TW_RETFROMSIGNAL(value) return TW_ARG_IFNOTVOID(value, void)
-#define TW_ARG_IFNOTVOID(value, type) TW_CAT(TW_ARG_IFNOTVOID_, type)(value)
-#define TW_ARG_IFNOTVOID_void(value)
-#define TW_ARG_IFNOTVOID_int(value) (value)
-
 /* maximum number of arguments of a libtw function */
 #define TW_MAX_ARGS_N 20
 
