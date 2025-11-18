@@ -103,6 +103,7 @@ trune *CloneStr2TRune(const char *s, uldat len) NOTHROW {
 volatile int AlarmReceived = 0;
 
 static void AlarmHandler(int sig) NOTHROW {
+  (void)sig;
   AlarmReceived = 1;
 }
 

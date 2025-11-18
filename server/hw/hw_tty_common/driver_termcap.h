@@ -306,6 +306,10 @@ TW_ATTR_HIDDEN void tty_driver::termcapDragArea(Tdisplay hw, dat Left, dat Up, d
   tty_driver *self = ttydriver(hw);
   udat delta = Up - DstUp;
 
+  (void)Left;
+  (void)Rgt;
+  (void)DstLeft;
+
   hw->HideMouse();
   hw->FlagsHW |= FlagChangedMouseFlagHW;
 

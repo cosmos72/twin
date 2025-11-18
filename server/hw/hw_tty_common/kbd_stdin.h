@@ -285,18 +285,16 @@ TW_ATTR_HIDDEN udat tty_driver::linuxLookupKey(Tdisplay hw, udat *ShiftFlags, by
   case TW_Linefeed:
   case TW_Return:
   case TW_Escape:
-    return (udat)*s;
+    break;
   default:
     if (*s < ' ') {
       /* try to handle CTRL + <some key> */
       *ShiftFlags = KBD_CTRL_FL;
       return (udat)*s | 0x40;
     }
-    return (udat)*s;
+    break;
   }
-
-  /* NOTREACHED */
-  return TW_Null;
+  return (udat)*s;
 }
 
 TW_ATTR_HIDDEN void tty_driver::stdinKeyboardEvent(int fd, Tdisplay hw) {

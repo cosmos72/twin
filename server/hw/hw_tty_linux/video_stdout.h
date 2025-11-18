@@ -447,6 +447,8 @@ TW_ATTR_HIDDEN void tty_driver::linuxResetPalette(Tdisplay hw) {
 
 TW_ATTR_HIDDEN bool tty_driver::linuxCanDragArea(Tdisplay hw, dat Left, dat Up, dat Rgt, dat Dwn,
                                                  dat DstLeft, dat DstUp) {
+  (void)Up;
+  (void)DstLeft;
   /*
    * tty scrolling capabilities are very limited...
    * do not even consider using tty `ESC [ <n> M' (delete_line)
@@ -460,6 +462,10 @@ TW_ATTR_HIDDEN void tty_driver::linuxDragArea(Tdisplay hw, dat Left, dat Up, dat
                                               dat DstLeft, dat DstUp) {
   FILE *out = ttydriver(hw)->out;
   udat delta = Up - DstUp;
+
+  (void)Left;
+  (void)Rgt;
+  (void)DstLeft;
 
   hw->HideMouse();
   hw->FlagsHW |= FlagChangedMouseFlagHW;

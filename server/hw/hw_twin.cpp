@@ -189,6 +189,7 @@ TW_ATTR_HIDDEN void tw_driver::KeyboardEvent(int fd, Tdisplay hw) {
   tmsg msg;
   bool firstloop = true;
 
+  (void)fd;
   /*
    * All other parts of twin read and parse data from fds in big chunks,
    * while Tw_ReadMsg() returns only a single event at time.
@@ -293,7 +294,11 @@ TW_ATTR_HIDDEN void tw_driver::DetectSize(Tdisplay hw, dat *x, dat *y) {
   *y = hw->Y;
 }
 
-TW_ATTR_HIDDEN void tw_driver::CheckResize(Tdisplay hw, dat *x, dat *y) { /* always ok */
+TW_ATTR_HIDDEN void tw_driver::CheckResize(Tdisplay hw, dat *x, dat *y) {
+  /* always ok */
+  (void)hw;
+  (void)x;
+  (void)y;
 }
 
 TW_ATTR_HIDDEN void tw_driver::Resize(Tdisplay hw, dat x, dat y) {
@@ -641,11 +646,12 @@ TW_ATTR_HIDDEN bool tw_driver::InitHW(Tdisplay hw) {
   return false;
 }
 
-EXTERN_C byte InitModule(Tmodule Module) {
-  Module->DoInit = &tw_driver::InitHW;
+EXTERN_C byte InitModule(Tmodule m) {
+  m->DoInit = &tw_driver::InitHW;
   return ttrue;
 }
 
 /* this MUST be defined, or it seems that a bug in dlsym() gets triggered */
-EXTERN_C void QuitModule(Tmodule Module) {
+EXTERN_C void QuitModule(Tmodule m) {
+  (void)m;
 }

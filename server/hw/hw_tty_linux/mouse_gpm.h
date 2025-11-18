@@ -100,6 +100,11 @@ TW_ATTR_HIDDEN void tty_driver::gpmQuitMouse(Tdisplay hw) {
 
 TW_ATTR_HIDDEN void tty_driver::gpmConfigureMouse(Tdisplay hw, udat resource, byte todefault,
                                                   udat value) {
+
+  (void)hw;
+  (void)todefault;
+  (void)value;
+
   switch (resource) {
   case HW_MOUSEMOTIONEVENTS:
     /* nothing to do */
@@ -115,10 +120,11 @@ TW_ATTR_HIDDEN void tty_driver::gpmMouseEvent(int fd, Tdisplay hw) {
   int left = 0;
   udat IdButtons, Buttons = 0;
 
+  (void)fd;
   /*
    * All other parts of twin read and parse data from fds in big chunks,
    * while Gpm_GetEvent() reads and parses only a single event at time.
-   * To compensate this and avoid mouse to lag behind, we do a small loop.
+   * To compensate this and avoid mouse lagging behind, we do a small loop.
    */
   byte loopN = 30;
 

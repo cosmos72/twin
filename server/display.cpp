@@ -96,6 +96,7 @@ void *AlwaysNull(void) {
 void gainPrivileges(void) {
 }
 void RemotePidIsDead(pid_t pid) {
+  (void)pid;
 }
 
 void printk_str(const char *s, size_t len) {
@@ -149,11 +150,13 @@ uldat RegisterRemote(int fd, Tobj HandlerData, handler_io_d HandlerIO) {
 
 void UnRegisterRemote(uldat Slot) {
   /* not needed, we are going to quit anyway if this gets called */
+  (void)Slot;
 }
 
 void RemoteCouldntWrite(uldat Slot) {
-  if (Slot == NOSLOT || Slot >= FdTop || LS.Fd == NOFD)
+  if (Slot == NOSLOT || Slot >= FdTop || LS.Fd == NOFD) {
     return;
+  }
   if (LS.extern_couldntwrite == tfalse) {
     LS.extern_couldntwrite = ttrue;
     FdWQueued++;
@@ -318,6 +321,7 @@ void Sdisplay::Remove() {
 static Sdisplay _HW;
 
 void warn_NoHW(uldat len, const char *arg, uldat tried) {
+  (void)tried;
   log(ERROR) << "twdisplay: All display drivers failed";
   if (arg) {
     log(ERROR) << " for `" << Chars(arg, len) << "'";
@@ -417,6 +421,7 @@ static bool IsValidNameHW(Chars carg) NOTHROW {
 }
 
 static Tdisplay AttachDisplayHW(Chars arg, uldat slot, byte flags) {
+  (void)flags;
   if (arg && !arg.starts_with(Chars("-hw="))) {
     log(ERROR) << "twdisplay: specified `" << arg << "' is not `--hw=<display>'\n";
     return NULL;
@@ -568,6 +573,10 @@ void DragAreaHW(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
 
 void SetPaletteHW(udat N, udat R, udat G, udat B) {
   /* nop */
+  (void)N;
+  (void)R;
+  (void)G;
+  (void)B;
 }
 
 void ResetPaletteHW(void) {
@@ -722,7 +731,9 @@ Tobj TwinSelectionGetOwner(void) {
 /* HW back-end function: set selection owner */
 void TwinSelectionSetOwner(Tobj Owner, tany Time, tany Frac) {
   tmsg msg;
-
+  (void)Owner;
+  (void)Time;
+  (void)Frac;
   if ((msg = TwCreateMsg(TW_MSG_SELECTIONCLEAR, sizeof(tevent_common)))) {
     TwBlindSendMsg(tw_helper, msg);
   }
@@ -742,7 +753,9 @@ void TwinSelectionNotify(Tobj Requestor, uldat ReqPrivate, e_id Magic, Chars mim
 
 /* HW back-end function: request selection */
 void TwinSelectionRequest(Tobj Requestor, uldat ReqPrivate, Tobj Owner) {
-#if 0
+#if 1
+  (void)Requestor;
+#else
   log(INFO) << "twdisplay: Selection Request from 0x" << hex((topaque)Requestor) //
             << ", Owner is 0x" << hex((topaque)Owner);
 #endif

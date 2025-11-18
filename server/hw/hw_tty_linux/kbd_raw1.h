@@ -300,6 +300,8 @@ static void SAK() {
 }
 
 static udat do_ignore(byte value, byte up_flag) {
+  (void)value;
+  (void)up_flag;
   return TW_Null;
 }
 
@@ -308,6 +310,8 @@ static void do_null() {
 }
 
 static udat do_lowercase(byte value, byte up_flag) {
+  (void)value;
+  (void)up_flag;
   log(ERROR)
       << "twin: hw/hw_tty_linux/kbd_raw1.h: do_lowercase() called. This should not happen!\n";
   return TW_Null;

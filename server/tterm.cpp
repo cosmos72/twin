@@ -33,7 +33,7 @@ static char *default_args[3];
 
 static Tmsgport Term_MsgPort;
 
-static void TwinTermH(Tmsgport MsgPort);
+static void TwinTermH(Tmsgport msgport);
 static void TwinTermIO(int Fd, Twindow Window);
 
 static void termShutDown(Twidget w) {
@@ -96,11 +96,13 @@ static Twindow OpenTerm(const char *arg0, const char *const *argv) {
   return NULL;
 }
 
-static void TwinTermH(Tmsgport MsgPort) {
+static void TwinTermH(Tmsgport msgport) {
   Tmsg msg;
   event_any *Event;
   udat Code /*, Repeat*/;
   Twindow Win;
+
+  (void)msgport;
 
   while ((msg = Term_MsgPort->Msgs.First)) {
     msg->Remove();
@@ -207,10 +209,12 @@ static void OverrideMethods(bool enter) {
   }
 }
 
-EXTERN_C byte InitModule(Tmodule Module) {
+EXTERN_C byte InitModule(Tmodule m) {
   tcolor color[19];
   Twindow Window;
   const char *shellpath, *shell;
+
+  (void)m;
 
   ColorFill(color, 19, TCOL(tblack, twhite));
   color[14] = color[9] = color[1] = TCOL(tred, twhite);
@@ -248,7 +252,8 @@ EXTERN_C byte InitModule(Tmodule Module) {
   return tfalse;
 }
 
-EXTERN_C void QuitModule(Tmodule Module) {
+EXTERN_C void QuitModule(Tmodule m) {
+  (void)m;
   UnRegisterExt(Term, Open, OpenTerm);
   OverrideMethods(false);
   if (Term_MsgPort) {

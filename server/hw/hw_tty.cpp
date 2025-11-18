@@ -711,11 +711,12 @@ TW_ATTR_HIDDEN void tty_driver::QuitHW(Tdisplay hw) {
   hw->Private = NULL;
 }
 
-EXTERN_C byte InitModule(Tmodule Module) {
-  Module->DoInit = &tty_driver::InitHW;
+EXTERN_C byte InitModule(Tmodule m) {
+  m->DoInit = &tty_driver::InitHW;
   return ttrue;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-EXTERN_C void QuitModule(Tmodule Module) {
+EXTERN_C void QuitModule(Tmodule m) {
+  (void)m;
 }

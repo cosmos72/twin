@@ -151,6 +151,8 @@ TW_ATTR_HIDDEN void tty_driver::xtermMouseEvent(int fd, Tdisplay hw) {
   byte len = self->xterm_mouse_len;
   bool release_buttons = false;
 
+  (void)fd;
+
   if (s[0] != '\033' || s[1] != '[') {
     return;
   }
