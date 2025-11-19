@@ -1513,14 +1513,18 @@ static void OpenSubMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
   Tscreen S = All->Screens.First;
   ldat y = P->CurY;
 
-  P->CurY = item->WCurY;
-  if (y != TW_MAXLDAT)
-    DrawLogicWidget((Twidget)P, 0, y, TW_MAXLDAT, y);
-  if ((y = P->CurY) == TW_MAXLDAT)
-    (void)P->FindRowByCode(item->Code, &P->CurY);
-  if ((y = P->CurY) != TW_MAXLDAT)
-    DrawLogicWidget((Twidget)P, 0, y, TW_MAXLDAT, y);
+  (void)M;
 
+  P->CurY = item->WCurY;
+  if (y != TW_MAXLDAT) {
+    DrawLogicWidget((Twidget)P, 0, y, TW_MAXLDAT, y);
+  }
+  if ((y = P->CurY) == TW_MAXLDAT) {
+    (void)P->FindRowByCode(item->Code, &P->CurY);
+  }
+  if ((y = P->CurY) != TW_MAXLDAT) {
+    DrawLogicWidget((Twidget)P, 0, y, TW_MAXLDAT, y);
+  }
   if (w) {
     if (!w->Parent) {
       w->Left = P->Left + P->XWidth - S->XLogic;

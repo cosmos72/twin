@@ -77,7 +77,7 @@ TW_C_FEATURES
 # C++ flags '-p -pg' are incompatible with -fomit-frame-pointer
 initial_CXXFLAGS="$CXXFLAGS"
 for try_flag in -std=c++98 -fno-strict-aliasing -fwrapv -pipe \
-                -Wall -Wshadow -Wno-uninitialized -Wno-unused -Wundef \
+                -Wall -W -Wextra -Wshadow -Wno-uninitialized -Wundef \
                 -Wcast-qual -Wcast-align -Wpointer-arith -Wwrite-strings -Wsign-compare
 do
   save_CXXFLAGS="$CXXFLAGS"
@@ -106,7 +106,7 @@ AC_LANG_POP([C++])
 # C flags '-p -pg' are incompatible with -fomit-frame-pointer
 initial_CFLAGS="$CFLAGS"
 for try_flag in -fno-strict-aliasing -fwrapv -pipe \
-                -Wall -Wshadow -Wno-uninitialized -Wno-unused -Wundef \
+                -Wall -W -Wextra -Wshadow -Wno-uninitialized -Wundef \
                 -Wcast-qual -Wcast-align -Wpointer-arith -Wwrite-strings \
                 -Wstrict-prototypes -Wbad-function-cast \
                 -Wold-style-declaration -Wold-style-definition -Wsign-compare

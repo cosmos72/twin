@@ -73,6 +73,7 @@ TW_ATTR_HIDDEN void XDRIVER::DrawSome(dat x, dat y, ldat len) {
   if (buflen) {
     XDRAW(this->xcol, rune_count, buf, buflen);
   }
+  (void)rune_count;
 }
 
 enum { MAX_FONT_SCORE = 100 };

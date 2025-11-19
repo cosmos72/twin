@@ -849,6 +849,7 @@ void Swindow::DrawSelf(Sdraw *d) {
 }
 
 void Sscreen::DrawSelf(Sdraw *d) {
+  (void)d;
   /* should never be called */
   log(ERROR) << "twin: Sscreen::DrawSelf() called! This should not happen.\n";
 }

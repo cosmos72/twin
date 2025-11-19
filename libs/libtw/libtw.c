@@ -3204,6 +3204,7 @@ byte Tw_DisableGzip(tw_d TwD) {
 
 #endif /* CONF_SOCKET_GZ */
 
+#if 0
 TW_INLINE void TWS_2_proto(udat tws_type, byte proto[2]) {
   if (tws_type & TWS_vec) {
     proto[0] = 'V';
@@ -3223,3 +3224,4 @@ TW_INLINE void TWS_2_proto(udat tws_type, byte proto[2]) {
     proto[1] = TWS_tany;
   }
 }
+#endif /* 0 */

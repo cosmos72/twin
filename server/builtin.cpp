@@ -130,6 +130,7 @@ static void TweakMenuRows(Tmenuitem item, udat code, byte flag) {
 }
 
 static void UpdateMenuRows(Twidget dummy) {
+  (void)dummy;
   if (DlIsLoaded(TermSo)) {
     TweakMenuRows(Builtin_Modules, COD_TERM_ON, ROW_INACTIVE);
     TweakMenuRows(Builtin_Modules, COD_TERM_OFF, ROW_ACTIVE);
@@ -487,15 +488,15 @@ static void DisplayGadgetH(Tmsg msg) {
   }
 }
 
-static void BuiltinH(Tmsgport MsgPort) {
+static void BuiltinH(Tmsgport msgport) {
   Tmsg msg;
   event_any *Event;
-  Tscreen screen;
-  Twindow NewWindow = (Twindow)0, tempWin;
+  Tscreen screen = All->Screens.First;
+  Twindow newWin = (Twindow)0, tempWin;
   Trow row;
   udat Code;
 
-  screen = All->Screens.First;
+  (void)msgport;
 
   while ((msg = Builtin_MsgPort->Msgs.First)) {
     msg->Remove();
@@ -537,36 +538,36 @@ static void BuiltinH(Tmsgport MsgPort) {
         case COD_ABOUT_WIN:
           switch (Code) {
           case COD_EXECUTE:
-            NewWindow = ExecuteWin;
+            newWin = ExecuteWin;
             break;
           case COD_CLOCK_WIN:
             Builtin_MsgPort->WakeUp = TIMER_ALWAYS;
-            NewWindow = ClockWin;
+            newWin = ClockWin;
             break;
           case COD_OPTION_WIN:
             UpdateOptionWin();
-            NewWindow = OptionWin;
+            newWin = OptionWin;
             break;
           case COD_BUTTONS_WIN:
             UpdateButtonWin();
-            NewWindow = ButtonWin;
+            newWin = ButtonWin;
             break;
           case COD_DISPLAY_WIN:
             UpdateDisplayWin((Twidget)DisplayWin);
-            NewWindow = DisplayWin;
+            newWin = DisplayWin;
             break;
           case COD_MESSAGES_WIN:
-            NewWindow = MessagesWin;
+            newWin = MessagesWin;
             break;
           case COD_ABOUT_WIN:
-            NewWindow = AboutWin;
+            newWin = AboutWin;
             break;
           default:
             break;
           }
-          if (NewWindow->Parent)
-            NewWindow->UnMap();
-          NewWindow->Map((Twidget)screen);
+          if (newWin->Parent)
+            newWin->UnMap();
+          newWin->Map((Twidget)screen);
           break;
 
         case COD_QUIT:

@@ -107,9 +107,9 @@ void Sscreen::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
 }
 
 void Sscreen::SetXY(dat x, dat y) {
+  (void)x;
   if (this == ::All->Screens.First) {
-    y = Max2(y, -1);
-    y = Min2(y, ::All->DisplayHeight - 1);
+    y = Min2(Max2(y, -1), ::All->DisplayHeight - 1);
     ResizeFirstScreen(y - Up);
   }
 }

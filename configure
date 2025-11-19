@@ -22392,7 +22392,7 @@ printf "%s\n" "$ac_cv_c_attribute_hidden" >&6; }
 # C++ flags '-p -pg' are incompatible with -fomit-frame-pointer
 initial_CXXFLAGS="$CXXFLAGS"
 for try_flag in -std=c++98 -fno-strict-aliasing -fwrapv -pipe \
-                -Wall -Wshadow -Wno-uninitialized -Wno-unused -Wundef \
+                -Wall -W -Wextra -Wshadow -Wno-uninitialized -Wundef \
                 -Wcast-qual -Wcast-align -Wpointer-arith -Wwrite-strings -Wsign-compare
 do
   save_CXXFLAGS="$CXXFLAGS"
@@ -22455,10 +22455,10 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # C flags '-p -pg' are incompatible with -fomit-frame-pointer
 initial_CFLAGS="$CFLAGS"
 for try_flag in -fno-strict-aliasing -fwrapv -pipe \
-                -Wall -Wshadow -Wno-uninitialized -Wno-unused -Wundef \
+                -Wall -W -Wextra -Wshadow -Wno-uninitialized -Wundef \
                 -Wcast-qual -Wcast-align -Wpointer-arith -Wwrite-strings \
                 -Wstrict-prototypes -Wbad-function-cast \
-                -Wold-style-declaration -Wold-style-definition -Wsign-compare
+                -Wold-style-definition -Wsign-compare
 do
   save_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS $try_flag"
@@ -27806,6 +27806,3 @@ tw_cfg()
 
   echo                              >> include/twconfig.h
   echo '#endif /* TWCONFIG_H */'    >> include/twconfig.h
-
-
-

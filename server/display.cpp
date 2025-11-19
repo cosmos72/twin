@@ -204,11 +204,6 @@ void Sobj::Delete() {
 ////////////////////////////////////////////////////////////////////////////////
 /// Smodule methods
 
-static SmoduleFn _FnModule = {
-    (bool (*)(Tmodule))AlwaysFalse, /* DlOpen       */
-    (void (*)(Tmodule))NoOp,        /* DlClose      */
-};
-
 Tmodule Smodule::Init(Chars /*name*/) {
   Sobj::Init(Tmodule_class_id);
   return this;

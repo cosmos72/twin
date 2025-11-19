@@ -76,6 +76,7 @@ static VOLATILE bool GotSignalChild;
 static VOLATILE bool GotSignalHangup;
 
 static void SignalWinch(int n) NOTHROW {
+  (void)n;
   GotSignals = GotSignalWinch = true;
   signal(SIGWINCH, SignalWinch);
 }
@@ -88,6 +89,7 @@ static void HandleSignalWinch(void) {
 }
 
 static void SignalChild(int n) NOTHROW {
+  (void)n;
   GotSignals = GotSignalChild = true;
   signal(SIGCHLD, SignalChild);
 }
@@ -107,6 +109,7 @@ static void HandleSignalChild(void) {
  * got a SIGHUP. shutdown the display on controlling tty, if any
  */
 static void SignalHangup(int n) {
+  (void)n;
   GotSignals = GotSignalHangup = true;
   signal(SIGHUP, SignalHangup);
 }

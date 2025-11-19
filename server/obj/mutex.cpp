@@ -57,6 +57,8 @@ Tmutex Smutex::Create(Tmsgport owner, byte namelen, const char *name, byte perm)
 }
 
 Tmutex Smutex::Init(Tmsgport owner, byte namelen, const char *name, byte perm) {
+  (void)namelen;
+  (void)name;
   if (!Sobj::Init(Tmutex_class_id)) {
     return NULL;
   }

@@ -64,6 +64,8 @@ void s_idvec::shrink(e_class_byte class_byte) {
   Tobj *new_vec;
   uldat new_size = Max2(TW_BIGBUFF, Top << 1);
 
+  (void)class_byte;
+
   if (new_size < Size &&
       (new_vec = (Tobj *)ReAllocMem0(Vec, sizeof(Tobj) * Size, sizeof(Tobj) * new_size))) {
     Vec = new_vec;
