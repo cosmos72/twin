@@ -205,7 +205,7 @@
    make install
 
    WARNING (1):
-   since twin has not been extensively tested against vulnerabilities,
+   since twin has *NOT* been extensively tested against vulnerabilities,
    it will *NOT* be installed suid-root or sgid-tty by default.
    In order for the terminal emulator to work, you may need to give
    such privileges to twin, but remember that you do so at your own risk!
@@ -221,8 +221,7 @@
    them.
    To make debugging easier, if you compile with $libdir set to empty value
    (i.e. make libdir= ) then twin will look for modules in the current
-   directory. In this way `make install' is not necessary in order to use
-   modules.
+   directory. In this way `make install' is not necessary for using modules.
 
    In any case, you cannot mix modules from a certain version
    with a `twin' executable of a different version.
@@ -321,8 +320,8 @@
    Raise/Lower to move the focused window to top/bottom of windows stack,
    and also unfocus if moving it to bottom of stack.
 
-   You can use the menus even without a mouse: The `Pause' key opens the menu
-   (to change it, edit your ~/.config/twin/twinrc, or, if you disabled support
+   You can use the menus even without a mouse: The `F12` or `Pause' keys open the menu
+   (to change them, edit your ~/.config/twin/twinrc, or, if you disabled support
    for twinrc parser, edit server/hotkey.h and recompile)
    then you can transverse the menu with arrow keys, hit `Return'
    to select an entry in a menuitem or `Escape' to close the menu.
@@ -330,9 +329,10 @@
    arrows, Resize lets you resize it (still with arrows),
    while Scroll lets you scroll it: use arrows for one-line scrolls and
    Insert,Delete,PageUp,PageDown for one-page scrolls.
-   There is a small problem now: if twin intercepts the `Pause' key,
-   how can you have your programs receive it? This is what "Send Hotkey"
-   is for: it sends a `Pause' key event to the focused window.
+   There is a small problem now: if twin intercepts the `F12` and `Pause' keys,
+   how can you have your programs receive them? This is what menu entries
+   "Send F12" and "Send Pause" are for: they send the corresponding key event
+   to the focused window.
 
    Now, the next argument: Focusing and Freezing.
 
@@ -340,13 +340,13 @@
    on the lower-right corner of windows to resize them, a thing you probably
    don't know is that if _while holding the left button_ you also press
    the middle or right button, the window will `freeze', i.e. it doesn't resize
-   anymore when you move the mouse, but will istantly resize when you release
+   anymore when you move the mouse, but will istantly resize when you _release_
    the middle or right button. Also, while the window is `frozen', the virtual
    screen doesn't scroll. The same `freeze' technique can be used while
    dragging a window (to drag a window, press left button on window title).
 
    Downside:
-   `Freezing' does not work if twin displays on X, you have a two-button mouse
+   `Freezing' does not work if you have a two-button mouse, and twin displays on X,
    and you configured the X server with Option "Emulate3Buttons".
    That's a limit of your mouse / X server combination.
 

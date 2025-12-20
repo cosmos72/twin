@@ -98,6 +98,7 @@ AddToMenu " Window " (
    " List... "     WindowList
    ""              Nop
    " Refresh "     Refresh
+   " Send F12 "    SyntheticKey F12
    " Send Pause "  SyntheticKey Pause
    ""              Nop
    " Close "       Close
