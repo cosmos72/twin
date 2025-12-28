@@ -1131,7 +1131,7 @@ static void clear_newtitle(tty_data *tty) {
 }
 
 /** execute ESC [ ... */
-static void cmd(tty_data *tty, byte c) {
+static void csi(tty_data *tty, byte c) {
   switch (c) {
   case 'A':
     if (!tty->Par[0]) {
@@ -1344,6 +1344,108 @@ static void setg(tty_data *tty, byte c) {
   }
 }
 
+/** return 0 if caller should continue processing current byte, 1 if it should stop */
+static int write_esc(tty_data *tty, byte c) {
+  switch (c) {
+  case '#':
+    tty->State = EShash;
+    return 1;
+  case '%':
+    tty->State = ESpercent;
+    return 1;
+  case '(':
+    tty->State = ESsetG0;
+    return 1;
+  case ')':
+  case '-':
+    tty->State = ESsetG1;
+    return 1;
+  case '*':
+  case '.':
+    tty->State = ESsetG2;
+    return 1;
+  case '+':
+  case '/':
+    tty->State = ESsetG3;
+    return 1;
+
+  case '7':
+    save_current(tty);
+    break;
+  case '8':
+    restore_current(tty);
+    break;
+  case '=': /* Appl. keypad */
+    tty->Flags |= TTY_KBDAPPLIC | TTY_NEEDREFOCUS;
+    break;
+  case '>': /* Numeric keypad */
+    tty->Flags &= ~TTY_KBDAPPLIC;
+    tty->Flags |= TTY_NEEDREFOCUS;
+    break;
+  case 'E':
+    cr(tty);
+    lf(tty);
+    break;
+  case 'M':
+    ri(tty);
+    break;
+  case 'D':
+    lf(tty);
+    break;
+  case 'H':
+    set_tabstop(tty, tty->X, true);
+    break;
+  case 'Z':
+    respond_ID(tty);
+    break;
+
+  case '[':
+    tty->State = ESsquare;
+    return 1;
+  case ']':
+    tty->State = ESnonstd;
+    return 1;
+  case 'c':
+    reset_tty(tty, true);
+    break;
+  case '~':
+    set_charset(tty, tty->Gv[tty->Gi = 1]);
+    break;
+  case 'n':
+  case '}':
+    set_charset(tty, tty->Gv[tty->Gi = 2]);
+    break;
+  case 'o':
+  case '|':
+    set_charset(tty, tty->Gv[tty->Gi = 3]);
+    break;
+
+  case '\\': /* ESC\ is the official termination for ESC]0; which starts window title change */
+    set_newtitle(tty);
+    break;
+  }
+  return 0;
+}
+
+static void write_nonstd(tty_data *tty, byte c) {
+  if (c == 'P') { /* Palette escape sequence */
+    tty->Par[0] = tty->nPar = 0;
+    tty->State = ESrgb;
+    return;
+  } else if (c == 'R') { /* Reset palette */
+    ResetPaletteHW();
+  } else if (c == '0' || c == '2' || c == '7') {
+    /* may be xterm "set icon name & window title" or xterm "set window title"
+     * or xterm "set current directory title" */
+    tty->State = ESxterm_title_;
+    return;
+  } else {
+    /* unsupported escape sequence */
+    tty->State = ESxterm_ignore;
+    return;
+  }
+}
+
 static void write_ctrl(tty_data *tty, byte c) {
   /*
    *  Control characters can be used in the _middle_
@@ -1413,106 +1515,14 @@ static void write_ctrl(tty_data *tty, byte c) {
   switch (tty->State & ESlomask) {
 
   case ESesc:
-    switch (c) {
-    case '#':
-      tty->State = EShash;
+    if (write_esc(tty, c)) {
       return;
-    case '%':
-      tty->State = ESpercent;
-      return;
-    case '(':
-      tty->State = ESsetG0;
-      return;
-    case ')':
-    case '-':
-      tty->State = ESsetG1;
-      return;
-    case '*':
-    case '.':
-      tty->State = ESsetG2;
-      return;
-    case '+':
-    case '/':
-      tty->State = ESsetG3;
-      return;
-
-    case '7':
-      save_current(tty);
-      break;
-    case '8':
-      restore_current(tty);
-      break;
-
-    case '=': /* Appl. keypad */
-      tty->Flags |= TTY_KBDAPPLIC | TTY_NEEDREFOCUS;
-      break;
-    case '>': /* Numeric keypad */
-      tty->Flags &= ~TTY_KBDAPPLIC;
-      tty->Flags |= TTY_NEEDREFOCUS;
-      break;
-
-    case 'E':
-      cr(tty);
-      lf(tty);
-      break;
-    case 'M':
-      ri(tty);
-      break;
-    case 'D':
-      lf(tty);
-      break;
-    case 'H':
-      set_tabstop(tty, tty->X, true);
-      break;
-    case 'Z':
-      respond_ID(tty);
-      break;
-
-    case '[':
-      tty->State = ESsquare;
-      return;
-    case ']':
-      tty->State = ESnonstd;
-      return;
-    case 'c':
-      reset_tty(tty, true);
-      break;
-    case '~':
-      set_charset(tty, tty->Gv[tty->Gi = 1]);
-      break;
-    case 'n':
-    case '}':
-      set_charset(tty, tty->Gv[tty->Gi = 2]);
-      break;
-    case 'o':
-    case '|':
-      set_charset(tty, tty->Gv[tty->Gi = 3]);
-      break;
-
-    case '\\': /* ESC\ is the official termination for ESC]0; which starts window title change */
-      set_newtitle(tty);
-      break;
     }
     break;
 
   case ESnonstd:
-    if (c == 'P') { /* Palette escape sequence */
-      tty->Par[0] = tty->nPar = 0;
-      tty->State = ESrgb;
-      return;
-    } else if (c == 'R') { /* Reset palette */
-      ResetPaletteHW();
-    } else if (c == '0' || c == '2' || c == '7') {
-      /* may be xterm "set icon name & window title" or xterm "set window title"
-       * or xterm "set current directory title" */
-      tty->State = ESxterm_title_;
-      return;
-    } else {
-      /* unsupported escape sequence */
-      tty->State = ESxterm_ignore;
-      return;
-    }
-    break;
+    write_nonstd(tty, c);
+    return;
 
   case ESrgb:
     if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')) {
@@ -1552,11 +1562,17 @@ static void write_ctrl(tty_data *tty, byte c) {
     /* FALLTHROUGH */
 
   case ESgetpars:
-    if ((c == ';' || c == ':') && tty->nPar < NPAR - 1) {
-      tty->Par[++tty->nPar] = 0;
+    if (c == ';' || c == ':') {
+      uldat i = tty->nPar + 1;
+      if (i < NPAR) {
+        tty->Par[tty->nPar = i] = 0;
+      }
       return;
-    } else if (c >= '0' && c <= '9' && tty->nPar < NPAR) {
-      tty->Par[tty->nPar] = 10 * tty->Par[tty->nPar] + (c - '0');
+    } else if (c >= '0' && c <= '9') {
+      uldat i = tty->nPar;
+      if (i < NPAR) {
+        tty->Par[i] = 10 * tty->Par[i] + (c - '0');
+      }
       return;
     } else {
       tty->State = (tty_state)(ESgotpars | (tty->State & ES_himask));
@@ -1566,7 +1582,7 @@ static void write_ctrl(tty_data *tty, byte c) {
   case ESgotpars:
     switch (tty->State & ES_himask) {
     case ES_none:
-      cmd(tty, c);
+      csi(tty, c);
       break;
     case ES_ques:
       ques(tty, c);
@@ -1595,6 +1611,7 @@ static void write_ctrl(tty_data *tty, byte c) {
       break;
     }
     break;
+
   case ESfunckey:
     break;
 
