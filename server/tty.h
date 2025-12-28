@@ -83,8 +83,13 @@ enum tty_state /*: udat*/ {
   ESxterm_ignore_esc,
   ESxterm_title_,
   ESxterm_title,
-  ESany = 0xFF,
-  ESques = 0x100
+  ESlomask = 0xFF,
+  ES_none = 0x00,  /* found ESC [ */
+  ES_hash = 0x100, /* found ESC [ # */
+  ES_eq = 0x200,   /* found ESC [ = */
+  ES_gt = 0x300,   /* found ESC [ > */
+  ES_ques = 0x400, /* found ESC [ ? */
+  ES_himask = 0xFF00,
 };
 
 class tty_data {

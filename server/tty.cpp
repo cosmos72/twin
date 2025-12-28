@@ -784,6 +784,14 @@ static inline void status_report(tty_data *tty) {
   respond_string(tty, "\033[0n", 4); /* Terminal ok */
 }
 
+static void report(tty_data *tty) {
+  if (tty->Par[0] == 5) {
+    status_report(tty);
+  } else if (tty->Par[0] == 6) {
+    cursor_report(tty);
+  }
+}
+
 /*
  * this is what the terminal answers to a ESC-Z or csi0c query.
  */
@@ -795,102 +803,107 @@ static inline void respond_ID(tty_data *tty) {
   respond_string(tty, "\033[?6;5c", 7);
 }
 
+/** execute ESC [ nnn h  and  ESC [ nnn l */
 static void set_mode(tty_data *tty, byte on_off) {
   uldat i;
 
   for (i = 0; i <= tty->nPar; i++) {
     uldat par = tty->Par[i];
-
     /* DEC private modes set/reset */
 
-    if (tty->State & ESques) {
-      switch (par) {
+    switch (par) {
 
-      case 1: /* Cursor keys send ^[Ox/^[[x */
-        change_flags(tty, TTY_ALTCURSKEYS, on_off);
-        tty->Flags |= TTY_NEEDREFOCUS;
-        break;
-      case 2: /* set G0...G3 to LATIN1 charset */
-        std::memset(tty->Gv, LATIN1_MAP, sizeof(tty->Gv));
-        set_charset(tty, LATIN1_MAP);
-        break;
-      // case 3: break; /* 80/132 mode switch, unimplemented */
-      case 5: /* Inverted screen on/off */
-        change_flags(tty, TTY_INVERTSCR, on_off);
-        update_eff(tty);
-        invert_screen(tty);
-        break;
-      case 6: /* Origin relative/absolute */
-        change_flags(tty, TTY_RELORIG, on_off);
-        goto_axy(tty, 0, 0);
-        break;
-      case 7: /* Autowrap on/off */
-        change_flags(tty, TTY_AUTOWRAP, on_off);
-        break;
-      // case 8: break; /* Autorepeat on/off, unimplemented */
-      case 9: /* X10-compatible mouse reporting */
-        change_flags(tty,
-                     TTY_REPORTMOUSE_STYLE | TTY_REPORTMOUSE_RELEASE | TTY_REPORTMOUSE_DRAG |
-                         TTY_REPORTMOUSE_MOVE,
-                     tfalse);
-        change_flags(tty, TTY_REPORTMOUSE_X10, on_off);
-        tty->Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE, on_off ? WINDOW_WANT_MOUSE : 0);
-        break;
-      case 25: /* Cursor on/off */
-        tty->Win->ChangeField(TWS_window_Flags, WINDOWFL_CURSOR_ON,
-                              on_off ? WINDOWFL_CURSOR_ON : 0);
-        tty->Flags |= TTY_UPDATECURSOR;
-        break;
-      case 999: /* twterm mouse reporting, includes mouse movement */
-        change_flags(tty, TTY_REPORTMOUSE_STYLE, tfalse);
-        change_flags(tty,
-                     TTY_REPORTMOUSE_TWTERM | TTY_REPORTMOUSE_RELEASE | TTY_REPORTMOUSE_DRAG |
-                         TTY_REPORTMOUSE_MOVE,
-                     on_off);
-        tty->Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
-                              on_off ? WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION : 0);
-        break;
-      case 1000: /* xterm mouse reporting, button press/release only */
-        change_flags(tty, TTY_REPORTMOUSE_STYLE | TTY_REPORTMOUSE_DRAG | TTY_REPORTMOUSE_MOVE,
-                     tfalse);
-        change_flags(tty, TTY_REPORTMOUSE_XTERM | TTY_REPORTMOUSE_RELEASE, on_off);
-        tty->Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE, on_off ? WINDOW_WANT_MOUSE : 0);
-        break;
-      case 1002: /* xterm mouse reporting, includes mouse dragging */
-        change_flags(tty, TTY_REPORTMOUSE_STYLE | TTY_REPORTMOUSE_MOVE, tfalse);
-        change_flags(tty, TTY_REPORTMOUSE_XTERM | TTY_REPORTMOUSE_RELEASE | TTY_REPORTMOUSE_DRAG,
-                     on_off);
-        tty->Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
-                              on_off ? WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION : 0);
-        break;
-      case 1003: /* xterm mouse reporting, includes mouse movement */
-        change_flags(tty, TTY_REPORTMOUSE_STYLE, tfalse);
-        change_flags(tty,
-                     TTY_REPORTMOUSE_XTERM | TTY_REPORTMOUSE_RELEASE | TTY_REPORTMOUSE_DRAG |
-                         TTY_REPORTMOUSE_MOVE,
-                     on_off);
-        tty->Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
-                              on_off ? WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION : 0);
-        break;
-      case 1006: /* xterm mouse reporting, toggles decimal mode */
-        change_flags(tty, TTY_REPORTMOUSE_DECIMAL, on_off);
-        break;
-      default:
-        break;
-      }
-    } else {
-      switch (par) {
+    case 3: /* Monitor (display ctrls) */
+      change_flags(tty, TTY_DISPCTRL, on_off);
+      break;
+    case 4: /* Insert Mode on/off */
+      change_flags(tty, TTY_INSERT, on_off);
+      break;
+    case 20: /* Lf, Enter == CrLf/Lf */
+      change_flags(tty, TTY_CRLF, on_off);
+      break;
+    }
+  }
+}
 
-      case 3: /* Monitor (display ctrls) */
-        change_flags(tty, TTY_DISPCTRL, on_off);
-        break;
-      case 4: /* Insert Mode on/off */
-        change_flags(tty, TTY_INSERT, on_off);
-        break;
-      case 20: /* Lf, Enter == CrLf/Lf */
-        change_flags(tty, TTY_CRLF, on_off);
-        break;
-      }
+/** execute ESC [ ? nnn h  and  ESC [ ? nnn l */
+static void set_mode_ques(tty_data *tty, byte on_off) {
+  uldat i;
+
+  for (i = 0; i <= tty->nPar; i++) {
+    uldat par = tty->Par[i];
+    switch (par) {
+
+    case 1: /* Cursor keys send ^[Ox/^[[x */
+      change_flags(tty, TTY_ALTCURSKEYS, on_off);
+      tty->Flags |= TTY_NEEDREFOCUS;
+      break;
+    case 2: /* set G0...G3 to LATIN1 charset */
+      std::memset(tty->Gv, LATIN1_MAP, sizeof(tty->Gv));
+      set_charset(tty, LATIN1_MAP);
+      break;
+    // case 3: break; /* 80/132 mode switch, unimplemented */
+    case 5: /* Inverted screen on/off */
+      change_flags(tty, TTY_INVERTSCR, on_off);
+      update_eff(tty);
+      invert_screen(tty);
+      break;
+    case 6: /* Origin relative/absolute */
+      change_flags(tty, TTY_RELORIG, on_off);
+      goto_axy(tty, 0, 0);
+      break;
+    case 7: /* Autowrap on/off */
+      change_flags(tty, TTY_AUTOWRAP, on_off);
+      break;
+    // case 8: break; /* Autorepeat on/off, unimplemented */
+    case 9: /* X10-compatible mouse reporting */
+      change_flags(tty,
+                   TTY_REPORTMOUSE_STYLE | TTY_REPORTMOUSE_RELEASE | TTY_REPORTMOUSE_DRAG |
+                       TTY_REPORTMOUSE_MOVE,
+                   tfalse);
+      change_flags(tty, TTY_REPORTMOUSE_X10, on_off);
+      tty->Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE, on_off ? WINDOW_WANT_MOUSE : 0);
+      break;
+    case 25: /* Cursor on/off */
+      tty->Win->ChangeField(TWS_window_Flags, WINDOWFL_CURSOR_ON, on_off ? WINDOWFL_CURSOR_ON : 0);
+      tty->Flags |= TTY_UPDATECURSOR;
+      break;
+    case 999: /* twterm mouse reporting, includes mouse movement */
+      change_flags(tty, TTY_REPORTMOUSE_STYLE, tfalse);
+      change_flags(tty,
+                   TTY_REPORTMOUSE_TWTERM | TTY_REPORTMOUSE_RELEASE | TTY_REPORTMOUSE_DRAG |
+                       TTY_REPORTMOUSE_MOVE,
+                   on_off);
+      tty->Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
+                            on_off ? WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION : 0);
+      break;
+    case 1000: /* xterm mouse reporting, button press/release only */
+      change_flags(tty, TTY_REPORTMOUSE_STYLE | TTY_REPORTMOUSE_DRAG | TTY_REPORTMOUSE_MOVE,
+                   tfalse);
+      change_flags(tty, TTY_REPORTMOUSE_XTERM | TTY_REPORTMOUSE_RELEASE, on_off);
+      tty->Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE, on_off ? WINDOW_WANT_MOUSE : 0);
+      break;
+    case 1002: /* xterm mouse reporting, includes mouse dragging */
+      change_flags(tty, TTY_REPORTMOUSE_STYLE | TTY_REPORTMOUSE_MOVE, tfalse);
+      change_flags(tty, TTY_REPORTMOUSE_XTERM | TTY_REPORTMOUSE_RELEASE | TTY_REPORTMOUSE_DRAG,
+                   on_off);
+      tty->Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
+                            on_off ? WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION : 0);
+      break;
+    case 1003: /* xterm mouse reporting, includes mouse movement */
+      change_flags(tty, TTY_REPORTMOUSE_STYLE, tfalse);
+      change_flags(tty,
+                   TTY_REPORTMOUSE_XTERM | TTY_REPORTMOUSE_RELEASE | TTY_REPORTMOUSE_DRAG |
+                       TTY_REPORTMOUSE_MOVE,
+                   on_off);
+      tty->Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
+                            on_off ? WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION : 0);
+      break;
+    case 1006: /* xterm mouse reporting, toggles decimal mode */
+      change_flags(tty, TTY_REPORTMOUSE_DECIMAL, on_off);
+      break;
+    default:
+      break;
     }
   }
 }
@@ -1117,6 +1130,220 @@ static void clear_newtitle(tty_data *tty) {
   tty->newName.clear();
 }
 
+/** execute ESC [ ... */
+static void cmd(tty_data *tty, byte c) {
+  switch (c) {
+  case 'A':
+    if (!tty->Par[0]) {
+      tty->Par[0]++;
+    }
+    goto_xy(tty, tty->X, tty->Y - tty->Par[0]);
+    break;
+  case 'b':
+    csi_b(tty, tty->Par[0]);
+    break;
+  case 'B':
+  case 'e':
+    if (!tty->Par[0]) {
+      tty->Par[0]++;
+    }
+    goto_xy(tty, tty->X, tty->Y + tty->Par[0]);
+    break;
+  case 'C':
+  case 'a':
+    if (!tty->Par[0]) {
+      tty->Par[0]++;
+    }
+    goto_xy(tty, tty->X + tty->Par[0], tty->Y);
+    break;
+  case 'c':
+    if (!tty->Par[0]) {
+      respond_ID(tty);
+    }
+    break;
+  case 'D':
+    if (!tty->Par[0]) {
+      tty->Par[0]++;
+    }
+    goto_xy(tty, tty->X - tty->Par[0], tty->Y);
+    break;
+  case 'd':
+    if (tty->Par[0]) {
+      tty->Par[0]--;
+    }
+    goto_axy(tty, tty->X, tty->Par[0]);
+    break;
+  case 'E':
+    if (!tty->Par[0]) {
+      tty->Par[0]++;
+    }
+    goto_xy(tty, 0, tty->Y + tty->Par[0]);
+    break;
+  case 'F':
+    if (!tty->Par[0]) {
+      tty->Par[0]++;
+    }
+    goto_xy(tty, 0, tty->Y - tty->Par[0]);
+    break;
+  case 'G':
+  case '`':
+    if (tty->Par[0]) {
+      tty->Par[0]--;
+    }
+    goto_xy(tty, tty->Par[0], tty->Y);
+    break;
+  case 'g': {
+    const uldat n = tty->Par[0];
+    if (n == 0) {
+      set_tabstop(tty, tty->X, false);
+    } else if (n == 3) {
+      std::memset(tty->TabStop, 0x00, sizeof(tty->TabStop));
+    }
+    break;
+  }
+  case 'H':
+  case 'f':
+    if (tty->Par[0]) {
+      tty->Par[0]--;
+    }
+    if (!tty->nPar) {
+      tty->Par[1] = 0;
+    } else if (tty->Par[1]) {
+      tty->Par[1]--;
+    }
+    goto_axy(tty, tty->Par[1], tty->Par[0]);
+    break;
+  case 'h':
+    set_mode(tty, 1);
+    break;
+
+  case 'I': {
+    const uldat n = tty->Par[0];
+    goto_tab_forward(tty, n ? n : 1);
+    break;
+  }
+  case 'J':
+    /* ESC [ nnn J   is erase display */
+    csi_J(tty, tty->Par[0]);
+    break;
+  case 'K':
+    /* ESC [ nnn K   is erase line */
+    csi_K(tty, tty->Par[0]);
+    break;
+  case 'L':
+    csi_L(tty, tty->Par[0]);
+    break;
+  case 'l':
+    set_mode(tty, 0);
+    break;
+  case 'M':
+    csi_M(tty, tty->Par[0]);
+    break;
+  case 'm':
+    csi_m(tty);
+    break;
+  case 'n':
+    report(tty);
+    break;
+  case 'P':
+    csi_P(tty, tty->Par[0]);
+    break;
+  case 'q': /* DECLL - but only 3 leds */
+            /* map 0,1,2,3 to 0,1,2,4 */
+#if 0
+    if (tty->Par[0] < 4) {
+      setledstate(kbd_table, (tty->Par[0] < 3) ? tty->Par[0] : 4);
+    }
+#endif
+    break;
+  case 'r':
+    csi_r(tty);
+    break;
+  case 'S': {
+    const uldat n = tty->Par[0];
+    scrollup(tty, tty->Top, tty->Bottom, n ? n : 1);
+    break;
+  }
+  case 's':
+    save_current(tty);
+    break;
+  case 'T': {
+    const uldat n = tty->Par[0];
+    scrolldown(tty, tty->Top, tty->Bottom, n ? n : 1);
+    break;
+  }
+  // case 't': break; /* xterm window manipulation, unimplemented */
+  case 'u':
+    restore_current(tty);
+    break;
+  case 'X':
+    csi_X(tty, tty->Par[0]);
+    break;
+  case '@':
+    csi_at(tty, tty->Par[0]);
+    break;
+  case ']': /* setterm functions */
+    setterm_command(tty);
+    break;
+  }
+}
+
+/** execute ESC [ ? ... */
+static void ques(tty_data *tty, byte c) {
+  switch (c) {
+  case 'c':
+    /* ESC [ ? nnn ; nnn ; nnn c is Linux cursor style */
+    if (!tty->Par[0]) {
+      tty->Par[1] = tty->Par[2] = 0;
+    } else if (tty->nPar == 1) {
+      tty->Par[2] = 0;
+    }
+    tty->Win->CursorType = tty->Par[0] | (tty->Par[1] << 8) | (tty->Par[2] << 16);
+    tty->Flags |= TTY_UPDATECURSOR;
+    break;
+  case 'h':
+    set_mode_ques(tty, 1);
+    break;
+  case 'J':
+    /* ESC [ ? nnn J is selective erase display */
+    csi_J(tty, tty->Par[0]);
+    break;
+  case 'K':
+    /* ESC [ ? nnn K is selective erase line */
+    csi_K(tty, tty->Par[0]);
+    break;
+  case 'l':
+    set_mode_ques(tty, 0);
+    break;
+  case 'n':
+    report(tty);
+    break;
+  }
+}
+
+static void setg(tty_data *tty, byte c) {
+  const byte i = (tty->State & ESlomask) - ESsetG0;
+  switch (c) {
+  case '0':
+    tty->Gv[i] = VT100GR_MAP;
+    break;
+  case 'B':
+    tty->Gv[i] = LATIN1_MAP;
+    break;
+  case 'K':
+    tty->Gv[i] = USER_MAP;
+    break;
+  case 'U':
+    tty->Gv[i] = IBMPC_MAP;
+    break;
+  default:
+    break;
+  }
+  if (tty->Gi == i) {
+    set_charset(tty, tty->Gv[i]);
+  }
+}
+
 static void write_ctrl(tty_data *tty, byte c) {
   /*
    *  Control characters can be used in the _middle_
@@ -1182,8 +1409,8 @@ static void write_ctrl(tty_data *tty, byte c) {
 
   /* tty->State machine */
 
-  /* mask out ESques for now */
-  switch (tty->State & ESany) {
+  /* mask out ES_himask for now */
+  switch (tty->State & ESlomask) {
 
   case ESesc:
     switch (c) {
@@ -1305,12 +1532,21 @@ static void write_ctrl(tty_data *tty, byte c) {
     tty->Par[0] = tty->nPar = 0;
     /*memset((byte *)&Par, 0, NPAR * sizeof(ldat));*/
     tty->State = ESgetpars;
-    if (c == '[') { /* Function key */
+    switch (c) {
+    case '[': /* Function key */
       tty->State = ESfunckey;
       return;
-    }
-    if (c == '?') {
-      tty->State = (tty_state)(tty->State | ESques);
+    case '#':
+      tty->State = (tty_state)((tty->State & ESlomask) | ES_hash);
+      return;
+    case '=':
+      tty->State = (tty_state)((tty->State & ESlomask) | ES_eq);
+      return;
+    case '>':
+      tty->State = (tty_state)((tty->State & ESlomask) | ES_gt);
+      return;
+    case '?':
+      tty->State = (tty_state)((tty->State & ESlomask) | ES_ques);
       return;
     }
     /* FALLTHROUGH */
@@ -1323,189 +1559,27 @@ static void write_ctrl(tty_data *tty, byte c) {
       tty->Par[tty->nPar] = 10 * tty->Par[tty->nPar] + (c - '0');
       return;
     } else {
-      tty->State = (tty_state)(ESgotpars | (tty->State & ESques));
+      tty->State = (tty_state)(ESgotpars | (tty->State & ES_himask));
     }
     /* FALLTHROUGH */
 
   case ESgotpars:
-    switch (c) {
-    case 'h':
-      set_mode(tty, 1);
+    switch (tty->State & ES_himask) {
+    case ES_none:
+      cmd(tty, c);
       break;
-    case 'l':
-      set_mode(tty, 0);
+    case ES_ques:
+      ques(tty, c);
       break;
-    case 'c':
-      if (tty->State & ESques) {
-        if (!tty->Par[0]) {
-          tty->Par[1] = tty->Par[2] = 0;
-        } else if (tty->nPar == 1) {
-          tty->Par[2] = 0;
-        }
-        tty->Win->CursorType = tty->Par[0] | (tty->Par[1] << 8) | (tty->Par[2] << 16);
-        tty->Flags |= TTY_UPDATECURSOR;
-      }
-      break;
-    case 'J':
-      /* ESC [ nnn J   is erase display */
-      /* ESC [ ? nnn J is selective erase display */
-      csi_J(tty, tty->Par[0]);
-      break;
-    case 'K':
-      /* ESC [ nnn K   is erase line */
-      /* ESC [ ? nnn K is selective erase line */
-      csi_K(tty, tty->Par[0]);
-      break;
-    case 'm':
-      /* selection complement mask */
-      break;
-    case 'n':
-      if (!(tty->State & ESques)) {
-        if (tty->Par[0] == 5) {
-          status_report(tty);
-        } else if (tty->Par[0] == 6) {
-          cursor_report(tty);
-        }
-      }
-      break;
-    }
-    if (tty->State & ESques) {
-      break;
-    }
-    switch (c) {
-    case 'A':
-      if (!tty->Par[0]) {
-        tty->Par[0]++;
-      }
-      goto_xy(tty, tty->X, tty->Y - tty->Par[0]);
-      break;
-    case 'b':
-      csi_b(tty, tty->Par[0]);
-      break;
-    case 'B':
-    case 'e':
-      if (!tty->Par[0]) {
-        tty->Par[0]++;
-      }
-      goto_xy(tty, tty->X, tty->Y + tty->Par[0]);
-      break;
-    case 'C':
-    case 'a':
-      if (!tty->Par[0]) {
-        tty->Par[0]++;
-      }
-      goto_xy(tty, tty->X + tty->Par[0], tty->Y);
-      break;
-    case 'c':
-      if (!tty->Par[0]) {
-        respond_ID(tty);
-      }
-      break;
-    case 'D':
-      if (!tty->Par[0]) {
-        tty->Par[0]++;
-      }
-      goto_xy(tty, tty->X - tty->Par[0], tty->Y);
-      break;
-    case 'd':
-      if (tty->Par[0]) {
-        tty->Par[0]--;
-      }
-      goto_axy(tty, tty->X, tty->Par[0]);
-      break;
-    case 'E':
-      if (!tty->Par[0]) {
-        tty->Par[0]++;
-      }
-      goto_xy(tty, 0, tty->Y + tty->Par[0]);
-      break;
-    case 'F':
-      if (!tty->Par[0]) {
-        tty->Par[0]++;
-      }
-      goto_xy(tty, 0, tty->Y - tty->Par[0]);
-      break;
-    case 'G':
-    case '`':
-      if (tty->Par[0]) {
-        tty->Par[0]--;
-      }
-      goto_xy(tty, tty->Par[0], tty->Y);
-      break;
-    case 'g': {
-      const uldat n = tty->Par[0];
-      if (n == 0) {
-        set_tabstop(tty, tty->X, false);
-      } else if (n == 3) {
-        std::memset(tty->TabStop, 0x00, sizeof(tty->TabStop));
-      }
-      break;
-    }
-    case 'H':
-    case 'f':
-      if (tty->Par[0]) {
-        tty->Par[0]--;
-      }
-      if (!tty->nPar) {
-        tty->Par[1] = 0;
-      } else if (tty->Par[1]) {
-        tty->Par[1]--;
-      }
-      goto_axy(tty, tty->Par[1], tty->Par[0]);
-      break;
-    case 'I': {
-      const uldat n = tty->Par[0];
-      goto_tab_forward(tty, n ? n : 1);
-      break;
-    }
-    case 'L':
-      csi_L(tty, tty->Par[0]);
-      break;
-    case 'M':
-      csi_M(tty, tty->Par[0]);
-      break;
-    case 'm':
-      csi_m(tty);
-      break;
-    case 'P':
-      csi_P(tty, tty->Par[0]);
-      break;
-    case 'q': /* DECLL - but only 3 leds */
-              /* map 0,1,2,3 to 0,1,2,4 */
-#if 0
-      if (tty->Par[0] < 4) {
-        setledstate(kbd_table, (tty->Par[0] < 3) ? tty->Par[0] : 4);
-      }
-#endif
-      break;
-    case 'r':
-      csi_r(tty);
-      break;
-    case 'S': {
-      const uldat n = tty->Par[0];
-      scrollup(tty, tty->Top, tty->Bottom, n ? n : 1);
-      break;
-    }
-    case 's':
-      save_current(tty);
-      break;
-    case 'T': {
-      const uldat n = tty->Par[0];
-      scrolldown(tty, tty->Top, tty->Bottom, n ? n : 1);
-      break;
-    }
-    // case 't': break; /* xterm window manipulation, unimplemented */
-    case 'u':
-      restore_current(tty);
-      break;
-    case 'X':
-      csi_X(tty, tty->Par[0]);
-      break;
-    case '@':
-      csi_at(tty, tty->Par[0]);
-      break;
-    case ']': /* setterm functions */
-      setterm_command(tty);
+    case ES_hash:
+    case ES_eq:
+    case ES_gt:
+    default:
+      /* ignore unimplemented sequences:
+       *   ESC [ # ...
+       *   ESC [ = ...
+       *   ESC [ > ...
+       */
       break;
     }
     break;
@@ -1535,29 +1609,10 @@ static void write_ctrl(tty_data *tty, byte c) {
   case ESsetG0:
   case ESsetG1:
   case ESsetG2:
-  case ESsetG3: {
-    const byte i = (tty->State & ESany) - ESsetG0;
-    switch (c) {
-    case '0':
-      tty->Gv[i] = VT100GR_MAP;
-      break;
-    case 'B':
-      tty->Gv[i] = LATIN1_MAP;
-      break;
-    case 'K':
-      tty->Gv[i] = USER_MAP;
-      break;
-    case 'U':
-      tty->Gv[i] = IBMPC_MAP;
-      break;
-    default:
-      break;
-    }
-    if (tty->Gi == i) {
-      set_charset(tty, tty->Gv[i]);
-    }
+  case ESsetG3:
+    setg(tty, c);
     break;
-  }
+
   case ESxterm_ignore:
     /* ignore, cannot set icon name */
     return;
