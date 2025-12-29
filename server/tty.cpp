@@ -1110,10 +1110,6 @@ static void goto_tab_forward(tty_data *tty, uldat n) {
   tty->Pos += x;
 }
 
-static bool insert_newtitle(tty_data *tty, byte c) {
-  return tty->newName.append(c);
-}
-
 static void set_newtitle(tty_data *tty) {
   String &name = tty->newName;
   const size_t len = name.size();
@@ -1124,10 +1120,6 @@ static void set_newtitle(tty_data *tty) {
   name.shrink_to_fit();
   /* name.release() also resets it to zero length */
   tty->Win->SetTitle(len, name.release());
-}
-
-static void clear_newtitle(tty_data *tty) {
-  tty->newName.clear();
 }
 
 /** execute ESC [ ... then update tty->State */
@@ -1358,30 +1350,30 @@ static void setg(tty_data *tty, byte c) {
   }
 }
 
-/** return 0 if caller should continue processing current byte, 1 if it should stop */
-static int write_esc(tty_data *tty, byte c) {
+/** also updates tty->State */
+static void write_esc(tty_data *tty, byte c) {
   switch (c) {
   case '#':
     tty->State = EShash;
-    return 1;
+    return;
   case '%':
     tty->State = ESpercent;
-    return 1;
+    return;
   case '(':
     tty->State = ESsetG0;
-    return 1;
+    return;
   case ')':
   case '-':
     tty->State = ESsetG1;
-    return 1;
+    return;
   case '*':
   case '.':
     tty->State = ESsetG2;
-    return 1;
+    return;
   case '+':
   case '/':
     tty->State = ESsetG3;
-    return 1;
+    return;
 
   case '7':
     save_current(tty);
@@ -1415,10 +1407,10 @@ static int write_esc(tty_data *tty, byte c) {
 
   case '[':
     tty->State = ESsquare;
-    return 1;
+    return;
   case ']':
     tty->State = ESnonstd;
-    return 1;
+    return;
   case 'c':
     reset_tty(tty, true);
     break;
@@ -1438,25 +1430,24 @@ static int write_esc(tty_data *tty, byte c) {
     set_newtitle(tty);
     break;
   }
-  return 0;
+  tty->State = ESnormal;
 }
 
+/** also updates tty->State */
 static void write_nonstd(tty_data *tty, byte c) {
   if (c == 'P') { /* Palette escape sequence */
     tty->Par[0] = tty->nPar = 0;
     tty->State = ESrgb;
-    return;
   } else if (c == 'R') { /* Reset palette */
     ResetPaletteHW();
+    tty->State = ESnormal;
   } else if (c == '0' || c == '2' || c == '7') {
     /* may be xterm "set icon name & window title" or xterm "set window title"
      * or xterm "set current directory title" */
     tty->State = ESxterm_title_;
-    return;
   } else {
     /* unsupported escape sequence */
     tty->State = ESxterm_ignore;
-    return;
   }
 }
 
@@ -1531,13 +1522,11 @@ static void write_ctrl(tty_data *tty, byte c) {
   switch (tty->State & ESlomask) {
 
   case ESesc:
-    if (write_esc(tty, c)) {
-      return;
-    }
-    break;
+    write_esc(tty, c); /* already updates tty->State */
+    return;
 
   case ESnonstd:
-    write_nonstd(tty, c);
+    write_nonstd(tty, c); /* already updates tty->State */
     return;
 
   case ESrgb:
@@ -1556,7 +1545,6 @@ static void write_ctrl(tty_data *tty, byte c) {
 
   case ESsquare:
     tty->Par[0] = tty->nPar = 0;
-    /*memset((byte *)&Par, 0, NPAR * sizeof(ldat));*/
     tty->State = ESgetpars;
     switch (c) {
     case '[': /* Function key */
@@ -1607,7 +1595,7 @@ static void write_ctrl(tty_data *tty, byte c) {
     case ES_eq:
     case ES_gt:
     default:
-      /* ignore unimplemented sequences:
+      /* ignore unimplemented xterm sequences:
        *   ESC [ # ...
        *   ESC [ = ...
        *   ESC [ > ...
@@ -1651,18 +1639,19 @@ static void write_ctrl(tty_data *tty, byte c) {
     return;
   case ESxterm_ignore_esc:
     /* expecting '\\' but reset state on any character */
-    tty->State = ESnormal;
-    return;
+    break;
 
   case ESxterm_title_:
     if (c == ';') {
+      tty->newName.clear();
       tty->State = ESxterm_title;
       return;
     }
     break;
 
   case ESxterm_title:
-    if (c >= ' ' && insert_newtitle(tty, c)) {
+    if (c >= ' ') {
+      (void)tty->newName.append(c);
       return;
     }
     break;
@@ -1671,9 +1660,6 @@ static void write_ctrl(tty_data *tty, byte c) {
     break;
   }
 
-  if (tty->newName && c != 27) {
-    clear_newtitle(tty);
-  }
   tty->State = ESnormal;
 }
 
