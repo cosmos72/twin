@@ -1130,9 +1130,17 @@ static void clear_newtitle(tty_data *tty) {
   tty->newName.clear();
 }
 
-/** execute ESC [ ... */
+/** execute ESC [ ... then update tty->State */
 static void csi(tty_data *tty, byte c) {
   switch (c) {
+  case ' ':
+  case '#':
+  case '$':
+  case '\'':
+  case '*':
+    /* ignore next byte */
+    tty->State = ESignore;
+    return;
   case 'A':
     if (!tty->Par[0]) {
       tty->Par[0]++;
@@ -1286,11 +1294,16 @@ static void csi(tty_data *tty, byte c) {
     setterm_command(tty);
     break;
   }
+  tty->State = ESnormal;
 }
 
 /** execute ESC [ ? ... */
 static void ques(tty_data *tty, byte c) {
   switch (c) {
+  case '$':
+    /* ignore next byte */
+    tty->State = ESignore;
+    return;
   case 'c':
     /* ESC [ ? nnn ; nnn ; nnn c is Linux cursor style */
     if (!tty->Par[0]) {
@@ -1319,6 +1332,7 @@ static void ques(tty_data *tty, byte c) {
     report(tty);
     break;
   }
+  tty->State = ESnormal;
 }
 
 static void setg(tty_data *tty, byte c) {
@@ -1447,10 +1461,12 @@ static void write_nonstd(tty_data *tty, byte c) {
 }
 
 static void write_ctrl(tty_data *tty, byte c) {
-  /*
-   *  Control characters can be used in the _middle_
-   *  of an escape sequence.
-   */
+  if (tty->State == ESignore) {
+    /* ignore current byte */
+    tty->State = ESnormal;
+    return;
+  }
+  /* Control characters can be used in the _middle_ of an escape sequence */
   switch (c) {
   case 0:
     return;
@@ -1581,12 +1597,12 @@ static void write_ctrl(tty_data *tty, byte c) {
 
   case ESgotpars:
     switch (tty->State & ES_himask) {
-    case ES_none:
-      csi(tty, c);
-      break;
+    case ES_csi:
+      csi(tty, c); /* already updates tty->State */
+      return;
     case ES_ques:
-      ques(tty, c);
-      break;
+      ques(tty, c); /* already updates tty->State */
+      return;
     case ES_hash:
     case ES_eq:
     case ES_gt:

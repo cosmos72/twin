@@ -70,21 +70,21 @@ enum tty_state /*: udat*/ {
   ESgetpars,
   ESgotpars,
   ESfunckey,
-  EShash,
-  ESsetG0,
-  ESsetG1,
-  ESsetG2,
-  ESsetG3,
-  ESpercent,
-  ESignore,
-  ESnonstd,
+  EShash,    /* found ESC # */
+  ESsetG0,   /* found ESC ( */
+  ESsetG1,   /* found ESC ) */
+  ESsetG2,   /* found ESC * */
+  ESsetG3,   /* found ESC + */
+  ESpercent, /* found ESC % */
+  ESignore,  /* ignore next byte*/
+  ESnonstd,  /* found ESC ] */
   ESrgb,
   ESxterm_ignore,
   ESxterm_ignore_esc,
   ESxterm_title_,
   ESxterm_title,
   ESlomask = 0xFF,
-  ES_none = 0x00,  /* found ESC [ */
+  ES_csi = 0x00,   /* found ESC [ */
   ES_hash = 0x100, /* found ESC [ # */
   ES_eq = 0x200,   /* found ESC [ = */
   ES_gt = 0x300,   /* found ESC [ > */
