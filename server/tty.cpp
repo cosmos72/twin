@@ -325,7 +325,7 @@ static void fill(tty_data *tty, tcell *s, tcell c, ldat len) {
   }
 }
 
-static void scrollup(tty_data *tty, dat t, dat b, dat nr) {
+static void scroll_up(tty_data *tty, dat t, dat b, ldat nr) {
   Twindow w = tty->Win;
   tcell *d, *s;
   bool accel = false;
@@ -375,7 +375,7 @@ static void scrollup(tty_data *tty, dat t, dat b, dat nr) {
   }
 }
 
-static void scrolldown(tty_data *tty, dat t, dat b, dat nr) {
+static void scroll_down(tty_data *tty, dat t, dat b, ldat nr) {
   tcell *s;
   ldat step;
   bool accel = false;
@@ -405,12 +405,76 @@ static void scrolldown(tty_data *tty, dat t, dat b, dat nr) {
   }
 }
 
+static void scroll_left(tty_data *tty, dat t, dat b, ldat nr) {
+  tcell *s;
+  ptrdiff_t split_delta;
+  ldat move_len, fill_len;
+  tcell fill_cell;
+
+  tty->Flags &= ~TTY_NEEDWRAP;
+
+  t = Max2(t, 0);
+  b = Min2(b, tty->SizeY - 1);
+  if (t >= b) {
+    return;
+  }
+  dirty_tty(tty, 0, t, tty->SizeX - 1, b - 1);
+
+  s = tty->Start + tty->SizeX * t;
+  split_delta = tty->Split - tty->Win->USE.C.Contents;
+  nr = Max2(nr, 1);
+  move_len = Max2(tty->SizeX - nr, 0);
+  fill_len = tty->SizeX - move_len;
+  fill_cell = TCELL(tty->Win->ColText, ' ');
+
+  for (; t <= b; ++t) {
+    while (s > tty->Split) {
+      s -= split_delta;
+    }
+    MoveMem(s + nr, s, move_len * sizeof(tcell));
+    fill(tty, s + move_len, fill_cell, fill_len);
+    s += tty->SizeX;
+  }
+}
+
+static void scroll_right(tty_data *tty, dat t, dat b, ldat nr) {
+  tcell *s;
+  ptrdiff_t split_delta;
+  ldat move_len, fill_len;
+  tcell fill_cell;
+
+  tty->Flags &= ~TTY_NEEDWRAP;
+
+  t = Max2(t, 0);
+  b = Min2(b, tty->SizeY - 1);
+  if (t >= b) {
+    return;
+  }
+  dirty_tty(tty, 0, t, tty->SizeX - 1, b - 1);
+
+  s = tty->Start + tty->SizeX * t;
+  split_delta = tty->Split - tty->Win->USE.C.Contents;
+  nr = Max2(nr, 1);
+  move_len = Max2(tty->SizeX - nr, 0);
+  fill_len = tty->SizeX - move_len;
+  fill_cell = TCELL(tty->Win->ColText, ' ');
+
+  for (; t <= b; ++t) {
+    while (s > tty->Split) {
+      s -= split_delta;
+    }
+    MoveMem(s, s + nr, move_len * sizeof(tcell));
+    fill(tty, s, fill_cell, fill_len);
+    s += tty->SizeX;
+  }
+}
+
 static inline void lf(tty_data *tty) {
   /* don't scroll if above bottom of scrolling region, or
    * if below scrolling region
    */
   if (tty->Y + 1 == tty->Bottom) {
-    scrollup(tty, tty->Top, tty->Bottom, 1);
+    scroll_up(tty, tty->Top, tty->Bottom, 1);
   } else if (tty->Y < tty->SizeY - 1) {
     tty->Y++;
     tty->Pos += tty->SizeX;
@@ -426,7 +490,7 @@ static void ri(tty_data *tty) {
    * or if above scrolling region
    */
   if (tty->Y == tty->Top) {
-    scrolldown(tty, tty->Top, tty->Bottom, 1);
+    scroll_down(tty, tty->Top, tty->Bottom, 1);
   } else if (tty->Y > 0) {
     tty->Y--;
     tty->Pos -= tty->SizeX;
@@ -743,6 +807,15 @@ static void csi_m(tty_data *tty) {
   update_eff(tty);
 }
 
+static void csi_space(tty_data *tty, byte c) {
+  if (c == '@') {
+    scroll_left(tty, tty->Top, tty->Bottom, tty->Par[0]);
+  } else if (c == 'A') {
+    scroll_right(tty, tty->Top, tty->Bottom, tty->Par[0]);
+  }
+  tty->State = ESnormal;
+}
+
 static void respond_string(tty_data *tty, const char *p, int len) {
   if (len < 0) {
     return;
@@ -948,19 +1021,19 @@ static void setterm_command(tty_data *tty) {
 }
 
 static void insert_line(tty_data *tty, ldat nr) {
-  scrolldown(tty, tty->Y, tty->Bottom, nr);
+  scroll_down(tty, tty->Y, tty->Bottom, nr);
   tty->Flags &= ~TTY_NEEDWRAP;
 }
 
 static void delete_line(tty_data *tty, ldat nr) {
-  scrollup(tty, tty->Y, tty->Bottom, nr);
+  scroll_up(tty, tty->Y, tty->Bottom, nr);
   tty->Flags &= ~TTY_NEEDWRAP;
 }
 
 static void csi_at(tty_data *tty, ldat nr) {
   if (nr > (ldat)tty->SizeX - tty->X) {
     nr = (ldat)tty->SizeX - tty->X;
-  } else if (!nr) {
+  } else if (nr <= 0) {
     nr = 1;
   }
   insert_char(tty, nr);
@@ -969,7 +1042,7 @@ static void csi_at(tty_data *tty, ldat nr) {
 static void csi_L(tty_data *tty, ldat nr) {
   if (nr > (ldat)tty->SizeY - tty->Y) {
     nr = (ldat)tty->SizeY - tty->Y;
-  } else if (!nr) {
+  } else if (nr <= 0) {
     nr = 1;
   }
   insert_line(tty, nr);
@@ -978,7 +1051,7 @@ static void csi_L(tty_data *tty, ldat nr) {
 static void csi_P(tty_data *tty, ldat nr) {
   if (nr > (ldat)tty->SizeX - tty->X) {
     nr = (ldat)tty->SizeX - tty->X;
-  } else if (!nr) {
+  } else if (nr <= 0) {
     nr = 1;
   }
   delete_char(tty, nr);
@@ -987,7 +1060,7 @@ static void csi_P(tty_data *tty, ldat nr) {
 static void csi_M(tty_data *tty, ldat nr) {
   if (nr > (ldat)tty->SizeY - tty->Y) {
     nr = (ldat)tty->SizeY - tty->Y;
-  } else if (!nr) {
+  } else if (nr <= 0) {
     nr = 1;
   }
   delete_line(tty, nr);
@@ -1126,6 +1199,8 @@ static void set_newtitle(tty_data *tty) {
 static void csi(tty_data *tty, byte c) {
   switch (c) {
   case ' ':
+    tty->State = ESspace;
+    return;
   case '#':
   case '$':
   case '\'':
@@ -1261,7 +1336,7 @@ static void csi(tty_data *tty, byte c) {
     break;
   case 'S': {
     const uldat n = tty->Par[0];
-    scrollup(tty, tty->Top, tty->Bottom, n ? n : 1);
+    scroll_up(tty, tty->Top, tty->Bottom, n ? n : 1);
     break;
   }
   case 's':
@@ -1269,7 +1344,7 @@ static void csi(tty_data *tty, byte c) {
     break;
   case 'T': {
     const uldat n = tty->Par[0];
-    scrolldown(tty, tty->Top, tty->Bottom, n ? n : 1);
+    scroll_down(tty, tty->Top, tty->Bottom, n ? n : 1);
     break;
   }
   // case 't': break; /* xterm window manipulation, unimplemented */
@@ -1452,10 +1527,16 @@ static void write_nonstd(tty_data *tty, byte c) {
 }
 
 static void write_ctrl(tty_data *tty, byte c) {
-  if (tty->State == ESignore) {
+  switch (tty->State) {
+  case ESignore:
     /* ignore current byte */
     tty->State = ESnormal;
     return;
+  case ESspace:
+    csi_space(tty, c); /* already updates tty->State */
+    return;
+  default:
+    break;
   }
   /* Control characters can be used in the _middle_ of an escape sequence */
   switch (c) {
