@@ -78,6 +78,7 @@ enum tty_state /*: udat*/ {
   ESpercent, /* found ESC % */
   ESignore,  /* ignore next byte*/
   ESnonstd,  /* found ESC ] */
+  ESspace,   /* found ESC [ ... SPACE */
   ESrgb,
   ESxterm_ignore,
   ESxterm_ignore_esc,
