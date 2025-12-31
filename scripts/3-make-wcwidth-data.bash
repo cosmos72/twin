@@ -1,6 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-exec >include/wcwidth_data.h
+declare -a wide
+
+cat txt/EastAsianWidth.txt | grep '^[0-9A-F]' | cut -b1-18 | grep '; [FW]' | sed -e 's/\.\./ /' -e 's/;/ /' > txt/wide.txt
+
+exec > include/Tutf/wcwidth_data.h
 
 cat <<EOF
 /*
@@ -17,21 +21,45 @@ cat <<EOF
 #ifndef TUTF_WCWIDTH_DATA_H
 #define TUTF_WCWIDTH_DATA_H
 
-static const trune wide[][2] = {
+static const unsigned char wide_bitmap[0x4000] = {
 EOF
 
-cat txt/EastAsianWidth.txt | grep '^[0-9A-F]' | cut -d' ' -f1 | grep -v ';N' | sed -e 's/\.\./ /' -e 's/;/ /'  | \
-while read lo hi width; do
+while read lox hix width; do
+ lo=$(printf '%d' "0x$lox")
+ if [ "$lo" -ge 131072 ]; then
+   break
+ fi
  if [ "$width" = "" ]; then
-   width="$hi"
-   hi="$lo"
+   width="$hix"
+   hix="$lox"
  fi
  if [ "$width" = "F" -o "$width" = "W" ]; then
-   echo "    { 0x$lo, 0x$hi },"
+   hi=$(printf '%d' "0x$hix")
+   while [ "$lo" -le "$hi" ]; do
+     wide[$lo]=x
+     : $(( lo = lo + 1 ))
+   done
  fi
+done < txt/wide.txt
+
+lo=0
+while [ "$lo" -lt 131072 ]; do
+  bits=""
+  bit=0
+  while [ "$bit" -lt 8 ]; do
+    i=$(( lo + bit ))
+    bits="${#wide[$i]}$bits"
+    : $(( bit = bit + 1 ))
+  done
+  if [ "$bits" = "00000000" ]; then
+    echo '0,'
+  else
+    printf '0x%x,\n' "0b$bits"
+  fi
+  : $(( lo = lo + 8 ))
 done
 
-cat <<EOF
+cat << EOF
 };
 
 #endif /* TUTF_WCWIDTH_DATA_H */

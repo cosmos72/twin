@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 for path in txt/*.txt; do
   if [ "$path" = "txt/UnicodeData.txt" -o "$path" = "txt/EastAsianWidth.txt" ]; then

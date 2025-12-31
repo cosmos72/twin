@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 CHARSET="`echo \"$1\" | tr 'a-z' 'A-Z'`"
 if [ "$CHARSET" = "" ]; then

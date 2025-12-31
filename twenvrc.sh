@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Copyright (C) 2000 by Massimiliano Ghilardi
 #
 # This program is free software; you can redistribute it and/or modify
