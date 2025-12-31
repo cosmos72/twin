@@ -4,7 +4,7 @@ exec >include/wcwidth_data.h
 
 cat <<EOF
 /*
- *  wcwidth_data.c  --  compute display width of UTF-32 (Unicode) characters
+ *  wcwidth_data.h  --  compute display width of UTF-32 (Unicode) characters
  *
  *  PLEASE DO NOT EDIT!
  *

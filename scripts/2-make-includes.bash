@@ -13,7 +13,7 @@ for path in txt/*.txt; do
   elif [ "${F:0:6}" = ADOBE_ ]; then
     OPTS="--insert-missing=32"
   fi
-  echo "./helper-from-unicode.org.bash $F $OPTS < $path > include/$f.h"
-  ./helper-from-unicode.org.bash "$F" $OPTS < "$path" > include/"$f".h
+  echo "scripts/helper-from-unicode.org.bash $F $OPTS < $path > include/Tutf/$f.h"
+  scripts/helper-from-unicode.org.bash "$F" $OPTS < "$path" > "include/Tutf/$f.h"
 done
 

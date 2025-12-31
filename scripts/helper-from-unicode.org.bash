@@ -19,20 +19,19 @@ echo ' * using the script twin/scripts/helper-from-unicode.org.bash'
 echo ' *'
 echo ' * PLEASE DO NOT EDIT!'
 echo ' */'
-echo
 
 if [ -f utf_32.bash.cache ]; then
   . utf_32.bash.cache
 else
-  if [ ! -r include/utf_32.h ]; then
-    echo "File 'include/utf_32.h' not found! please run the script '1-make-utf_32_h.bash' first" 1>&2
+  if [ ! -r include/Tutf/utf_32.h ]; then
+    echo "File 'include/Tutf/utf_32.h' not found! please run 'scripts/1-make-utf_32_h.bash' first" 1>&2
     exit 1
   fi
   while read define name value; do
     if [ "$define" = '#define' -a "${name:0:9}" = 'T_UTF_32_' ]; then
       names["$(( value ))"]="${name:9}"
     fi
-  done < include/utf_32.h
+  done < include/Tutf/utf_32.h
   set | grep ^names= > utf_32.bash.cache
 fi
 
@@ -140,7 +139,7 @@ while [ "$index" -le 255 ]; do
   to_name "$index" "$hex_index"
   name="$result"
   if [ "$name" != "" ]; then
-    echo "#define T_${CHARSET}_$name	$hex_index"
+    echo "#define T_${CHARSET}_$name $hex_index"
   fi
   : $(( index = index + 1 ))
 done
@@ -187,6 +186,5 @@ while [ "$index" -le 255 ]; do
 done
 echo
 
-echo
 echo
 echo "#endif /* TUTF_${CHARSET}_H */"
