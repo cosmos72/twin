@@ -1,8 +1,8 @@
 #!/bin/bash
 
-mkdir include 2>/dev/null
+mkdir -p include/Tutf 2>/dev/null
 
-exec >include/utf_32.h
+exec >include/Tutf/utf_32.h
 
 cat <<EOF
 /*
@@ -30,9 +30,9 @@ EOF
 cut -d';' -f1,2,11 <txt/UnicodeData.txt | tr ', -' '___' | sed -e 's/<[^>]*>/_/g' -e 's/_([^)]*)//g' | tr ';' ' '  | \
 while read i n1 n2; do
  if [ "$n1" != "" -a "$n1" != "_" ]; then
-   echo "#define T_UTF_32_$n1	0x$i"
+   echo "#define T_UTF_32_$n1 0x$i"
  elif [ "$n2" != "" -a "$n2" != "_" ]; then
-   echo "#define T_UTF_32_CTRL_$n2	0x$i"
+   echo "#define T_UTF_32_CTRL_$n2 0x$i"
  fi
 done
 
