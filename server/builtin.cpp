@@ -26,7 +26,6 @@
 #include "hw_multi.h"
 #include "obj/id.h"
 #include "resize.h"
-#include "log.h"
 #include "util.h"
 #include "version.h"
 

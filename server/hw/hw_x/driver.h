@@ -92,7 +92,8 @@ private:
   unsigned long ColorToPixel(trgb rgb);
   bool FontIsDualWidth(const XFontStruct *info);
 #if HW_X_DRIVER == HW_XFT
-  static ldat CalcFontScore(udat fontwidth, udat fontheight, XftFont *fontp, const char *fontname);
+  static ldat CalcFontScore(udat fontwidth, udat fontheight, int weight, XftFont *fontp,
+                            const char *fontname);
   void DrawStringUtf8(int x, int y, int rune_count, const char *string, int string_length);
   static void CopyColor(trgb rgb, unsigned long pixel, XftColor *dst);
 #endif

@@ -20,10 +20,11 @@
 #include "data.h"
 #include "remote.h"
 
+#include "common.h"
 #include "hw.h"
 #include "hw_private.h"
 #include "hw_dirty.h"
-#include "common.h"
+#include "log.h"
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -113,14 +114,15 @@ TW_ATTR_HIDDEN void XDRIVER::SetColors(const tcolor col) {
   SetBg(TCOLBG(col));
 }
 
-TW_ATTR_HIDDEN ldat XDRIVER::CalcFontScore(udat fontwidth, udat fontheight, XftFont *fontp,
-                                           const char *fontname) {
+TW_ATTR_HIDDEN ldat XDRIVER::CalcFontScore(udat fontwidth, udat fontheight, int weight,
+                                           XftFont *fontp, const char *fontname) {
   if (FC_CHARSET_MAP_SIZE >= 256 / 32) {
     FcChar32 map[FC_CHARSET_MAP_SIZE] = {}, *ptr = map, mask = (FcChar32)-1;
     FcChar32 next, first = FcCharSetFirstPage(fontp->charset, map, &next);
     /* check that font contains at least ASCII (space is not necessary since it's blank) */
-    if (first == FC_CHARSET_DONE || first > ' ' + 1)
+    if (first == FC_CHARSET_DONE || first > ' ' + 1) {
       return 0;
+    }
     if (first == 0) {
       first = 32;
     } else {
@@ -130,30 +132,41 @@ TW_ATTR_HIDDEN ldat XDRIVER::CalcFontScore(udat fontwidth, udat fontheight, XftF
         map[0] >>= n;
         mask >>= n;
       }
-      if ((map[0] & mask) != mask)
+      if ((map[0] & mask) != mask) {
         return 0;
+      }
     }
     ptr++;
     while (first < '~') {
-      if (ptr >= map + FC_CHARSET_MAP_SIZE)
+      if (ptr >= map + FC_CHARSET_MAP_SIZE) {
         return 0;
+      }
       mask = (FcChar32)-1;
       if ('~' - first < 32)
         mask >>= '~' - first;
-      if ((ptr[0] & mask) != mask)
+      if ((ptr[0] & mask) != mask) {
         return 0;
+      }
       first += 32;
       ptr++;
     }
   }
   ldat score = FontScoreOf(fontwidth, fontheight, (ldat)fontp->max_advance_width,
                            (ldat)fontp->ascent + fontp->descent);
+  /* slightly prefer regular weight fonts */
+  if (weight < FC_WEIGHT_REGULAR) {
+    score -= (FC_WEIGHT_REGULAR - weight + 8) / 16;
+  } else if (weight > FC_WEIGHT_REGULAR) {
+    score -= (weight - FC_WEIGHT_REGULAR + 8) / 16;
+  }
   /* slightly prefer fonts with "DejaVu" "Sans" or "Mono" in their name */
-  if (!strstr(fontname, "DejaVu") && !strstr(fontname, "dejavu"))
+  if (!strstr(fontname, "DejaVu") && !strstr(fontname, "dejavu")) {
     score -= 2;
+  }
   if (!strstr(fontname, "Sans") && !strstr(fontname, "sans") && !strstr(fontname, "Mono") &&
-      !strstr(fontname, "mono"))
+      !strstr(fontname, "mono")) {
     score--;
+  }
   return score;
 }
 
@@ -162,13 +175,14 @@ TW_ATTR_HIDDEN char *XDRIVER::AutodetectFont(const char *family, udat fontwidth,
   char *fontname = NULL;
   FcPattern *best_pattern = NULL;
   ldat best_score = TW_MINLDAT;
+  const char *path = family && (strchr(family, '.') || strchr(family, '/')) ? family : NULL;
 
   /*
    * find a usable font as follows
    *    an xft font (outline=true, scalable=true)
    *    monospace (spacing=100)
    *    not italic (slant=0)
-   *    medium weight (75 <= weight <= 100)
+   *    medium weight (50 <= weight <= 200)
    *    highest font score (closest to fontwidth X fontheight)
    */
   FcFontSet *fontset =
@@ -176,6 +190,7 @@ TW_ATTR_HIDDEN char *XDRIVER::AutodetectFont(const char *family, udat fontwidth,
                    XFT_SCALABLE, XftTypeBool, FcTrue, XFT_SPACING, XftTypeInteger, 100, XFT_SLANT,
                    XftTypeInteger, 0, (char *)0, XFT_WEIGHT, XFT_FAMILY, XFT_FILE, (char *)0);
   if (fontset) {
+    log(INFO) << "      found monospace fonts: ";
     for (int i = 0; i < fontset->nfont; i++) {
       XftFont *fontp;
       FcChar8 *file;
@@ -186,17 +201,23 @@ TW_ATTR_HIDDEN char *XDRIVER::AutodetectFont(const char *family, udat fontwidth,
       if (FcPatternGetInteger(fontset->fonts[i], XFT_WEIGHT, 0, &weight) != FcResultMatch) {
         continue;
       }
-      if ((weight < FC_WEIGHT_BOOK) || (weight > FC_WEIGHT_MEDIUM)) {
+      if ((weight < FC_WEIGHT_LIGHT) || (weight > FC_WEIGHT_BOLD)) {
         continue;
       }
       if (FcPatternGetString(fontset->fonts[i], XFT_FILE, 0, &file) != FcResultMatch) {
         continue;
       }
-      if (family &&
-          FcPatternGetString(fontset->fonts[i], XFT_FAMILY, 0, &t_family) == FcResultMatch) {
-        if (!strstr((const char *)t_family, family)) {
-          continue;
-        }
+      if (FcPatternGetString(fontset->fonts[i], XFT_FAMILY, 0, &t_family) != FcResultMatch) {
+        continue;
+      }
+      log(INFO) << Chars(", ", i == 0 ? 0 : 2) << Chars::from_c((const char *)t_family);
+      if (path     ? strstr((const char *)file, path) != NULL
+          : family ? strstr((const char *)t_family, family) != NULL
+                   : true) {
+        /* ok, font matches requested text */
+      } else {
+        log(INFO) << " [x]";
+        continue;
       }
 
       t_pattern = FcPatternCreate();
@@ -205,8 +226,8 @@ TW_ATTR_HIDDEN char *XDRIVER::AutodetectFont(const char *family, udat fontwidth,
 
       fontp = XftFontOpenPattern(this->xdisplay, t_pattern);
       if (fontp) {
-        ldat score = CalcFontScore(fontwidth, fontheight, fontp, (const char *)file);
-
+        ldat score = CalcFontScore(fontwidth, fontheight, weight, fontp, (const char *)file);
+        log(INFO) << " [" << score << "]";
         if (best_pattern == NULL || score > best_score) {
           best_score = score;
           if (best_pattern) {
@@ -216,10 +237,13 @@ TW_ATTR_HIDDEN char *XDRIVER::AutodetectFont(const char *family, udat fontwidth,
         }
         /* XftFontClose() also destroys the XftPattern passed to XftFontOpenPattern() */
         XftFontClose(this->xdisplay, fontp);
+      } else {
+        log(INFO) << " [-]";
       }
     }
     FcFontSetDestroy(fontset);
   }
+  log(INFO) << "\n";
 
   if (best_pattern) {
     fontname = (char *)FcNameUnparse(best_pattern);
