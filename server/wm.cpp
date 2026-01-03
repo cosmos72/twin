@@ -81,68 +81,68 @@ inline sbyte IsTabPosition(Twindow Window, udat pos, sbyte isX) {
 }
 
 static tpos WMFindBorderWindow(Twindow w, dat u, dat v, byte border, tcell *ptr_cell) {
-  const trune *BorderFont;
-  trune Font = 0;
+  const trune *borderRunes;
+  trune rune = 0;
   ldat k;
-  uldat Attr;
   tcell extra_u;
-  tcolor Color;
+  tcolor color;
   dat rev_u, rev_v;
   dat XWidth, YWidth;
-  tpos Found = POS_SIDE_UP;
-  byte FlDrag, FlResize, FlScroll, FlPressed;
-  byte Horiz, Vert;
-  byte Close, Resize, NMenuWin, BarX, BarY;
+  tpos found = POS_SIDE_UP;
   sbyte Back_Fwd, i;
 
-  if (!w)
-    return Found;
-
+  if (!w) {
+    return found;
+  }
   XWidth = w->XWidth;
   YWidth = w->YWidth;
   rev_u = XWidth - u - 1;
   rev_v = YWidth - v - 1;
 
-  if (u < 0 || v < 0 || rev_u < 0 || rev_v < 0)
+  if (u < 0 || v < 0 || rev_u < 0 || rev_v < 0) {
     return POS_ROOT;
-
-  if ((w->Flags & WINDOWFL_BORDERLESS) || (u && v && rev_u && rev_v))
+  }
+  if ((w->Flags & WINDOWFL_BORDERLESS) || (u && v && rev_u && rev_v)) {
     return POS_INSIDE;
+  }
 
-  FlDrag = FlResize = FlScroll = FlPressed = tfalse;
+  bool flDrag = false, flResize = false, flScroll = false;
+  const bool flFocus = (Twidget)w == All->Screens.First->FocusW();
 
-  if (w == (Twindow)All->Screens.First->FocusW()) {
+  if (flFocus) {
     switch (All->State & state_any) {
     case state_drag:
-      FlDrag = ttrue;
+      flDrag = true;
       break;
     case state_resize:
-      FlResize = ttrue;
+      flResize = true;
       break;
     case state_scroll:
-      FlScroll = ttrue;
+      flScroll = true;
       break;
     default:
       break;
     }
   }
 
-  Attr = w->Attr;
-  Close = !!(Attr & WINDOW_CLOSE);
-  Resize = !!(Attr & WINDOW_RESIZE);
-  BarX = !!(Attr & WINDOW_X_BAR);
-  BarY = !!(Attr & WINDOW_Y_BAR);
-  NMenuWin = !(w->Flags & WINDOWFL_MENU);
+  uldat attr = w->Attr;
+  byte horiz = extra_u = u ? rev_u ? 1 : 2 : 0;
+  byte vert = v ? rev_v ? 1 : 2 : 0;
 
-  Horiz = extra_u = u ? rev_u ? (byte)1 : (byte)2 : (byte)0;
-  Vert = v ? rev_v ? (byte)1 : (byte)2 : (byte)0;
+  const bool canClose = (attr & WINDOW_CLOSE) != 0;
+  const bool canResize = (attr & WINDOW_RESIZE) != 0;
+  const bool haveBarX = (attr & WINDOW_X_BAR) != 0;
+  const bool haveBarY = (attr & WINDOW_Y_BAR) != 0;
+  const bool isMenuWin = (w->Flags & WINDOWFL_MENU) != 0;
 
-  if (!(BorderFont = w->BorderPattern[border]) && !(BorderFont = RCFindBorderPattern(w, border)))
+  if (!(borderRunes = w->BorderPattern[border]) &&
+      !(borderRunes = RCFindBorderPattern(w, border))) {
+    borderRunes = w->BorderPattern[border] = StdBorder[border];
+  }
+  const bool flNested = !(w->Parent && IS_SCREEN(w->Parent));
 
-    BorderFont = w->BorderPattern[border] = StdBorder[border];
-
-  if (w->Parent && IS_SCREEN(w->Parent))
-    switch (Vert) {
+  if (!flNested) {
+    switch (vert) {
     case 0:
 
 #define is_u(pos)                                                                                  \
@@ -152,175 +152,186 @@ static tpos WMFindBorderWindow(Twindow w, dat u, dat v, byte border, tcell *ptr_
 #define delta_u(pos) ((pos) >= 0 ? u - (udat)(pos) : (udat) - (pos) - rev_u - (udat)1)
 
       i = BUTTON_MAX;
-      if (Close && All->ButtonVec[0].exists && is_u(All->ButtonVec[0].pos))
+      if (canClose && All->ButtonVec[0].exists && is_u(All->ButtonVec[0].pos)) {
         i = 0;
-      else if (NMenuWin)
-        for (i = 1; i < BUTTON_MAX; i++)
-          if (All->ButtonVec[i].exists && is_u(All->ButtonVec[i].pos))
+      } else if (!isMenuWin) {
+        for (i = 1; i < BUTTON_MAX; i++) {
+          if (All->ButtonVec[i].exists && is_u(All->ButtonVec[i].pos)) {
             break;
-
+          }
+        }
+      }
       if (i < BUTTON_MAX) {
-        Font = All->ButtonVec[i].shape[extra_u = delta_u(All->ButtonVec[i].pos)];
-        Found = (tpos)i;
+        rune = All->ButtonVec[i].shape[extra_u = delta_u(All->ButtonVec[i].pos)];
+        found = (tpos)i;
       } else if (w->NameLen) {
 
         k = 2 * (ldat)u - ((ldat)XWidth - (ldat)w->NameLen - (ldat)3);
         if (k > 0)
           k /= 2;
         if (k > 0 && k <= w->NameLen) {
-          Font = Tutf_CP437_to_UTF_32[(byte)w->Name[--k]];
-          Found = POS_TITLE;
+          rune = Tutf_CP437_to_UTF_32[(byte)w->Name[--k]];
+          found = POS_TITLE;
         } else if (k == 0 || k == w->NameLen + 1) {
-          Font = ' ';
-          Found = POS_TITLE;
+          rune = ' ';
+          found = POS_TITLE;
         } else
-          Font = BorderFont[Horiz];
+          rune = borderRunes[horiz];
       } else
-        Font = BorderFont[Horiz];
+        rune = borderRunes[horiz];
       break;
 
 #undef is_u
 #undef delta_u
 
     case 1:
-      if (Horiz == 0) {
-        Font = BorderFont[(extra_u = Vert) * 3];
-        Found = POS_SIDE_LEFT;
-      } else if (Horiz == 2) {
-        if (BarY) {
+      if (horiz == 0) {
+        rune = borderRunes[(extra_u = vert) * 3];
+        found = POS_SIDE_LEFT;
+      } else if (horiz == 2) {
+        if (haveBarY) {
           if (rev_v < (udat)3) {
-            Font = ScrollBarY[extra_u = (udat)3 - rev_v];
-            Found = rev_v == (udat)2 ? POS_Y_ARROW_BACK : POS_Y_ARROW_FWD;
+            rune = ScrollBarY[extra_u = (udat)3 - rev_v];
+            found = rev_v == (udat)2 ? POS_Y_ARROW_BACK : POS_Y_ARROW_FWD;
           } else if (!(Back_Fwd = IsTabPosition(w, v - (udat)1, tfalse))) {
-            Font = TabY;
-            Found = POS_Y_TAB;
+            rune = TabY;
+            found = POS_Y_TAB;
           } else {
-            Font = ScrollBarY[0];
-            Found = Back_Fwd > (sbyte)0 ? POS_Y_BAR_FWD : POS_Y_BAR_BACK;
+            rune = ScrollBarY[0];
+            found = Back_Fwd > (sbyte)0 ? POS_Y_BAR_FWD : POS_Y_BAR_BACK;
           }
         } else {
-          Font = BorderFont[(extra_u = Vert) * 3 + 2];
-          Found = POS_SIDE_RIGHT;
+          rune = borderRunes[(extra_u = vert) * 3 + 2];
+          found = POS_SIDE_RIGHT;
         }
       }
       break;
     case 2:
-      Found = POS_SIDE_DOWN;
+      found = POS_SIDE_DOWN;
 
       if (rev_u < (udat)2) {
-        if (Resize) {
-          Font = GadgetResize[extra_u = (udat)1 - rev_u];
-          Found = POS_BUTTON_RESIZE;
+        if (canResize) {
+          rune = GadgetResize[extra_u = (udat)1 - rev_u];
+          found = POS_BUTTON_RESIZE;
         } else
-          Font = BorderFont[6 + (extra_u = (udat)2 - rev_u)];
-      } else if (!BarX || !Horiz) {
-        Font = BorderFont[6 + Horiz];
+          rune = borderRunes[6 + (extra_u = (udat)2 - rev_u)];
+      } else if (!haveBarX || !horiz) {
+        rune = borderRunes[6 + horiz];
       } else if (rev_u < (udat)4) {
-        Font = ScrollBarX[extra_u = (udat)4 - rev_u];
-        Found = rev_u == (udat)3 ? POS_X_ARROW_BACK : POS_X_ARROW_FWD;
+        rune = ScrollBarX[extra_u = (udat)4 - rev_u];
+        found = rev_u == (udat)3 ? POS_X_ARROW_BACK : POS_X_ARROW_FWD;
       } else if (!(Back_Fwd = IsTabPosition(w, u - (udat)1, ttrue))) {
-        Font = TabX;
-        Found = POS_X_TAB;
+        rune = TabX;
+        found = POS_X_TAB;
         extra_u = 0;
       } else {
-        Font = ScrollBarX[0];
-        Found = Back_Fwd > (sbyte)0 ? POS_X_BAR_FWD : POS_X_BAR_BACK;
+        rune = ScrollBarX[0];
+        found = Back_Fwd > (sbyte)0 ? POS_X_BAR_FWD : POS_X_BAR_BACK;
         extra_u = 0;
       }
       break;
     default:
       break;
     }
-  else
-    switch (Vert) {
+  } else {
+    switch (vert) {
     case 0:
       if (w->NameLen) {
         k = 2 * (ldat)u - ((ldat)XWidth - (ldat)w->NameLen - (ldat)3);
-        if (k > 0)
+        if (k > 0) {
           k /= 2;
+        }
         if (k > 0 && k <= w->NameLen) {
-          Font = Tutf_CP437_to_UTF_32[(byte)w->Name[--k]];
-          Found = POS_TITLE;
+          rune = Tutf_CP437_to_UTF_32[(byte)w->Name[--k]];
+          found = POS_TITLE;
         } else if (k == 0 || k == w->NameLen + 1) {
-          Font = ' ';
-          Found = POS_TITLE;
-        } else
-          Font = BorderFont[Horiz];
-      } else
-        Font = BorderFont[Horiz];
+          rune = ' ';
+          found = POS_TITLE;
+        } else {
+          rune = borderRunes[horiz];
+        }
+      } else {
+        rune = borderRunes[horiz];
+      }
       break;
 
     default:
-      Font = BorderFont[Vert * 3 + Horiz];
-      Found = Vert == 1 ? (Horiz ? POS_SIDE_RIGHT : POS_SIDE_LEFT) : POS_SIDE_DOWN;
+      rune = borderRunes[vert * 3 + horiz];
+      found = vert == 1 ? (horiz ? POS_SIDE_RIGHT : POS_SIDE_LEFT) : POS_SIDE_DOWN;
       break;
     }
-
+  }
   if (!ptr_cell)
-    return Found;
+    return found;
 
-  if (FlDrag && Found >= POS_TITLE && Found <= POS_SIDE_DOWN) {
-    FlPressed = ttrue;
-    if (Found == POS_TITLE && w->ColName && k >= 0 && k < w->NameLen)
-      Color = w->ColName[k];
-    else
-      Color = w->ColGadgets;
+  if (flDrag && found >= POS_TITLE && found <= POS_SIDE_DOWN) {
+    if (found == POS_TITLE && w->ColName && k >= 0 && k < w->NameLen) {
+      color = w->ColName[k];
+    } else {
+      color = w->ColGadgets;
+    }
   } else
-    switch (Found) {
+    switch (found) {
     case POS_TITLE:
-      if (w->ColName && k >= 0 && k < w->NameLen)
-        Color = w->ColName[k];
-      else
-        Color = w->ColBorder;
+      if (w->ColName && k >= 0 && k < w->NameLen) {
+        color = w->ColName[k];
+      } else {
+        color = w->ColBorder;
+      }
       break;
     case POS_SIDE_LEFT:
     case POS_SIDE_UP:
     case POS_SIDE_RIGHT:
     case POS_SIDE_DOWN:
-      Color = w->ColBorder;
+      color = w->ColBorder;
       break;
     case POS_BUTTON_RESIZE:
-      Color = w->ColGadgets;
-      if (FlResize) {
-        Color = TCOL(TCOLBG(Color), TCOLFG(Color));
-        FlPressed = ttrue;
+      color = w->ColGadgets;
+      if (flResize) {
+        color = TCOL(TCOLBG(color), TCOLFG(color));
       }
       break;
     case POS_X_ARROW_BACK:
     case POS_X_ARROW_FWD:
     case POS_Y_ARROW_FWD:
     case POS_Y_ARROW_BACK:
-      Color = w->ColArrows;
+      color = w->ColArrows;
       break;
     case POS_X_TAB:
     case POS_Y_TAB:
-      Color = w->ColTabs;
+      color = w->ColTabs;
       break;
     case POS_X_BAR_BACK:
     case POS_X_BAR_FWD:
     case POS_Y_BAR_BACK:
     case POS_Y_BAR_FWD:
-      Color = w->ColBars;
+      color = w->ColBars;
       break;
     default:
-      Color = Found < BUTTON_MAX
-                  ? (FlDrag ? TCOL(TCOLBG(w->ColGadgets), TCOLFG(w->ColGadgets)) : w->ColGadgets)
-                  : w->ColBorder;
+      if (found >= BUTTON_MAX) {
+        color = w->ColBorder;
+      } else {
+        color = w->ColGadgets;
+        if (flDrag) {
+          color = TCOL(TCOLBG(color), TCOLFG(color));
+        }
+      }
       break;
     }
-  if (FlScroll && Found >= POS_X_BAR_BACK && Found <= POS_Y_ARROW_FWD) {
-    Color ^= TCOL(thigh, thigh);
-    FlPressed = ttrue;
-  } else if (Found < BUTTON_MAX && (w->State & WINDOW_GADGET_PRESSED) &&
-             (w->State & (BUTTON_FIRST_SELECT << Found))) {
+  if (flScroll && found >= POS_X_BAR_BACK && found <= POS_Y_ARROW_FWD) {
+    color ^= TCOL(thigh, thigh);
+  } else if (found < BUTTON_MAX && (w->State & WINDOW_GADGET_PRESSED) &&
+             (w->State & (BUTTON_FIRST_SELECT << found))) {
 
-    Color = TCOL(TCOLBG(Color), TCOLFG(Color));
-    FlPressed = ttrue;
+    color = TCOL(TCOLBG(color), TCOLFG(color));
+  } else if (found >= POS_TITLE && found <= POS_SIDE_DOWN && !flFocus && !flNested && !isMenuWin) {
+    // remove high background color from non-focused window
+    color &= ~TCOL(0, thigh);
   }
 
-  *ptr_cell = TCELL(Color, Font);
+  *ptr_cell = TCELL(color, rune);
 
-  return Found;
+  return found;
 }
 
 static void SmartPlace(Twidget w, Tscreen screen);
@@ -359,7 +370,7 @@ void AskCloseWidget(Twidget w) {
 
     if ((msg = Smsg::Create(msg_widget_gadget, 0))) {
       msg->Event.EventGadget.W = w;
-      msg->Event.EventGadget.Code = (udat)0; /* COD_CLOSE */
+      msg->Event.EventGadget.Code = (udat)0; // COD_CLOSE
       SendMsg(w->Owner, msg);
     }
   }
@@ -477,10 +488,10 @@ static void HandleHilightAndSelection(Twidget W, udat Code, dat X, dat Y, byte I
     if (_Code == All->SetUp->ButtonSelection && IS_WINDOW(W))
       SetSelectionFromWindow((Twindow)W);
     else if (_Code == All->SetUp->ButtonPaste && Inside) {
-      /* send Selection Paste Tmsg */
+      // send Selection Paste Tmsg
       Tmsg NewMsg;
 
-      /* store selection owner */
+      // store selection owner
       SelectionImport();
 
       if ((NewMsg = Smsg::Create(msg_selection, 0))) {
@@ -515,14 +526,14 @@ static byte CheckForwardMsg(wm_ctx *C, Tmsg msg, byte WasUsed) {
 
   if ((All->State & state_any) == state_menu) {
     if (!w)
-      /* the menu is being used, but no menu windows opened yet. continue. */
+      // the menu is being used, but no menu windows opened yet. continue.
       w = (Twidget)All->Screens.First->MenuWindow;
     else
-      /* the menu is being used. leave last_w. */
+      // the menu is being used. leave last_w. */
       w = NULL;
   } else {
     if (All->Screens.First->ClickWindow && w != (Twidget)All->Screens.First->ClickWindow) {
-      /* cannot send messages to focused window while user clicked on another window */
+      // cannot send messages to focused window while user clicked on another window
       w = NULL;
     }
   }
@@ -536,7 +547,7 @@ static byte CheckForwardMsg(wm_ctx *C, Tmsg msg, byte WasUsed) {
   if (msg->Type == msg_key) {
     if (!WasUsed && All->State == state_default) {
 
-      /* back up to first parent that WANT_KEYS or has AUTO_KEYS */
+      // back up to first parent that WANT_KEYS or has AUTO_KEYS
       while (w && !(w->Attr & WIDGET_WANT_KEYS ||
                     (IS_WINDOW(w) && ((Twindow)w)->Attr & WINDOW_AUTO_KEYS)))
         w = w->Parent;
@@ -554,7 +565,7 @@ static byte CheckForwardMsg(wm_ctx *C, Tmsg msg, byte WasUsed) {
   }
 
   if (w != last_w && (LastKeys || LastInside)) {
-    /* try to leave last_w with a clean status */
+    // try to leave last_w with a clean status
     CleanupLastW(last_w, LastKeys, LastInside);
 
     last_w = w;
