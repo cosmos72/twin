@@ -47,6 +47,10 @@
 
 /***************/
 
+#ifndef SIZE_MAX
+#define SIZE_MAX (~(size_t)0)
+#endif
+
 bool NeedUpdateCursor;
 
 void FlushCursor(void) {
@@ -119,15 +123,23 @@ bool ResizeWindowContents(Twindow w) {
   tty_data *Data = w->USE.C.TtyData;
   dat x = w->XWidth, y = w->YWidth + Data->ScrollBack;
 
-  if (!(w->Flags & WINDOWFL_BORDERLESS))
+  if (!(w->Flags & WINDOWFL_BORDERLESS)) {
     x -= 2, y -= 2;
-
+  }
   h = TCELL(w->ColText, ' ');
 
   /* safety check: */
   if (x > 0 && y > 0) {
-    if (!(saveNewCont = NewCont = (tcell *)AllocMem(x * y * sizeof(tcell))))
+    /* cannot overflow: x and y are limited to 1 ... 0x7fff */
+    const size_t xy = (size_t)x * (size_t)y;
+
+    if (xy > SIZE_MAX / sizeof(tcell)) {
+      /* xy * sizeof(tcell) would overflow */
       return false;
+    }
+    if (!(saveNewCont = NewCont = (tcell *)AllocMem(xy * sizeof(tcell)))) {
+      return false;
+    }
 
     /*
      * copy the Contents. Quite non-trivial for two reasons:
@@ -164,8 +176,9 @@ bool ResizeWindowContents(Twindow w) {
       *NewCont++ = h;
   } else {
     x = y = 0;
-    if (w->USE.C.Contents)
+    if (w->USE.C.Contents) {
       FreeMem(w->USE.C.Contents);
+    }
     saveNewCont = NULL;
   }
 
@@ -176,11 +189,11 @@ bool ResizeWindowContents(Twindow w) {
   w->USE.C.HSplit = 0; /* splitline == 0 */
   w->USE.C.Contents = saveNewCont;
 
-  if (w->CurY >= y)
+  if (w->CurY >= y) {
     w->CurY = y - 1;
-  else if (w->CurY < w->YLogic)
+  } else if (w->CurY < w->YLogic) {
     w->CurY = w->YLogic;
-
+  }
   Data->SizeX = x;
   Data->SizeY = w->YWidth - 2;
   Data->Top = 0;
@@ -192,18 +205,18 @@ bool ResizeWindowContents(Twindow w) {
   Data->saveY = Data->Y = w->CurY - Data->ScrollBack;
   Data->Pos = w->USE.C.Contents + w->CurY * x + w->CurX;
 
-  if (!(w->Attr & WINDOW_WANT_CHANGES) && w->USE.C.TtyData && w->RemoteData.FdSlot != NOSLOT)
-    /* the MsgPort will not be informed of the resize...
-     * we must send SIGWINCH manually */
+  if (!(w->Attr & WINDOW_WANT_CHANGES) && w->USE.C.TtyData && w->RemoteData.FdSlot != NOSLOT) {
+    /* the MsgPort will not be informed of the resize... we must send SIGWINCH manually */
     (void)SendResizeSignal(w);
-
+  }
   if (w->Parent) {
     DrawBorderWindow(w, BORDER_RIGHT);
 
     DrawLogicWidget((Twidget)w, 0, 0, w->WLogic - 1, w->HLogic - 1);
 
-    if (ContainsCursor((Twidget)w))
+    if (ContainsCursor((Twidget)w)) {
       UpdateCursor();
+    }
   }
 
   return true;
