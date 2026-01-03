@@ -1417,6 +1417,19 @@ static void ques(tty_data *tty, byte c) {
   tty->State = ESnormal;
 }
 
+/** execute ESC [ > ... */
+static void gt(tty_data *tty, byte c) {
+  switch (c) {
+  case 'c':
+    /* ESC [ > 0 c is "query secondary attributes */
+    if (tty->Par[0] == 0) {
+      respond_string(tty, "\033[>41;10000;1c", 14);
+    }
+    break;
+  }
+  tty->State = ESnormal;
+}
+
 static void setg(tty_data *tty, byte c) {
   const byte i = (tty->State & ESlomask) - ESsetG0;
   switch (c) {
@@ -1441,7 +1454,7 @@ static void setg(tty_data *tty, byte c) {
 }
 
 /** also updates tty->State */
-static void write_esc(tty_data *tty, byte c) {
+static void esc(tty_data *tty, byte c) {
   switch (c) {
   case '#':
     tty->State = EShash;
@@ -1496,10 +1509,10 @@ static void write_esc(tty_data *tty, byte c) {
     break;
 
   case '[':
-    tty->State = ESsquare;
+    tty->State = ESopen;
     return;
   case ']':
-    tty->State = ESnonstd;
+    tty->State = ESclose;
     return;
   case 'c':
     reset_tty(tty, true);
@@ -1541,7 +1554,7 @@ static void write_nonstd(tty_data *tty, byte c) {
   }
 }
 
-static void write_ctrl(tty_data *tty, byte c) {
+static void ctrl(tty_data *tty, byte c) {
   switch (tty->State) {
   case ESignore:
     /* ignore current byte */
@@ -1608,7 +1621,7 @@ static void write_ctrl(tty_data *tty, byte c) {
     del(tty);
     return;
   case 128 + 27:
-    tty->State = ESsquare;
+    tty->State = ESopen;
     return;
   }
 
@@ -1618,10 +1631,10 @@ static void write_ctrl(tty_data *tty, byte c) {
   switch (tty->State & ESlomask) {
 
   case ESesc:
-    write_esc(tty, c); /* already updates tty->State */
+    esc(tty, c); /* already updates tty->State */
     return;
 
-  case ESnonstd:
+  case ESclose:
     write_nonstd(tty, c); /* already updates tty->State */
     return;
 
@@ -1639,25 +1652,27 @@ static void write_ctrl(tty_data *tty, byte c) {
     }
     break;
 
-  case ESsquare:
+  case ESopen:
     tty->Par[0] = tty->nPar = 0;
-    tty->State = ESgetpars;
     switch (c) {
     case '[': /* Function key */
       tty->State = ESfunckey;
       return;
     case '#':
-      tty->State = (tty_state)((tty->State & ESlomask) | ES_hash);
+      tty->State = (tty_state)(ESgetpars | ES_hash);
       return;
     case '=':
-      tty->State = (tty_state)((tty->State & ESlomask) | ES_eq);
+      tty->State = (tty_state)(ESgetpars | ES_eq);
       return;
     case '>':
-      tty->State = (tty_state)((tty->State & ESlomask) | ES_gt);
+      tty->State = (tty_state)(ESgetpars | ES_gt);
       return;
     case '?':
-      tty->State = (tty_state)((tty->State & ESlomask) | ES_ques);
+      tty->State = (tty_state)(ESgetpars | ES_ques);
       return;
+    default:
+      tty->State = ESgetpars;
+      break;
     }
     /* FALLTHROUGH */
 
@@ -1687,9 +1702,11 @@ static void write_ctrl(tty_data *tty, byte c) {
     case ES_ques:
       ques(tty, c); /* already updates tty->State */
       return;
+    case ES_gt:
+      gt(tty, c); /* already updates tty->State */
+      return;
     case ES_hash:
     case ES_eq:
-    case ES_gt:
     default:
       /* ignore unimplemented xterm sequences:
        *   ESC [ # ...
@@ -1934,7 +1951,7 @@ static bool TtyWriteCharsetOrUtf8(Twindow w, uldat len, const char *chars, bool 
     if (printable && state_normal) {
       write_rune(tty, c);
     } else {
-      write_ctrl(tty, (byte)c);
+      ctrl(tty, (byte)c);
     }
     /* don't flush here, it just decreases performance */
     /* flush_tty(); */
@@ -2001,7 +2018,7 @@ bool TtyWriteTRune(Twindow w, uldat len, const trune *runes) {
         tty->Pos++;
       }
     } else {
-      write_ctrl(tty, (byte)c);
+      ctrl(tty, (byte)c);
     }
   }
   flush_tty(tty);

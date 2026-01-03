@@ -65,8 +65,8 @@ enum tty_charmap /*: byte*/ {
 
 enum tty_state /*: udat*/ {
   ESnormal = 0,
-  ESesc,
-  ESsquare,
+  ESesc,  /* found ESC   */
+  ESopen, /* found ESC [ */
   ESgetpars,
   ESgotpars,
   ESfunckey,
@@ -77,7 +77,7 @@ enum tty_state /*: udat*/ {
   ESsetG3,   /* found ESC + */
   ESpercent, /* found ESC % */
   ESignore,  /* ignore next byte*/
-  ESnonstd,  /* found ESC ] */
+  ESclose,   /* found ESC ] */
   ESspace,   /* found ESC [ ... SPACE */
   ESrgb,
   ESxterm_ignore,
