@@ -9,7 +9,9 @@
 #ifndef TWIN_TTERM_H
 #define TWIN_TTERM_H
 
-byte InitTerm(void);
+bool InitTerm(void);
+
+Twindow OpenTerm(const char *arg0, const char *const *argv);
 
 extern Tmenu Term_Menu;
 

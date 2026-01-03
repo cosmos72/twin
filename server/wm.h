@@ -25,7 +25,6 @@ struct wm_ctx {
 };
 
 bool InitWM(void);
-void QuitWM(void);
 
 void AskCloseWidget(Twidget w);
 void Check4Resize(Twindow window);
@@ -36,5 +35,7 @@ void FocusCtx(wm_ctx *C);
 byte ActivateCtx(wm_ctx *C, byte State);
 
 void ForceRelease(const wm_ctx *C);
+
+tpos WMFindBorderWindow(Twindow w, dat u, dat v, byte border, tcell *ptr_cell);
 
 #endif /* TWIN_WM_H */

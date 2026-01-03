@@ -530,10 +530,10 @@ void ExposeWindow2(Twindow w, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitc
   if (utf8_bytes) {
     bool (*writeUtf8)(Twindow, uldat, const char *);
     if (W_USE(w, USECONTENTS)) {
-      writeUtf8 = Fn_Twindow->TtyWriteUtf8;
-    } else
+      writeUtf8 = TtyWriteUtf8;
+    } else {
       writeUtf8 = RowWriteUtf8Window;
-
+    }
     curX = w->CurX;
     curY = w->CurY;
     for (; YWidth; YWidth--, Up++, utf8_bytes += Pitch) {

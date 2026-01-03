@@ -5,7 +5,6 @@
 CONF___MENU="General setup"
 CONF_SOCKET_MENU="Socket support"
 CONF_WM_MENU="Window Manager"
-CONF_TERM_MENU="Terminal emulator"
 CONF_PRINTK_MENU="Messages logging"
 CONF_HW_MENU="Display hardware support"
 CONF_OPT_MENU="Runtime options"
@@ -21,7 +20,6 @@ CONF_WM_HELP="Window Manager: absolutely needed!"
 CONF_WM_RC_HELP="WM: support ~/.config/twin/twinrc configuration parser"
 CONF_WM_RC_SHMMAP_HELP=" -> WM: RC: use mmapped shared file for parser"
 CONF_WM_RC_SHRINK_HELP=" -> WM: RC: shrink memory when parser finished"
-CONF_TERM_HELP="Builtin Terminal emulator"
 CONF_TERM_DEVPTS_HELP=" -> Terminal: use Unix98 /dev/pts/* pseudo-ttys"
 CONF_PRINTK_HELP="Store server messages into Messages window"
 CONF_HW_TTY_HELP="HW support: text terminals (Linux console...)"
@@ -56,7 +54,6 @@ menu CONF_WM
   yesno_dep CONF_WM_RC_SHRINK CONF_WM_RC
 endmenu
 menu CONF_TERM
-  yesmodno CONF_TERM
   yesno CONF_TERM_DEVPTS
 endmenu
 menu CONF_PRINTK

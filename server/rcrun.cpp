@@ -19,6 +19,7 @@
 #include "obj/id.h" // Obj2Id()
 #include "resize.h"
 #include "util.h"
+#include "tterm.h" // OpenTerm()
 #include "wm.h"
 
 #include "common.h"
@@ -476,7 +477,7 @@ static byte RCSteps(run *r) {
          * it goes in a msg_map queued in the WM_MsgPort,
          * so we have the time to reach the corresponding WAIT here
          */
-        Ext(Term, Open)(n->x.v.argv[0], n->x.v.argv);
+        OpenTerm(n->x.v.argv[0], n->x.v.argv);
         break;
 
       case INTERACTIVE:
@@ -514,7 +515,7 @@ static byte RCSteps(run *r) {
         break;
       case MODULE:
         if (n->x.f.a == -1) {
-          n->x.f.a = DlName2Code(n->name);
+          n->x.f.a = DlName2Code(Chars::from_c(n->name));
         }
         if (n->x.f.flag == FL_ON) {
           DlLoad((IdSo)n->x.f.a);

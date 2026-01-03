@@ -1161,28 +1161,31 @@ static Twindow sockCreateWindow(SockCtx &ctx, dat TitleLen, const char *Title,
 
 static void sockWriteCharsetWindow(SockCtx &ctx, Twindow w, uldat len, const char *charset_bytes) {
   if (w) {
-    if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
+    if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS) {
       w->TtyWriteCharset(len, charset_bytes);
-    else if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
+    } else if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS) {
       w->RowWriteCharset(len, charset_bytes);
+    }
   }
 }
 
 static void sockWriteUtf8Window(SockCtx &ctx, Twindow w, uldat len, const char *utf8_bytes) {
   if (w) {
-    if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
+    if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS) {
       w->TtyWriteUtf8(len, utf8_bytes);
-    else if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
+    } else if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS) {
       w->RowWriteUtf8(len, utf8_bytes);
+    }
   }
 }
 
 static void sockWriteTRuneWindow(SockCtx &ctx, Twindow w, uldat len, const trune *runes) {
   if (w) {
-    if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
+    if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS) {
       w->TtyWriteTRune(len, runes);
-    else if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
+    } else if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS) {
       w->RowWriteTRune(len, runes);
+    }
   }
 }
 

@@ -27,9 +27,6 @@ struct exts {
     void (*SendMsg)(Tmsgport MsgPort, Tmsg msg);
     bool (*InitAuth)(void);
   } Socket;
-  struct {
-    Twindow (*Open)(const char *arg0, const char *const *argv);
-  } Term;
 };
 
 extern exts Exts;

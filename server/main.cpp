@@ -35,6 +35,7 @@
 #include "remote.h"
 #include "scroller.h"
 #include "stl/string.h"
+#include "tterm.h" // InitTerm()
 #include "util.h"
 #include "version.h"
 #include "wm.h"
@@ -202,7 +203,7 @@ static bool Init(void) {
           * also Video[]. The former is initialized by InitBuiltin(), the latter by InitHW().
           * No DrawArea2() are allowed at all before InitHW() !
           */
-         InitWM();
+         InitWM() && InitTerm();
 }
 
 void Quit(int status) {

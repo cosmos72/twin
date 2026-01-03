@@ -33,7 +33,6 @@ m4_define([TW_OUTPUT], [[
   tw_cfg CONF_WM_RC             "$enable_wm_rc"
   tw_cfg CONF_WM_RC_SHMMAP      "$enable_wm_rc_shmmap"
   tw_cfg CONF_WM_RC_SHRINK      "$enable_wm_rc_shrink"
-  tw_cfg CONF_TERM              "$enable_term"
   tw_cfg CONF_TERM_DEVPTS       "$enable_term_devpts"
   tw_cfg CONF_PRINTK            "$enable_printk"
   tw_cfg CONF_HW_TTY            "$enable_hw_tty"

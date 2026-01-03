@@ -61,12 +61,6 @@ AC_ARG_ENABLE(wm_rc_shrink,dnl
 enable_wm_rc_shrink=yes
 )dnl
 
-dnl terminal emulator
-AC_ARG_ENABLE(term,dnl
-[  --enable-term[=yes|no]                 enable builtin terminal emulator ],,
-enable_term=yes
-)dnl
-
 dnl use /dev/pts/* for terminal emulator
 AC_ARG_ENABLE(term_devpts,dnl
 [  --enable-term-devpts[=yes|no]          enable Unix98 /dev/pts/* pseudo-ttys ],,

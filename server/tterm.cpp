@@ -65,7 +65,7 @@ static Twindow newTermWindow(const char *title) {
   return Window;
 }
 
-static Twindow OpenTerm(const char *arg0, const char *const *argv) {
+Twindow OpenTerm(const char *arg0, const char *const *argv) {
   Twindow Window;
   const char *title;
 
@@ -190,31 +190,10 @@ static void TwinTermIO(int Fd, Twindow Window) {
 
 #include "tty.h"
 
-static void OverrideMethods(bool enter) {
-  if (enter) {
-    OverrideMethod(widget, KbdFocus, FakeKbdFocus, TtyKbdFocus);
-    OverrideMethod(window, KbdFocus, FakeKbdFocus, TtyKbdFocus);
-    OverrideMethod(window, TtyWriteCharset, FakeWriteCharset, TtyWriteCharset);
-    OverrideMethod(window, TtyWriteUtf8, FakeWriteUtf8, TtyWriteUtf8);
-    OverrideMethod(window, TtyWriteTRune, FakeWriteTRune, TtyWriteTRune);
-    OverrideMethod(window, TtyWriteTCell, FakeWriteTCell, TtyWriteTCell);
-    ForceKbdFocus();
-  } else {
-    OverrideMethod(window, TtyWriteTCell, TtyWriteTCell, FakeWriteTCell);
-    OverrideMethod(window, TtyWriteTRune, TtyWriteTRune, FakeWriteTRune);
-    OverrideMethod(window, TtyWriteUtf8, TtyWriteUtf8, FakeWriteUtf8);
-    OverrideMethod(window, TtyWriteCharset, TtyWriteCharset, FakeWriteCharset);
-    OverrideMethod(window, KbdFocus, TtyKbdFocus, FakeKbdFocus);
-    OverrideMethod(widget, KbdFocus, TtyKbdFocus, FakeKbdFocus);
-  }
-}
-
-EXTERN_C byte InitModule(Tmodule m) {
+bool InitTerm(void) {
   tcolor color[19];
   Twindow Window;
   const char *shellpath, *shell;
-
-  (void)m;
 
   ColorFill(color, 19, TCOL(tblack, twhite));
   color[14] = color[9] = color[1] = TCOL(tred, twhite);
@@ -238,25 +217,25 @@ EXTERN_C byte InitModule(Tmodule m) {
 
       Smenuitem::Create4MenuCommon(Term_Menu)) {
 
-    RegisterExt(Term, Open, OpenTerm);
-    OverrideMethods(true);
+    ForceKbdFocus();
 
-    if (default_args[1][0] == '/')
+    if (default_args[1][0] == '/') {
       default_args[1][0] = '-';
-    return ttrue;
+    }
+    return true;
   }
-  if (shellpath)
+  if (shellpath) {
     log(ERROR) << "twin: InitTerm(): " << Errstr << "\n";
-  else
+  } else {
     log(ERROR) << "twin: required environment variable $SHELL not set!\n";
-  return tfalse;
+  }
+  return false;
 }
 
-EXTERN_C void QuitModule(Tmodule m) {
-  (void)m;
-  UnRegisterExt(Term, Open, OpenTerm);
-  OverrideMethods(false);
+#if 0  // unused
+void QuitTerm(void) {
   if (Term_MsgPort) {
     Term_MsgPort->Delete();
   }
 }
+#endif // 0

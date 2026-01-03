@@ -97,20 +97,18 @@ Tmodule DlLoadAny(Chars name) {
 
 static Tmodule So[MAX_So];
 
-IdSo DlName2Code(const char *name) {
-  if (!strcmp(name, "term"))
-    return TermSo;
-  if (!strcmp(name, "socket"))
+IdSo DlName2Code(const Chars name) {
+  if (name == Chars("socket")) {
     return SocketSo;
-  if (!strcmp(name, "rcparse"))
+  } else if (name == Chars("rcparse")) {
     return RCParseSo;
-  return MainSo;
+  } else {
+    return MainSo;
+  }
 }
 
 static Chars DlCode2Name(IdSo code) {
   switch (code) {
-  case TermSo:
-    return Chars("term");
   case SocketSo:
     return Chars("socket");
   case RCParseSo:
@@ -122,27 +120,25 @@ static Chars DlCode2Name(IdSo code) {
 }
 
 Tmodule DlLoad(IdSo code) {
-  Tmodule M = (Tmodule)0;
-  if (code >= 0 && code < MAX_So && !(M = So[code])) {
+  Tmodule m = NULL;
+  if (code >= 0 && code < MAX_So && !(m = So[code])) {
     const Chars name = DlCode2Name(code);
-    M = DlLoadAny(name);
-    if ((So[code] = M)) {
+    m = DlLoadAny(name);
+    if ((So[code] = m)) {
       All->HookModule();
     } else {
       log(ERROR) << "failed to load module " << name << ": " //
                  << (Errstr ? Errstr : Chars("unknown error"));
     }
   }
-  return M;
+  return m;
 }
 
 void DlUnload(IdSo code) {
-  if (code < MAX_So) {
-    if (So[code]) {
-      So[code]->Delete();
-      So[code] = NULL;
-      All->HookModule();
-    }
+  if (code >= 0 && code < MAX_So && So[code]) {
+    So[code]->Delete();
+    So[code] = NULL;
+    All->HookModule();
   }
 }
 

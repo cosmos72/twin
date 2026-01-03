@@ -80,7 +80,7 @@ inline sbyte IsTabPosition(Twindow Window, udat pos, sbyte isX) {
   return pos >= (start = TabStart(Window, isX)) ? pos - start < TabLen(Window, isX) ? 0 : 1 : -1;
 }
 
-static tpos WMFindBorderWindow(Twindow w, dat u, dat v, byte border, tcell *ptr_cell) {
+tpos WMFindBorderWindow(Twindow w, dat u, dat v, byte border, tcell *ptr_cell) {
   const trune *borderRunes;
   trune rune = 0;
   ldat k;
@@ -1944,14 +1944,6 @@ static void SmartPlace(Twidget w, Tscreen screen) {
   w->MapTopReal(screen);
 }
 
-static void OverrideMethods(bool enter) {
-  if (enter) {
-    OverrideMethod(window, FindBorder, FakeFindBorderWindow, WMFindBorderWindow);
-  } else {
-    OverrideMethod(window, FindBorder, WMFindBorderWindow, FakeFindBorderWindow);
-  }
-}
-
 bool InitWM(void) {
   byte logged = false;
 
@@ -1967,7 +1959,6 @@ bool InitWM(void) {
         MapQueue->Remove();
 
         if (InitRC()) {
-          OverrideMethods(true);
           return true;
         } else {
           log(ERROR) << "twin: RC: " << Errstr << "\n";
@@ -1989,10 +1980,11 @@ bool InitWM(void) {
   return false;
 }
 
+#if 0  // unused
 void QuitWM(void) {
   QuitRC();
-  OverrideMethods(tfalse);
   UnRegisterExt(WM, MsgPort, WM_MsgPort);
   WM_MsgPort->Delete();
   MapQueue->Delete();
 }
+#endif // 0

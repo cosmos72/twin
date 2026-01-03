@@ -661,8 +661,6 @@ am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LDFLAGS_BIN_EXPORT_DYNAMIC
-LIBTERM_la_FALSE
-LIBTERM_la_TRUE
 LIBSOCKET_la_FALSE
 LIBSOCKET_la_TRUE
 LIBRCPARSE_la_FALSE
@@ -870,7 +868,6 @@ enable_wm
 enable_wm_rc
 enable_wm_rc_shmmap
 enable_wm_rc_shrink
-enable_term
 enable_term_devpts
 enable_printk
 enable_hw_tty
@@ -1563,7 +1560,6 @@ Optional Features:
   --enable-wm-rc=yes|no                enable ~/.config/twin/twinrc configuration parser
   --enable-wm-rc-shmmap=yes|no         enable mmapped shared file for parser
   --enable-wm-rc-shrink=yes|no         enable shrinking memory when parser finished
-  --enable-term=yes|no                 enable builtin terminal emulator
   --enable-term-devpts=yes|no          enable Unix98 /dev/pts/* pseudo-ttys
   --enable-printk=yes|no               enable logging messages in Messages window
   --enable-hw-tty=yes|no               enable tty drivers
@@ -4788,16 +4784,6 @@ then :
   enableval=$enable_wm_rc_shrink;
 else case e in #(
   e) enable_wm_rc_shrink=yes
- ;;
-esac
-fi
-
-# Check whether --enable-term was given.
-if test ${enable_term+y}
-then :
-  enableval=$enable_term;
-else case e in #(
-  e) enable_term=yes
  ;;
 esac
 fi
@@ -25070,14 +25056,6 @@ else
   LIBSOCKET_la_FALSE=
 fi
 
- if test "$enable_term"       = yes; then
-  LIBTERM_la_TRUE=
-  LIBTERM_la_FALSE='#'
-else
-  LIBTERM_la_TRUE='#'
-  LIBTERM_la_FALSE=
-fi
-
 
 CFLAGS="$custom_CFLAGS"
 
@@ -25302,10 +25280,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${LIBSOCKET_la_TRUE}" && test -z "${LIBSOCKET_la_FALSE}"; then
   as_fn_error $? "conditional \"LIBSOCKET_la\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${LIBTERM_la_TRUE}" && test -z "${LIBTERM_la_FALSE}"; then
-  as_fn_error $? "conditional \"LIBTERM_la\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
@@ -27786,7 +27760,6 @@ tw_cfg()
   tw_cfg CONF_WM_RC             "$enable_wm_rc"
   tw_cfg CONF_WM_RC_SHMMAP      "$enable_wm_rc_shmmap"
   tw_cfg CONF_WM_RC_SHRINK      "$enable_wm_rc_shrink"
-  tw_cfg CONF_TERM              "$enable_term"
   tw_cfg CONF_TERM_DEVPTS       "$enable_term_devpts"
   tw_cfg CONF_PRINTK            "$enable_printk"
   tw_cfg CONF_HW_TTY            "$enable_hw_tty"

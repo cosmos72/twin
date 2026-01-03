@@ -26,6 +26,7 @@
 #include "hw_multi.h"
 #include "obj/id.h"
 #include "resize.h"
+#include "tterm.h" // OpenTerm()
 #include "util.h"
 #include "version.h"
 
@@ -68,8 +69,6 @@ enum {
   COD_MESSAGES_WIN = 24,
   COD_ABOUT_WIN = 25,
 
-  COD_TERM_ON = 30,
-  COD_TERM_OFF = 31,
   COD_SOCKET_ON = 32,
   COD_SOCKET_OFF = 33,
 
@@ -130,13 +129,6 @@ static void TweakMenuRows(Tmenuitem item, udat code, byte flag) {
 
 static void UpdateMenuRows(Twidget dummy) {
   (void)dummy;
-  if (DlIsLoaded(TermSo)) {
-    TweakMenuRows(Builtin_Modules, COD_TERM_ON, ROW_INACTIVE);
-    TweakMenuRows(Builtin_Modules, COD_TERM_OFF, ROW_ACTIVE);
-  } else {
-    TweakMenuRows(Builtin_Modules, COD_TERM_ON, ROW_ACTIVE);
-    TweakMenuRows(Builtin_Modules, COD_TERM_OFF, ROW_INACTIVE);
-  }
   if (DlIsLoaded(SocketSo)) {
     TweakMenuRows(Builtin_Modules, COD_SOCKET_ON, ROW_INACTIVE);
     TweakMenuRows(Builtin_Modules, COD_SOCKET_OFF, ROW_ACTIVE);
@@ -202,7 +194,7 @@ static void ExecuteWinRun(void) {
 
     if ((G = ExecuteWin->FindGadgetByCode(COD_E_TTY)) && G->USE.T.Text[0][1] != ' ') {
       /* run in a tty */
-      Ext(Term, Open)(arg0, (const char *const *)argv);
+      OpenTerm(arg0, (const char *const *)argv);
     } else if (argv)
       switch (fork()) {
         /* do not run in a tty */
@@ -598,17 +590,8 @@ static void BuiltinH(Tmsgport msgport) {
           SendControlMsg(Ext(WM, MsgPort), MSG_CONTROL_RESTART, 0, NULL);
           break;
 
-        case COD_TERM_ON:
-          if (!DlLoad(TermSo))
-            break;
-          /* FALLTHROUGH */
-
         case COD_SPAWN:
-          Ext(Term, Open)(NULL, NULL);
-          break;
-
-        case COD_TERM_OFF:
-          DlUnload(TermSo);
+          OpenTerm(NULL, NULL);
           break;
 
         case COD_SOCKET_OFF:
@@ -719,10 +702,10 @@ static void BuiltinH(Tmsgport msgport) {
       case MSG_CONTROL_OPEN: {
         char **cmd = TokenizeStringVec(Event->EventControl.Len, Event->EventControl.Data);
         if (cmd) {
-          Ext(Term, Open)(cmd[0], (const char *const *)cmd);
+          OpenTerm(cmd[0], (const char *const *)cmd);
           FreeStringVec(cmd);
         } else
-          Ext(Term, Open)(NULL, NULL);
+          OpenTerm(NULL, NULL);
         break;
       }
       case MSG_CONTROL_QUIT:
@@ -865,11 +848,6 @@ bool InitBuiltin(void) {
 
       (w = Swindow::Create4Menu(Builtin_Menu)) &&
       (w->InstallHook(UpdateMenuRows, &All->HookModule), ttrue) &&
-      Row4Menu(w, COD_TERM_ON, ROW_ACTIVE, 20, " Run Twin Term      ") &&
-      Row4Menu(w, COD_TERM_OFF, ROW_INACTIVE, 20, " Stop Twin Term     ") &&
-      Row4Menu(
-          w, (udat)0, ROW_IGNORE, 20,
-          "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
       Row4Menu(w, COD_SOCKET_ON, ROW_ACTIVE, 20, " Run Socket Server  ") &&
       Row4Menu(w, COD_SOCKET_OFF, ROW_INACTIVE, 20, " Stop Socket Server ") &&
       (Builtin_Modules = Smenuitem::Create4Menu(Builtin_Menu, w, 0, ttrue, 9, " Modules ")) &&

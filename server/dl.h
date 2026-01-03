@@ -16,7 +16,6 @@ void DlClose(Tmodule Module);
 
 enum IdSo {
   MainSo = 0,
-  TermSo = 2,
   SocketSo = 3,
   RCParseSo = 4,
   MAX_So = 5,
@@ -25,7 +24,7 @@ enum IdSo {
 Tmodule DlLoad(IdSo code);
 void DlUnload(IdSo code);
 Tmodule DlIsLoaded(IdSo code);
-IdSo DlName2Code(const char *name);
+IdSo DlName2Code(const Chars name);
 
 Tmodule DlLoadAny(Chars name);
 

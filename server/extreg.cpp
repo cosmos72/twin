@@ -22,12 +22,10 @@ exts Exts = {{NULL},
              {
                  (void (*)(Tmsgport, Tmsg))NoOp,
                  AlwaysTrue,
-             },
-             {FakeOpenTerm}};
+             }};
 const exts OrigExts = {{NULL},
                        {remoteKillSlot},
                        {
                            (void (*)(Tmsgport, Tmsg))NoOp,
                            AlwaysTrue,
-                       },
-                       {FakeOpenTerm}};
+                       }};
