@@ -22458,7 +22458,7 @@ for try_flag in -fno-strict-aliasing -fwrapv -pipe \
                 -Wall -W -Wextra -Wshadow -Wno-uninitialized -Wundef \
                 -Wcast-qual -Wcast-align -Wpointer-arith -Wwrite-strings \
                 -Wstrict-prototypes -Wbad-function-cast \
-                -Wold-style-definition -Wsign-compare
+                -Wold-style-declaration -Wold-style-definition -Wsign-compare
 do
   save_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS $try_flag"
@@ -27806,3 +27806,6 @@ tw_cfg()
 
   echo                              >> include/twconfig.h
   echo '#endif /* TWCONFIG_H */'    >> include/twconfig.h
+
+
+

@@ -869,11 +869,26 @@ static void report(tty_data *tty) {
  * this is what the terminal answers to a ESC-Z or csi0c query.
  */
 static inline void respond_ID(tty_data *tty) {
-  /* VT102ID (returned by linux console) is "\033[?6c" */
-  /* twin <= 0.3.8  reports "\033[?6;3c" to indicate xterm-style mouse features */
-  /* twin <= 0.3.10 reports "\033[?6;4c", can also report mouse motion with no buttons pressed */
-  /* twin >= 0.3.11 reports "\033[?6;5c", also supports utf-8 mode */
-  respond_string(tty, "\033[?6;5c", 7);
+  /**
+   * xterm replies "\033[? ... c" indicating the supported features:
+   * 64: terminal is VT420
+   *  1: 132 columns
+   *  2: printer
+   *  3: ReGIS graphics
+   *  4: Sixel graphics
+   *  5: Selective erase
+   *  8: User-defined keys
+   *  9: National Replacement Character sets i.e. ESC [ ? 42 h
+   * 15: Technical characters i.e. ESC ( > and similar
+   * 16: Locator port
+   * 17: Terminal state interrogation
+   * 18: User windows
+   * 21: Horizontal scrolling
+   * 22: ANSI color
+   * 28: Rectangular editing
+   * 29: ANSI text locator i.e. DEC Locator mode
+   */
+  respond_string(tty, "\033[?64;1;18;21;22c", 17);
 }
 
 /** execute ESC [ nnn h  and  ESC [ nnn l */
