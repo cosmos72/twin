@@ -160,7 +160,7 @@ static bool InitTtyDataWindow(Twindow window, dat scrollbacklines) {
     return false;
   }
 
-  new (&tty->newName) String();
+  new (&tty->oscString) String();
 
   h = TCELL(TCOL(twhite, tblack), ' ');
   while (count--) {
@@ -223,7 +223,7 @@ void Swindow::Delete() {
   if (W_USE(this, USECONTENTS)) {
     tty_data *tty = USE.C.TtyData;
     if (tty) {
-      tty->newName.~String();
+      tty->oscString.~String();
       FreeMem(tty);
     }
     if (USE.C.Contents) {

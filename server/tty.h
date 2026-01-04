@@ -65,31 +65,28 @@ enum tty_charmap /*: byte*/ {
 
 enum tty_state /*: udat*/ {
   ESnormal = 0,
-  ESesc,  /* found ESC   */
-  ESopen, /* found ESC [ */
-  ESgetpars,
-  ESgotpars,
-  ESfunckey,
-  EShash,    /* found ESC # */
-  ESsetG0,   /* found ESC ( */
-  ESsetG1,   /* found ESC ) */
-  ESsetG2,   /* found ESC * */
-  ESsetG3,   /* found ESC + */
-  ESpercent, /* found ESC % */
-  ESignore,  /* ignore next byte*/
-  ESclose,   /* found ESC ] */
-  ESspace,   /* found ESC [ ... SPACE */
-  ESrgb,
-  ESxterm_ignore,
-  ESxterm_ignore_esc,
-  ESxterm_title_,
-  ESxterm_title,
+  ESesc,        /* found ESC   */
+  ESsquare,     /* found ESC [ */
+  ESgetpars,    /* found ESC [ ...     now read NNN ... */
+  ESgotpars,    /* found ESC [ NNN ... now read command */
+  ESfunckey,    /* found ESC [ [ */
+  EShash,       /* found ESC # */
+  ESsetG0,      /* found ESC ( */
+  ESsetG1,      /* found ESC ) */
+  ESsetG2,      /* found ESC * */
+  ESsetG3,      /* found ESC + */
+  ESpercent,    /* found ESC % */
+  ESignore,     /* ignore next byte*/
+  ESspace,      /* found ESC [ ... SPACE */
+  ESrgb,        /* found ESC ] P */
+  ESosc,        /* found ESC ]       now read NNN */
+  ESosc_string, /* found ESC ] NNN ; now read STRING */
   ESlomask = 0xFF,
-  ES_csi = 0x00,   /* found ESC [ */
-  ES_hash = 0x100, /* found ESC [ # */
-  ES_eq = 0x200,   /* found ESC [ = */
-  ES_gt = 0x300,   /* found ESC [ > */
-  ES_ques = 0x400, /* found ESC [ ? */
+  ES_csi = 0x00,   /* found ESC [ NNN ...   */
+  ES_hash = 0x100, /* found ESC [ # NNN ... */
+  ES_eq = 0x200,   /* found ESC [ = NNN ... */
+  ES_gt = 0x300,   /* found ESC [ > NNN ... */
+  ES_ques = 0x400, /* found ESC [ ? NNN ... */
   ES_himask = 0xFF00,
 };
 
@@ -116,7 +113,7 @@ public:
   trune curr_rune;            /* for ESC [ NNN b i.e. repeat last char NNN times */
   trune (*InvCharset)(trune); /* pointer to trune -> byte translation function */
 
-  String newName;    /* buffer for xterm set window title escape seq */
+  String oscString;  /* buffer for ESC ] NNN ... ; STRING ESC \ command */
   byte TabStop[128]; /* Allow tab stops in positions 0-1023 */
 };
 

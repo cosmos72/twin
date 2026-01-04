@@ -18,15 +18,14 @@
 #include "twin.h"
 #include "algo.h"
 #include "alloc.h"
+#include "common.h"
 #include "data.h"
+#include "draw.h"
+#include "hw.h"
 #include "methods.h"
 #include "palette.h"
-#include "draw.h"
-#include "resize.h"
-
 #include "remote.h"
-#include "hw.h"
-#include "common.h"
+#include "resize.h"
 #include "tty.h"
 
 #include <Tw/Tw.h>
@@ -846,23 +845,40 @@ static void respond_string(tty_data *tty, const char *p, int len) {
   }
 }
 
-static void cursor_report(tty_data *tty) {
+static void report_cursor(tty_data *tty) {
   char buf[40];
   int n = snprintf(buf, sizeof(buf), "\033[%d;%dR",
                    tty->Y + (tty->Flags & TTY_RELORIG ? tty->Top + 1 : 1), tty->X + 1);
   respond_string(tty, buf, n);
 }
 
-static inline void status_report(tty_data *tty) {
+static inline void report_status(tty_data *tty) {
   respond_string(tty, "\033[0n", 4); /* Terminal ok */
 }
 
 static void report(tty_data *tty) {
   if (tty->Par[0] == 5) {
-    status_report(tty);
+    report_status(tty);
   } else if (tty->Par[0] == 6) {
-    cursor_report(tty);
+    report_cursor(tty);
   }
+}
+
+static void respond_rgb_index(tty_data *tty, Chars prefix, uint8_t index, trgb color) {
+  char buf[24];
+  int len =
+      snprintf(buf, sizeof(buf), "\033]%.*s;%hu;rgb:%02hx/%02hx/%02hx\033\\", (int)prefix.size(),
+               prefix.data(), (unsigned short)index, (unsigned short)TRED(color),
+               (unsigned short)TGREEN(color), (unsigned short)TBLUE(color));
+  respond_string(tty, buf, Min2(len, sizeof(buf)));
+}
+
+static void respond_rgb(tty_data *tty, Chars prefix, trgb color) {
+  char buf[20];
+  int len = snprintf(buf, sizeof(buf), "\033]%.*s;rgb:%02hx/%02hx/%02hx\033\\", (int)prefix.size(),
+                     prefix.data(), (unsigned short)TRED(color), (unsigned short)TGREEN(color),
+                     (unsigned short)TBLUE(color));
+  respond_string(tty, buf, Min2(len, sizeof(buf)));
 }
 
 /*
@@ -1145,6 +1161,8 @@ static void reset_tty(tty_data *tty, bool do_clear) {
   tty->utf8 = 1;
   tty->utf8_count = tty->utf8_char = tty->curr_rune = 0;
 
+  tty->oscString.clear();
+
   std::memset(tty->TabStop, 0x01, sizeof(tty->TabStop));
   tty->TabStop[0] = 0;
 
@@ -1196,18 +1214,6 @@ static void goto_tab_forward(tty_data *tty, uldat n) {
   }
   tty->X = x;
   tty->Pos += x;
-}
-
-static void set_newtitle(tty_data *tty) {
-  String &name = tty->newName;
-  const size_t len = name.size();
-  if (len == 0) {
-    return;
-  }
-  /* try to shrink... */
-  name.shrink_to_fit();
-  /* name.release() also resets it to zero length */
-  tty->Win->SetTitle(len, name.release());
 }
 
 /** execute ESC [ ... then update tty->State */
@@ -1453,7 +1459,7 @@ static void setg(tty_data *tty, byte c) {
   }
 }
 
-/** also updates tty->State */
+/** found ESC, parse next byte. also update tty->State */
 static void esc(tty_data *tty, byte c) {
   switch (c) {
   case '#':
@@ -1509,10 +1515,11 @@ static void esc(tty_data *tty, byte c) {
     break;
 
   case '[':
-    tty->State = ESopen;
+    tty->State = ESsquare;
     return;
   case ']':
-    tty->State = ESclose;
+    tty->State = ESosc;
+    tty->Par[tty->nPar = 0] = 0;
     return;
   case 'c':
     reset_tty(tty, true);
@@ -1528,29 +1535,146 @@ static void esc(tty_data *tty, byte c) {
   case '|':
     set_charset(tty, tty->Gv[tty->Gi = 3]);
     break;
-
-  case '\\': /* ESC\ is the official termination for ESC]0; which starts window title change */
-    set_newtitle(tty);
-    break;
   }
   tty->State = ESnormal;
 }
 
-/** also updates tty->State */
-static void write_nonstd(tty_data *tty, byte c) {
-  if (c == 'P') { /* Palette escape sequence */
-    tty->Par[0] = tty->nPar = 0;
+static void osc_cmd_window_title(tty_data *tty) {
+  String &name = tty->oscString;
+  const size_t len = name.size();
+  if (len == 0) {
+    return;
+  }
+  /* try to shrink... */
+  name.shrink_to_fit();
+  /* name.release() also resets it to zero length */
+  tty->Win->SetTitle(len, name.release());
+}
+
+static void osc_cmd_palette(tty_data *tty) {
+  String &name = tty->oscString;
+  size_t len = name.size();
+  if (len >= 2 && name[len - 2] == ';' && name[len - 1] == '?') {
+    uint8_t index = tty->Par[1] & 0xFF;
+    respond_rgb_index(tty, Chars("4"), index, Palette[index]);
+  }
+}
+
+static void osc_cmd_fg_color(tty_data *tty) {
+  String &name = tty->oscString;
+  if (name.size() == 1 && name[0] == '?') {
+    respond_rgb(tty, Chars("11"), TCOLFG(tty->Color));
+  }
+}
+
+static void osc_cmd_bg_color(tty_data *tty) {
+  String &name = tty->oscString;
+  if (name.size() == 1 && name[0] == '?') {
+    respond_rgb(tty, Chars("11"), TCOLBG(tty->Color));
+  }
+}
+
+static void osc_cmd_cursor_color(tty_data *tty) {
+  String &name = tty->oscString;
+  if (name.size() == 1 && name[0] == '?') {
+    respond_rgb(tty, Chars("12"), TCOLBG(tty->Color));
+  }
+}
+
+static void osc_cmd_selection_bg_color(tty_data *tty) {
+  String &name = tty->oscString;
+  if (name.size() == 1 && name[0] == '?') {
+    respond_rgb(tty, Chars("17"), TCOLBG(tty->Win->ColSelect));
+  }
+}
+
+static void osc_cmd_selection_fg_color(tty_data *tty) {
+  String &name = tty->oscString;
+  if (name.size() == 1 && name[0] == '?') {
+    respond_rgb(tty, Chars("19"), TCOLFG(tty->Win->ColSelect));
+  }
+}
+
+/** found ESC ] NNN ; STRING now parse next byte. also update tty->State */
+static void osc_cmd(tty_data *tty, byte c) {
+  switch (tty->Par[0]) {
+  case 0:
+  case 2:
+    osc_cmd_window_title(tty);
+    break;
+  case 4:
+    osc_cmd_palette(tty);
+    break;
+  case 10:
+    osc_cmd_fg_color(tty);
+    break;
+  case 11:
+    osc_cmd_bg_color(tty);
+    break;
+  case 12:
+    osc_cmd_cursor_color(tty);
+    break;
+  case 17:
+    osc_cmd_selection_bg_color(tty);
+    break;
+  case 19:
+    osc_cmd_selection_fg_color(tty);
+    break;
+  }
+  tty->oscString.clear();
+  tty->State = (c == 27) ? ESignore /* ignore expected \ */ : ESnormal;
+}
+
+/** found ESC ] NNN now parse next byte. also update tty->State */
+static void osc(tty_data *tty, byte c) {
+  switch (c) {
+  case ';':
+    tty->oscString.clear();
+    tty->State = ESosc_string;
+    tty->Par[tty->nPar = 1] = 0;
+    break;
+  case 'P': /* Linux palette set */
     tty->State = ESrgb;
-  } else if (c == 'R') { /* Reset palette */
+    break;
+  case 'R': /* Linux palette reset */
     ResetPaletteHW();
     tty->State = ESnormal;
-  } else if (c == '0' || c == '2' || c == '7') {
-    /* may be xterm "set icon name & window title" or xterm "set window title"
-     * or xterm "set current directory title" */
-    tty->State = ESxterm_title_;
+    break;
+  default:
+    if (c >= '0' && c <= '9') {
+      /* found OSC command i.e. ESC ] NNN ... */
+      tty->Par[0] = 10 * tty->Par[0] + (c - '0');
+    } else {
+      tty->State = ESnormal;
+    }
+    break;
+  }
+}
+
+/** found ESC ] NNN ; ... now parse next byte. also update tty->State */
+static void osc_string(tty_data *tty, byte c) {
+  if (c < ' ') {
+    /* official termination for ESC ] NNN ... is ESC \  */
+    /* unofficial but common termination is BEL i.e. \7 */
+    /* we allow any byte < 32 as termination            */
+    osc_cmd(tty, c);
   } else {
-    /* unsupported escape sequence */
-    tty->State = ESxterm_ignore;
+    /** both accumulate c into tty->oscString and parse c as decimal integer into tty->Par[] */
+    uldat n = tty->nPar;
+    if (c >= '0' && c <= '9') {
+      if (n < NPAR) {
+        tty->Par[n] = 10 * tty->Par[n] + (c - '0');
+      }
+    } else if (c == ';') {
+      if (++n < NPAR) {
+        tty->nPar = n;
+        tty->Par[n] = 0;
+      }
+    }
+    /** limit oscString to 1024 bytes - avoids denial of service */
+    if (tty->oscString.size() < 1024) {
+      (void)tty->oscString.append(c);
+    }
   }
 }
 
@@ -1563,23 +1687,19 @@ static void ctrl(tty_data *tty, byte c) {
   case ESspace:
     csi_space(tty, c); /* already updates tty->State */
     return;
+  case ESosc_string:
+    osc_string(tty, c);
+    return;
   default:
     break;
   }
+
   /* Control characters can be used in the _middle_ of an escape sequence */
   switch (c) {
   case 0:
     return;
   case 7:
-    if (tty->State != ESxterm_ignore && tty->State != ESxterm_title) {
-      BeepHW();
-      return;
-    }
-    if (tty->State == ESxterm_title) {
-      /* \x07 is an (un)official termination for ESC]0; which starts window title change */
-      set_newtitle(tty);
-    }
-    tty->State = ESnormal;
+    BeepHW();
     return;
   case 8:
     bs(tty);
@@ -1611,17 +1731,13 @@ static void ctrl(tty_data *tty, byte c) {
     tty->State = ESnormal;
     return;
   case 27:
-    if (tty->State == ESxterm_ignore) {
-      tty->State = ESxterm_ignore_esc;
-    } else {
-      tty->State = ESesc;
-    }
+    tty->State = ESesc;
     return;
   case 127:
     del(tty);
     return;
   case 128 + 27:
-    tty->State = ESopen;
+    tty->State = ESsquare;
     return;
   }
 
@@ -1634,8 +1750,8 @@ static void ctrl(tty_data *tty, byte c) {
     esc(tty, c); /* already updates tty->State */
     return;
 
-  case ESclose:
-    write_nonstd(tty, c); /* already updates tty->State */
+  case ESosc:
+    osc(tty, c); /* already updates tty->State */
     return;
 
   case ESrgb:
@@ -1652,7 +1768,7 @@ static void ctrl(tty_data *tty, byte c) {
     }
     break;
 
-  case ESopen:
+  case ESsquare:
     tty->Par[0] = tty->nPar = 0;
     switch (c) {
     case '[': /* Function key */
@@ -1745,28 +1861,6 @@ static void ctrl(tty_data *tty, byte c) {
   case ESsetG2:
   case ESsetG3:
     setg(tty, c);
-    break;
-
-  case ESxterm_ignore:
-    /* ignore, cannot set icon name */
-    return;
-  case ESxterm_ignore_esc:
-    /* expecting '\\' but reset state on any character */
-    break;
-
-  case ESxterm_title_:
-    if (c == ';') {
-      tty->newName.clear();
-      tty->State = ESxterm_title;
-      return;
-    }
-    break;
-
-  case ESxterm_title:
-    if (c >= ' ') {
-      (void)tty->newName.append(c);
-      return;
-    }
     break;
 
   default:
