@@ -305,14 +305,15 @@ static byte ImmBorder(str wildcard, ldat flag, node shape) {
 static ldat FreeButtonPos(ldat n, ldat lr) {
   ldat i;
   ldat freepos = lr == FL_LEFT ? 0 : -2;
-
-  for (i = 0; i < BUTTON_MAX; i++)
+  (void)n;
+  for (i = 0; i < BUTTON_MAX; i++) {
     if (All->ButtonVec[i].exists) {
       if (All->ButtonVec[i].pos >= 0 && freepos >= 0 && freepos < All->ButtonVec[i].pos + 2)
         freepos = All->ButtonVec[i].pos + 2;
       else if (All->ButtonVec[i].pos < 0 && freepos < 0 && freepos > All->ButtonVec[i].pos - 2)
         freepos = All->ButtonVec[i].pos - 2;
     }
+  }
   return freepos;
 }
 
@@ -1432,8 +1433,10 @@ static bool rcload(Tdisplay hw) {
 #endif
   bool c = false;
 
-  if (!(path = FindConfigFile("twinrc", &len)))
+  (void)hw;
+  if (!(path = FindConfigFile("twinrc", &len))) {
     return c;
+  }
 
   /*
    * try to guess a reasonable size:
@@ -1522,12 +1525,13 @@ static bool rcload(Tdisplay hw) {
 #endif
 }
 
-EXTERN_C byte InitModule(Tmodule Module) {
-  Module->DoInit = rcload;
+EXTERN_C byte InitModule(Tmodule m) {
+  m->DoInit = rcload;
   return ttrue;
 }
 
-EXTERN_C void QuitModule(Tmodule Module) {
+EXTERN_C void QuitModule(Tmodule m) {
+  (void)m;
 }
 
 #endif /* TWIN_RCPARSE_H */

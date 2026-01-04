@@ -53,10 +53,13 @@
     }                                                                                              \
     return tfalse
 
-#define TWScasevec(objtype, field, _type, len)                                                     \
-  case CAT4(TWS_, objtype, _, field):                                                              \
-    if ((TSF->TWS_field_vecV = (void *)x->field))                                                  \
+#define TWScasevec(objtype, field, _type, len) TWScasevec5(objtype, field, field, _type, len)
+
+#define TWScasevec5(objtype, fieldname, field, _type, len)                                         \
+  case CAT4(TWS_, objtype, _, fieldname):                                                          \
+    if ((TSF->TWS_field_vecV = (void *)x->field)) {                                                \
       TSF->TWS_field_vecL = (uldat)sizeof(_type) * (len);                                          \
+    }                                                                                              \
     TSF->type = TWS_vec | CAT(TWS_, _type);                                                        \
     break
 
@@ -109,6 +112,7 @@ static tobj *sockAllocListDeltaObjs(Tobj F, topaque *len, udat fdelta) {
 
 static byte sockStatObj(SockCtx &ctx, Tobj o, tsfield TSF) {
   TobjEntry x = (TobjEntry)o;
+  (void)ctx;
   switch (TSF->label) {
   case TWS_obj_Id:
     break;
@@ -237,9 +241,9 @@ static byte sockStatWindow(SockCtx &ctx, Twindow x, tsfield TSF) {
     break;
 
     TWScase(window, Menu, obj);
-    TWScase(window, NameLen, dat);
-    TWScasevec(window, Name, byte, x->NameLen);
-    TWScasevec(window, ColName, tcolor, x->NameLen);
+    TWScase4(window, NameLen, Name.size(), dat);
+    TWScasevec5(window, Name, Name.data(), byte, x->Name.size());
+    TWScasevec(window, ColName, tcolor, x->Name.size());
     TWScaseAvec(window, BorderPattern, 0, trune, 9);
     TWScaseAvec(window, BorderPattern, 1, trune, 9);
     TWScase(window, CurX, ldat);

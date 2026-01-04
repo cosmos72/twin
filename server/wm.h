@@ -32,7 +32,7 @@ void MaximizeWindow(Twindow w, byte full_screen);
 void ShowWinList(wm_ctx *C);
 
 void FocusCtx(wm_ctx *C);
-byte ActivateCtx(wm_ctx *C, byte State);
+bool ActivateCtx(wm_ctx *C, byte State);
 
 void ForceRelease(const wm_ctx *C);
 

@@ -1547,8 +1547,8 @@ static void osc_cmd_window_title(tty_data *tty) {
   }
   /* try to shrink... */
   name.shrink_to_fit();
-  /* name.release() also resets it to zero length */
-  tty->Win->SetTitle(len, name.release());
+  swap(name, tty->Win->Name);
+  name.clear();
 }
 
 static void osc_cmd_palette(tty_data *tty) {

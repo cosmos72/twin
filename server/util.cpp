@@ -57,7 +57,7 @@ String TmpDir;
 String SocketDir;
 
 void NormalizeTime(timevalue *Time) {
-  if (Time->Fraction >= FullSEC || Time->Fraction < 0) {
+  if (Time->Fraction >= FullSEC) {
     tany delta = Time->Fraction / FullSEC;
     Time->Seconds += delta;
     Time->Fraction -= delta * FullSEC;
@@ -726,7 +726,7 @@ static byte CreateMouseEventXtermDecimal(event_mouse *event, byte buflen, char *
 }
 
 /* X10-style mouse reporting */
-static byte CreateMouseEventX10(event_mouse *event, byte buflen, char *buf, const uldat flags) {
+static byte CreateMouseEventX10(event_mouse *event, byte buflen, char *buf, const uldat /*flags*/) {
 
   const udat code = event->Code;
 
@@ -1050,7 +1050,7 @@ char **TokenizeTRuneVec(uldat len, trune *s) {
 int unixFd;
 uldat unixSlot;
 
-static void TWDisplayIO(int fd, uldat slot) {
+static void TWDisplayIO(int fd, uldat /*slot*/) {
   struct sockaddr_un un_addr = {};
   socklen_t len = sizeof(un_addr);
 

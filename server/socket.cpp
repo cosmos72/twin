@@ -536,12 +536,14 @@ static void fullMultiplexS(SockCtx &ctx, uldat id, Span<s_tsfield> a) {
   }
 }
 
+#if 0  // unused
 /* here a[0] is the first arg, a.size is the number of args */
 static void sockMultiplexS(SockCtx &ctx, uldat id, Span<s_tsfield> a) {
   if (sockMultiplex_S(ctx, id, a)) {
     a[0] _type = proto_2_TWS(sockF[id].Format);
   }
 }
+#endif // 0
 
 /* code to return array lengths V(expr) and W(expr) */
 static uldat sockLengths(uldat id, View<s_tsfield> a) {
@@ -969,26 +971,29 @@ static void sockAttachHW(SockCtx &ctx, uldat len, const char *arg, byte flags) {
   }
 }
 
-static byte sockDetachHW(SockCtx &ctx, uldat len, const char *arg) {
+static byte sockDetachHW(SockCtx & /*ctx*/, uldat len, const char *arg) {
   return DetachDisplayHW(Chars(arg, len), 0); /* cannot detach exclusive displays !! */
 }
 
-static void sockSetFontTranslation(SockCtx &ctx, const byte trans[0x80]) {
+static void sockSetFontTranslation(SockCtx & /*ctx*/, const byte trans[0x80]) {
   if (trans) {
-    int i;
     trune *G = All->Gtranslations[USER_MAP];
+    int i;
 
-    for (i = 0; i < 0x80; i++)
+    for (i = 0; i < 0x80; i++) {
       G[i] = i;
-    if (sizeof(trune) == sizeof(byte))
+    }
+    if (sizeof(trune) == sizeof(byte)) {
       CopyMem(trans, G + 0x80, 0x80);
-    else
-      for (i = 0x0; i < 0x80; i++)
+    } else {
+      for (i = 0x0; i < 0x80; i++) {
         G[0x80 | i] = trans[i];
+      }
+    }
   }
 }
 
-static void sockSetTRuneTranslation(SockCtx &ctx, const trune trans[0x80]) {
+static void sockSetTRuneTranslation(SockCtx & /*ctx*/, const trune trans[0x80]) {
   if (trans) {
     int i;
     trune *G = All->Gtranslations[USER_MAP];
@@ -999,7 +1004,7 @@ static void sockSetTRuneTranslation(SockCtx &ctx, const trune trans[0x80]) {
   }
 }
 
-static Tmsgport sockGetMsgPortObj(SockCtx &ctx, Tobj o) {
+static Tmsgport sockGetMsgPortObj(SockCtx & /*ctx*/, Tobj o) {
   while (o) {
     switch (o->Id >> class_byte_shift) {
     case Trow_class_byte:
@@ -1050,7 +1055,7 @@ static void sockRecursiveDeleteWidget(SockCtx &ctx, Twidget w) {
   w->UnMap();
   w->RecursiveDelete(port);
 }
-static void sockSetXYWidget(SockCtx &ctx, Twidget w, dat x, dat y) {
+static void sockSetXYWidget(SockCtx & /*ctx*/, Twidget w, dat x, dat y) {
   if (w) {
     if (w->Parent && IS_SCREEN(w->Parent)) {
       x += w->Parent->XLogic;
@@ -1059,17 +1064,17 @@ static void sockSetXYWidget(SockCtx &ctx, Twidget w, dat x, dat y) {
     w->SetXY(x, y);
   }
 }
-static void sockDrawWidget(SockCtx &ctx, Twidget w, dat XWidth, dat YWidth, dat Left, dat Up,
+static void sockDrawWidget(SockCtx & /*ctx*/, Twidget w, dat XWidth, dat YWidth, dat Left, dat Up,
                            const char *Text, const trune *Font, const tcell *Attr) {
   if (w) {
     w->Expose(XWidth, YWidth, Left, Up, XWidth, Text, Font, Attr);
   }
 }
 
-static void sockFocusSubWidget(SockCtx &ctx, Twidget w) {
-  Twidget P;
+static void sockFocusSubWidget(SockCtx & /*ctx*/, Twidget w) {
   if (w && !IS_SCREEN(w) && w->Parent && !IS_SCREEN(w->Parent)) {
     w->SelectW = NULL;
+    Twidget P;
     while ((P = w->Parent) && !IS_SCREEN(P)) {
       P->SelectW = w;
       w = P;
@@ -1080,7 +1085,7 @@ static void sockFocusSubWidget(SockCtx &ctx, Twidget w) {
   }
 }
 
-static void sockResizeWidget(SockCtx &ctx, Twidget w, dat X, dat Y) {
+static void sockResizeWidget(SockCtx & /*ctx*/, Twidget w, dat X, dat Y) {
   if (w) {
     if (IS_WINDOW(w)) {
       if (!(w->Flags & WINDOWFL_BORDERLESS))
@@ -1094,7 +1099,7 @@ static void sockResizeWidget(SockCtx &ctx, Twidget w, dat X, dat Y) {
   }
 }
 
-static void sockCirculateChildrenWidget(SockCtx &ctx, Twidget w, byte up_or_down) {
+static void sockCirculateChildrenWidget(SockCtx & /*ctx*/, Twidget w, byte up_or_down) {
   if (w) {
     if (up_or_down == TW_CIRCULATE_RAISE_LAST) {
       if ((w = w->Widgets.Last)) {
@@ -1108,8 +1113,8 @@ static void sockCirculateChildrenWidget(SockCtx &ctx, Twidget w, byte up_or_down
   }
 }
 
-static void sockCirculateChildrenRow(SockCtx &ctx, Tobj obj, byte up_or_down) {
-  Trow row = (Trow)0;
+static void sockCirculateChildrenRow(SockCtx & /*ctx*/, Tobj obj, byte up_or_down) {
+  Trow row = NULL;
   if (obj) {
     if (IS_WINDOW(obj) && W_USE((Twindow)obj, USEROWS)) {
 
@@ -1159,7 +1164,8 @@ static Twindow sockCreateWindow(SockCtx &ctx, dat TitleLen, const char *Title,
   return (Twindow)0;
 }
 
-static void sockWriteCharsetWindow(SockCtx &ctx, Twindow w, uldat len, const char *charset_bytes) {
+static void sockWriteCharsetWindow(SockCtx & /*ctx*/, Twindow w, uldat len,
+                                   const char *charset_bytes) {
   if (w) {
     if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS) {
       w->TtyWriteCharset(len, charset_bytes);
@@ -1169,7 +1175,7 @@ static void sockWriteCharsetWindow(SockCtx &ctx, Twindow w, uldat len, const cha
   }
 }
 
-static void sockWriteUtf8Window(SockCtx &ctx, Twindow w, uldat len, const char *utf8_bytes) {
+static void sockWriteUtf8Window(SockCtx & /*ctx*/, Twindow w, uldat len, const char *utf8_bytes) {
   if (w) {
     if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS) {
       w->TtyWriteUtf8(len, utf8_bytes);
@@ -1179,7 +1185,7 @@ static void sockWriteUtf8Window(SockCtx &ctx, Twindow w, uldat len, const char *
   }
 }
 
-static void sockWriteTRuneWindow(SockCtx &ctx, Twindow w, uldat len, const trune *runes) {
+static void sockWriteTRuneWindow(SockCtx & /*ctx*/, Twindow w, uldat len, const trune *runes) {
   if (w) {
     if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS) {
       w->TtyWriteTRune(len, runes);
@@ -1189,34 +1195,32 @@ static void sockWriteTRuneWindow(SockCtx &ctx, Twindow w, uldat len, const trune
   }
 }
 
-static void sockWriteTCellWindow(SockCtx &ctx, Twindow w, dat x, dat y, uldat len,
+static void sockWriteTCellWindow(SockCtx & /*ctx*/, Twindow w, dat x, dat y, uldat len,
                                  const tcell *cells) {
   if (w) {
-    if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
+    if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS) {
       w->TtyWriteTCell(x, y, len, cells);
-    else if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
+    } else if ((w->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS) {
       w->RowWriteTCell(x, y, len, cells);
+    }
   }
 }
 
-static void sockSetTitleWindow(SockCtx &ctx, Twindow w, dat titlelen, const char *title) {
-  char *_title = NULL;
-
+static void sockSetTitleWindow(SockCtx & /*ctx*/, Twindow w, dat titlelen, const char *title) {
   if (w) {
-    if (!titlelen || (_title = (char *)CloneMem(title, titlelen + 1)))
-      w->SetTitle(titlelen, _title);
+    w->SetTitle(Chars(title, titlelen));
   }
 }
 
-static Trow sockFindRowByCodeWindow(SockCtx &ctx, Twindow w, dat Code) {
+static Trow sockFindRowByCodeWindow(SockCtx & /*ctx*/, Twindow w, dat Code) {
   if (w) {
     return w->FindRowByCode(Code, NULL);
   }
-  return (Trow)0;
+  return NULL;
 }
 
-static Tmenuitem sockCreate4MenuAny(SockCtx &ctx, Tobj Parent, Twindow w, udat Code, byte Flags,
-                                    ldat len, const char *Name) {
+static Tmenuitem sockCreate4MenuAny(SockCtx & /*ctx*/, Tobj Parent, Twindow w, udat Code,
+                                    byte Flags, ldat len, const char *Name) {
   return Smenuitem::Create4Menu(Parent, w, Code, Flags, len, Name);
 }
 
@@ -1241,13 +1245,15 @@ static Tmsgport sockCreateMsgPort(SockCtx &ctx, byte NameLen, const char *Name) 
   }
   return port;
 }
-static Tmsgport sockFindMsgPort(SockCtx &ctx, Tmsgport Prev, byte NameLen, const char *Name) {
+static Tmsgport sockFindMsgPort(SockCtx & /*ctx*/, Tmsgport Prev, byte NameLen, const char *Name) {
   Tmsgport M;
-  if (!(M = Prev))
+  if (!(M = Prev)) {
     M = All->MsgPorts.First;
+  }
   while (M) {
-    if (M->NameLen == NameLen && !memcmp(M->Name, Name, NameLen))
+    if (M->NameLen == NameLen && !memcmp(M->Name, Name, NameLen)) {
       break;
+    }
     M = M->Next;
   }
   return M;
@@ -1314,10 +1320,8 @@ static Tall sockGetAll(SockCtx & /*ctx*/) {
  */
 static void SocketSendMsg(Tmsgport port, Tmsg msg) {
   SockCtx ctx;
-  uldat len, tot;
   byte *t;
-  uldat save_Slot;
-  int save_Fd;
+  uldat len, tot;
 
   ctx.RequestN = MSG_MAGIC;
   ctx.Fd = port->RemoteData.Fd;
@@ -1745,14 +1749,15 @@ static byte sockCanCompress(SockCtx & /*ctx*/) {
   return ttrue;
 }
 
-static voidpf sockZAlloc(voidpf opaque, uInt items, uInt size) {
+static voidpf sockZAlloc(voidpf /*opaque*/, uInt items, uInt size) {
   void *ret = AllocMem(items * (size_t)size);
   return ret ? (voidpf)ret : Z_NULL;
 }
 
-static void sockZFree(voidpf opaque, voidpf address) {
-  if (address != Z_NULL)
+static void sockZFree(voidpf /*opaque*/, voidpf address) {
+  if (address != Z_NULL) {
     FreeMem(address);
+  }
 }
 
 /* fixup the uncompressed slot for on-the-fly compression */
@@ -2448,7 +2453,7 @@ static void SocketH(Tmsgport port) {
 
 static void (*save_unixSocketIO)(int fd, uldat slot);
 
-EXTERN_C byte InitModule(Tmodule Module) {
+EXTERN_C byte InitModule(Tmodule /*module*/) {
   uldat m;
   struct sockaddr_in addr;
   char opt[TW_SIZEOF_SIZE_T] = {
@@ -2510,7 +2515,7 @@ EXTERN_C byte InitModule(Tmodule Module) {
   return tfalse;
 }
 
-EXTERN_C void QuitModule(Tmodule Module) {
+EXTERN_C void QuitModule(Tmodule /*module*/) {
   if (unixSlot != NOSLOT) {
     FdList[unixSlot].HandlerIO.S = save_unixSocketIO;
   }

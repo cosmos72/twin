@@ -44,7 +44,9 @@ protected:
   void destroy() NOTHROW {
     if (data_ != NULL) {
       mem::free(data());
+      data_ = NULL;
     }
+    cap_ = size_ = 0;
   }
 
   bool ensure_capacity(size_t n) NOTHROW {

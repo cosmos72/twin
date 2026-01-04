@@ -81,10 +81,9 @@ static run *Interactive; /* list of waiting-for-interactive-op queues */
 /* shell-like wildcard pattern matching */
 static byte wildcard_match(cstr p, cstr q) {
   byte c;
-
-  if (!q)
+  if (!q) {
     q = "";
-
+  }
   for (;;) {
     switch (c = (byte)*p++) {
     case '\0':
@@ -107,8 +106,9 @@ static byte wildcard_match(cstr p, cstr q) {
         }
       }
       do {
-        if (wildcard_match(p, q))
+        if (wildcard_match(p, q)) {
           return ttrue;
+        }
       } while (*q++ != '\0');
       return tfalse;
     case '[': {
@@ -120,12 +120,15 @@ static byte wildcard_match(cstr p, cstr q) {
       if (*endp == '!')
         endp++;
       for (;;) {
-        if (*endp == '\0')
+        if (*endp == '\0') {
           goto dft; /* no matching ] */
-        if (*endp == '\\')
+        }
+        if (*endp == '\\') {
           endp++;
-        if (*++endp == ']')
+        }
+        if (*++endp == ']') {
           break;
+        }
       }
       if (*p == '!') {
         invert++;
@@ -134,29 +137,35 @@ static byte wildcard_match(cstr p, cstr q) {
       chr = *q++;
       c = *p++;
       do {
-        if (c == '\\')
+        if (c == '\\') {
           c = (byte)*p++;
+        }
         if (*p == '-' && p[1] != ']') {
           p++;
-          if (*p == '\\')
+          if (*p == '\\') {
             p++;
-          if (chr >= c && chr <= (byte)*p)
+          }
+          if (chr >= c && chr <= (byte)*p) {
             found = 1;
+          }
           p++;
         } else {
-          if (chr == c)
+          if (chr == c) {
             found = 1;
+          }
         }
       } while ((c = (byte)*p++) != ']');
 
-      if (found == invert)
+      if (found == invert) {
         return tfalse;
+      }
       break;
     }
     dft:
     default:
-      if ((byte)*q++ != c)
+      if ((byte)*q++ != c) {
         return tfalse;
+      }
       break;
     }
   }
@@ -244,7 +253,7 @@ static node RCFindMouseBind(ldat code, ldat ctx) {
     /* triple-inclusive match here:
      * (l->id & code)   : match buttons
      * (l->id & hc)     : match hold/click
-     * (l->x.ctx & ctx): match release context
+     * (l->x.ctx & ctx) : match release context
      */
     if ((l->id & code) && (l->id & hc) && (l->x.ctx & ctx))
       return l;
@@ -255,14 +264,18 @@ static node RCFindMouseBind(ldat code, ldat ctx) {
 trune *RCFindBorderPattern(Twindow w, byte border) {
   node l;
 
-  if (!w)
+  if (!w) {
     return NULL;
-
-  for (l = BorderList; l; l = l->next) {
-    if ((l->x.f.flag == FL_INACTIVE) == border && wildcard_match(l->name, w->Name))
-      break;
   }
-  return w->BorderPattern[border] = l ? l->runes : NULL;
+  for (l = BorderList; l; l = l->next) {
+    if ((l->x.f.flag == FL_INACTIVE) == border) {
+      String &winTitle = w->Name;
+      if (winTitle.make_c_str() && wildcard_match(l->name, winTitle.data())) {
+        break;
+      }
+    }
+  }
+  return w->BorderPattern[border] = (l ? l->runes : NULL);
 }
 
 inline void RCRemove(run **p) {
@@ -353,19 +366,18 @@ static ldat applyflagy(node n) {
 }
 
 static Twindow RCFindWindowName(cstr name) {
-  uldat len = strlen(name);
-  Twindow w;
+  size_t len = name ? strlen(name) : 0;
   Tscreen screen = All->Screens.First;
 
   while (screen) {
     /* search among mapped windows */
-    w = (Twindow)screen->Widgets.First;
+    Twidget w = screen->Widgets.First;
+    Twindow win;
     while (w) {
-      if (IS_WINDOW(w) && w->NameLen >= 0 && (udat)w->NameLen == len &&
-          !memcmp(w->Name, name, len)) {
-        return w;
+      if (IS_WINDOW(w) && (win = (Twindow)w)->Name == Chars(name, len)) {
+        return win;
       }
-      w = (Twindow)w->Next;
+      w = w->Next;
     }
     screen = screen->NextScreen();
   }
@@ -373,11 +385,12 @@ static Twindow RCFindWindowName(cstr name) {
 }
 
 static Tscreen RCFindScreenName(cstr name) {
-  uldat len = strlen(name);
+  uldat len = name ? strlen(name) : 0;
   Tscreen screen = All->Screens.First;
   while (screen) {
-    if (screen->NameLen >= 0 && (udat)screen->NameLen == len && !memcmp(screen->Name, name, len))
+    if (screen->NameLen >= 0 && (udat)screen->NameLen == len && !memcmp(screen->Name, name, len)) {
       break;
+    }
   }
   return screen;
 }
@@ -428,11 +441,12 @@ static byte RCSteps(run *r) {
   Twidget w, SkipW;
   Tscreen screen;
   wm_ctx *C;
+  const cstr *argv;
   node n, f;
   ldat flag;
-  const cstr *argv;
-  byte state = Snext, ret;
   int nfd;
+  byte state = Snext;
+  bool ret = false;
 
   w = RCCheck4WidgetId(r);
   screen = ScreenOf(w);
@@ -485,7 +499,7 @@ static byte RCSteps(run *r) {
         if (!C->Screen && !(C->Screen = screen))
           C->Screen = All->Screens.First;
 
-        ret = tfalse;
+        ret = false;
         switch (n->x.f.flag) {
         case MENU:
           ret = ActivateCtx(C, state_menu);
@@ -506,8 +520,9 @@ static byte RCSteps(run *r) {
           state = Serr;
           break;
         }
-        if (ret)
+        if (ret) {
           state = Sinter;
+        }
         break;
       case MENU:
         /* this is just like INTERACTIVE MENU ... but does not wait! */
@@ -912,26 +927,29 @@ static void RCWake(void) {
 
 /* wake up queues when the wanted window appears */
 static void RCWake4Window(Twindow w) {
-  str Name = w->Name;
+  const String &name = w->Name;
   run **p = &Wait, *r;
 
-  if (Name)
+  if (name.size() > 0)
     while ((r = *p)) {
-      if (!strcmp(r->SW.Name, Name)) {
+      if (name == Chars::from_c(r->SW.Name)) {
         r->W = w->Id;
         RCRemove(p); /* p does not change but *p is now the next run */
         RCAddFirst(r, Run);
-      } else
+      } else {
         p = &r->next;
+      }
     }
 }
 
 static byte MouseClickReleaseSameCtx(uldat W1, uldat W2, ldat clickCtx, ldat relCtx, ldat ctx) {
   if ((ctx & clickCtx) && (ctx & relCtx)) {
-    if ((clickCtx & CTX_ANY_WIN) != (relCtx & CTX_ANY_WIN))
+    if ((clickCtx & CTX_ANY_WIN) != (relCtx & CTX_ANY_WIN)) {
       return tfalse;
-    if ((clickCtx & CTX_ANY_WIN) && (relCtx & CTX_ANY_WIN))
+    }
+    if ((clickCtx & CTX_ANY_WIN) && (relCtx & CTX_ANY_WIN)) {
       return W1 == W2;
+    }
     return ttrue;
   }
   return tfalse;
@@ -970,14 +988,15 @@ byte RC_VMQueue(const wm_ctx *C) {
         Code = HOLD_CODE(RELEASE_N(C->Code)) | RELEASE_;
         n = RCFindMouseBind((ldat)Code, ctx);
         if (n && MouseClickReleaseSameCtx(ClickWinId, C->W ? C->W->Id : NOID,
-                                          Pos2Ctx(ClickWindowPos), ctx, n->x.ctx))
+                                          Pos2Ctx(ClickWindowPos), ctx, n->x.ctx)) {
           n = n->body;
-        else
+        } else {
           n = NULL;
+        }
       }
-    } else
+    } else {
       n = RCFindKeyBind((ldat)C->Code, (ldat)C->ShiftFlags);
-
+    }
     if (n && (r = RCNew(n))) {
       used = ttrue, CopyMem(C, &r->C, sizeof(wm_ctx));
       r->W = ClickWinId;

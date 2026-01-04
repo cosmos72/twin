@@ -60,7 +60,7 @@ inline void ScrollerDelayRepeat(void) {
   Scroller_MsgPort->PauseDuration.Fraction = 333 MilliSECs + 1;
 }
 
-static void ScrollerH(Tmsgport MsgPort) {
+static void ScrollerH(Tmsgport msgport) {
   Tmsg msg, saved_msg = NULL;
   mouse_state *Mouse;
   uldat Attr, WState;
@@ -69,12 +69,15 @@ static void ScrollerH(Tmsgport MsgPort) {
   byte State, FlagDeskScroll, FlagWinScroll, WinScrolled = tfalse;
   Twindow FocusWindow;
 
+  (void)msgport;
+
   while ((msg = Scroller_MsgPort->Msgs.First)) {
     msg->Remove();
-    if (msg == Do_Scroll || msg == Dont_Scroll)
+    if (msg == Do_Scroll || msg == Dont_Scroll) {
       saved_msg = msg;
-    else
+    } else {
       msg->Delete();
+    }
   }
 
   if (saved_msg == Dont_Scroll || !All->MouseDisplay) {
@@ -94,9 +97,9 @@ static void ScrollerH(Tmsgport MsgPort) {
     FlagWinScroll = (((Attr & WINDOW_X_BAR) && (WState & X_BAR_SELECT)) ||
                      ((Attr & WINDOW_Y_BAR) && (WState & Y_BAR_SELECT))) &&
                     !(WState & TAB_SELECT);
-  } else
+  } else {
     FlagWinScroll = tfalse;
-
+  }
   FlagDeskScroll = (All->SetUp->Flags & setup_screen_scroll)
                    /* only a single button must be held */
                    && (Mouse->keys == HOLD_CODE(HOLD_N(Mouse->keys)));
@@ -111,8 +114,9 @@ static void ScrollerH(Tmsgport MsgPort) {
   }
 
   if (State != state_default && FlagWinScroll) {
-    if ((WinScrolled = ExecScrollFocusWindow()))
+    if ((WinScrolled = ExecScrollFocusWindow())) {
       ScrollerAutoRepeat();
+    }
   }
 
   Mouse_delta_x = -Mouse->delta_x;
@@ -135,12 +139,11 @@ static void ScrollerH(Tmsgport MsgPort) {
 
     DragFirstScreen(Mouse_delta_x * Limit, Mouse_delta_y * Limit);
 
-    if (!WinScrolled)
+    if (!WinScrolled) {
       ScrollerAutoRepeat();
-
+    }
     StdAddMouseEvent((Tdisplay)0, MOVE_MOUSE | Mouse->keys, Mouse->x, Mouse->y);
-  } else {
-    if (!WinScrolled)
-      ScrollerDelayRepeat();
+  } else if (!WinScrolled) {
+    ScrollerDelayRepeat();
   }
 }

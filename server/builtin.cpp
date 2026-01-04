@@ -225,27 +225,34 @@ void UpdateOptionWin(void) {
 
   for (i = 0; list[i]; i++) {
     if ((G = OptionWin->FindGadgetByCode(list[i]))) {
-      if (Flags & setup_shadows)
+      if (Flags & setup_shadows) {
         G->Flags &= ~GADGETFL_DISABLED;
-      else
+      } else {
         G->Flags |= GADGETFL_DISABLED;
+      }
     }
   }
-  if ((G = OptionWin->FindGadgetByCode(COD_O_SHADOWS)))
-    G->USE.T.Text[0][1] = Flags & setup_shadows ? _CHECK : ' ';
-  if ((G = OptionWin->FindGadgetByCode(COD_O_CURSOR_ALWAYS)))
-    G->USE.T.Text[0][1] = Flags & setup_cursor_always ? _CHECK : ' ';
-  if ((G = OptionWin->FindGadgetByCode(COD_O_MENU_HIDE)))
-    G->USE.T.Text[0][1] = Flags & setup_menu_hide ? _CHECK : ' ';
-  if ((G = OptionWin->FindGadgetByCode(COD_O_MENU_INFO)))
-    G->USE.T.Text[0][1] = Flags & setup_menu_info ? _CHECK : ' ';
-  if ((G = OptionWin->FindGadgetByCode(COD_O_MENU_RELAX)))
-    G->USE.T.Text[0][1] = Flags & setup_menu_relax ? _CHECK : ' ';
-  if ((G = OptionWin->FindGadgetByCode(COD_O_SCREEN_SCROLL)))
-    G->USE.T.Text[0][1] = Flags & setup_screen_scroll ? _CHECK : ' ';
-  if ((G = OptionWin->FindGadgetByCode(COD_O_TERMINALS_UTF8)))
-    G->USE.T.Text[0][1] = Flags & setup_terminals_utf8 ? _CHECK : ' ';
-
+  if ((G = OptionWin->FindGadgetByCode(COD_O_SHADOWS))) {
+    G->USE.T.Text[0][1] = Flags & setup_shadows ? (trune)_CHECK : (trune)' ';
+  }
+  if ((G = OptionWin->FindGadgetByCode(COD_O_CURSOR_ALWAYS))) {
+    G->USE.T.Text[0][1] = Flags & setup_cursor_always ? (trune)_CHECK : (trune)' ';
+  }
+  if ((G = OptionWin->FindGadgetByCode(COD_O_MENU_HIDE))) {
+    G->USE.T.Text[0][1] = Flags & setup_menu_hide ? (trune)_CHECK : (trune)' ';
+  }
+  if ((G = OptionWin->FindGadgetByCode(COD_O_MENU_INFO))) {
+    G->USE.T.Text[0][1] = Flags & setup_menu_info ? (trune)_CHECK : (trune)' ';
+  }
+  if ((G = OptionWin->FindGadgetByCode(COD_O_MENU_RELAX))) {
+    G->USE.T.Text[0][1] = Flags & setup_menu_relax ? (trune)_CHECK : (trune)' ';
+  }
+  if ((G = OptionWin->FindGadgetByCode(COD_O_SCREEN_SCROLL))) {
+    G->USE.T.Text[0][1] = Flags & setup_screen_scroll ? (trune)_CHECK : (trune)' ';
+  }
+  if ((G = OptionWin->FindGadgetByCode(COD_O_TERMINALS_UTF8))) {
+    G->USE.T.Text[0][1] = Flags & setup_terminals_utf8 ? (trune)_CHECK : (trune)' ';
+  }
   OptionWin->CurX = 25;
   OptionWin->CurY = 1;
   ch = (Flags & setup_shadows ? All->SetUp->DeltaXShade : 0) + '0';
@@ -257,38 +264,43 @@ void UpdateOptionWin(void) {
 }
 
 static void OptionH(Tmsg msg) {
-  byte Flags = All->SetUp->Flags, XShade = All->SetUp->DeltaXShade,
-       YShade = All->SetUp->DeltaYShade;
-  byte redraw = ttrue;
+  byte Flags = All->SetUp->Flags;
+  byte XShade = All->SetUp->DeltaXShade;
+  byte YShade = All->SetUp->DeltaYShade;
+  bool redraw = true;
 
   switch (msg->Event.EventGadget.Code) {
   case COD_O_SHADOWS:
     Flags ^= setup_shadows;
     break;
   case COD_O_Xp_SHADE:
-    if (XShade < max_xshade)
+    if (XShade < max_xshade) {
       XShade++;
+    }
     break;
   case COD_O_Xn_SHADE:
-    if (XShade > 1)
+    if (XShade > 1) {
       XShade--;
+    }
     break;
   case COD_O_Yp_SHADE:
-    if (YShade < max_yshade)
+    if (YShade < max_yshade) {
       YShade++;
+    }
     break;
   case COD_O_Yn_SHADE:
-    if (YShade > 1)
+    if (YShade > 1) {
       YShade--;
+    }
     break;
   case COD_O_CURSOR_ALWAYS:
     Flags ^= setup_cursor_always;
-    redraw = tfalse;
+    redraw = false;
     break;
   case COD_O_MENU_HIDE:
     Flags ^= setup_menu_hide;
     HideMenu(!!(Flags & setup_menu_hide));
-    redraw = tfalse;
+    redraw = false;
     break;
   case COD_O_MENU_INFO:
     Flags ^= setup_menu_info;
@@ -298,14 +310,14 @@ static void OptionH(Tmsg msg) {
     break;
   case COD_O_SCREEN_SCROLL:
     Flags ^= setup_screen_scroll;
-    redraw = tfalse;
+    redraw = false;
     break;
   case COD_O_TERMINALS_UTF8:
     Flags ^= setup_terminals_utf8;
-    redraw = tfalse;
+    redraw = false;
     break;
   default:
-    redraw = tfalse;
+    redraw = false;
     break;
   }
   if (Flags != All->SetUp->Flags || XShade != All->SetUp->DeltaXShade ||
@@ -316,9 +328,9 @@ static void OptionH(Tmsg msg) {
     All->SetUp->DeltaYShade = YShade;
 
     UpdateOptionWin();
-    if (redraw == ttrue)
+    if (redraw) {
       QueuedDrawArea2FullScreen = true;
-    else {
+    } else {
       DrawFullWindow(OptionWin);
       UpdateCursor();
     }
@@ -748,10 +760,12 @@ void UpdateWinList(void) {
   WinList->YWidth = WinList->MinYWidth;
 
   for (w = screen->Widgets.First; w; w = w->Next) {
-    if (w == (Twidget)WinList || !IS_WINDOW(w) ||
-        (((Twindow)w)->Flags & (WINDOWFL_NOTVISIBLE | WINDOWFL_MENU)))
-      continue;
-    (void)Row4Menu(WinList, (udat)0, ROW_ACTIVE, ((Twindow)w)->NameLen, ((Twindow)w)->Name);
+    if (w != (Twidget)WinList && IS_WINDOW(w)) {
+      Twindow win = (Twindow)w;
+      if (!(win->Flags & (WINDOWFL_NOTVISIBLE | WINDOWFL_MENU))) {
+        (void)Row4Menu(WinList, (udat)0, ROW_ACTIVE, win->Name.size(), win->Name.data());
+      }
+    }
   }
 }
 

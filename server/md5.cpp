@@ -24,6 +24,8 @@
 
 #if TW_IS_LITTLE_ENDIAN
 TW_INLINE void byteReverse(md5_uint32 *buf, unsigned longs) {
+  (void)buf;
+  (void)longs;
 }
 #elif TW_IS_BIG_ENDIAN
 

@@ -18,6 +18,7 @@
 #include "obj/widget.h"
 #include "obj/fn.h"
 #include "resize.h" // RowWrite*Window()
+#include "stl/string.h"
 
 #ifdef TW_HAVE_SYS_TYPES_H
 #include <sys/types.h> /* pid_t */
@@ -71,9 +72,8 @@ public:
   /* Twindow */
   Tmenu Menu;
   Tmenuitem MenuItem; /* from which the Twindow depends */
-  dat NameLen;
-  char *Name;
-  tcolor *ColName;
+  String Name;
+  tcolor *ColName; // if != NULL, size() == Name.size()
   trune *BorderPattern[2];
   Tremotedata RemoteData;
   ldat CurX, CurY;
@@ -138,7 +138,7 @@ public:
   }
 
   void GotoXY(ldat x, ldat y);
-  void SetTitle(dat titlelen, char *title); // title must be allocated mem, it will be retained
+  void SetTitle(Chars title);
   void SetColText(tcolor coltext);
   void SetColors(udat bitmap, tcolor colgadgets, tcolor colarrows, tcolor colbars, tcolor coltabs,
                  tcolor colborder, tcolor coltext, tcolor colselect, tcolor coldisabled,

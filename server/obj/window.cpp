@@ -80,7 +80,7 @@ Twindow Swindow::Init(Tmsgport owner, dat titlelen, const char *title, const tco
                      Twindow_class_id)) {
     return NULL;
   }
-  if (title && !(Name = CloneStrL(title, titlelen))) {
+  if (title && !(Name.assign(title, titlelen))) {
     return NULL;
   }
   if (coltitle && !(ColName = (tcolor *)CloneMem(coltitle, titlelen * sizeof(tcolor)))) {
@@ -89,7 +89,6 @@ Twindow Swindow::Init(Tmsgport owner, dat titlelen, const char *title, const tco
 
   Menu = m;
   // MenuItem = NULL;
-  NameLen = titlelen;
   //  BorderPattern[0] = BorderPattern[1] = NULL;
   RemoteData.Fd = NOFD;
   RemoteData.ChildPid = NOPID;
@@ -214,9 +213,7 @@ static bool InitTtyDataWindow(Twindow window, dat scrollbacklines) {
 
 void Swindow::Delete() {
   UnMap();
-  if (Name) {
-    FreeMem(Name);
-  }
+  Name.~String();
   if (ColName) {
     FreeMem(ColName);
   }
@@ -396,14 +393,11 @@ void Swindow::GotoXY(ldat x, ldat y) {
   }
 }
 
-void Swindow::SetTitle(dat titlelen, char *title) {
-  Twidget parent;
+void Swindow::SetTitle(Chars title) {
 
-  if (Name)
-    FreeMem(Name);
-
-  NameLen = titlelen;
-  Name = title;
+  if (!Name.assign(title)) {
+    return;
+  }
 
 #if 1
   /*
@@ -417,6 +411,7 @@ void Swindow::SetTitle(dat titlelen, char *title) {
   DrawBorderWindow(this, BORDER_ANY);
 #endif
 
+  Twidget parent;
   if ((parent = Parent) && IS_SCREEN(parent)) {
     /* need to update Twindow list with new name ? */
     ((Tscreen)parent)->HookMap();

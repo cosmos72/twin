@@ -24,6 +24,7 @@
 static char bindir_twin_server[] = BINDIR "/twin_server";
 
 int main(int argc, char *argv[]) {
+  (void)argc;
   argv[0] = bindir_twin_server;
   execv(argv[0], argv);
   printf("failed to exec %s: %s\n", argv[0], strerror(errno));
