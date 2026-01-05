@@ -1,12 +1,12 @@
 /*
- *  tty->c --  linux terminal emulator
+ *  tty.cpp --  xterm terminal emulator
  *
  *  linux terminal control sequences decoder taken from:
  *    linux/drivers/char/console.c
  *    Copyright (C) 1991, 1992  Linus Torvalds
  *
  *  all the rest written by twin author:
- *    Copyright (C) 1993-2001  Massimiliano Ghilardi
+ *    Copyright (C) 1993-2026  Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -661,9 +661,10 @@ static void csi_m(tty_data *tty) {
   tcolor coltext = tty->Win->ColText;
   trgb fg = TCOLFG(coltext), bg = TCOLBG(coltext);
   uldat i;
+  const uldat npar = tty->nPar;
   udat effects = tty->Effects;
 
-  for (i = 0; i <= tty->nPar;) {
+  for (i = 0; i <= npar;) {
     uldat par = tty->Par[i];
     switch (par) {
     case 0:
@@ -726,26 +727,24 @@ static void csi_m(tty_data *tty) {
       effects &= ~EFF_REVERSE;
       break;
     case 38:
-      if (i < tty->nPar) {
-        if (tty->Par[i + 1] == 5) {
-          /* 8-bit palette foreground: ESC[38;5;<8BITPALETTE>m */
-          uldat index = tty->Par[i + 2];
-          if (index <= 255) {
-            fg = Palette[index];
-          }
-          i += 3;
-          continue;
-        } else if (tty->Par[i + 1] == 2) {
-          /* 24-bit truecolor foreground: ESC[38;2;<R>;<G>;<B>m */
-          uldat r = tty->Par[i + 2];
-          uldat g = tty->Par[i + 3];
-          uldat b = tty->Par[i + 4];
-          if (r <= 255 && g <= 255 && b <= 255) {
-            fg = TRGB(r, g, b);
-          }
-          i += 5;
-          continue;
+      if (i + 3 <= npar && tty->Par[i + 1] == 5) {
+        /* 8-bit palette foreground: ESC[38;5;<8BITPALETTE>m */
+        uldat index = tty->Par[i + 2];
+        if (index <= 255) {
+          fg = Palette[index];
         }
+        i += 3;
+        continue;
+      } else if (i + 5 <= npar && tty->Par[i + 1] == 2) {
+        /* 24-bit truecolor foreground: ESC[38;2;<R>;<G>;<B>m */
+        uldat r = tty->Par[i + 2];
+        uldat g = tty->Par[i + 3];
+        uldat b = tty->Par[i + 4];
+        if (r <= 255 && g <= 255 && b <= 255) {
+          fg = TRGB(r, g, b);
+        }
+        i += 5;
+        continue;
       }
       /* ANSI X3.64-1979 (SCO-ish?)
        * Enables underscore, white foreground with white underscore
@@ -762,26 +761,24 @@ static void csi_m(tty_data *tty) {
       effects &= ~EFF_UNDERLINE;
       break;
     case 48:
-      if (i < tty->nPar) {
-        if (tty->Par[i + 1] == 5) {
-          /* 8-bit palette background: ESC[48;5;<8BITPALETTE>m */
-          uldat index = tty->Par[i + 2];
-          if (index <= 255) {
-            bg = Palette[index];
-          }
-          i += 3;
-          continue;
-        } else if (tty->Par[i + 1] == 2) {
-          /* 24-bit truecolor background: ESC[48;2;<R>;<G>;<B>m */
-          uldat r = tty->Par[i + 2];
-          uldat g = tty->Par[i + 3];
-          uldat b = tty->Par[i + 4];
-          if (r <= 255 && g <= 255 && b <= 255) {
-            bg = TRGB(r, g, b);
-          }
-          i += 5;
-          continue;
+      if (i + 3 <= npar && tty->Par[i + 1] == 5) {
+        /* 8-bit palette background: ESC[48;5;<8BITPALETTE>m */
+        uldat index = tty->Par[i + 2];
+        if (index <= 255) {
+          bg = Palette[index];
         }
+        i += 3;
+        continue;
+      } else if (i + 5 <= npar && tty->Par[i + 1] == 2) {
+        /* 24-bit truecolor background: ESC[48;2;<R>;<G>;<B>m */
+        uldat r = tty->Par[i + 2];
+        uldat g = tty->Par[i + 3];
+        uldat b = tty->Par[i + 4];
+        if (r <= 255 && g <= 255 && b <= 255) {
+          bg = TRGB(r, g, b);
+        }
+        i += 5;
+        continue;
       }
       break;
     case 49: /* restore default bg */
@@ -797,6 +794,7 @@ static void csi_m(tty_data *tty) {
       } else if (par >= 100 && par <= 107) {
         bg = Palette[par - 100 + 8];
       }
+      break;
     }
     i++;
   }
@@ -909,14 +907,12 @@ static inline void respond_ID(tty_data *tty) {
 
 /** execute ESC [ nnn h  and  ESC [ nnn l */
 static void set_mode(tty_data *tty, byte on_off) {
+  const uldat npar = tty->nPar;
   uldat i;
 
-  for (i = 0; i <= tty->nPar; i++) {
-    uldat par = tty->Par[i];
+  for (i = 0; i <= npar; i++) {
     /* DEC private modes set/reset */
-
-    switch (par) {
-
+    switch (tty->Par[i]) {
     case 3: /* Monitor (display ctrls) */
       change_flags(tty, TTY_DISPCTRL, on_off);
       break;
@@ -1012,7 +1008,7 @@ static void set_mode_ques(tty_data *tty, byte on_off) {
   }
 }
 
-static void setterm_command(tty_data *tty) {
+static void csi_setterm(tty_data *tty) {
   switch (tty->Par[0]) {
 
   case 1: /* set fg color for underline mode */
@@ -1379,7 +1375,7 @@ static void csi(tty_data *tty, byte c) {
     csi_at(tty, tty->Par[0]);
     break;
   case ']': /* setterm functions */
-    setterm_command(tty);
+    csi_setterm(tty);
     break;
   }
   tty->State = ESnormal;
@@ -1438,24 +1434,26 @@ static void gt(tty_data *tty, byte c) {
 
 static void setg(tty_data *tty, byte c) {
   const byte i = (tty->State & ESlomask) - ESsetG0;
+  byte g;
   switch (c) {
   case '0':
-    tty->Gv[i] = VT100GR_MAP;
+    g = VT100GR_MAP;
     break;
   case 'B':
-    tty->Gv[i] = LATIN1_MAP;
+    g = LATIN1_MAP;
     break;
   case 'K':
-    tty->Gv[i] = USER_MAP;
+    g = USER_MAP;
     break;
   case 'U':
-    tty->Gv[i] = IBMPC_MAP;
+    g = IBMPC_MAP;
     break;
   default:
-    break;
+    return;
   }
+  tty->Gv[i] = g;
   if (tty->Gi == i) {
-    set_charset(tty, tty->Gv[i]);
+    set_charset(tty, g);
   }
 }
 
