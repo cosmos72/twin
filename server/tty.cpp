@@ -1492,8 +1492,7 @@ static void esc(tty_data *tty, byte c) {
     tty->Flags |= TTY_KBDAPPLIC | TTY_NEEDREFOCUS;
     break;
   case '>': /* Numeric keypad */
-    tty->Flags &= ~TTY_KBDAPPLIC;
-    tty->Flags |= TTY_NEEDREFOCUS;
+    tty->Flags = (tty->Flags & ~TTY_KBDAPPLIC) | TTY_NEEDREFOCUS;
     break;
   case 'E':
     cr(tty);
@@ -1825,7 +1824,6 @@ static void ctrl(tty_data *tty, byte c) {
       /* ignore unimplemented xterm sequences:
        *   ESC [ # ...
        *   ESC [ = ...
-       *   ESC [ > ...
        */
       break;
     }
@@ -1930,18 +1928,18 @@ static tty_data *common(Twindow w) {
 
 /*
  * combine (*pc) with partial utf-8 char stored in tty->utf8_char.
- * return ttrue if the utf-8 char is complete, and can be displayed.
+ * return true if the utf-8 char is complete, and can be displayed.
  */
 static bool combine_utf8(tty_data *tty, trune *pc) {
   trune c = *pc;
 
   if (tty->utf8_count > 0 && (c & 0xc0) == 0x80) {
     tty->utf8_char = (tty->utf8_char << 6) | (c & 0x3f);
-    tty->utf8_count--;
-    if (tty->utf8_count == 0) {
+    bool is_complete = --tty->utf8_count == 0;
+    if (is_complete) {
       *pc = tty->utf8_char;
     }
-    return tty->utf8_count == 0;
+    return is_complete;
   }
 
   if ((c & 0xe0) == 0xc0) {
