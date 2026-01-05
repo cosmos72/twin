@@ -605,19 +605,16 @@ static void update_eff(tty_data *tty) {
   trgb fg = TCOLFG(coltext), bg = TCOLBG(coltext);
   const udat effects = tty->Effects;
 
-  if (effects & EFF_UNDERLINE) {
-    fg = TCOLFG(tty->Underline);
-  } else if (effects & EFF_HALFINTENS) {
-    fg = TCOLFG(tty->HalfInten);
-  }
   if (!!(effects & EFF_REVERSE) != !!(tty->Flags & TTY_INVERTSCR)) {
     const trgb inv_fg = (bg & ~thigh) | (fg & thigh);
     const trgb inv_bg = (fg & ~thigh) | (bg & thigh);
     fg = inv_fg;
     bg = inv_bg;
   }
-  if (effects & EFF_INTENSITY) {
+  if (effects & (EFF_INTENSITY | EFF_UNDERLINE)) {
     fg |= thigh;
+  } else if (effects & EFF_HALFINTENS) {
+    fg &= ~thigh;
   }
   if (effects & EFF_BLINK) {
     bg |= thigh;
@@ -800,7 +797,6 @@ static void csi_m(tty_data *tty) {
   }
   tty->Effects = effects;
   tty->Win->ColText = TCOL(fg, bg);
-
   update_eff(tty);
 }
 
