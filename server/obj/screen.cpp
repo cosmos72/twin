@@ -150,17 +150,18 @@ void Sscreen::BgImage(dat bgwidth, dat bgheight, const tcell *bg) {
 
 Tmenu Sscreen::FindMenu() const {
 
-  if (MenuWindow && IS_WINDOW(MenuWindow))
+  if (MenuWindow && IS_WINDOW(MenuWindow)) {
     /* menu activated from MenuWindow, return its Tmenu */
     return MenuWindow->Menu;
+  }
 
   /* no Twindow activated the Tmenu... either the Tmenu is inactive
    * or it is activated from the builtin Tmenu */
 
-  if (FocusW() && IS_WINDOW(FocusW()) && ((Twindow)FocusW())->Menu != ::All->CommonMenu)
+  if (FocusW() && IS_WINDOW(FocusW()) && ((Twindow)FocusW())->Menu != ::All->CommonMenu) {
     /* Tmenu inactive... return the focus Twindow's one */
     return ((Twindow)FocusW())->Menu;
-
+  }
   /* last case: Tmenu activated from builtin Tmenu */
   return ::All->BuiltinMenu;
 }

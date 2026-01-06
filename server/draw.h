@@ -60,7 +60,7 @@ Tscreen ScreenParent(Twidget w);
 Twindow WindowParent(Twidget w);
 Twidget NonScreenParent(Twidget w);
 Twindow FindCursorWindow(void);
-byte ContainsCursor(Twidget w);
+bool ContainsCursor(Twidget w);
 Twidget RecursiveFindWidgetAt(Twidget Parent, dat X, dat Y);
 
 #endif /* TWIN_DRAW_H */

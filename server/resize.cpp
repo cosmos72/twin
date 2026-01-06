@@ -212,9 +212,9 @@ bool ResizeWindowContents(Twindow w) {
   if (w->Parent) {
     DrawBorderWindow(w, BORDER_RIGHT);
 
-    DrawLogicWidget((Twidget)w, 0, 0, w->WLogic - 1, w->HLogic - 1);
+    DrawLogicWidget(w, 0, 0, w->WLogic - 1, w->HLogic - 1);
 
-    if (ContainsCursor((Twidget)w)) {
+    if (ContainsCursor(w)) {
       UpdateCursor();
     }
   }
@@ -906,7 +906,7 @@ void DragFirstWindow(dat i, dat j) {
     }
   }
 
-  if (ContainsCursor((Twidget)w))
+  if (ContainsCursor(w))
     UpdateCursor();
 }
 
@@ -984,8 +984,9 @@ void DragWindow(Twindow w, dat i, dat j) {
     DrawArea2((Tscreen)0, (Twidget)0, (Twidget)0, (dat)Left, (dat)Up, (dat)Rgt + DeltaXShade,
               (dat)Dwn, tfalse);
   }
-  if (w == (Twindow)All->Screens.First->FocusW())
+  if (w == All->Screens.First->FocusW()) {
     UpdateCursor();
+  }
 }
 
 void ResizeRelFirstWindow(dat i, dat j) {
@@ -1110,9 +1111,9 @@ void ResizeRelFirstWindow(dat i, dat j) {
   }
   if (DeltaX || DeltaY) {
     DrawBorderWindow(w, BORDER_ANY);
-    if (w == (Twindow)screen->FocusW())
+    if (w == screen->FocusW()) {
       UpdateCursor();
-
+    }
     /* resize contents? for Interactive Resize, let the WM resize it
      * when Interactive Resize finishes. otherwise, do it now */
     if (W_USE(w, USECONTENTS) && w->USE.C.Contents &&
@@ -1190,9 +1191,9 @@ void ResizeRelWindow(Twindow w, dat i, dat j) {
         DrawShadeWindow(w, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
     }
 
-    if (visible && w == (Twindow)All->Screens.First->FocusW())
+    if (visible && w == All->Screens.First->FocusW()) {
       UpdateCursor();
-
+    }
     /* resize contents? for Interactive Resize, let the WM resize it
      * when Interactive Resize finishes. otherwise, do it now */
     if (W_USE(w, USECONTENTS) && w->USE.C.Contents &&
@@ -1335,7 +1336,7 @@ void ScrollFirstWindow(ldat DeltaX, ldat DeltaY, byte byXYLogic) {
 
   ScrollFirstWindowArea(0, 0, XWidth - 3, YWidth - 3, -DeltaX, -DeltaY);
 
-  if (byXYLogic && ContainsCursor((Twidget)w))
+  if (byXYLogic && ContainsCursor(w))
     UpdateCursor();
 }
 
@@ -1390,7 +1391,7 @@ void ScrollWindow(Twindow w, ldat DeltaX, ldat DeltaY) {
 
   DrawFullWindow(w);
 
-  if (ContainsCursor((Twidget)w))
+  if (ContainsCursor(w))
     UpdateCursor();
 }
 
@@ -1445,9 +1446,9 @@ byte ExecScrollFocusWindow(void) {
   if ((All->State & state_any) != state_scroll)
     return tfalse;
 
-  if (!(screen = All->Screens.First) || !(w = (Twindow)screen->FocusW()) || !IS_WINDOW(w))
+  if (!(screen = All->Screens.First) || !(w = (Twindow)screen->FocusW()) || !IS_WINDOW(w)) {
     return tfalse;
-
+  }
   Attr = w->Attr;
   State = w->State;
   DeltaX = DeltaY = (sbyte)0;
@@ -1520,55 +1521,55 @@ void HideMenu(byte on_off) {
   }
 }
 
-static void OpenSubMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
-  Twindow P = (Twindow)item->Parent;
+static void OpenSubMenuItem(Tmenu m, Tmenuitem item, bool by_mouse) {
+  Twindow p = (Twindow)item->Parent;
   Twindow w = item->Window;
-  Tscreen S = All->Screens.First;
-  ldat y = P->CurY;
+  Tscreen s = All->Screens.First;
+  ldat y = p->CurY;
 
-  (void)M;
+  (void)m;
 
-  P->CurY = item->WCurY;
+  p->CurY = item->WCurY;
   if (y != TW_MAXLDAT) {
-    DrawLogicWidget((Twidget)P, 0, y, TW_MAXLDAT, y);
+    DrawLogicWidget((Twidget)p, 0, y, TW_MAXLDAT, y);
   }
-  if ((y = P->CurY) == TW_MAXLDAT) {
-    (void)P->FindRowByCode(item->Code, &P->CurY);
+  if ((y = p->CurY) == TW_MAXLDAT) {
+    (void)p->FindRowByCode(item->Code, &p->CurY);
   }
-  if ((y = P->CurY) != TW_MAXLDAT) {
-    DrawLogicWidget((Twidget)P, 0, y, TW_MAXLDAT, y);
+  if ((y = p->CurY) != TW_MAXLDAT) {
+    DrawLogicWidget((Twidget)p, 0, y, TW_MAXLDAT, y);
   }
   if (w) {
     if (!w->Parent) {
-      w->Left = P->Left + P->XWidth - S->XLogic;
-      w->Up = P->Up + P->CurY - P->YLogic - S->YLogic + 1;
+      w->Left = p->Left + p->XWidth - s->XLogic;
+      w->Up = p->Up + p->CurY - p->YLogic - s->YLogic + 1;
     }
     if (by_mouse)
       w->CurY = TW_MAXLDAT;
     else if (w->CurY == TW_MAXLDAT)
       w->CurY = 0;
-    w->MapTopReal(S);
+    w->MapTopReal(s);
   }
-  if ((Twidget)P != S->FocusW()) {
-    P->Focus();
+  if (p != s->FocusW()) {
+    p->Focus();
   }
 }
 
-static void OpenTopMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
-  Tmenu _M = (Tmenu)item->Parent; /* may either be M or All->CommonMenu */
+static void OpenTopMenuItem(Tmenu m, Tmenuitem item, bool by_mouse) {
+  Tmenu _M = (Tmenu)item->Parent; /* may either be m or All->CommonMenu */
   Twindow w = item->Window;
 
   if (!w->Parent) {
     w->Up = 1;
     w->Left = item->Left;
 
-    if (M != _M && M->Items.Last) {
+    if (m != _M && m->Items.Last) {
       /* adjust common Tmenu w->Left to the item position in this Tmenu */
-      w->Left += M->Items.Last->Left + M->Items.Last->Len;
+      w->Left += m->Items.Last->Left + m->Items.Last->Len;
     }
   }
 
-  M->SetSelectedItem(item);
+  m->SetSelectedItem(item);
 
   if (by_mouse) {
     w->CurY = TW_MAXLDAT;
@@ -1583,49 +1584,49 @@ static void OpenTopMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
   w->MapTopReal(All->Screens.First);
 
   if (w->CurY != TW_MAXLDAT && (item = (Tmenuitem)w->FindRow(w->CurY))) {
-    OpenSubMenuItem(M, item, by_mouse);
+    OpenSubMenuItem(m, item, by_mouse);
   }
 }
 
-static void OpenMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
+static void OpenMenuItem(Tmenu m, Tmenuitem item, bool by_mouse) {
   if (item) {
     Tobj O = item->Parent;
     if (O && IS_WINDOW(O)) {
-      OpenSubMenuItem(M, item, by_mouse);
+      OpenSubMenuItem(m, item, by_mouse);
     } else {
-      OpenTopMenuItem(M, item, by_mouse);
+      OpenTopMenuItem(m, item, by_mouse);
     }
   } else {
-    M->SetSelectedItem((Tmenuitem)0);
+    m->SetSelectedItem((Tmenuitem)0);
   }
 }
 
 /* this activates the Tmenu bar */
 static void OpenMenu(Tmenuitem item, bool by_mouse) {
-  Tscreen S = All->Screens.First;
-  Twidget w = S->FocusW();
-  Tmenu M = S->FindMenu();
+  Tscreen s = All->Screens.First;
+  Twidget w = s->FocusW();
+  Tmenu m = s->FindMenu();
 
   if ((All->State & state_any) == state_default) {
 
     All->State = state_menu | (by_mouse ? state_fl_bymouse : 0);
 
-    if (All->SetUp->Flags & setup_menu_hide)
+    if (All->SetUp->Flags & setup_menu_hide) {
       HideMenu(tfalse);
-
-    if (!S->MenuWindow && w) {
-      S->MenuWindow = (Twindow)w; /* so that it keeps `active' borders */
-      S->FocusW((Twidget)0);
+    }
+    if (!s->MenuWindow && w) {
+      s->MenuWindow = (Twindow)w; /* so that it keeps `active' borders */
+      s->FocusW((Twidget)0);
     }
   }
-  OpenMenuItem(M, item, by_mouse);
+  OpenMenuItem(m, item, by_mouse);
 }
 
 /*
  * up one level; return new selected item;
  * do NOT use to close the Tmenu, CloseMenu() does that
  */
-static Tmenuitem CloseMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
+static Tmenuitem CloseMenuItem(Tmenu m, Tmenuitem item, bool by_mouse) {
   Tobj parent = item->Parent;
   Twindow w = item->Window;
 
@@ -1653,7 +1654,7 @@ static Tmenuitem CloseMenuItem(Tmenu M, Tmenuitem item, bool by_mouse) {
     }
   } else {
     item = (Tmenuitem)0;
-    M->SetSelectedItem(item);
+    m->SetSelectedItem(item);
   }
   return item;
 }
@@ -1670,41 +1671,41 @@ static dat DepthOfMenuItem(Tmenuitem item) {
 }
 
 /* this traverses the Tmenu bar as needed */
-static void TraverseMenu(Tmenu M, Tmenuitem OldItem, dat Odepth, Tmenuitem NewItem, dat Ndepth,
+static void TraverseMenu(Tmenu m, Tmenuitem oldItem, dat oldDepth, Tmenuitem newItem, dat newDepth,
                          bool by_mouse) {
-  while (Odepth > Ndepth && OldItem) {
-    Odepth--;
-    OldItem = CloseMenuItem(M, OldItem, by_mouse);
+  while (oldDepth > newDepth && oldItem) {
+    oldDepth--;
+    oldItem = CloseMenuItem(m, oldItem, by_mouse);
   }
   /* paranoia */
-  Odepth = DepthOfMenuItem(OldItem);
+  oldDepth = DepthOfMenuItem(oldItem);
 
-  if (Ndepth == Odepth) {
-    if (OldItem != NewItem)
-      CloseMenuItem(M, OldItem, by_mouse);
-    OpenMenuItem(M, NewItem, by_mouse);
-  } else if (Ndepth == Odepth + 1) {
-    OpenMenuItem(M, NewItem, by_mouse);
+  if (newDepth == oldDepth) {
+    if (oldItem != newItem)
+      CloseMenuItem(m, oldItem, by_mouse);
+    OpenMenuItem(m, newItem, by_mouse);
+  } else if (newDepth == oldDepth + 1) {
+    OpenMenuItem(m, newItem, by_mouse);
   } else
     log(ERROR) << "twin: internal error: unsupported Tmenu traversing.\n";
 }
 
 /* close the Tmenu bar */
 void CloseMenu(void) {
-  Tscreen S = All->Screens.First;
-  Tmenu M = S->FindMenu();
+  Tscreen s = All->Screens.First;
+  Tmenu m = s->FindMenu();
   Tmenuitem item;
   Twindow w;
 
-  if (M) {
-    if ((w = S->MenuWindow)) {
+  if (m) {
+    if ((w = s->MenuWindow)) {
       w->KbdFocus();
-      S->MenuWindow = NULL;
-    } else
+      s->MenuWindow = NULL;
+    } else {
       Swindow::KbdFocus(NULL);
-
+    }
     /* close whole currently open Tmenu tree */
-    item = M->GetSelectedItem();
+    item = m->GetSelectedItem();
     while (item && IS_MENUITEM(item) && (w = (Twindow)item->Window) && IS_WINDOW(w)) {
       item = (Tmenuitem)w->FindRow(w->CurY);
       w->UnMap();
@@ -1714,7 +1715,7 @@ void CloseMenu(void) {
   if (All->SetUp->Flags & setup_menu_hide) {
     HideMenu(ttrue);
   } else {
-    S->DrawMenu(0, TW_MAXDAT);
+    s->DrawMenu(0, TW_MAXDAT);
   }
 }
 
@@ -1723,19 +1724,19 @@ void CloseMenu(void) {
  * do NOT use to close the Tmenu, CloseMenu() does that
  */
 void SetMenuState(Tmenuitem item, bool by_mouse) {
-  Tscreen S = All->Screens.First;
-  Tmenu M = S->FindMenu();
-  Tmenuitem OldItem = (Tmenuitem)0;
-  dat Odepth = 0;
+  Tscreen s = All->Screens.First;
+  Tmenu m = s->FindMenu();
+  Tmenuitem oldItem = (Tmenuitem)0;
+  dat oldDepth = 0;
 
-  if (M && (item || by_mouse)) {
+  if (m && (item || by_mouse)) {
     if ((All->State & state_any) != state_default) {
-      OldItem = M->RecursiveGetSelectedItem(&Odepth);
+      oldItem = m->RecursiveGetSelectedItem(&oldDepth);
     }
-    if (!OldItem) {
+    if (!oldItem) {
       OpenMenu(item, by_mouse);
-    } else if (OldItem != item) {
-      TraverseMenu(M, OldItem, Odepth, item, DepthOfMenuItem(item), by_mouse);
+    } else if (oldItem != item) {
+      TraverseMenu(m, oldItem, oldDepth, item, DepthOfMenuItem(item), by_mouse);
     }
     UpdateCursor();
   }

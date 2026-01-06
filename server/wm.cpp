@@ -109,7 +109,7 @@ tpos WMFindBorderWindow(Twindow w, dat u, dat v, byte border, tcell *ptr_cell) {
 
   namelen = w->Name.size();
   bool flDrag = false, flResize = false, flScroll = false;
-  const bool flFocus = (Twidget)w == All->Screens.First->FocusW();
+  const bool flFocus = (w == All->Screens.First->FocusW()) || (w == All->Screens.First->MenuWindow);
 
   if (flFocus) {
     switch (All->State & state_any) {
@@ -422,16 +422,18 @@ void ShowWinList(wm_ctx *c) {
 }
 
 static void RecursiveFocusWidget(Twidget w) {
-  Twidget P;
+  Twidget p;
   w->SelectW = NULL;
-  while ((P = w->Parent)) {
-    P->SelectW = w;
-    if (IS_SCREEN(P))
+  while ((p = w->Parent)) {
+    p->SelectW = w;
+    if (IS_SCREEN(p)) {
       break;
-    w = P;
+    }
+    w = p;
   }
-  if (ContainsCursor((Twidget)WindowParent(w)))
+  if (ContainsCursor(WindowParent(w))) {
     UpdateCursor();
+  }
 }
 
 static Twidget RecursiveFindFocusWidget(Twidget w) {
@@ -515,7 +517,8 @@ static byte CheckForwardMsg(wm_ctx *c, Tmsg msg, byte WasUsed) {
   static uldat LastWId = NOID;
   static byte LastInside = tfalse;
   static udat LastKeys = 0;
-  Twidget last_w, w, P;
+  Tscreen s;
+  Twidget last_w, w, p;
   event_any *event;
   udat Code;
   dat X, Y;
@@ -525,28 +528,31 @@ static byte CheckForwardMsg(wm_ctx *c, Tmsg msg, byte WasUsed) {
     return inUse;
 
   last_w = (Twidget)Id2Obj(Twidget_class_byte, LastWId);
-
-  w = All->Screens.First->FocusW();
+  s = All->Screens.First;
+  w = s->FocusW();
 
   if ((All->State & state_any) == state_menu) {
-    if (!w)
-      // the menu is being used, but no menu windows opened yet. continue.
-      w = (Twidget)All->Screens.First->MenuWindow;
-    else
+    if (!w) {
+      // the menu is being used, but no menu window opened yet.
+      // continue with most recently focused window (saved in MenuWindow)
+      w = s->MenuWindow;
+    } else {
       // the menu is being used. leave last_w. */
       w = NULL;
+    }
   } else {
-    if (All->Screens.First->ClickWindow && w != (Twidget)All->Screens.First->ClickWindow) {
+    Twidget click_w = s->ClickWindow;
+    if (click_w && w != click_w) {
       // cannot send messages to focused window while user clicked on another window
       w = NULL;
     }
   }
 
-  if (w)
+  if (w) {
     w = RecursiveFindFocusWidget(w);
-  else
+  } else {
     return inUse;
-
+  }
   event = &msg->Event;
   if (msg->Type == msg_key) {
     if (!WasUsed && All->State == state_default) {
@@ -587,9 +593,9 @@ static byte CheckForwardMsg(wm_ctx *c, Tmsg msg, byte WasUsed) {
 
   if (LastKeys) {
     TranslateCoordsWidget(NULL, w, &X, &Y, &Inside);
-    if (c->Pos == POS_ROOT || c->Pos == POS_MENU)
+    if (c->Pos == POS_ROOT || c->Pos == POS_MENU) {
       Inside = tfalse;
-
+    }
   } else {
 
     c->W = NonScreenParent(w);
@@ -608,20 +614,21 @@ static byte CheckForwardMsg(wm_ctx *c, Tmsg msg, byte WasUsed) {
         if (c->DW != w || c->Pos == POS_ROOT || c->Pos == POS_MENU)
           /* w may be obscured by something else */
           Inside = tfalse;
-        while (Inside == ttrue + ttrue && (P = w->Parent)) {
+        while (Inside == ttrue + ttrue && (p = w->Parent)) {
           /* on the border, must report to the parent */
-          w = P;
+          w = p;
           X = c->i;
           Y = c->j;
           TranslateCoordsWidget(NULL, w, &X, &Y, &Inside);
         }
       }
     }
-    if (Inside == ttrue + ttrue)
+    if (Inside == ttrue + ttrue) {
       Inside = tfalse;
+    }
   }
 
-  /* manage window hilight and Selection */
+  /* manage window highlight and Selection */
   if (IS_WINDOW(w) && Inside && Code && !LastKeys && (All->State & state_any) == state_default &&
       !(w->Attr & WIDGET_WANT_MOUSE)) {
 
@@ -884,8 +891,9 @@ static void ContinueMenu(wm_ctx *c) {
 }
 
 static void ReleaseMenu(wm_ctx *c) {
-  Twindow MW = All->Screens.First->MenuWindow;
-  Twindow FW = (Twindow)All->Screens.First->FocusW();
+  Tscreen s = All->Screens.First;
+  Twindow win_m = s->MenuWindow;
+  Twindow win_f = (Twindow)s->FocusW();
   Tmenu menu;
   Tmenuitem item;
   Trow Row;
@@ -893,9 +901,9 @@ static void ReleaseMenu(wm_ctx *c) {
   event_menu *event;
   udat Code;
 
-  if (FW && IS_WINDOW(FW) && FW->CurY < TW_MAXLDAT && (menu = FW->Menu) &&
+  if (win_f && IS_WINDOW(win_f) && win_f->CurY < TW_MAXLDAT && (menu = win_f->Menu) &&
       (item = menu->GetSelectedItem()) && (item->Flags & ROW_ACTIVE) &&
-      (Row = FW->FindRow(FW->CurY)) && (Row->Flags & ROW_ACTIVE) && Row->Code)
+      (Row = win_f->FindRow(win_f->CurY)) && (Row->Flags & ROW_ACTIVE) && Row->Code)
 
     Code = Row->Code;
   else
@@ -905,20 +913,17 @@ static void ReleaseMenu(wm_ctx *c) {
   CloseMenu();
 
   if (Code >= COD_RESERVED) {
-    /* handle COD_RESERVED codes internally */
-    Fill4RC_VM(c, (Twidget)MW, msg_menu_row, POS_MENU, Row->Code);
+    Fill4RC_VM(c, win_m, msg_menu_row, POS_MENU, Row->Code);
     (void)RC_VMQueue(c);
+    /* handle COD_RESERVED codes internally */
   } else if (Code) {
     if ((msg = Smsg::Create(msg_menu_row, 0))) {
       event = &msg->Event.EventMenu;
-      event->W = MW;
+      event->W = win_m;
       event->Code = Code;
       event->Menu = menu;
       event->Row = Row;
-      if (MW)
-        SendMsg(MW->Owner, msg);
-      else
-        SendMsg(menu->MsgPort, msg);
+      SendMsg(win_m ? win_m->Owner : menu->MsgPort, msg);
     }
   }
 }
@@ -1093,18 +1098,18 @@ static void ContinueScroll(wm_ctx *c) {
 }
 
 static void ReleaseDragResizeScroll(const wm_ctx * /*c*/) {
-  Twindow FW = All->Screens.First->ClickWindow;
+  Twindow win_f = All->Screens.First->ClickWindow;
   udat wasResize;
 
   wasResize = (All->State & state_any) == state_resize;
   All->State = state_default;
 
-  if (FW) {
-    FW->State &= ~(BUTTON_ANY_SELECT | SCROLL_ANY_SELECT | XY_BAR_SELECT);
-    DrawBorderWindow(FW, BORDER_ANY);
+  if (win_f) {
+    win_f->State &= ~(BUTTON_ANY_SELECT | SCROLL_ANY_SELECT | XY_BAR_SELECT);
+    DrawBorderWindow(win_f, BORDER_ANY);
 
     if (wasResize) {
-      Check4Resize(FW);
+      Check4Resize(win_f);
       HideResize();
     }
   }
@@ -1132,14 +1137,14 @@ static byte ActivateButton(wm_ctx *c) {
  * I prefer them to stay pressed, so this is disabled
  */
 static void ContinueButton(wm_ctx *c) {
-    Twindow FW = All->Screens.First->ClickWindow;
+    Twindow w = All->Screens.First->ClickWindow;
     uldat ltemp;
     byte found = tfalse;
 
-    if (!FW)
+    if (!w)
         return;
 
-    if (FW == c->W && (ltemp = FW->State) & BUTTON_ANY_SELECT) {
+    if (w == c->W && (ltemp = w->State) & BUTTON_ANY_SELECT) {
         DetailCtx(c);
         if (c->Pos < BUTTON_MAX &&
             (ltemp & BUTTON_ANY_SELECT) == (BUTTON_FIRST_SELECT << c->Pos))
@@ -1148,33 +1153,33 @@ static void ContinueButton(wm_ctx *c) {
     }
 
     if (found)
-        FW->State |= GADGET_PRESSED;
+        w->State |= GADGET_PRESSED;
     else
-        FW->State &= ~GADGET_PRESSED;
-    if (ltemp != FW->State)
-        DrawBorderWindow(FW, BORDER_UP);
+        w->State &= ~GADGET_PRESSED;
+    if (ltemp != w->State)
+        DrawBorderWindow(w, BORDER_UP);
 }
 #endif
 
 /* this is mouse only */
 static void ReleaseButton(wm_ctx *c) {
-  Twindow FW = All->Screens.First->ClickWindow;
+  Twindow w = All->Screens.First->ClickWindow;
 
   All->State = state_default;
-  if (FW) {
-    if (FW == (Twindow)c->W && FW->State & BUTTON_ANY_SELECT) {
+  if (w) {
+    if (w == (Twindow)c->W && w->State & BUTTON_ANY_SELECT) {
       DetailCtx(c);
 
       if (c->Pos < BUTTON_MAX &&
-          (FW->State & BUTTON_ANY_SELECT) == (BUTTON_FIRST_SELECT << c->Pos)) {
+          (w->State & BUTTON_ANY_SELECT) == (BUTTON_FIRST_SELECT << c->Pos)) {
 
-        c->W = (Twidget)FW;
+        c->W = (Twidget)w;
         c->Type = msg_mouse;
         (void)RC_VMQueue(c);
       }
     }
-    FW->State &= ~(BUTTON_ANY_SELECT | WINDOW_GADGET_PRESSED);
-    DrawBorderWindow(FW, BORDER_UP);
+    w->State &= ~(BUTTON_ANY_SELECT | WINDOW_GADGET_PRESSED);
+    DrawBorderWindow(w, BORDER_UP);
   }
 }
 
@@ -1194,24 +1199,24 @@ static byte ActivateGadget(wm_ctx *c) {
 
 /* this is mouse only */
 static void ContinueGadget(wm_ctx *c) {
-  Twindow FW = All->Screens.First->ClickWindow;
-  Tgadget FG;
+  Twindow w = All->Screens.First->ClickWindow;
+  Tgadget fg;
   udat temp;
 
-  if (FW && (FG = (Tgadget)RecursiveFindFocusWidget((Twidget)FW))) {
-    temp = FG->Flags;
+  if (w && (fg = (Tgadget)RecursiveFindFocusWidget((Twidget)w))) {
+    temp = fg->Flags;
 
     if (!(temp & GADGETFL_TOGGLE)) {
-      if (FW == (Twindow)c->W && FG && (DetailCtx(c), (Twidget)FG == c->DW))
-        FG->Flags |= GADGETFL_PRESSED;
+      if (w == (Twindow)c->W && fg && (DetailCtx(c), (Twidget)fg == c->DW))
+        fg->Flags |= GADGETFL_PRESSED;
       else
-        FG->Flags &= ~GADGETFL_PRESSED;
+        fg->Flags &= ~GADGETFL_PRESSED;
 
-      if (temp != FG->Flags) {
-        if ((Twidget)FW == All->Screens.First->Widgets.First)
-          DrawUnobscuredWidget((Twidget)FG, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
+      if (temp != fg->Flags) {
+        if ((Twidget)w == All->Screens.First->Widgets.First)
+          DrawUnobscuredWidget((Twidget)fg, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
         else
-          DrawAreaWidget((Twidget)FG);
+          DrawAreaWidget((Twidget)fg);
       }
     }
   }
@@ -1219,22 +1224,22 @@ static void ContinueGadget(wm_ctx *c) {
 
 /* this is mouse only */
 static void ReleaseGadget(wm_ctx *c) {
-  Twindow FW = All->Screens.First->ClickWindow;
-  Tgadget FG;
+  Twindow w = All->Screens.First->ClickWindow;
+  Tgadget fg;
 
   All->State = state_default;
-  if (!FW)
+  if (!w)
     return;
 
   DetailCtx(c);
 
-  FG = (Tgadget)RecursiveFindFocusWidget((Twidget)FW);
+  fg = (Tgadget)RecursiveFindFocusWidget((Twidget)w);
 
-  if (!FG || !IS_GADGET(FG) || FG->Flags & GADGETFL_TOGGLE)
+  if (!fg || !IS_GADGET(fg) || fg->Flags & GADGETFL_TOGGLE)
     return;
 
-  UnPressGadget(FG, (Twidget)FW == c->W && FG && (Twidget)FG == c->DW);
-  /* FW->SelectW=NULL; */
+  UnPressGadget(fg, (Twidget)w == c->W && fg && (Twidget)fg == c->DW);
+  /* w->SelectW=NULL; */
 }
 
 /* the only Activate*() that make sense from within RC_VM() */
@@ -1265,14 +1270,14 @@ void ForceRelease(const wm_ctx *c) {
     ReleaseDragResizeScroll(c);
     break;
   case state_gadget: {
-    Twindow FW;
-    Tgadget FG;
+    Twindow fw;
+    Tgadget fg;
 
-    if ((FW = All->Screens.First->ClickWindow) &&
-        (FG = (Tgadget)RecursiveFindFocusWidget((Twidget)FW)) && IS_GADGET(FG) &&
-        !(FG->Flags & GADGETFL_TOGGLE))
+    if ((fw = All->Screens.First->ClickWindow) &&
+        (fg = (Tgadget)RecursiveFindFocusWidget((Twidget)fw)) && IS_GADGET(fg) &&
+        !(fg->Flags & GADGETFL_TOGGLE))
 
-      UnPressGadget(FG, tfalse);
+      UnPressGadget(fg, tfalse);
   } break;
   case state_menu:
     CloseMenu();
@@ -1284,9 +1289,9 @@ void ForceRelease(const wm_ctx *c) {
     break;
   default:
     if ((All->State & state_any) < BUTTON_MAX) {
-      Twindow FW;
-      if ((FW = All->Screens.First->ClickWindow))
-        FW->State &= ~(BUTTON_ANY_SELECT | WINDOW_GADGET_PRESSED);
+      Twindow fw;
+      if ((fw = All->Screens.First->ClickWindow))
+        fw->State &= ~(BUTTON_ANY_SELECT | WINDOW_GADGET_PRESSED);
     }
     break;
   }

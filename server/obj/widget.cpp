@@ -286,7 +286,7 @@ void Swidget::UnMap() {
   } else if ((parent = w->Parent)) {
     if (IS_SCREEN(parent)) {
       Tscreen screen = (Tscreen)parent;
-      if (screen == All->Screens.First && w == (Twidget)screen->MenuWindow) {
+      if (screen == All->Screens.First && w == screen->MenuWindow) {
         /*
          * ! DANGER !
          * Trying to UnMap() the Tmenu owner.
@@ -302,18 +302,19 @@ void Swidget::UnMap() {
         screen->ClickWindow = NULL;
 
       Twindow next = NULL;
-      const byte wasFocus = w == screen->FocusW();
+      const bool wasFocus = w == screen->FocusW();
       if (wasFocus) {
         if (w->Flags & WINDOWFL_MENU) {
           next = screen->MenuWindow;
         } else {
-          if ((Twidget)w == screen->Widgets.First)
+          if ((Twidget)w == screen->Widgets.First) {
             next = (Twindow)w->Next;
-          else
+          } else {
             next = (Twindow)screen->Widgets.First;
-
-          while (next && !IS_WINDOW(next))
+          }
+          while (next && !IS_WINDOW(next)) {
             next = (Twindow)next->Next;
+          }
         }
       }
 

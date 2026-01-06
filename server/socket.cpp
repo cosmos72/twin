@@ -1079,7 +1079,7 @@ static void sockFocusSubWidget(SockCtx & /*ctx*/, Twidget w) {
       P->SelectW = w;
       w = P;
     }
-    if (ContainsCursor((Twidget)WindowParent(w))) {
+    if (ContainsCursor(WindowParent(w))) {
       UpdateCursor();
     }
   }

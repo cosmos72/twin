@@ -606,7 +606,7 @@ static byte RCSteps(run *r) {
         break;
       case WINDOW:
         if (n->name)
-          w = (Twidget)RCFindWindowName(n->name);
+          w = RCFindWindowName(n->name);
         else {
           ldat i = applyflagx(n);
           flag = n->x.f.plus_minus;
@@ -625,8 +625,9 @@ static byte RCSteps(run *r) {
           if (flag == 0) {
             if (i == 0) {
               w = All->Screens.First->FocusW();
-              if (w && !IS_WINDOW(w))
+              if (w && !IS_WINDOW(w)) {
                 w = (Twidget)0;
+              }
             } else {
               if (i > 0)
                 i--;
@@ -715,12 +716,12 @@ static byte RCSteps(run *r) {
       case FOCUS:
         if (w && screen) {
           flag = n->x.f.flag;
-          if (flag == FL_TOGGLE)
+          if (flag == FL_TOGGLE) {
             flag = (screen->FocusW() == (Twidget)w) ? FL_OFF : FL_ON;
-
-          if (flag == FL_ON && screen != All->Screens.First)
+          }
+          if (flag == FL_ON && screen != All->Screens.First) {
             screen->Focus();
-
+          }
           if (flag == FL_ON) {
             w->Focus();
           } else {

@@ -19,9 +19,11 @@ class Sscreen : public Swidget {
 public:
   dat NameLen;
   char *Name;
-  Twindow MenuWindow, ClickWindow;
+  // points to most recently focused window while a menu window is open and stored in ->FocusW()
+  Twindow MenuWindow;
+  Twindow ClickWindow;
   Tall All;
-  HookData HookMap; /* allow hooks on children Map()/UnMap() inside this Tscreen */
+  HookData HookMap; // allow hooks on children Map()/UnMap() inside this Tscreen
 
 private:
   Tscreen Init(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg);

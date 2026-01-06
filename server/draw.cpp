@@ -941,8 +941,8 @@ void Sdraw::Draw() {
       if (IS_WINDOW(w) && !((window = (Twindow)w)->Flags & WINDOWFL_BORDERLESS)) {
 
         if (!only_child) {
-          winActive = window == (Twindow)All->Screens.First->FocusW() ||
-                      window == All->Screens.First->MenuWindow;
+          winActive =
+              window == All->Screens.First->MenuWindow || window == All->Screens.First->FocusW();
           border = (window->Flags & WINDOWFL_MENU) || !winActive;
           DrawSelfBorder(window, left, up, rgt, dwn, x1, y1, x2, y2, border, winActive, shaded);
         }
@@ -971,10 +971,11 @@ void Sdraw::Draw() {
     }
 
     if (x1 > x2 || y1 > y2 || x1 >= dwidth || y1 >= dheight || x2 < 0 || y2 < 0) {
-      if (!first_cycle)
-        FreeMem(d);
-      else
+      if (first_cycle) {
         first_cycle = false;
+      } else {
+        FreeMem(d);
+      }
       continue;
     }
 
@@ -1136,20 +1137,26 @@ Twidget NonScreenParent(Twidget w) {
 }
 
 Twindow FindCursorWindow(void) {
-  Twidget P, w;
-  if (!(P = All->Screens.First->FocusW()))
-    P = (Twidget)All->Screens.First->MenuWindow;
-  if (P)
-    while ((w = P->SelectW))
-      P = w;
-  return WindowParent(P);
+  Tscreen s = All->Screens.First;
+  Twidget p = s->FocusW();
+  Twidget w;
+  if (!p) {
+    p = s->MenuWindow;
+  }
+  if (p) {
+    while ((w = p->SelectW)) {
+      p = w;
+    }
+  }
+  return WindowParent(p);
 }
 
-byte ContainsCursor(Twidget w) {
+bool ContainsCursor(Twidget w) {
   Twidget c = (Twidget)FindCursorWindow();
   while (c) {
-    if (c == w)
+    if (c == w) {
       return ttrue;
+    }
     c = c->Parent;
   }
   return tfalse;
