@@ -724,7 +724,7 @@ static void csi_m(tty_data *tty) {
       effects &= ~EFF_REVERSE;
       break;
     case 38:
-      if (i + 3 <= npar && tty->Par[i + 1] == 5) {
+      if (i + 2 <= npar && tty->Par[i + 1] == 5) {
         /* 8-bit palette foreground: ESC[38;5;<8BITPALETTE>m */
         uldat index = tty->Par[i + 2];
         if (index <= 255) {
@@ -732,7 +732,7 @@ static void csi_m(tty_data *tty) {
         }
         i += 3;
         continue;
-      } else if (i + 5 <= npar && tty->Par[i + 1] == 2) {
+      } else if (i + 4 <= npar && tty->Par[i + 1] == 2) {
         /* 24-bit truecolor foreground: ESC[38;2;<R>;<G>;<B>m */
         uldat r = tty->Par[i + 2];
         uldat g = tty->Par[i + 3];
@@ -758,7 +758,7 @@ static void csi_m(tty_data *tty) {
       effects &= ~EFF_UNDERLINE;
       break;
     case 48:
-      if (i + 3 <= npar && tty->Par[i + 1] == 5) {
+      if (i + 2 <= npar && tty->Par[i + 1] == 5) {
         /* 8-bit palette background: ESC[48;5;<8BITPALETTE>m */
         uldat index = tty->Par[i + 2];
         if (index <= 255) {
@@ -766,7 +766,7 @@ static void csi_m(tty_data *tty) {
         }
         i += 3;
         continue;
-      } else if (i + 5 <= npar && tty->Par[i + 1] == 2) {
+      } else if (i + 4 <= npar && tty->Par[i + 1] == 2) {
         /* 24-bit truecolor background: ESC[48;2;<R>;<G>;<B>m */
         uldat r = tty->Par[i + 2];
         uldat g = tty->Par[i + 3];
