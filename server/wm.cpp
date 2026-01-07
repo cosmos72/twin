@@ -31,7 +31,7 @@
 #include "common.h"
 
 #include <Tw/Twkeys.h> /* for TW_* key defines */
-#include <Tutf/Tutf.h> /* for UCS-2 to charset conversions */
+#include <Tutf/Tutf.h> /* for UTF-32 <-> charset conversions */
 
 #include "rctypes.h"
 #include "rcrun.h"
@@ -43,41 +43,46 @@ byte ClickWindowPos = TW_MAXBYTE;
 static Tmsgport WM_MsgPort;
 static Tmsgport MapQueue;
 
-#define XBarSize (Window->XWidth - (udat)5)
-#define YBarSize (Window->YWidth - (udat)4)
+static inline ldat XBarSize(Twindow w) {
+  return (ldat)w->XWidth - (ldat)5;
+}
 
-static udat TabStart(Twindow Window, sbyte isX) {
+static inline ldat YBarSize(Twindow w) {
+  return (ldat)w->YWidth - (ldat)4;
+}
+
+static udat TabStart(Twindow w, sbyte isX) {
   ldat NumLogicMax;
   udat ret;
 
   if (isX) {
-    NumLogicMax = Max2(Window->WLogic, Window->XLogic + Window->XWidth - 2);
-    ret = Window->XLogic * (ldat)XBarSize / NumLogicMax;
+    NumLogicMax = Max2(w->WLogic, w->XLogic + w->XWidth - 2);
+    ret = w->XLogic * XBarSize(w) / NumLogicMax;
   } else {
-    NumLogicMax = Max2(Window->HLogic, Window->YLogic + (ldat)Window->YWidth - 2);
-    ret = Window->YLogic * (ldat)YBarSize / NumLogicMax;
+    NumLogicMax = Max2(w->HLogic, w->YLogic + (ldat)w->YWidth - 2);
+    ret = w->YLogic * YBarSize(w) / NumLogicMax;
   }
   return ret;
 }
 
-static udat TabLen(Twindow Window, sbyte isX) {
+static udat TabLen(Twindow w, sbyte isX) {
   ldat NumLogicMax;
   udat ret;
 
   if (isX) {
-    NumLogicMax = Max2(Window->WLogic, Window->XLogic + Window->XWidth - 2);
-    ret = ((Window->XWidth - 2) * (ldat)XBarSize + NumLogicMax - 1) / NumLogicMax;
+    NumLogicMax = Max2(w->WLogic, w->XLogic + w->XWidth - 2);
+    ret = ((w->XWidth - 2) * XBarSize(w) + NumLogicMax - 1) / NumLogicMax;
   } else {
-    NumLogicMax = Max2(Window->HLogic, Window->YLogic + Window->YWidth - 2);
-    ret = ((Window->YWidth - 2) * (ldat)YBarSize + NumLogicMax - 1) / NumLogicMax;
+    NumLogicMax = Max2(w->HLogic, w->YLogic + w->YWidth - 2);
+    ret = ((w->YWidth - 2) * YBarSize(w) + NumLogicMax - 1) / NumLogicMax;
   }
   return ret ? ret : 1;
 }
 
 /* this returns -1 before the tab, 0 on the tab, 1 after */
-inline sbyte IsTabPosition(Twindow Window, udat pos, sbyte isX) {
-  udat start;
-  return pos >= (start = TabStart(Window, isX)) ? pos - start < TabLen(Window, isX) ? 0 : 1 : -1;
+inline sbyte IsTabPosition(Twindow w, udat pos, sbyte isX) {
+  const udat start = TabStart(w, isX);
+  return pos >= start ? pos - start < TabLen(w, isX) ? 0 : 1 : -1;
 }
 
 tpos WMFindBorderWindow(Twindow w, dat u, dat v, byte border, tcell *ptr_cell) {
