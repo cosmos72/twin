@@ -838,10 +838,10 @@ static void RCRun(void) {
 
 /*
  * let's see how much we can sleep:
- * return tfalse if no limit to sleep time;
+ * return false if no limit to sleep time;
  * else _t will be filled with max time to sleep.
  */
-static byte RCSleep(timevalue *_t) {
+static bool RCSleep(timevalue *_t) {
   timevalue *t = _t;
   run *r = Sleep;
 
@@ -849,22 +849,23 @@ static byte RCSleep(timevalue *_t) {
   t->Fraction = (tany)0; /* not TW_MAXTANY as Normalize() would overflow */
 
   while (r) {
-    if (CmpTime(&r->SW.WakeUp, t) < 0)
+    if (CmpTime(&r->SW.WakeUp, t) < 0) {
       t = &r->SW.WakeUp;
+    }
     r = r->next;
   }
 
   if (t != _t) {
-    if (CmpTime(t, &All->Now) > 0)
+    if (CmpTime(t, &All->Now) > 0) {
       SubTime(_t, t, &All->Now);
-    else {
+    } else {
       /* avoid busy looping */
       _t->Seconds = 0;
       _t->Fraction = 10 MilliSECs;
     }
-    return ttrue;
+    return true;
   }
-  return tfalse;
+  return false;
 }
 
 /*
@@ -957,14 +958,14 @@ static byte MouseClickReleaseSameCtx(uldat W1, uldat W2, ldat clickCtx, ldat rel
 }
 
 /* handle incoming messages */
-byte RC_VMQueue(const wm_ctx *C) {
+bool RC_VMQueue(const wm_ctx *C) {
   uldat ClickWinId = All->Screens.First->ClickWindow ? All->Screens.First->ClickWindow->Id : NOID;
   Twidget w;
   ldat ctx;
   node n;
   run *r;
   udat Code;
-  byte used = tfalse;
+  bool used = false;
   /* from wm.c : */
   extern byte ClickWindowPos;
 
@@ -999,25 +1000,27 @@ byte RC_VMQueue(const wm_ctx *C) {
       n = RCFindKeyBind((ldat)C->Code, (ldat)C->ShiftFlags);
     }
     if (n && (r = RCNew(n))) {
-      used = ttrue, CopyMem(C, &r->C, sizeof(wm_ctx));
+      used = true;
+      CopyMem(C, &r->C, sizeof(wm_ctx));
       r->W = ClickWinId;
       /* to preserve execution orded, run it right now ! */
       RCRun();
     }
     break;
   case msg_map:
-    used = ttrue, RCWake4Window((Twindow)C->W);
+    used = true;
+    RCWake4Window((Twindow)C->W);
     break;
   case msg_control:
     if (C->Code == MSG_CONTROL_OPEN) {
-      used = ttrue;
-      if (All->State != state_default)
+      used = true;
+      if (All->State != state_default) {
         /*
          * return to state_default, and rely on RCReload()
          * to set QueuedDrawArea2FullScreen = true
          */
         ForceRelease(C);
-
+      }
       RCReload();
     }
     break;
@@ -1025,7 +1028,7 @@ byte RC_VMQueue(const wm_ctx *C) {
     if (C->Code >= COD_RESERVED && C->Code < MenuBindsMax + COD_RESERVED) {
       n = MenuBinds[C->Code - COD_RESERVED];
       if (n && (r = RCNew(n))) {
-        used = ttrue;
+        used = true;
         CopyMem(C, &r->C, sizeof(wm_ctx));
         w = All->Screens.First->FocusW();
         r->W = w ? w->Id : NOID;
@@ -1042,7 +1045,7 @@ byte RC_VMQueue(const wm_ctx *C) {
 }
 
 /* virtual machine main loop */
-byte RC_VM(timevalue *t) {
+bool RC_VM(timevalue *t) {
 
   /* do the real thing: run the queues */
   RCWake();

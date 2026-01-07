@@ -37,7 +37,7 @@ node LookupNodeName(cstr name, node head);
 
 trune *RCFindBorderPattern(Twindow w, byte border);
 
-byte RC_VM(timevalue *t);
-byte RC_VMQueue(const wm_ctx *C);
+bool RC_VM(timevalue *t);
+bool RC_VMQueue(const wm_ctx *C);
 
 #endif /* TWIN_RCRUN_H */

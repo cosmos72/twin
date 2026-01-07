@@ -1542,6 +1542,7 @@ static void osc_cmd_window_title(tty_data *tty) {
   name.shrink_to_fit();
   swap(name, tty->Win->Name);
   name.clear();
+  DrawBorderWindow(tty->Win, BORDER_UP);
 }
 
 static void osc_cmd_palette(tty_data *tty) {
