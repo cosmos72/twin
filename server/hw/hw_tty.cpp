@@ -711,6 +711,11 @@ TW_ATTR_HIDDEN void tty_driver::QuitHW(Tdisplay hw) {
   hw->Private = NULL;
 }
 
+#ifdef TWIN_HW_TTY_STATIC
+bool tty_InitHW(Tdisplay hw) {
+  return tty_driver::InitHW(hw);
+}
+#else
 EXTERN_C byte InitModule(Tmodule m) {
   m->DoInit = &tty_driver::InitHW;
   return ttrue;
@@ -720,3 +725,4 @@ EXTERN_C byte InitModule(Tmodule m) {
 EXTERN_C void QuitModule(Tmodule m) {
   (void)m;
 }
+#endif

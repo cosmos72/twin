@@ -138,9 +138,9 @@ static void Usage(void) {
         " --plugindir=DIRECTORY    set directory where to look for --hw=... libraries\n"
         "Currently known display drivers: \n"
         "\txft[@<XDISPLAY>]\n"
-        "\tX[@<XDISPLAY>]\n"
-        "\ttwin[@<TWDISPLAY>]\n"
-        "\ttty[@<tty device>]\n",
+        "\tx11[@<XDISPLAY>]\n"
+        "\ttty[@<tty device>]\n"
+        "\ttwin[@<TWDISPLAY>]\n",
         stdout);
 }
 

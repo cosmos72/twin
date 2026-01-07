@@ -415,7 +415,10 @@ static void display_FixName(Tdisplay hw) {
   }
 }
 
-static bool display_InitHW(Tdisplay hw) {
+#ifndef TWIN_HW_DISPLAY_STATIC
+static
+#endif
+    bool display_InitHW(Tdisplay hw) {
   Chars arg = hw->Name;
   Tmsgport Port;
 
@@ -558,6 +561,7 @@ static bool display_InitHW(Tdisplay hw) {
   return true;
 }
 
+#ifndef TWIN_HW_DISPLAY_STATIC
 EXTERN_C byte InitModule(Tmodule m) {
   m->DoInit = display_InitHW;
   return ttrue;
@@ -567,3 +571,4 @@ EXTERN_C byte InitModule(Tmodule m) {
 EXTERN_C void QuitModule(Tmodule m) {
   (void)m;
 }
+#endif // TWIN_HW_DISPLAY_STATIC

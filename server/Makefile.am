@@ -1,10 +1,9 @@
 SUBDIRS = hw
 
-bin_PROGRAMS       = twdisplay twin twin_server
+bin_PROGRAMS       = twdisplay twin twin_server twin_server_static
 bin_SCRIPTS        = twstart
 pkglib_LTLIBRARIES =
 noinst_LIBRARIES   = libtwin_static.a
-noinst_PROGRAMS    = twin_server_static
 
 AM_CPPFLAGS           = -I$(top_srcdir)/include $(LTDLINCL) -DPLUGINDIR="\"$(pkglibdir)\"" -DCONFDIR="\"$(sysconfdir)/twin\""
 twin_CPPFLAGS         = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir)\""
@@ -36,9 +35,9 @@ twin_server_static_LDFLAGS = -static
 librcparse_la_LDFLAGS      = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
 libsocket_la_LDFLAGS       = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
 
-twdisplay_LDADD            = $(LIBTW)          $(LIBTUTF) $(LIBDL) $(LIBTSTL)
-twin_server_LDADD          =                   $(LIBTUTF) $(LIBDL) $(LIBTSTL)
-twin_server_static_LDADD   = libtwin_static.a  $(LIBTUTF) $(LIBDL) $(LIBTSTL)
+twdisplay_LDADD            = $(LIBTW)                        $(LIBTUTF) $(LIBDL) $(LIBTSTL)
+twin_server_LDADD          =                                 $(LIBTUTF) $(LIBDL) $(LIBTSTL)
+twin_server_static_LDADD   = libtwin_static.a hw/libhw_all.a $(LIBTUTF) $(LIBDL) $(LIBTSTL)
 
 librcparse_la_LIBADD       = $(LIBTUTF) $(LIBTSTL)
 libsocket_la_LIBADD        = $(LIBTUTF) $(LIBTSTL) $(LIBSOCK) $(LIBZ)
@@ -55,4 +54,16 @@ if LIBSOCKET_la
   libtwin_static_a_CPPFLAGS  += -DTWIN_SOCKET_STATIC
   libtwin_static_a_SOURCES   += md5.cpp socket.cpp
   twin_server_static_LDADD   += $(LIBSOCK) $(LIBZ)
+endif
+if LIBHW_TTY_la
+  twin_server_static_LDADD   += $(LIBTERMCAP) $(LIBGPM)
+endif
+if LIBHW_TWIN_la
+  twin_server_static_LDADD   += $(LIBTW) $(LIBZ)
+endif
+if LIBHW_X11_la
+  twin_server_static_LDADD   += $(LIBX11)
+endif
+if LIBHW_XFT_la
+  twin_server_static_LDADD   += $(LIBXFT) $(XFT_LIBS) $(LIBX11)
 endif

@@ -10,7 +10,7 @@ dist_pkgsysconf_DATA = twenvrc.sh twinrc
 
 install-exec-hook:
 	@if echo "$(host_triplet)" | $(GREP) linux >/dev/null 2>&1 ; then \
-	  CMD_LDCONFIG="ldconfig" ; \
+	  CMD_LDCONFIG="/sbin/ldconfig" ; \
 	elif echo "$(host_triplet)" | $(GREP) freebsd >/dev/null 2>&1 ; then \
 	  CMD_LDCONFIG="ldconfig -R" ; \
 	else \

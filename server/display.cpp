@@ -233,7 +233,7 @@ static Tmodule DlLoadAny(Chars name) {
      * a Module MUST have a InitModule function, as it needs to set
      * Module->Private to its xxx_InitHW() startup code.
      */
-  } else if (!(init_func = (byte(*)(Tmodule))dlsym((dlhandle)m->Handle, "InitModule"))) {
+  } else if (!(init_func = (byte (*)(Tmodule))dlsym((dlhandle)m->Handle, "InitModule"))) {
     Error(DLERROR);
     Errstr = Chars("InitModule() not found in Tmodule");
   } else if (!init_func(m)) {
@@ -990,9 +990,9 @@ static void Usage(void) NOTHROW {
         " --plugindir=DIRECTORY    set directory where to look for --hw=... libraries\n"
         "Currently known display drivers: \n"
         "\txft[@<XDISPLAY>]\n"
-        "\tX[@<XDISPLAY>]\n"
-        "\ttwin[@<TWDISPLAY>]\n"
-        "\ttty[@<tty device>]\n",
+        "\tx11[@<XDISPLAY>]\n"
+        "\ttty[@<tty device>]\n"
+        "\ttwin[@<TWDISPLAY>]\n",
         stdout);
 }
 

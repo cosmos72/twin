@@ -93,8 +93,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = twdisplay$(EXEEXT) twin$(EXEEXT) twin_server$(EXEEXT)
-noinst_PROGRAMS = twin_server_static$(EXEEXT)
+bin_PROGRAMS = twdisplay$(EXEEXT) twin$(EXEEXT) twin_server$(EXEEXT) \
+	twin_server_static$(EXEEXT)
 @LIBRCPARSE_la_TRUE@am__append_1 = librcparse.la
 @LIBRCPARSE_la_TRUE@am__append_2 = -DTWIN_RCPARSE_STATIC
 @LIBRCPARSE_la_TRUE@am__append_3 = rcparse_tab.cpp rcparse_lex.cpp
@@ -102,6 +102,10 @@ noinst_PROGRAMS = twin_server_static$(EXEEXT)
 @LIBSOCKET_la_TRUE@am__append_5 = -DTWIN_SOCKET_STATIC
 @LIBSOCKET_la_TRUE@am__append_6 = md5.cpp socket.cpp
 @LIBSOCKET_la_TRUE@am__append_7 = $(LIBSOCK) $(LIBZ)
+@LIBHW_TTY_la_TRUE@am__append_8 = $(LIBTERMCAP) $(LIBGPM)
+@LIBHW_TWIN_la_TRUE@am__append_9 = $(LIBTW) $(LIBZ)
+@LIBHW_X11_la_TRUE@am__append_10 = $(LIBX11)
+@LIBHW_XFT_la_TRUE@am__append_11 = $(LIBXFT) $(XFT_LIBS) $(LIBX11)
 subdir = server
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -122,7 +126,7 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(pkglibdir)" \
 	"$(DESTDIR)$(bindir)"
-PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
+PROGRAMS = $(bin_PROGRAMS)
 LIBRARIES = $(noinst_LIBRARIES)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -230,9 +234,18 @@ am_twin_server_static_OBJECTS = $(am__objects_3)
 twin_server_static_OBJECTS = $(am_twin_server_static_OBJECTS)
 @LIBSOCKET_la_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) \
 @LIBSOCKET_la_TRUE@	$(am__DEPENDENCIES_1)
-twin_server_static_DEPENDENCIES = libtwin_static.a \
+@LIBHW_TTY_la_TRUE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1) \
+@LIBHW_TTY_la_TRUE@	$(am__DEPENDENCIES_1)
+@LIBHW_TWIN_la_TRUE@am__DEPENDENCIES_4 = $(am__DEPENDENCIES_1) \
+@LIBHW_TWIN_la_TRUE@	$(am__DEPENDENCIES_1)
+@LIBHW_X11_la_TRUE@am__DEPENDENCIES_5 = $(am__DEPENDENCIES_1)
+@LIBHW_XFT_la_TRUE@am__DEPENDENCIES_6 = $(am__DEPENDENCIES_1) \
+@LIBHW_XFT_la_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+twin_server_static_DEPENDENCIES = libtwin_static.a hw/libhw_all.a \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3) $(am__DEPENDENCIES_4) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6)
 twin_server_static_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(twin_server_static_LDFLAGS) \
@@ -585,7 +598,7 @@ libsocket_la_SOURCES = md5.cpp socket.cpp
 libtwin_static_a_SOURCES = dl_static.cpp $(am__append_3) \
 	$(am__append_6)
 twin_server_SOURCES = $(twin_server_common_SOURCES) dl_dynamic.cpp dl_helper.cpp
-twin_server_static_SOURCES = $(twin_server_common_SOURCES) 
+twin_server_static_SOURCES = $(twin_server_common_SOURCES)
 twdisplay_LDFLAGS = -export-dynamic $(LDFLAGS_BIN_EXPORT_DYNAMIC)
 twin_server_LDFLAGS = -export-dynamic $(LDFLAGS_BIN_EXPORT_DYNAMIC)
 
@@ -593,10 +606,11 @@ twin_server_LDFLAGS = -export-dynamic $(LDFLAGS_BIN_EXPORT_DYNAMIC)
 twin_server_static_LDFLAGS = -static
 librcparse_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
 libsocket_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
-twdisplay_LDADD = $(LIBTW)          $(LIBTUTF) $(LIBDL) $(LIBTSTL)
+twdisplay_LDADD = $(LIBTW)                        $(LIBTUTF) $(LIBDL) $(LIBTSTL)
 twin_server_LDADD = $(LIBTUTF) $(LIBDL) $(LIBTSTL)
-twin_server_static_LDADD = libtwin_static.a $(LIBTUTF) $(LIBDL) \
-	$(LIBTSTL) $(am__append_7)
+twin_server_static_LDADD = libtwin_static.a hw/libhw_all.a $(LIBTUTF) \
+	$(LIBDL) $(LIBTSTL) $(am__append_7) $(am__append_8) \
+	$(am__append_9) $(am__append_10) $(am__append_11)
 librcparse_la_LIBADD = $(LIBTUTF) $(LIBTSTL)
 libsocket_la_LIBADD = $(LIBTUTF) $(LIBTSTL) $(LIBSOCK) $(LIBZ)
 libtwin_static_a_CPPFLAGS = $(am__append_2) $(am__append_5)
@@ -677,10 +691,6 @@ uninstall-binPROGRAMS:
 clean-binPROGRAMS:
 	$(am__rm_f) $(bin_PROGRAMS)
 	test -z "$(EXEEXT)" || $(am__rm_f) $(bin_PROGRAMS:$(EXEEXT)=)
-
-clean-noinstPROGRAMS:
-	$(am__rm_f) $(noinst_PROGRAMS)
-	test -z "$(EXEEXT)" || $(am__rm_f) $(noinst_PROGRAMS:$(EXEEXT)=)
 
 clean-noinstLIBRARIES:
 	-$(am__rm_f) $(noinst_LIBRARIES)
@@ -1216,8 +1226,7 @@ maintainer-clean-generic:
 clean: clean-recursive
 
 clean-am: clean-binPROGRAMS clean-generic clean-libtool \
-	clean-noinstLIBRARIES clean-noinstPROGRAMS \
-	clean-pkglibLTLIBRARIES mostlyclean-am
+	clean-noinstLIBRARIES clean-pkglibLTLIBRARIES mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -f ./$(DEPDIR)/alloc.Po
@@ -1398,16 +1407,16 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 .PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am \
 	am--depfiles check check-am clean clean-binPROGRAMS \
 	clean-generic clean-libtool clean-noinstLIBRARIES \
-	clean-noinstPROGRAMS clean-pkglibLTLIBRARIES cscopelist-am \
-	ctags ctags-am distclean distclean-compile distclean-generic \
-	distclean-libtool distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-binPROGRAMS \
-	install-binSCRIPTS install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-pdf install-pdf-am install-pkglibLTLIBRARIES \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs installdirs-am maintainer-clean \
+	clean-pkglibLTLIBRARIES cscopelist-am ctags ctags-am distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-binPROGRAMS install-binSCRIPTS \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-pkglibLTLIBRARIES install-ps \
+	install-ps-am install-strip installcheck installcheck-am \
+	installdirs installdirs-am maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS \

@@ -11,12 +11,10 @@
  */
 
 #include "dl_helper.h"
-
 #include "dl_common.h"
-
+#include "hw/hw_all.h"
 #include "socket.h"
-
-bool rcload(Tdisplay hw);
+#include "rcproto.h"
 
 bool DlOpen(Tmodule m) {
   bool ok = false;
@@ -33,7 +31,7 @@ bool DlOpen(Tmodule m) {
     break;
 #endif
   default:
-    break;
+    ok = DlOpenHW(m);
   }
   if (!ok && !Errstr) {
     Error(DLERROR);

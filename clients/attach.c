@@ -37,10 +37,10 @@ static void Usage(byte detach) {
           "  --twin@<TWDISPLAY>       specify server to contact (default is $TWDISPLAY)\n"
           "  --hw=<display>[,options] start the given display driver\n"
           "Currently known display drivers: \n"
-          "\tX[@<XDISPLAY>]\n"
           "\txft[@<XDISPLAY>]\n"
-          "\ttwin[@<TWDISPLAY>]\n"
-          "\ttty[@<tty device>]\n",
+          "\tx11[@<XDISPLAY>]\n"
+          "\ttty[@<tty device>]\n"
+          "\ttwin[@<TWDISPLAY>]\n",
           MYname, detach ? "" : "--hw=<display> [...]", detach ? "" : " (default)",
           detach ? " (default)" : "");
 }

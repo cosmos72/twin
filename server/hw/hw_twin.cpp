@@ -646,6 +646,11 @@ TW_ATTR_HIDDEN bool tw_driver::InitHW(Tdisplay hw) {
   return false;
 }
 
+#ifdef TWIN_HW_TWIN_STATIC
+bool tw_InitHW(Tdisplay hw) {
+  return tw_driver::InitHW(hw);
+}
+#else
 EXTERN_C byte InitModule(Tmodule m) {
   m->DoInit = &tw_driver::InitHW;
   return ttrue;
@@ -655,3 +660,4 @@ EXTERN_C byte InitModule(Tmodule m) {
 EXTERN_C void QuitModule(Tmodule m) {
   (void)m;
 }
+#endif

@@ -582,6 +582,15 @@ TW_ATTR_HIDDEN void XDRIVER::QuitHW() {
   hw->fnQuitHW = NULL;
 }
 
+#if defined(TWIN_HW_X11_STATIC) && HW_X_DRIVER == HW_X11
+bool x11_InitHW(Tdisplay hw) {
+  return XDRIVER::InitHW(hw);
+}
+#elif defined(TWIN_HW_XFT_STATIC) && HW_X_DRIVER == HW_XFT
+bool xft_InitHW(Tdisplay hw) {
+  return XDRIVER::InitHW(hw);
+}
+#else
 EXTERN_C byte InitModule(Tmodule mod) {
   mod->DoInit = &XDRIVER::InitHW;
   return ttrue;
@@ -591,3 +600,4 @@ EXTERN_C byte InitModule(Tmodule mod) {
 EXTERN_C void QuitModule(Tmodule m) {
   (void)m;
 }
+#endif

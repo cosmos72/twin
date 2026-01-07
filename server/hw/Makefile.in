@@ -14,6 +14,7 @@
 
 @SET_MAKE@
 
+
 VPATH = @srcdir@
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
@@ -91,10 +92,19 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @LIBHW_DISPLAY_la_TRUE@am__append_1 = libhw_display.la
-@LIBHW_X11_la_TRUE@am__append_2 = libhw_x11.la
-@LIBHW_XFT_la_TRUE@am__append_3 = libhw_xft.la
-@LIBHW_TTY_la_TRUE@am__append_4 = libhw_tty.la
-@LIBHW_TWIN_la_TRUE@am__append_5 = libhw_twin.la
+@LIBHW_DISPLAY_la_TRUE@am__append_2 = hw_display.cpp
+@LIBHW_TTY_la_TRUE@am__append_3 = libhw_tty.la
+@LIBHW_TTY_la_TRUE@am__append_4 = -DTWIN_HW_TTY_STATIC
+@LIBHW_TTY_la_TRUE@am__append_5 = hw_tty.cpp
+@LIBHW_TWIN_la_TRUE@am__append_6 = libhw_twin.la
+@LIBHW_TWIN_la_TRUE@am__append_7 = -DTWIN_HW_TWIN_STATIC
+@LIBHW_TWIN_la_TRUE@am__append_8 = hw_twin.cpp
+@LIBHW_X11_la_TRUE@am__append_9 = libhw_x11.la
+@LIBHW_X11_la_TRUE@am__append_10 = -DTWIN_HW_X11_STATIC $(X11_CPPFLAGS)
+@LIBHW_X11_la_TRUE@am__append_11 = hw_x11.cpp
+@LIBHW_XFT_la_TRUE@am__append_12 = libhw_xft.la
+@LIBHW_XFT_la_TRUE@am__append_13 = -DTWIN_HW_XFT_STATIC $(X11_CPPFLAGS) $(XFT_CFLAGS)
+@LIBHW_XFT_la_TRUE@am__append_14 = hw_xft.cpp
 subdir = server/hw
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -113,6 +123,7 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
+LIBRARIES = $(noinst_LIBRARIES)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -141,6 +152,27 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(pkglibdir)"
 LTLIBRARIES = $(pkglib_LTLIBRARIES)
+ARFLAGS = cr
+AM_V_AR = $(am__v_AR_@AM_V@)
+am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
+am__v_AR_0 = @echo "  AR      " $@;
+am__v_AR_1 = 
+libhw_all_a_AR = $(AR) $(ARFLAGS)
+libhw_all_a_RANLIB = $(RANLIB)
+am__DEPENDENCIES_1 =
+libhw_all_a_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am__libhw_all_a_SOURCES_DIST = hw_all.cpp hw_display.cpp hw_tty.cpp \
+	hw_twin.cpp hw_x11.cpp hw_xft.cpp
+@LIBHW_DISPLAY_la_TRUE@am__objects_1 =  \
+@LIBHW_DISPLAY_la_TRUE@	libhw_all_a-hw_display.$(OBJEXT)
+@LIBHW_TTY_la_TRUE@am__objects_2 = libhw_all_a-hw_tty.$(OBJEXT)
+@LIBHW_TWIN_la_TRUE@am__objects_3 = libhw_all_a-hw_twin.$(OBJEXT)
+@LIBHW_X11_la_TRUE@am__objects_4 = libhw_all_a-hw_x11.$(OBJEXT)
+@LIBHW_XFT_la_TRUE@am__objects_5 = libhw_all_a-hw_xft.$(OBJEXT)
+am_libhw_all_a_OBJECTS = libhw_all_a-hw_all.$(OBJEXT) $(am__objects_1) \
+	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
+	$(am__objects_5)
+libhw_all_a_OBJECTS = $(am_libhw_all_a_OBJECTS)
 libhw_display_la_DEPENDENCIES =
 am_libhw_display_la_OBJECTS = hw_display.lo
 libhw_display_la_OBJECTS = $(am_libhw_display_la_OBJECTS)
@@ -149,7 +181,6 @@ am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
 @LIBHW_DISPLAY_la_TRUE@am_libhw_display_la_rpath = -rpath $(pkglibdir)
-am__DEPENDENCIES_1 =
 libhw_tty_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
@@ -196,6 +227,12 @@ depcomp = $(SHELL) $(top_srcdir)/admin/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/hw_display.Plo \
 	./$(DEPDIR)/hw_tty.Plo ./$(DEPDIR)/hw_twin.Plo \
+	./$(DEPDIR)/libhw_all_a-hw_all.Po \
+	./$(DEPDIR)/libhw_all_a-hw_display.Po \
+	./$(DEPDIR)/libhw_all_a-hw_tty.Po \
+	./$(DEPDIR)/libhw_all_a-hw_twin.Po \
+	./$(DEPDIR)/libhw_all_a-hw_x11.Po \
+	./$(DEPDIR)/libhw_all_a-hw_xft.Po \
 	./$(DEPDIR)/libhw_x11_la-hw_x11.Plo \
 	./$(DEPDIR)/libhw_xft_la-hw_xft.Plo
 am__mv = mv -f
@@ -217,10 +254,11 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(libhw_display_la_SOURCES) $(libhw_tty_la_SOURCES) \
-	$(libhw_twin_la_SOURCES) $(libhw_x11_la_SOURCES) \
-	$(libhw_xft_la_SOURCES)
-DIST_SOURCES = $(libhw_display_la_SOURCES) $(libhw_tty_la_SOURCES) \
+SOURCES = $(libhw_all_a_SOURCES) $(libhw_display_la_SOURCES) \
+	$(libhw_tty_la_SOURCES) $(libhw_twin_la_SOURCES) \
+	$(libhw_x11_la_SOURCES) $(libhw_xft_la_SOURCES)
+DIST_SOURCES = $(am__libhw_all_a_SOURCES_DIST) \
+	$(libhw_display_la_SOURCES) $(libhw_tty_la_SOURCES) \
 	$(libhw_twin_la_SOURCES) $(libhw_x11_la_SOURCES) \
 	$(libhw_xft_la_SOURCES)
 am__can_run_installinfo = \
@@ -420,22 +458,28 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-pkglib_LTLIBRARIES = $(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5)
+pkglib_LTLIBRARIES = $(am__append_1) $(am__append_3) $(am__append_6) \
+	$(am__append_9) $(am__append_12)
+noinst_LIBRARIES = libhw_all.a
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server
-libhw_x11_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS)
-libhw_xft_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS) $(XFT_CFLAGS)
+libhw_all_a_CPPFLAGS = $(AM_CPPFLAGS) $(am__append_4) $(am__append_7) \
+	$(am__append_10) $(am__append_13)
+libhw_x11_la_CPPFLAGS = $(AM_CPPFLAGS) $(X11_CPPFLAGS)
+libhw_xft_la_CPPFLAGS = $(AM_CPPFLAGS) $(X11_CPPFLAGS) $(XFT_CFLAGS)
+libhw_all_a_SOURCES = hw_all.cpp $(am__append_2) $(am__append_5) \
+	$(am__append_8) $(am__append_11) $(am__append_14)
 libhw_display_la_SOURCES = hw_display.cpp
-libhw_x11_la_SOURCES = hw_x11.cpp
-libhw_xft_la_SOURCES = hw_xft.cpp
 libhw_tty_la_SOURCES = hw_tty.cpp
 libhw_twin_la_SOURCES = hw_twin.cpp
+libhw_x11_la_SOURCES = hw_x11.cpp
+libhw_xft_la_SOURCES = hw_xft.cpp
 AM_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
-libhw_x11_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION) $(X11_LDFLAGS)
-libhw_xft_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION) $(X11_LDFLAGS)
+libhw_x11_la_LDFLAGS = $(AM_LDFLAGS) $(X11_LDFLAGS)
+libhw_xft_la_LDFLAGS = $(AM_LDFLAGS) $(X11_LDFLAGS)
+libhw_all_a_LIBADD = $(LIBTUTF) $(LIBTSTL)
 libhw_display_la_LIBADD = 
 libhw_x11_la_LIBADD = $(LIBTUTF) $(LIBTSTL) $(LIBX11)
-libhw_xft_la_LIBADD = $(LIBTUTF) $(LIBTSTL) $(LIBX11) $(XFT_LIBS) $(LIBXFT)
+libhw_xft_la_LIBADD = $(LIBTUTF) $(LIBTSTL) $(LIBXFT) $(XFT_LIBS) $(LIBX11)
 libhw_tty_la_LIBADD = $(LIBTUTF) $(LIBTSTL) $(LIBTERMCAP) $(LIBGPM)
 libhw_twin_la_LIBADD = $(LIBTUTF) $(LIBTSTL) $(LIBTW) $(LIBZ)
 all: all-am
@@ -472,6 +516,9 @@ $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
 
+clean-noinstLIBRARIES:
+	-$(am__rm_f) $(noinst_LIBRARIES)
+
 install-pkglibLTLIBRARIES: $(pkglib_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
 	@list='$(pkglib_LTLIBRARIES)'; test -n "$(pkglibdir)" || list=; \
@@ -505,6 +552,11 @@ clean-pkglibLTLIBRARIES:
 	echo rm -f $${locs}; \
 	$(am__rm_f) $${locs}
 
+libhw_all.a: $(libhw_all_a_OBJECTS) $(libhw_all_a_DEPENDENCIES) $(EXTRA_libhw_all_a_DEPENDENCIES) 
+	$(AM_V_at)-rm -f libhw_all.a
+	$(AM_V_AR)$(libhw_all_a_AR) libhw_all.a $(libhw_all_a_OBJECTS) $(libhw_all_a_LIBADD)
+	$(AM_V_at)$(libhw_all_a_RANLIB) libhw_all.a
+
 libhw_display.la: $(libhw_display_la_OBJECTS) $(libhw_display_la_DEPENDENCIES) $(EXTRA_libhw_display_la_DEPENDENCIES) 
 	$(AM_V_CXXLD)$(CXXLINK) $(am_libhw_display_la_rpath) $(libhw_display_la_OBJECTS) $(libhw_display_la_LIBADD) $(LIBS)
 
@@ -529,6 +581,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hw_display.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hw_tty.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hw_twin.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libhw_all_a-hw_all.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libhw_all_a-hw_display.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libhw_all_a-hw_tty.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libhw_all_a-hw_twin.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libhw_all_a-hw_x11.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libhw_all_a-hw_xft.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libhw_x11_la-hw_x11.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libhw_xft_la-hw_xft.Plo@am__quote@ # am--include-marker
 
@@ -561,6 +619,90 @@ am--depfiles: $(am__depfiles_remade)
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
+
+libhw_all_a-hw_all.o: hw_all.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libhw_all_a-hw_all.o -MD -MP -MF $(DEPDIR)/libhw_all_a-hw_all.Tpo -c -o libhw_all_a-hw_all.o `test -f 'hw_all.cpp' || echo '$(srcdir)/'`hw_all.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libhw_all_a-hw_all.Tpo $(DEPDIR)/libhw_all_a-hw_all.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='hw_all.cpp' object='libhw_all_a-hw_all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libhw_all_a-hw_all.o `test -f 'hw_all.cpp' || echo '$(srcdir)/'`hw_all.cpp
+
+libhw_all_a-hw_all.obj: hw_all.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libhw_all_a-hw_all.obj -MD -MP -MF $(DEPDIR)/libhw_all_a-hw_all.Tpo -c -o libhw_all_a-hw_all.obj `if test -f 'hw_all.cpp'; then $(CYGPATH_W) 'hw_all.cpp'; else $(CYGPATH_W) '$(srcdir)/hw_all.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libhw_all_a-hw_all.Tpo $(DEPDIR)/libhw_all_a-hw_all.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='hw_all.cpp' object='libhw_all_a-hw_all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libhw_all_a-hw_all.obj `if test -f 'hw_all.cpp'; then $(CYGPATH_W) 'hw_all.cpp'; else $(CYGPATH_W) '$(srcdir)/hw_all.cpp'; fi`
+
+libhw_all_a-hw_display.o: hw_display.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libhw_all_a-hw_display.o -MD -MP -MF $(DEPDIR)/libhw_all_a-hw_display.Tpo -c -o libhw_all_a-hw_display.o `test -f 'hw_display.cpp' || echo '$(srcdir)/'`hw_display.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libhw_all_a-hw_display.Tpo $(DEPDIR)/libhw_all_a-hw_display.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='hw_display.cpp' object='libhw_all_a-hw_display.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libhw_all_a-hw_display.o `test -f 'hw_display.cpp' || echo '$(srcdir)/'`hw_display.cpp
+
+libhw_all_a-hw_display.obj: hw_display.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libhw_all_a-hw_display.obj -MD -MP -MF $(DEPDIR)/libhw_all_a-hw_display.Tpo -c -o libhw_all_a-hw_display.obj `if test -f 'hw_display.cpp'; then $(CYGPATH_W) 'hw_display.cpp'; else $(CYGPATH_W) '$(srcdir)/hw_display.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libhw_all_a-hw_display.Tpo $(DEPDIR)/libhw_all_a-hw_display.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='hw_display.cpp' object='libhw_all_a-hw_display.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libhw_all_a-hw_display.obj `if test -f 'hw_display.cpp'; then $(CYGPATH_W) 'hw_display.cpp'; else $(CYGPATH_W) '$(srcdir)/hw_display.cpp'; fi`
+
+libhw_all_a-hw_tty.o: hw_tty.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libhw_all_a-hw_tty.o -MD -MP -MF $(DEPDIR)/libhw_all_a-hw_tty.Tpo -c -o libhw_all_a-hw_tty.o `test -f 'hw_tty.cpp' || echo '$(srcdir)/'`hw_tty.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libhw_all_a-hw_tty.Tpo $(DEPDIR)/libhw_all_a-hw_tty.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='hw_tty.cpp' object='libhw_all_a-hw_tty.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libhw_all_a-hw_tty.o `test -f 'hw_tty.cpp' || echo '$(srcdir)/'`hw_tty.cpp
+
+libhw_all_a-hw_tty.obj: hw_tty.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libhw_all_a-hw_tty.obj -MD -MP -MF $(DEPDIR)/libhw_all_a-hw_tty.Tpo -c -o libhw_all_a-hw_tty.obj `if test -f 'hw_tty.cpp'; then $(CYGPATH_W) 'hw_tty.cpp'; else $(CYGPATH_W) '$(srcdir)/hw_tty.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libhw_all_a-hw_tty.Tpo $(DEPDIR)/libhw_all_a-hw_tty.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='hw_tty.cpp' object='libhw_all_a-hw_tty.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libhw_all_a-hw_tty.obj `if test -f 'hw_tty.cpp'; then $(CYGPATH_W) 'hw_tty.cpp'; else $(CYGPATH_W) '$(srcdir)/hw_tty.cpp'; fi`
+
+libhw_all_a-hw_twin.o: hw_twin.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libhw_all_a-hw_twin.o -MD -MP -MF $(DEPDIR)/libhw_all_a-hw_twin.Tpo -c -o libhw_all_a-hw_twin.o `test -f 'hw_twin.cpp' || echo '$(srcdir)/'`hw_twin.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libhw_all_a-hw_twin.Tpo $(DEPDIR)/libhw_all_a-hw_twin.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='hw_twin.cpp' object='libhw_all_a-hw_twin.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libhw_all_a-hw_twin.o `test -f 'hw_twin.cpp' || echo '$(srcdir)/'`hw_twin.cpp
+
+libhw_all_a-hw_twin.obj: hw_twin.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libhw_all_a-hw_twin.obj -MD -MP -MF $(DEPDIR)/libhw_all_a-hw_twin.Tpo -c -o libhw_all_a-hw_twin.obj `if test -f 'hw_twin.cpp'; then $(CYGPATH_W) 'hw_twin.cpp'; else $(CYGPATH_W) '$(srcdir)/hw_twin.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libhw_all_a-hw_twin.Tpo $(DEPDIR)/libhw_all_a-hw_twin.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='hw_twin.cpp' object='libhw_all_a-hw_twin.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libhw_all_a-hw_twin.obj `if test -f 'hw_twin.cpp'; then $(CYGPATH_W) 'hw_twin.cpp'; else $(CYGPATH_W) '$(srcdir)/hw_twin.cpp'; fi`
+
+libhw_all_a-hw_x11.o: hw_x11.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libhw_all_a-hw_x11.o -MD -MP -MF $(DEPDIR)/libhw_all_a-hw_x11.Tpo -c -o libhw_all_a-hw_x11.o `test -f 'hw_x11.cpp' || echo '$(srcdir)/'`hw_x11.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libhw_all_a-hw_x11.Tpo $(DEPDIR)/libhw_all_a-hw_x11.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='hw_x11.cpp' object='libhw_all_a-hw_x11.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libhw_all_a-hw_x11.o `test -f 'hw_x11.cpp' || echo '$(srcdir)/'`hw_x11.cpp
+
+libhw_all_a-hw_x11.obj: hw_x11.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libhw_all_a-hw_x11.obj -MD -MP -MF $(DEPDIR)/libhw_all_a-hw_x11.Tpo -c -o libhw_all_a-hw_x11.obj `if test -f 'hw_x11.cpp'; then $(CYGPATH_W) 'hw_x11.cpp'; else $(CYGPATH_W) '$(srcdir)/hw_x11.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libhw_all_a-hw_x11.Tpo $(DEPDIR)/libhw_all_a-hw_x11.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='hw_x11.cpp' object='libhw_all_a-hw_x11.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libhw_all_a-hw_x11.obj `if test -f 'hw_x11.cpp'; then $(CYGPATH_W) 'hw_x11.cpp'; else $(CYGPATH_W) '$(srcdir)/hw_x11.cpp'; fi`
+
+libhw_all_a-hw_xft.o: hw_xft.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libhw_all_a-hw_xft.o -MD -MP -MF $(DEPDIR)/libhw_all_a-hw_xft.Tpo -c -o libhw_all_a-hw_xft.o `test -f 'hw_xft.cpp' || echo '$(srcdir)/'`hw_xft.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libhw_all_a-hw_xft.Tpo $(DEPDIR)/libhw_all_a-hw_xft.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='hw_xft.cpp' object='libhw_all_a-hw_xft.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libhw_all_a-hw_xft.o `test -f 'hw_xft.cpp' || echo '$(srcdir)/'`hw_xft.cpp
+
+libhw_all_a-hw_xft.obj: hw_xft.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libhw_all_a-hw_xft.obj -MD -MP -MF $(DEPDIR)/libhw_all_a-hw_xft.Tpo -c -o libhw_all_a-hw_xft.obj `if test -f 'hw_xft.cpp'; then $(CYGPATH_W) 'hw_xft.cpp'; else $(CYGPATH_W) '$(srcdir)/hw_xft.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libhw_all_a-hw_xft.Tpo $(DEPDIR)/libhw_all_a-hw_xft.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='hw_xft.cpp' object='libhw_all_a-hw_xft.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_all_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libhw_all_a-hw_xft.obj `if test -f 'hw_xft.cpp'; then $(CYGPATH_W) 'hw_xft.cpp'; else $(CYGPATH_W) '$(srcdir)/hw_xft.cpp'; fi`
 
 libhw_x11_la-hw_x11.lo: hw_x11.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_x11_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libhw_x11_la-hw_x11.lo -MD -MP -MF $(DEPDIR)/libhw_x11_la-hw_x11.Tpo -c -o libhw_x11_la-hw_x11.lo `test -f 'hw_x11.cpp' || echo '$(srcdir)/'`hw_x11.cpp
@@ -669,7 +811,7 @@ distdir-am: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(LTLIBRARIES)
+all-am: Makefile $(LIBRARIES) $(LTLIBRARIES)
 installdirs:
 	for dir in "$(DESTDIR)$(pkglibdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
@@ -706,13 +848,19 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-pkglibLTLIBRARIES \
-	mostlyclean-am
+clean-am: clean-generic clean-libtool clean-noinstLIBRARIES \
+	clean-pkglibLTLIBRARIES mostlyclean-am
 
 distclean: distclean-am
 	-rm -f ./$(DEPDIR)/hw_display.Plo
 	-rm -f ./$(DEPDIR)/hw_tty.Plo
 	-rm -f ./$(DEPDIR)/hw_twin.Plo
+	-rm -f ./$(DEPDIR)/libhw_all_a-hw_all.Po
+	-rm -f ./$(DEPDIR)/libhw_all_a-hw_display.Po
+	-rm -f ./$(DEPDIR)/libhw_all_a-hw_tty.Po
+	-rm -f ./$(DEPDIR)/libhw_all_a-hw_twin.Po
+	-rm -f ./$(DEPDIR)/libhw_all_a-hw_x11.Po
+	-rm -f ./$(DEPDIR)/libhw_all_a-hw_xft.Po
 	-rm -f ./$(DEPDIR)/libhw_x11_la-hw_x11.Plo
 	-rm -f ./$(DEPDIR)/libhw_xft_la-hw_xft.Plo
 	-rm -f Makefile
@@ -763,6 +911,12 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/hw_display.Plo
 	-rm -f ./$(DEPDIR)/hw_tty.Plo
 	-rm -f ./$(DEPDIR)/hw_twin.Plo
+	-rm -f ./$(DEPDIR)/libhw_all_a-hw_all.Po
+	-rm -f ./$(DEPDIR)/libhw_all_a-hw_display.Po
+	-rm -f ./$(DEPDIR)/libhw_all_a-hw_tty.Po
+	-rm -f ./$(DEPDIR)/libhw_all_a-hw_twin.Po
+	-rm -f ./$(DEPDIR)/libhw_all_a-hw_x11.Po
+	-rm -f ./$(DEPDIR)/libhw_all_a-hw_xft.Po
 	-rm -f ./$(DEPDIR)/libhw_x11_la-hw_x11.Plo
 	-rm -f ./$(DEPDIR)/libhw_xft_la-hw_xft.Plo
 	-rm -f Makefile
@@ -786,19 +940,20 @@ uninstall-am: uninstall-pkglibLTLIBRARIES
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles check check-am clean \
-	clean-generic clean-libtool clean-pkglibLTLIBRARIES \
-	cscopelist-am ctags ctags-am distclean distclean-compile \
-	distclean-generic distclean-libtool distclean-tags distdir dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-pkglibLTLIBRARIES install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
-	uninstall-am uninstall-pkglibLTLIBRARIES
+	clean-generic clean-libtool clean-noinstLIBRARIES \
+	clean-pkglibLTLIBRARIES cscopelist-am ctags ctags-am distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-pkglibLTLIBRARIES \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags tags-am uninstall uninstall-am \
+	uninstall-pkglibLTLIBRARIES
 
 .PRECIOUS: Makefile
 

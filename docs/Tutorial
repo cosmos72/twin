@@ -243,10 +243,10 @@
 
    where <display> is one of:
 
-   X[@<XDISPLAY>]     or    X11[@<XDISPLAY>]
 	xft[@<XDISPLAY>]
-	twin[@<TWDISPLAY>]
+   x11[@<XDISPLAY>]     or    X11[@<XDISPLAY>]
 	tty[@<tty device>]
+	twin[@<TWDISPLAY>]
 
    for an explanation of the available display methods and their options,
    see paragraph 8. below about `twattach' and `twdisplay': they have
@@ -776,10 +776,10 @@
 
     known displays are:
 
-      --hw=X[@<XDISPLAY>]     or    --hw=X11[@<XDISPLAY>]
       --hw=xft[@<XDISPLAY>]
-      --hw=twin[@<TWDISPLAY>]
+      --hw=x11[@<XDISPLAY>]     or    --hw=X11[@<XDISPLAY>]
       --hw=tty[@<tty device>]
+      --hw=twin[@<TWDISPLAY>]
 
     and known display options are:
 
