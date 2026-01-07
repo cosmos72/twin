@@ -2453,7 +2453,12 @@ static void SocketH(Tmsgport port) {
 
 static void (*save_unixSocketIO)(int fd, uldat slot);
 
-EXTERN_C byte InitModule(Tmodule /*module*/) {
+#ifdef TWIN_SOCKET_STATIC
+byte InitSocket(void)
+#else
+EXTERN_C byte InitModule(Tmodule /*module*/)
+#endif
+{
   uldat m;
   struct sockaddr_in addr;
   char opt[TW_SIZEOF_SIZE_T] = {
@@ -2515,7 +2520,12 @@ EXTERN_C byte InitModule(Tmodule /*module*/) {
   return tfalse;
 }
 
-EXTERN_C void QuitModule(Tmodule /*module*/) {
+#ifdef TWIN_SOCKET_STATIC
+void QuitSocket(void)
+#else
+EXTERN_C void QuitModule(Tmodule /*module*/)
+#endif
+{
   if (unixSlot != NOSLOT) {
     FdList[unixSlot].HandlerIO.S = save_unixSocketIO;
   }

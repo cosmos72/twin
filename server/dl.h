@@ -24,10 +24,8 @@ enum IdSo {
 Tmodule DlLoad(IdSo code);
 void DlUnload(IdSo code);
 Tmodule DlIsLoaded(IdSo code);
-IdSo DlName2Code(const Chars name);
+IdSo DlName2Id(const Chars name);
 
 Tmodule DlLoadAny(Chars name);
-
-void *DlSym(Tmodule Module, const char *name);
 
 #endif /* TWIN_DL_H */

@@ -16,6 +16,7 @@
 
 
 
+
 VPATH = @srcdir@
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
@@ -93,8 +94,14 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = twdisplay$(EXEEXT) twin$(EXEEXT) twin_server$(EXEEXT)
+noinst_PROGRAMS = twin_server_static$(EXEEXT)
 @LIBRCPARSE_la_TRUE@am__append_1 = librcparse.la
-@LIBSOCKET_la_TRUE@am__append_2 = libsocket.la
+@LIBRCPARSE_la_TRUE@am__append_2 = -DTWIN_RCPARSE_STATIC
+@LIBRCPARSE_la_TRUE@am__append_3 = rcparse_tab.cpp rcparse_lex.cpp
+@LIBSOCKET_la_TRUE@am__append_4 = libsocket.la
+@LIBSOCKET_la_TRUE@am__append_5 = -DTWIN_SOCKET_STATIC
+@LIBSOCKET_la_TRUE@am__append_6 = md5.cpp socket.cpp
+@LIBSOCKET_la_TRUE@am__append_7 = $(LIBSOCK) $(LIBZ)
 subdir = server
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -115,7 +122,8 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(pkglibdir)" \
 	"$(DESTDIR)$(bindir)"
-PROGRAMS = $(bin_PROGRAMS)
+PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
+LIBRARIES = $(noinst_LIBRARIES)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -143,6 +151,24 @@ am__uninstall_files_from_dir = { \
        $(am__cd) "$$dir" && echo $$files | $(am__xargs_n) 40 $(am__rm_f); }; \
   }
 LTLIBRARIES = $(pkglib_LTLIBRARIES)
+ARFLAGS = cr
+AM_V_AR = $(am__v_AR_@AM_V@)
+am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
+am__v_AR_0 = @echo "  AR      " $@;
+am__v_AR_1 = 
+libtwin_static_a_AR = $(AR) $(ARFLAGS)
+libtwin_static_a_RANLIB = $(RANLIB)
+libtwin_static_a_LIBADD =
+am__libtwin_static_a_SOURCES_DIST = dl_static.cpp rcparse_tab.cpp \
+	rcparse_lex.cpp md5.cpp socket.cpp
+@LIBRCPARSE_la_TRUE@am__objects_1 =  \
+@LIBRCPARSE_la_TRUE@	libtwin_static_a-rcparse_tab.$(OBJEXT) \
+@LIBRCPARSE_la_TRUE@	libtwin_static_a-rcparse_lex.$(OBJEXT)
+@LIBSOCKET_la_TRUE@am__objects_2 = libtwin_static_a-md5.$(OBJEXT) \
+@LIBSOCKET_la_TRUE@	libtwin_static_a-socket.$(OBJEXT)
+am_libtwin_static_a_OBJECTS = libtwin_static_a-dl_static.$(OBJEXT) \
+	$(am__objects_1) $(am__objects_2)
+libtwin_static_a_OBJECTS = $(am_libtwin_static_a_OBJECTS)
 am__DEPENDENCIES_1 =
 librcparse_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
@@ -179,26 +205,38 @@ am_twin_OBJECTS = twin-wrapper.$(OBJEXT)
 twin_OBJECTS = $(am_twin_OBJECTS)
 twin_LDADD = $(LDADD)
 am__dirstamp = $(am__leading_dot)dirstamp
-am_twin_server_OBJECTS = alloc.$(OBJEXT) builtin.$(OBJEXT) \
-	data.$(OBJEXT) dl.$(OBJEXT) dl_helper.$(OBJEXT) draw.$(OBJEXT) \
-	extreg.$(OBJEXT) hw.$(OBJEXT) hw_multi.$(OBJEXT) log.$(OBJEXT) \
-	main.$(OBJEXT) methods.$(OBJEXT) missing.$(OBJEXT) \
-	palette.$(OBJEXT) obj/all.$(OBJEXT) obj/display.$(OBJEXT) \
-	obj/gadget.$(OBJEXT) obj/group.$(OBJEXT) obj/id.$(OBJEXT) \
-	obj/menu.$(OBJEXT) obj/menuitem.$(OBJEXT) obj/module.$(OBJEXT) \
-	obj/msg.$(OBJEXT) obj/msgport.$(OBJEXT) obj/mutex.$(OBJEXT) \
-	obj/obj.$(OBJEXT) obj/row.$(OBJEXT) obj/screen.$(OBJEXT) \
-	obj/widget.$(OBJEXT) obj/window.$(OBJEXT) printk.$(OBJEXT) \
-	privilege.$(OBJEXT) pty.$(OBJEXT) rcopt.$(OBJEXT) \
-	rcrun.$(OBJEXT) remote.$(OBJEXT) resize.$(OBJEXT) \
-	shm.$(OBJEXT) scroller.$(OBJEXT) tterm.$(OBJEXT) tty.$(OBJEXT) \
-	util.$(OBJEXT) wm.$(OBJEXT)
+am__objects_3 = alloc.$(OBJEXT) builtin.$(OBJEXT) data.$(OBJEXT) \
+	draw.$(OBJEXT) extreg.$(OBJEXT) hw.$(OBJEXT) \
+	hw_multi.$(OBJEXT) log.$(OBJEXT) main.$(OBJEXT) \
+	methods.$(OBJEXT) missing.$(OBJEXT) palette.$(OBJEXT) \
+	obj/all.$(OBJEXT) obj/display.$(OBJEXT) obj/gadget.$(OBJEXT) \
+	obj/group.$(OBJEXT) obj/id.$(OBJEXT) obj/menu.$(OBJEXT) \
+	obj/menuitem.$(OBJEXT) obj/module.$(OBJEXT) obj/msg.$(OBJEXT) \
+	obj/msgport.$(OBJEXT) obj/mutex.$(OBJEXT) obj/obj.$(OBJEXT) \
+	obj/row.$(OBJEXT) obj/screen.$(OBJEXT) obj/widget.$(OBJEXT) \
+	obj/window.$(OBJEXT) printk.$(OBJEXT) privilege.$(OBJEXT) \
+	pty.$(OBJEXT) rcopt.$(OBJEXT) rcrun.$(OBJEXT) remote.$(OBJEXT) \
+	resize.$(OBJEXT) shm.$(OBJEXT) scroller.$(OBJEXT) \
+	tterm.$(OBJEXT) tty.$(OBJEXT) util.$(OBJEXT) wm.$(OBJEXT)
+am_twin_server_OBJECTS = $(am__objects_3) dl_dynamic.$(OBJEXT) \
+	dl_helper.$(OBJEXT)
 twin_server_OBJECTS = $(am_twin_server_OBJECTS)
 twin_server_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 twin_server_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(twin_server_LDFLAGS) $(LDFLAGS) -o $@
+am_twin_server_static_OBJECTS = $(am__objects_3)
+twin_server_static_OBJECTS = $(am_twin_server_static_OBJECTS)
+@LIBSOCKET_la_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) \
+@LIBSOCKET_la_TRUE@	$(am__DEPENDENCIES_1)
+twin_server_static_DEPENDENCIES = libtwin_static.a \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+twin_server_static_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(twin_server_static_LDFLAGS) \
+	$(LDFLAGS) -o $@
 SCRIPTS = $(bin_SCRIPTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -216,11 +254,16 @@ DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/admin/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/alloc.Po ./$(DEPDIR)/builtin.Po \
-	./$(DEPDIR)/data.Po ./$(DEPDIR)/display.Po ./$(DEPDIR)/dl.Po \
-	./$(DEPDIR)/dl_helper.Po ./$(DEPDIR)/draw.Po \
-	./$(DEPDIR)/extreg.Po ./$(DEPDIR)/hw.Po \
-	./$(DEPDIR)/hw_multi.Po ./$(DEPDIR)/log.Po ./$(DEPDIR)/main.Po \
-	./$(DEPDIR)/md5.Plo ./$(DEPDIR)/methods.Po \
+	./$(DEPDIR)/data.Po ./$(DEPDIR)/display.Po \
+	./$(DEPDIR)/dl_dynamic.Po ./$(DEPDIR)/dl_helper.Po \
+	./$(DEPDIR)/draw.Po ./$(DEPDIR)/extreg.Po ./$(DEPDIR)/hw.Po \
+	./$(DEPDIR)/hw_multi.Po \
+	./$(DEPDIR)/libtwin_static_a-dl_static.Po \
+	./$(DEPDIR)/libtwin_static_a-md5.Po \
+	./$(DEPDIR)/libtwin_static_a-rcparse_lex.Po \
+	./$(DEPDIR)/libtwin_static_a-rcparse_tab.Po \
+	./$(DEPDIR)/libtwin_static_a-socket.Po ./$(DEPDIR)/log.Po \
+	./$(DEPDIR)/main.Po ./$(DEPDIR)/md5.Plo ./$(DEPDIR)/methods.Po \
 	./$(DEPDIR)/missing.Po ./$(DEPDIR)/palette.Po \
 	./$(DEPDIR)/printk.Po ./$(DEPDIR)/privilege.Po \
 	./$(DEPDIR)/pty.Po ./$(DEPDIR)/rcopt.Po \
@@ -275,10 +318,13 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(librcparse_la_SOURCES) $(libsocket_la_SOURCES) \
-	$(twdisplay_SOURCES) $(twin_SOURCES) $(twin_server_SOURCES)
-DIST_SOURCES = $(librcparse_la_SOURCES) $(libsocket_la_SOURCES) \
-	$(twdisplay_SOURCES) $(twin_SOURCES) $(twin_server_SOURCES)
+SOURCES = $(libtwin_static_a_SOURCES) $(librcparse_la_SOURCES) \
+	$(libsocket_la_SOURCES) $(twdisplay_SOURCES) $(twin_SOURCES) \
+	$(twin_server_SOURCES) $(twin_server_static_SOURCES)
+DIST_SOURCES = $(am__libtwin_static_a_SOURCES_DIST) \
+	$(librcparse_la_SOURCES) $(libsocket_la_SOURCES) \
+	$(twdisplay_SOURCES) $(twin_SOURCES) $(twin_server_SOURCES) \
+	$(twin_server_static_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -520,12 +566,13 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = hw
 bin_SCRIPTS = twstart
-pkglib_LTLIBRARIES = $(am__append_1) $(am__append_2)
+pkglib_LTLIBRARIES = $(am__append_1) $(am__append_4)
+noinst_LIBRARIES = libtwin_static.a
 AM_CPPFLAGS = -I$(top_srcdir)/include $(LTDLINCL) -DPLUGINDIR="\"$(pkglibdir)\"" -DCONFDIR="\"$(sysconfdir)/twin\""
 twin_CPPFLAGS = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir)\""
 twdisplay_SOURCES = alloc.cpp display.cpp dl_helper.cpp hw.cpp log.cpp missing.cpp palette.cpp
 twin_SOURCES = wrapper.c
-twin_server_SOURCES = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.cpp extreg.cpp \
+twin_server_common_SOURCES = alloc.cpp builtin.cpp data.cpp draw.cpp extreg.cpp \
                         hw.cpp hw_multi.cpp log.cpp main.cpp methods.cpp missing.cpp palette.cpp \
                         obj/all.cpp obj/display.cpp obj/gadget.cpp obj/group.cpp \
                         obj/id.cpp obj/menu.cpp obj/menuitem.cpp obj/module.cpp obj/msg.cpp obj/msgport.cpp \
@@ -535,14 +582,24 @@ twin_server_SOURCES = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.c
 
 librcparse_la_SOURCES = rcparse_tab.cpp rcparse_lex.cpp
 libsocket_la_SOURCES = md5.cpp socket.cpp
+libtwin_static_a_SOURCES = dl_static.cpp $(am__append_3) \
+	$(am__append_6)
+twin_server_SOURCES = $(twin_server_common_SOURCES) dl_dynamic.cpp dl_helper.cpp
+twin_server_static_SOURCES = $(twin_server_common_SOURCES) 
 twdisplay_LDFLAGS = -export-dynamic $(LDFLAGS_BIN_EXPORT_DYNAMIC)
 twin_server_LDFLAGS = -export-dynamic $(LDFLAGS_BIN_EXPORT_DYNAMIC)
+
+# if you want to link against static system libraries (provided that they are installed) also add -Wl,-static
+twin_server_static_LDFLAGS = -static
 librcparse_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
 libsocket_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
-twdisplay_LDADD = $(LIBTW) $(LIBTUTF) $(LIBDL) $(LIBTSTL)
+twdisplay_LDADD = $(LIBTW)          $(LIBTUTF) $(LIBDL) $(LIBTSTL)
 twin_server_LDADD = $(LIBTUTF) $(LIBDL) $(LIBTSTL)
+twin_server_static_LDADD = libtwin_static.a $(LIBTUTF) $(LIBDL) \
+	$(LIBTSTL) $(am__append_7)
 librcparse_la_LIBADD = $(LIBTUTF) $(LIBTSTL)
 libsocket_la_LIBADD = $(LIBTUTF) $(LIBTSTL) $(LIBSOCK) $(LIBZ)
+libtwin_static_a_CPPFLAGS = $(am__append_2) $(am__append_5)
 all: all-recursive
 
 .SUFFIXES:
@@ -621,6 +678,13 @@ clean-binPROGRAMS:
 	$(am__rm_f) $(bin_PROGRAMS)
 	test -z "$(EXEEXT)" || $(am__rm_f) $(bin_PROGRAMS:$(EXEEXT)=)
 
+clean-noinstPROGRAMS:
+	$(am__rm_f) $(noinst_PROGRAMS)
+	test -z "$(EXEEXT)" || $(am__rm_f) $(noinst_PROGRAMS:$(EXEEXT)=)
+
+clean-noinstLIBRARIES:
+	-$(am__rm_f) $(noinst_LIBRARIES)
+
 install-pkglibLTLIBRARIES: $(pkglib_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
 	@list='$(pkglib_LTLIBRARIES)'; test -n "$(pkglibdir)" || list=; \
@@ -653,6 +717,11 @@ clean-pkglibLTLIBRARIES:
 	      sort -u`; \
 	echo rm -f $${locs}; \
 	$(am__rm_f) $${locs}
+
+libtwin_static.a: $(libtwin_static_a_OBJECTS) $(libtwin_static_a_DEPENDENCIES) $(EXTRA_libtwin_static_a_DEPENDENCIES) 
+	$(AM_V_at)-rm -f libtwin_static.a
+	$(AM_V_AR)$(libtwin_static_a_AR) libtwin_static.a $(libtwin_static_a_OBJECTS) $(libtwin_static_a_LIBADD)
+	$(AM_V_at)$(libtwin_static_a_RANLIB) libtwin_static.a
 
 librcparse.la: $(librcparse_la_OBJECTS) $(librcparse_la_DEPENDENCIES) $(EXTRA_librcparse_la_DEPENDENCIES) 
 	$(AM_V_CXXLD)$(librcparse_la_LINK) $(am_librcparse_la_rpath) $(librcparse_la_OBJECTS) $(librcparse_la_LIBADD) $(LIBS)
@@ -701,6 +770,10 @@ obj/window.$(OBJEXT): obj/$(am__dirstamp) \
 twin_server$(EXEEXT): $(twin_server_OBJECTS) $(twin_server_DEPENDENCIES) $(EXTRA_twin_server_DEPENDENCIES) 
 	@rm -f twin_server$(EXEEXT)
 	$(AM_V_CXXLD)$(twin_server_LINK) $(twin_server_OBJECTS) $(twin_server_LDADD) $(LIBS)
+
+twin_server_static$(EXEEXT): $(twin_server_static_OBJECTS) $(twin_server_static_DEPENDENCIES) $(EXTRA_twin_server_static_DEPENDENCIES) 
+	@rm -f twin_server_static$(EXEEXT)
+	$(AM_V_CXXLD)$(twin_server_static_LINK) $(twin_server_static_OBJECTS) $(twin_server_static_LDADD) $(LIBS)
 install-binSCRIPTS: $(bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_SCRIPTS)'; test -n "$(bindir)" || list=; \
@@ -748,12 +821,17 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/builtin.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/data.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/display.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dl.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dl_dynamic.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dl_helper.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/draw.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/extreg.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hw.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hw_multi.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtwin_static_a-dl_static.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtwin_static_a-md5.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtwin_static_a-rcparse_lex.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtwin_static_a-rcparse_tab.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtwin_static_a-socket.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Plo@am__quote@ # am--include-marker
@@ -861,6 +939,76 @@ twin-wrapper.obj: wrapper.c
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
+
+libtwin_static_a-dl_static.o: dl_static.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libtwin_static_a-dl_static.o -MD -MP -MF $(DEPDIR)/libtwin_static_a-dl_static.Tpo -c -o libtwin_static_a-dl_static.o `test -f 'dl_static.cpp' || echo '$(srcdir)/'`dl_static.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libtwin_static_a-dl_static.Tpo $(DEPDIR)/libtwin_static_a-dl_static.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='dl_static.cpp' object='libtwin_static_a-dl_static.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libtwin_static_a-dl_static.o `test -f 'dl_static.cpp' || echo '$(srcdir)/'`dl_static.cpp
+
+libtwin_static_a-dl_static.obj: dl_static.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libtwin_static_a-dl_static.obj -MD -MP -MF $(DEPDIR)/libtwin_static_a-dl_static.Tpo -c -o libtwin_static_a-dl_static.obj `if test -f 'dl_static.cpp'; then $(CYGPATH_W) 'dl_static.cpp'; else $(CYGPATH_W) '$(srcdir)/dl_static.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libtwin_static_a-dl_static.Tpo $(DEPDIR)/libtwin_static_a-dl_static.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='dl_static.cpp' object='libtwin_static_a-dl_static.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libtwin_static_a-dl_static.obj `if test -f 'dl_static.cpp'; then $(CYGPATH_W) 'dl_static.cpp'; else $(CYGPATH_W) '$(srcdir)/dl_static.cpp'; fi`
+
+libtwin_static_a-rcparse_tab.o: rcparse_tab.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libtwin_static_a-rcparse_tab.o -MD -MP -MF $(DEPDIR)/libtwin_static_a-rcparse_tab.Tpo -c -o libtwin_static_a-rcparse_tab.o `test -f 'rcparse_tab.cpp' || echo '$(srcdir)/'`rcparse_tab.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libtwin_static_a-rcparse_tab.Tpo $(DEPDIR)/libtwin_static_a-rcparse_tab.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rcparse_tab.cpp' object='libtwin_static_a-rcparse_tab.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libtwin_static_a-rcparse_tab.o `test -f 'rcparse_tab.cpp' || echo '$(srcdir)/'`rcparse_tab.cpp
+
+libtwin_static_a-rcparse_tab.obj: rcparse_tab.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libtwin_static_a-rcparse_tab.obj -MD -MP -MF $(DEPDIR)/libtwin_static_a-rcparse_tab.Tpo -c -o libtwin_static_a-rcparse_tab.obj `if test -f 'rcparse_tab.cpp'; then $(CYGPATH_W) 'rcparse_tab.cpp'; else $(CYGPATH_W) '$(srcdir)/rcparse_tab.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libtwin_static_a-rcparse_tab.Tpo $(DEPDIR)/libtwin_static_a-rcparse_tab.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rcparse_tab.cpp' object='libtwin_static_a-rcparse_tab.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libtwin_static_a-rcparse_tab.obj `if test -f 'rcparse_tab.cpp'; then $(CYGPATH_W) 'rcparse_tab.cpp'; else $(CYGPATH_W) '$(srcdir)/rcparse_tab.cpp'; fi`
+
+libtwin_static_a-rcparse_lex.o: rcparse_lex.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libtwin_static_a-rcparse_lex.o -MD -MP -MF $(DEPDIR)/libtwin_static_a-rcparse_lex.Tpo -c -o libtwin_static_a-rcparse_lex.o `test -f 'rcparse_lex.cpp' || echo '$(srcdir)/'`rcparse_lex.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libtwin_static_a-rcparse_lex.Tpo $(DEPDIR)/libtwin_static_a-rcparse_lex.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rcparse_lex.cpp' object='libtwin_static_a-rcparse_lex.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libtwin_static_a-rcparse_lex.o `test -f 'rcparse_lex.cpp' || echo '$(srcdir)/'`rcparse_lex.cpp
+
+libtwin_static_a-rcparse_lex.obj: rcparse_lex.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libtwin_static_a-rcparse_lex.obj -MD -MP -MF $(DEPDIR)/libtwin_static_a-rcparse_lex.Tpo -c -o libtwin_static_a-rcparse_lex.obj `if test -f 'rcparse_lex.cpp'; then $(CYGPATH_W) 'rcparse_lex.cpp'; else $(CYGPATH_W) '$(srcdir)/rcparse_lex.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libtwin_static_a-rcparse_lex.Tpo $(DEPDIR)/libtwin_static_a-rcparse_lex.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rcparse_lex.cpp' object='libtwin_static_a-rcparse_lex.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libtwin_static_a-rcparse_lex.obj `if test -f 'rcparse_lex.cpp'; then $(CYGPATH_W) 'rcparse_lex.cpp'; else $(CYGPATH_W) '$(srcdir)/rcparse_lex.cpp'; fi`
+
+libtwin_static_a-md5.o: md5.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libtwin_static_a-md5.o -MD -MP -MF $(DEPDIR)/libtwin_static_a-md5.Tpo -c -o libtwin_static_a-md5.o `test -f 'md5.cpp' || echo '$(srcdir)/'`md5.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libtwin_static_a-md5.Tpo $(DEPDIR)/libtwin_static_a-md5.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='md5.cpp' object='libtwin_static_a-md5.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libtwin_static_a-md5.o `test -f 'md5.cpp' || echo '$(srcdir)/'`md5.cpp
+
+libtwin_static_a-md5.obj: md5.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libtwin_static_a-md5.obj -MD -MP -MF $(DEPDIR)/libtwin_static_a-md5.Tpo -c -o libtwin_static_a-md5.obj `if test -f 'md5.cpp'; then $(CYGPATH_W) 'md5.cpp'; else $(CYGPATH_W) '$(srcdir)/md5.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libtwin_static_a-md5.Tpo $(DEPDIR)/libtwin_static_a-md5.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='md5.cpp' object='libtwin_static_a-md5.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libtwin_static_a-md5.obj `if test -f 'md5.cpp'; then $(CYGPATH_W) 'md5.cpp'; else $(CYGPATH_W) '$(srcdir)/md5.cpp'; fi`
+
+libtwin_static_a-socket.o: socket.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libtwin_static_a-socket.o -MD -MP -MF $(DEPDIR)/libtwin_static_a-socket.Tpo -c -o libtwin_static_a-socket.o `test -f 'socket.cpp' || echo '$(srcdir)/'`socket.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libtwin_static_a-socket.Tpo $(DEPDIR)/libtwin_static_a-socket.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='socket.cpp' object='libtwin_static_a-socket.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libtwin_static_a-socket.o `test -f 'socket.cpp' || echo '$(srcdir)/'`socket.cpp
+
+libtwin_static_a-socket.obj: socket.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libtwin_static_a-socket.obj -MD -MP -MF $(DEPDIR)/libtwin_static_a-socket.Tpo -c -o libtwin_static_a-socket.obj `if test -f 'socket.cpp'; then $(CYGPATH_W) 'socket.cpp'; else $(CYGPATH_W) '$(srcdir)/socket.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libtwin_static_a-socket.Tpo $(DEPDIR)/libtwin_static_a-socket.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='socket.cpp' object='libtwin_static_a-socket.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libtwin_static_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libtwin_static_a-socket.obj `if test -f 'socket.cpp'; then $(CYGPATH_W) 'socket.cpp'; else $(CYGPATH_W) '$(srcdir)/socket.cpp'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -1027,7 +1175,7 @@ distdir-am: $(DISTFILES)
 	done
 check-am: all-am
 check: check-recursive
-all-am: Makefile $(PROGRAMS) $(LTLIBRARIES) $(SCRIPTS)
+all-am: Makefile $(PROGRAMS) $(LIBRARIES) $(LTLIBRARIES) $(SCRIPTS)
 installdirs: installdirs-recursive
 installdirs-am:
 	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(pkglibdir)" "$(DESTDIR)$(bindir)"; do \
@@ -1068,6 +1216,7 @@ maintainer-clean-generic:
 clean: clean-recursive
 
 clean-am: clean-binPROGRAMS clean-generic clean-libtool \
+	clean-noinstLIBRARIES clean-noinstPROGRAMS \
 	clean-pkglibLTLIBRARIES mostlyclean-am
 
 distclean: distclean-recursive
@@ -1075,12 +1224,17 @@ distclean: distclean-recursive
 	-rm -f ./$(DEPDIR)/builtin.Po
 	-rm -f ./$(DEPDIR)/data.Po
 	-rm -f ./$(DEPDIR)/display.Po
-	-rm -f ./$(DEPDIR)/dl.Po
+	-rm -f ./$(DEPDIR)/dl_dynamic.Po
 	-rm -f ./$(DEPDIR)/dl_helper.Po
 	-rm -f ./$(DEPDIR)/draw.Po
 	-rm -f ./$(DEPDIR)/extreg.Po
 	-rm -f ./$(DEPDIR)/hw.Po
 	-rm -f ./$(DEPDIR)/hw_multi.Po
+	-rm -f ./$(DEPDIR)/libtwin_static_a-dl_static.Po
+	-rm -f ./$(DEPDIR)/libtwin_static_a-md5.Po
+	-rm -f ./$(DEPDIR)/libtwin_static_a-rcparse_lex.Po
+	-rm -f ./$(DEPDIR)/libtwin_static_a-rcparse_tab.Po
+	-rm -f ./$(DEPDIR)/libtwin_static_a-socket.Po
 	-rm -f ./$(DEPDIR)/log.Po
 	-rm -f ./$(DEPDIR)/main.Po
 	-rm -f ./$(DEPDIR)/md5.Plo
@@ -1170,12 +1324,17 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f ./$(DEPDIR)/builtin.Po
 	-rm -f ./$(DEPDIR)/data.Po
 	-rm -f ./$(DEPDIR)/display.Po
-	-rm -f ./$(DEPDIR)/dl.Po
+	-rm -f ./$(DEPDIR)/dl_dynamic.Po
 	-rm -f ./$(DEPDIR)/dl_helper.Po
 	-rm -f ./$(DEPDIR)/draw.Po
 	-rm -f ./$(DEPDIR)/extreg.Po
 	-rm -f ./$(DEPDIR)/hw.Po
 	-rm -f ./$(DEPDIR)/hw_multi.Po
+	-rm -f ./$(DEPDIR)/libtwin_static_a-dl_static.Po
+	-rm -f ./$(DEPDIR)/libtwin_static_a-md5.Po
+	-rm -f ./$(DEPDIR)/libtwin_static_a-rcparse_lex.Po
+	-rm -f ./$(DEPDIR)/libtwin_static_a-rcparse_tab.Po
+	-rm -f ./$(DEPDIR)/libtwin_static_a-socket.Po
 	-rm -f ./$(DEPDIR)/log.Po
 	-rm -f ./$(DEPDIR)/main.Po
 	-rm -f ./$(DEPDIR)/md5.Plo
@@ -1238,21 +1397,21 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 
 .PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am \
 	am--depfiles check check-am clean clean-binPROGRAMS \
-	clean-generic clean-libtool clean-pkglibLTLIBRARIES \
-	cscopelist-am ctags ctags-am distclean distclean-compile \
-	distclean-generic distclean-libtool distclean-tags distdir dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-binPROGRAMS install-binSCRIPTS install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-pkglibLTLIBRARIES install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	installdirs-am maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
-	uninstall-am uninstall-binPROGRAMS uninstall-binSCRIPTS \
-	uninstall-pkglibLTLIBRARIES
+	clean-generic clean-libtool clean-noinstLIBRARIES \
+	clean-noinstPROGRAMS clean-pkglibLTLIBRARIES cscopelist-am \
+	ctags ctags-am distclean distclean-compile distclean-generic \
+	distclean-libtool distclean-tags distdir dvi dvi-am html \
+	html-am info info-am install install-am install-binPROGRAMS \
+	install-binSCRIPTS install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-pkglibLTLIBRARIES \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs installdirs-am maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS \
+	uninstall-binSCRIPTS uninstall-pkglibLTLIBRARIES
 
 .PRECIOUS: Makefile
 

@@ -530,7 +530,7 @@ static byte RCSteps(run *r) {
         break;
       case MODULE:
         if (n->x.f.a == -1) {
-          n->x.f.a = DlName2Code(Chars::from_c(n->name));
+          n->x.f.a = DlName2Id(Chars::from_c(n->name));
         }
         if (n->x.f.flag == FL_ON) {
           DlLoad((IdSo)n->x.f.a);
@@ -874,12 +874,12 @@ static bool RCSleep(timevalue *_t) {
  * kill the queues, reload ~/.config/twin/twinrc and restart queues
  */
 static void RCReload(void) {
-  Tmodule M;
+  Tmodule m;
   bool (*mod_rcload)(Tdisplay) = NULL;
   byte success;
 
-  if ((M = DlLoad(RCParseSo))) {
-    mod_rcload = M->DoInit;
+  if ((m = DlLoad(RCParseSo))) {
+    mod_rcload = m->DoInit;
   }
 #if 0
   else { /* this would garble -hw=tty display */
@@ -889,7 +889,7 @@ static void RCReload(void) {
 
   success = mod_rcload && mod_rcload(NULL);
 
-  if (M)
+  if (m)
     DlUnload(RCParseSo);
 
   if (success) {

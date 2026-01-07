@@ -1424,7 +1424,10 @@ static byte ReadGlobals(void) {
 
 static byte rcparse(cstr path);
 
-static bool rcload(Tdisplay hw) {
+#ifndef TWIN_RCPARSE_STATIC
+static
+#endif
+    bool rcload(Tdisplay hw) {
   str path;
   uldat len;
 #ifndef DEBUG_FORK
@@ -1525,6 +1528,7 @@ static bool rcload(Tdisplay hw) {
 #endif
 }
 
+#ifndef TWIN_RCPARSE_STATIC
 EXTERN_C byte InitModule(Tmodule m) {
   m->DoInit = rcload;
   return ttrue;
@@ -1533,5 +1537,6 @@ EXTERN_C byte InitModule(Tmodule m) {
 EXTERN_C void QuitModule(Tmodule m) {
   (void)m;
 }
+#endif /* TWIN_RCPARSE_STATIC */
 
 #endif /* TWIN_RCPARSE_H */
