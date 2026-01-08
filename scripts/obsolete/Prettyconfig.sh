@@ -34,7 +34,7 @@ fi
 
 
 echo_feat=
-for i in socket wm wm_rc term term_devpts; do
+for i in socket rcparse term term_devpts; do
   eval "echo_val=\${enable_$i}"
   if test "$echo_val" = y; then
     echo_feat="$echo_feat $i"

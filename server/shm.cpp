@@ -37,7 +37,7 @@
 #include "util.h"
 #include "wm.h"
 
-#if !defined(CONF_WM_RC_SHMMAP) && defined(CONF_WM_RC_SHRINK)
+#if !defined(CONF_RCPARSE_SHMMAP) && defined(CONF_RCPARSE_SHRINK)
 static byte may_shrink = ttrue;
 #endif
 
@@ -86,7 +86,7 @@ static size_t full_read(int fd, byte *data, size_t len) {
   return len - left;
 }
 
-#if !defined(CONF_WM_RC_SHMMAP) && defined(CONF_WM_RC_SHRINK)
+#if !defined(CONF_RCPARSE_SHMMAP) && defined(CONF_RCPARSE_SHRINK)
 static void shm_shrink_error(void) {
 
   may_shrink = tfalse;
@@ -94,12 +94,12 @@ static void shm_shrink_error(void) {
 #ifdef CONF__ALLOC
                 "      This should not happen! Please report.\n"
 #endif
-                "      CONF_WM_RC_SHRINK disabled.\n"
+                "      CONF_RCPARSE_SHRINK disabled.\n"
                 "      Reconfigure and recompile to disable it permanently.\n";
 }
-#endif /* !defined(CONF_WM_RC_SHMMAP) && defined(CONF_WM_RC_SHRINK) */
+#endif /* !defined(CONF_RCPARSE_SHMMAP) && defined(CONF_RCPARSE_SHRINK) */
 
-#ifdef CONF_WM_RC_SHMMAP
+#ifdef CONF_RCPARSE_SHMMAP
 
 /* value returned on mmap() failure */
 #define NOCORE ((void *)-1)
@@ -221,7 +221,7 @@ byte shm_receive(int fd) {
   return tfalse;
 }
 
-#else /* CONF_WM_RC_SHMMAP */
+#else /* CONF_RCPARSE_SHMMAP */
 
 byte shm_init(size_t len) {
 
@@ -237,7 +237,7 @@ byte shm_init(size_t len) {
  * shrink (M, M+L) to (M, S)
  */
 byte shm_shrink(void) {
-#ifdef CONF_WM_RC_SHRINK
+#ifdef CONF_RCPARSE_SHRINK
   if (may_shrink) {
     size_t new_L = (size_t)(S - M);
 
@@ -258,7 +258,7 @@ byte shm_shrink(void) {
       return tfalse;
     }
   }
-#endif /* CONF_WM_RC_SHRINK */
+#endif /* CONF_RCPARSE_SHRINK */
   return ttrue;
 }
 
@@ -337,7 +337,7 @@ byte shm_receive(int fd) {
   return tfalse;
 }
 
-#endif /* CONF_WM_RC_SHMMAP */
+#endif /* CONF_RCPARSE_SHMMAP */
 
 /* important: memory returned by shm_malloc() must be full of zeros! */
 
@@ -369,7 +369,7 @@ void *shm_malloc(size_t len) {
 #ifdef DEBUG_SHM
     log(DEBUG) << hex((size_t)ret);
 #endif
-#ifndef CONF_WM_RC_SHMMAP
+#ifndef CONF_RCPARSE_SHMMAP
     /* important: memory returned by shm_malloc() must be full of zeros! */
     memset(ret, '\0', len);
 #endif

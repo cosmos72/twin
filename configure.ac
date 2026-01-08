@@ -236,10 +236,19 @@ if test "$have_x" = yes; then
   CPPFLAGS="$CPPFLAGS $X11_CPPFLAGS"
   LDFLAGS="$LDFLAGS $X11_LDFLAGS"
 
-  if test x"$PKG_CONFIG" != x; then
-    PKG_CHECK_MODULES([XFT], [xft freetype2 fontconfig], , [XFT_CFLAGS="-I/usr/include/freetype2 -I/usr/local/include/freetype2"])
+  if test "x$PKG_CONFIG" != "x"; then
+    PKG_CHECK_MODULES([XFT], [xft fontconfig], [
+      echo "  XFT_CFLAGS = $XFT_CFLAGS"
+      echo "  XFT_LIBS = $XFT_LIBS"
+    ], [])
   else
+    echo "  checking for package xft without pkg-config"
+  fi
+  if test "x$XFT_CFLAGS" = "x"; then
     XFT_CFLAGS="-I/usr/include/freetype2 -I/usr/local/include/freetype2"
+  fi
+  if test "x$XFT_LIBS" = "x"; then
+    XFT_LIBS="-lXft -lfontconfig -lfreetype"
   fi
   CPPFLAGS="$CPPFLAGS $XFT_CFLAGS"
   LDFLAGS="$LDFLAGS $XFT_LIBS"
@@ -264,7 +273,7 @@ fi
 AC_DEFINE_UNQUOTED(ATTR_FN_CONST,      [`echo $ac_cv_c_attribute_const     | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((const)),      or to empty if not supported.])
 AC_DEFINE_UNQUOTED(ATTR_TYPE_PACKED,   [`echo $ac_cv_c_attribute_packed    | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((packed)),     or to empty if not supported.])
 AC_DEFINE_UNQUOTED(ATTR_PTR_ALIGNED_1, [`echo $ac_cv_c_attribute_aligned_1 | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((aligned(1))), or to empty if not supported.])
-AC_DEFINE_UNQUOTED(ATTR_HIDDEN,     [`echo $ac_cv_c_attribute_hidden    | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((visiibility("hidden"))), or to empty if not supported.])
+AC_DEFINE_UNQUOTED(ATTR_HIDDEN,        [`echo $ac_cv_c_attribute_hidden    | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((visiibility("hidden"))), or to empty if not supported.])
 
 if test "$ac_cv_search_crypt" != "no" -o "$ac_cv_func_crypt" != "no"; then
   AC_DEFINE(HAVE_CRYPT, 1, [Define to 1 if you have the `crypt'  function.])
@@ -326,7 +335,7 @@ AM_CONDITIONAL(LIBHW_TTY_la,     [test "$enable_hw_tty"     = yes])
 AM_CONDITIONAL(LIBHW_TWIN_la,    [test "$enable_hw_twin"    = yes])
 AM_CONDITIONAL(LIBHW_X11_la,     [test "$enable_hw_x11"     = yes])
 AM_CONDITIONAL(LIBHW_XFT_la,     [test "$enable_hw_xft"     = yes])
-AM_CONDITIONAL(LIBRCPARSE_la,    [test "$enable_wm_rc"      = yes])
+AM_CONDITIONAL(LIBRCPARSE_la,    [test "$enable_rcparse"      = yes])
 AM_CONDITIONAL(LIBSOCKET_la,     [test "$enable_socket"     = yes])
 AM_CONDITIONAL(TWSERVER_STATIC,  [test "$enable_server_static" = yes])
 
@@ -380,7 +389,7 @@ fi
 if test "$enable_hw_xft" = yes; then
   echo -n " hw_xft"
 fi
-if test "$enable_wm_rc" = yes; then
+if test "$enable_rcparse" = yes; then
   echo -n " rcparse"
 fi
 if test "$enable_server_static" = yes; then
@@ -411,7 +420,7 @@ fi
 if test "$enable_hw_xft" != yes; then
   echo -n " hw_xft"
 fi
-if test "$enable_wm_rc" != yes; then
+if test "$enable_rcparse" != yes; then
   echo -n " rcparse"
 fi
 if test "$enable_server_static" != yes; then

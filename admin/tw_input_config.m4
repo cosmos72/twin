@@ -37,21 +37,21 @@ enable_socket_alien=yes
 )dnl
 
 dnl twinrc parser
-AC_ARG_ENABLE(wm_rc,dnl
-[  --enable-wm-rc[=yes|no]                enable ~/.config/twin/twinrc configuration parser ],,
-enable_wm_rc=yes
+AC_ARG_ENABLE(rcparse,dnl
+[  --enable-rcparse[=yes|no]              enable ~/.config/twin/twinrc configuration parser ],,
+enable_rcparse=yes
 )dnl
 
 dnl use mmapped shared file for parser
-AC_ARG_ENABLE(wm_rc_shmmap,dnl
-[  --enable-wm-rc-shmmap[=yes|no]         enable mmapped shared file for parser ],,
-enable_wm_rc_shmmap=yes
+AC_ARG_ENABLE(rcparse_shmmap,dnl
+[  --enable-rcparse-shmmap[=yes|no]       enable mmapped shared file for parser ],,
+enable_rcparse_shmmap=yes
 )dnl
 
-dnl shrink memory when parser finished
-AC_ARG_ENABLE(wm_rc_shrink,dnl
-[  --enable-wm-rc-shrink[=yes|no]         enable shrinking memory when parser finished ],,
-enable_wm_rc_shrink=yes
+dnl shrink memory when parser finishes
+AC_ARG_ENABLE(rcparse_shrink,dnl
+[  --enable-rcparse-shrink[=yes|no]       shrink memory when parser finishes ],,
+enable_rcparse_shrink=yes
 )dnl
 
 dnl use /dev/pts/* for terminal emulator

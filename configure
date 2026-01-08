@@ -867,9 +867,9 @@ enable_socket
 enable_socket_gz
 enable_socket_pthreads
 enable_socket_alien
-enable_wm_rc
-enable_wm_rc_shmmap
-enable_wm_rc_shrink
+enable_rcparse
+enable_rcparse_shmmap
+enable_rcparse_shrink
 enable_term_devpts
 enable_printk
 enable_hw_tty
@@ -1559,9 +1559,9 @@ Optional Features:
   --enable-socket-gz=yes|no            enable gzip compression on sockets
   --enable-socket-pthreads=yes|no      enable thread safe libraries (requires pthread)
   --enable-socket-alien=yes|no         enable support for non-native architectures
-  --enable-wm-rc=yes|no                enable ~/.config/twin/twinrc configuration parser
-  --enable-wm-rc-shmmap=yes|no         enable mmapped shared file for parser
-  --enable-wm-rc-shrink=yes|no         enable shrinking memory when parser finished
+  --enable-rcparse=yes|no              enable ~/.config/twin/twinrc configuration parser
+  --enable-rcparse-shmmap=yes|no       enable mmapped shared file for parser
+  --enable-rcparse-shrink=yes|no       shrink memory when parser finishes
   --enable-term-devpts=yes|no          enable Unix98 /dev/pts/* pseudo-ttys
   --enable-printk=yes|no               enable logging messages in Messages window
   --enable-hw-tty=yes|no               enable tty drivers
@@ -4758,32 +4758,32 @@ else case e in #(
 esac
 fi
 
-# Check whether --enable-wm_rc was given.
-if test ${enable_wm_rc+y}
+# Check whether --enable-rcparse was given.
+if test ${enable_rcparse+y}
 then :
-  enableval=$enable_wm_rc;
+  enableval=$enable_rcparse;
 else case e in #(
-  e) enable_wm_rc=yes
+  e) enable_rcparse=yes
  ;;
 esac
 fi
 
-# Check whether --enable-wm_rc_shmmap was given.
-if test ${enable_wm_rc_shmmap+y}
+# Check whether --enable-rcparse_shmmap was given.
+if test ${enable_rcparse_shmmap+y}
 then :
-  enableval=$enable_wm_rc_shmmap;
+  enableval=$enable_rcparse_shmmap;
 else case e in #(
-  e) enable_wm_rc_shmmap=yes
+  e) enable_rcparse_shmmap=yes
  ;;
 esac
 fi
 
-# Check whether --enable-wm_rc_shrink was given.
-if test ${enable_wm_rc_shrink+y}
+# Check whether --enable-rcparse_shrink was given.
+if test ${enable_rcparse_shrink+y}
 then :
-  enableval=$enable_wm_rc_shrink;
+  enableval=$enable_rcparse_shrink;
 else case e in #(
-  e) enable_wm_rc_shrink=yes
+  e) enable_rcparse_shrink=yes
  ;;
 esac
 fi
@@ -24657,22 +24657,22 @@ if test "$have_x" = yes; then
   CPPFLAGS="$CPPFLAGS $X11_CPPFLAGS"
   LDFLAGS="$LDFLAGS $X11_LDFLAGS"
 
-  if test x"$PKG_CONFIG" != x; then
+  if test "x$PKG_CONFIG" != "x"; then
 
 pkg_failed=no
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for xft freetype2 fontconfig" >&5
-printf %s "checking for xft freetype2 fontconfig... " >&6; }
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for xft fontconfig" >&5
+printf %s "checking for xft fontconfig... " >&6; }
 
 if test -n "$XFT_CFLAGS"; then
     pkg_cv_XFT_CFLAGS="$XFT_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"xft freetype2 fontconfig\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "xft freetype2 fontconfig") 2>&5
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"xft fontconfig\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "xft fontconfig") 2>&5
   ac_status=$?
   printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_XFT_CFLAGS=`$PKG_CONFIG --cflags "xft freetype2 fontconfig" 2>/dev/null`
+  pkg_cv_XFT_CFLAGS=`$PKG_CONFIG --cflags "xft fontconfig" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -24684,12 +24684,12 @@ if test -n "$XFT_LIBS"; then
     pkg_cv_XFT_LIBS="$XFT_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"xft freetype2 fontconfig\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "xft freetype2 fontconfig") 2>&5
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"xft fontconfig\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "xft fontconfig") 2>&5
   ac_status=$?
   printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_XFT_LIBS=`$PKG_CONFIG --libs "xft freetype2 fontconfig" 2>/dev/null`
+  pkg_cv_XFT_LIBS=`$PKG_CONFIG --libs "xft fontconfig" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -24710,27 +24710,56 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-                XFT_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "xft freetype2 fontconfig" 2>&1`
+                XFT_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "xft fontconfig" 2>&1`
         else
-                XFT_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "xft freetype2 fontconfig" 2>&1`
+                XFT_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "xft fontconfig" 2>&1`
         fi
         # Put the nasty error message in config.log where it belongs
         echo "$XFT_PKG_ERRORS" >&5
 
-        XFT_CFLAGS="-I/usr/include/freetype2 -I/usr/local/include/freetype2"
+        as_fn_error $? "Package requirements (xft fontconfig) were not met:
+
+$XFT_PKG_ERRORS
+
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+Alternatively, you may set the environment variables XFT_CFLAGS
+and XFT_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details." "$LINENO" 5
 elif test $pkg_failed = untried; then
         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
 printf "%s\n" "no" >&6; }
-        XFT_CFLAGS="-I/usr/include/freetype2 -I/usr/local/include/freetype2"
+        { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: error: in '$ac_pwd':" >&5
+printf "%s\n" "$as_me: error: in '$ac_pwd':" >&2;}
+as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+Alternatively, you may set the environment variables XFT_CFLAGS
+and XFT_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.
+
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.
+See 'config.log' for more details" "$LINENO" 5; }
 else
         XFT_CFLAGS=$pkg_cv_XFT_CFLAGS
         XFT_LIBS=$pkg_cv_XFT_LIBS
         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; }
 
+      echo "  XFT_CFLAGS = $XFT_CFLAGS"
+      echo "  XFT_LIBS = $XFT_LIBS"
+
 fi
   else
+    echo "  checking for package xft without pkg-config"
+  fi
+  if test "x$XFT_CFLAGS" = "x"; then
     XFT_CFLAGS="-I/usr/include/freetype2 -I/usr/local/include/freetype2"
+  fi
+  if test "x$XFT_LIBS" = "x"; then
+    XFT_LIBS="-lXft -lfontconfig -lfreetype"
   fi
   CPPFLAGS="$CPPFLAGS $XFT_CFLAGS"
   LDFLAGS="$LDFLAGS $XFT_LIBS"
@@ -24896,7 +24925,7 @@ fi
 
 
 if test "$ac_cv_func_mmap_fixed_mapped" = no; then
-  enable_wm_rc_shmmap=no
+  enable_rcparse_shmmap=no
 fi
 
 if test "$ac_cv_header_dlfcn_h" = no -o "$ac_cv_search_dlopen" = no; then
@@ -25037,7 +25066,7 @@ else
   LIBHW_XFT_la_FALSE=
 fi
 
- if test "$enable_wm_rc"      = yes; then
+ if test "$enable_rcparse"      = yes; then
   LIBRCPARSE_la_TRUE=
   LIBRCPARSE_la_FALSE='#'
 else
@@ -27765,9 +27794,9 @@ tw_cfg()
   tw_cfg CONF_SOCKET_GZ         "$enable_socket_gz"
   tw_cfg CONF_SOCKET_PTHREADS   "$enable_socket_pthreads"
   tw_cfg CONF_SOCKET_ALIEN      "$enable_socket_alien"
-  tw_cfg CONF_WM_RC             "$enable_wm_rc"
-  tw_cfg CONF_WM_RC_SHMMAP      "$enable_wm_rc_shmmap"
-  tw_cfg CONF_WM_RC_SHRINK      "$enable_wm_rc_shrink"
+  tw_cfg CONF_RCPARSE           "$enable_rcparse"
+  tw_cfg CONF_RCPARSE_SHMMAP    "$enable_rcparse_shmmap"
+  tw_cfg CONF_RCPARSE_SHRINK    "$enable_rcparse_shrink"
   tw_cfg CONF_TERM_DEVPTS       "$enable_term_devpts"
   tw_cfg CONF_PRINTK            "$enable_printk"
   tw_cfg CONF_HW_TTY            "$enable_hw_tty"
@@ -27813,7 +27842,7 @@ fi
 if test "$enable_hw_xft" = yes; then
   echo -n " hw_xft"
 fi
-if test "$enable_wm_rc" = yes; then
+if test "$enable_rcparse" = yes; then
   echo -n " rcparse"
 fi
 if test "$enable_server_static" = yes; then
@@ -27844,7 +27873,7 @@ fi
 if test "$enable_hw_xft" != yes; then
   echo -n " hw_xft"
 fi
-if test "$enable_wm_rc" != yes; then
+if test "$enable_rcparse" != yes; then
   echo -n " rcparse"
 fi
 if test "$enable_server_static" != yes; then

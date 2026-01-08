@@ -35,7 +35,7 @@
 #include "rcparse_tab.hpp"
 #include "rcrun.h"
 
-#ifdef CONF_WM_RC
+#ifdef CONF_RCPARSE
 #include "rcproto.h"
 #endif
 

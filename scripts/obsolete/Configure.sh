@@ -38,10 +38,9 @@ Options: [defaults in brackets after descriptions]
   --enable-socket-alien[=yes|no]         enable support for non-native architectures
 EOF
     cat << EOF
-  --enable-wm[=yes|no|mod]               enable the builtin WM (absolutely needed!)
-  --enable-wm-rc[=yes|no|mod]            enable ~/.config/twin/twinrc configuration parser
-  --enable-wm-rc-shmmap[=yes|no]         enable mmapped shared file for parser
-  --enable-wm-rc-shrink[=yes|no]         enable shrinking memory when parser finished
+  --enable-rcparse[=yes|no|mod]          enable ~/.config/twin/twinrc configuration parser
+  --enable-rcparse-shmmap[=yes|no]       enable mmapped shared file for parser
+  --enable-rcparse-shrink[=yes|no]       shrink memory when parser finishes
   --enable-term-devpts[=yes|no]          enable Unix98 /dev/pts/* pseudo-ttys
   --enable-printk[=yes|no]               enable logging messages in Messages window
 EOF
