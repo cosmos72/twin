@@ -386,6 +386,9 @@ fi
 if test "$enable_hw_twin" = yes; then
   echo -n " hw_twin"
 fi
+if test "$enable_hw_x11" = yes; then
+  echo -n " hw_x11"
+fi
 if test "$enable_hw_xft" = yes; then
   echo -n " hw_xft"
 fi
@@ -416,6 +419,9 @@ if test "$enable_hw_tty_termcap" != yes; then
 fi
 if test "$enable_hw_twin" != yes; then
   echo -n " hw_twin"
+fi
+if test "$enable_hw_x11" != yes; then
+  echo -n " hw_x11"
 fi
 if test "$enable_hw_xft" != yes; then
   echo -n " hw_xft"
