@@ -1,9 +1,14 @@
 SUBDIRS = hw
 
-bin_PROGRAMS       = twdisplay twin twin_server twin_server_static
+bin_PROGRAMS       = twdisplay twin twin_server
 bin_SCRIPTS        = twstart
 pkglib_LTLIBRARIES =
-noinst_LIBRARIES   = libtwin_static.a
+noinst_LIBRARIES   = 
+
+if TWSERVER_STATIC
+  bin_PROGRAMS        += twin_server_static
+  noinst_LIBRARIES    += libtwin_static.a
+endif
 
 AM_CPPFLAGS           = -I$(top_srcdir)/include $(LTDLINCL) -DPLUGINDIR="\"$(pkglibdir)\"" -DCONFDIR="\"$(sysconfdir)/twin\""
 twin_CPPFLAGS         = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir)\""
@@ -45,12 +50,12 @@ libsocket_la_LIBADD        = $(LIBTUTF) $(LIBTSTL) $(LIBSOCK) $(LIBZ)
 libtwin_static_a_CPPFLAGS  =
 
 if LIBRCPARSE_la
-  pkglib_LTLIBRARIES         += librcparse.la
+  pkglib_LTLIBRARIES       += librcparse.la
   libtwin_static_a_CPPFLAGS  += -DTWIN_RCPARSE_STATIC
   libtwin_static_a_SOURCES   += rcparse_tab.cpp rcparse_lex.cpp
 endif
 if LIBSOCKET_la
-  pkglib_LTLIBRARIES         += libsocket.la
+  pkglib_LTLIBRARIES       += libsocket.la
   libtwin_static_a_CPPFLAGS  += -DTWIN_SOCKET_STATIC
   libtwin_static_a_SOURCES   += md5.cpp socket.cpp
   twin_server_static_LDADD   += $(LIBSOCK) $(LIBZ)

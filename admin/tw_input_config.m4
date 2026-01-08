@@ -1,16 +1,15 @@
 m4_define([TW_OPTIONS], [
 
-dnl custom malloc/free
-dnl AC_ARG_ENABLE(-alloc,dnl
-dnl [  --enable--alloc[=yes|no]               enable custom malloc/free routines ],,
-dnl enable__alloc=yes
-dnl )dnl
-enable__alloc=no
-
 dnl dlopen() and friends
 AC_ARG_ENABLE(-dlopen,dnl
 [  --enable--dlopen[=yes|no]              use dlopen() to load modules instead of libtool lt_dlopen()],,
 enable__dlopen=yes
+)dnl
+
+dnl compile static twin server
+AC_ARG_ENABLE(server-static,dnl
+[  --enable-server-static[=yes|no]        also compile static twin server [[default=no]]],,
+enable_server_static=no
 )dnl
 
 dnl socket server
@@ -35,12 +34,6 @@ dnl support alien architectures
 AC_ARG_ENABLE(socket_alien,dnl
 [  --enable-socket-alien[=yes|no]         enable support for non-native architectures ],,
 enable_socket_alien=yes
-)dnl
-
-dnl builtin window manager
-AC_ARG_ENABLE(wm,dnl
-[  --enable-wm[=yes|no]                   enable the builtin WM (absolutely needed!) ],,
-enable_wm=yes
 )dnl
 
 dnl twinrc parser

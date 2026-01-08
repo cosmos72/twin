@@ -328,6 +328,7 @@ AM_CONDITIONAL(LIBHW_X11_la,     [test "$enable_hw_x11"     = yes])
 AM_CONDITIONAL(LIBHW_XFT_la,     [test "$enable_hw_xft"     = yes])
 AM_CONDITIONAL(LIBRCPARSE_la,    [test "$enable_wm_rc"      = yes])
 AM_CONDITIONAL(LIBSOCKET_la,     [test "$enable_socket"     = yes])
+AM_CONDITIONAL(TWSERVER_STATIC,  [test "$enable_server_static" = yes])
 
 CFLAGS="$custom_CFLAGS"
 
@@ -355,3 +356,69 @@ tw_cfg()
 }
 
 TW_OUTPUT
+
+[
+echo ""
+echo "Configuration summary:"
+echo "  main enabled features:"
+echo -n "    "
+if test "$enable_hw_display" = yes; then
+  echo -n " hw_display"
+fi
+if test "$enable_hw_tty" = yes; then
+  echo -n " hw_tty"
+fi
+if test "$enable_hw_tty_linux" = yes; then
+  echo -n " hw_tty_linux"
+fi
+if test "$enable_hw_tty_termcap" = yes; then
+  echo -n " hw_tty_termcap"
+fi
+if test "$enable_hw_twin" = yes; then
+  echo -n " hw_twin"
+fi
+if test "$enable_hw_xft" = yes; then
+  echo -n " hw_xft"
+fi
+if test "$enable_wm_rc" = yes; then
+  echo -n " rcparse"
+fi
+if test "$enable_server_static" = yes; then
+  echo -n " server_static"
+fi
+if test "$enable_socket" = yes; then
+  echo -n " socket"
+fi
+echo ""
+echo ""
+echo "  main disabled features:"
+echo -n "    "
+if test "$enable_hw_display" != yes; then
+  echo -n " hw_display"
+fi
+if test "$enable_hw_tty" != yes; then
+  echo -n " hw_tty"
+fi
+if test "$enable_hw_tty_linux" != yes; then
+  echo -n " hw_tty_linux"
+fi
+if test "$enable_hw_tty_termcap" != yes; then
+  echo -n " hw_tty_termcap"
+fi
+if test "$enable_hw_twin" != yes; then
+  echo -n " hw_twin"
+fi
+if test "$enable_hw_xft" != yes; then
+  echo -n " hw_xft"
+fi
+if test "$enable_wm_rc" != yes; then
+  echo -n " rcparse"
+fi
+if test "$enable_server_static" != yes; then
+  echo -n " server_static"
+fi
+if test "$enable_socket" != yes; then
+  echo -n " socket"
+fi
+echo ""
+]

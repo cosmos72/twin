@@ -31,11 +31,6 @@ Options: [defaults in brackets after descriptions]
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
 --enable options recognized:
-  --enable--shlibs[=yes|no]              enable building shared libraries
-  --enable--modules[=yes|no]             enable building shared modules
-  --enable--unicode[=yes|no]             enable building unicode-aware code
-  --enable--alloc[=yes|no]               enable custom malloc/free routines
-  --enable--long-long[=yes|no]           enable C type 'long long' if supported
   --enable--asm[=yes|no]                 enable hand-optimized assembler if available
   --enable-socket[=yes|no]               enable remote socket connections (libtw)
   --enable-socket-gz[=yes|no]            enable gzip compression on sockets
@@ -47,7 +42,6 @@ EOF
   --enable-wm-rc[=yes|no|mod]            enable ~/.config/twin/twinrc configuration parser
   --enable-wm-rc-shmmap[=yes|no]         enable mmapped shared file for parser
   --enable-wm-rc-shrink[=yes|no]         enable shrinking memory when parser finished
-  --enable-term[=yes|no|mod]             enable builtin terminal emulator
   --enable-term-devpts[=yes|no]          enable Unix98 /dev/pts/* pseudo-ttys
   --enable-printk[=yes|no]               enable logging messages in Messages window
 EOF

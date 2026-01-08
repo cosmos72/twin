@@ -1,9 +1,6 @@
 m4_define([TW_FIX_CONFIG], [
 
-enable__alloc=no
-
 if test "$ac_cv_func_mmap_fixed_mapped" = no; then
-  enable__alloc=no
   enable_wm_rc_shmmap=no
 fi
 
