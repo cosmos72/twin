@@ -91,8 +91,8 @@ static byte InitSysMon(int argc, char **argv) {
                            TW_WINDOW_DRAG | TW_WINDOW_CLOSE, (border ? 0 : TW_WINDOWFL_BORDERLESS),
                            numeric ? 29 : 24, 5, 0)) &&
 
-       (TwSetColorsWindow(SysMon_Win, 0x1FF, (tcolor)0x3F, (tcolor)0, (tcolor)0, (tcolor)0,
-                          (tcolor)0x9F, (tcolor)0x17, (tcolor)0x3F, (tcolor)0x18, (tcolor)0x08),
+       (TwSetColorsWindow(SysMon_Win, 0x1FF, (tcolor)0x3F, TCOL0, TCOL0, TCOL0, (tcolor)0x9F,
+                          (tcolor)0x17, (tcolor)0x3F, (tcolor)0x18, (tcolor)0x08),
         TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, 16, " System Monitor ", color_array),
         TwWriteCharsetWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME"),
         TwMapWindow(SysMon_Win, TwFirstScreen()), ttrue);

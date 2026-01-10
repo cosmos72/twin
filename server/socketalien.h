@@ -7,6 +7,8 @@
  *
  */
 
+#define _tcell .TWS_field_tcell
+#define _tcolor .TWS_field_tcolor
 #define _obj .TWS_field_obj
 #define _any .TWS_field_scalar
 #define _vec .TWS_field_vecV
@@ -264,10 +266,8 @@ static void alienReply(SockCtx &ctx, uldat code, uldat alien_len, uldat len, con
 }
 
 static void alienTranslateTCellV_CP437_to_UTF_32(tcell *H, uldat Len) {
-  trune f;
   while (Len--) {
-    f = Tutf_CP437_to_UTF_32[TRUNE(*H) & 0xFF];
-    *H = TCELL_COLMASK(*H) | TCELL(0, f);
+    H->rune = Tutf_CP437_to_UTF_32[TRUNE(*H) & 0xFF];
     H++;
   }
 }
@@ -279,14 +279,17 @@ static void alienTranslateTCellV_CP437_to_UTF_32(tcell *H, uldat Len) {
  * for tcell. detected by SIZEOF(trune) == 2 && SIZEOF(tcell) == 4
  */
 inline tcell alienFixDecodeTCell(tcell cell) {
-  trune rune = (cell & 0xFF) | ((cell >> 8) & 0xFF00);
-  tcolor col = (cell >> 8) & 0xFF;
-  return TCELL(col, rune);
+  uldat src = cell.rune;
+  trgb fg = Palette[(src >> 8) & 0xF];
+  trgb bg = Palette[(src >> 12) & 0xF];
+  trune rune = (src & 0xFF) | ((src >> 8) & 0xFF00);
+  return TCELL(TCOL(fg, bg), rune);
 }
 
 inline tcell alienMaybeFixDecodeTCell(SockCtx &ctx, tcell cell) {
-  if (SIZEOF(trune) == 2 && SIZEOF(tcell) == 4)
+  if (SIZEOF(trune) == 2 && SIZEOF(tcell) == 4) {
     cell = alienFixDecodeTCell(cell);
+  }
   return cell;
 }
 
@@ -307,30 +310,28 @@ inline ldat alienDecodeArg(SockCtx &ctx, uldat id, const char *Format, uldat n, 
   switch ((c = (byte)*Format++)) {
   case '_':
     switch ((c = (byte)*Format)) {
-#define CASE_fix(type, fixtype)                                                                    \
+#define CASE_fix(type, field, fixtype)                                                             \
   case CAT(TWS_, type):                                                                            \
     /* ensure type size WAS negotiated */                                                          \
     if (SIZEOF(type) && Left(SIZEOF(type))) {                                                      \
       type an;                                                                                     \
       POP(ctx.s, type, an);                                                                        \
-      a[n] _any = (tany)fixtype(ctx, an);                                                          \
+      a[n] field = fixtype(ctx, an);                                                               \
       a[n] _type = c;                                                                              \
-    } else                                                                                         \
+    } else {                                                                                       \
       fail = -fail;                                                                                \
+    }                                                                                              \
     break;
-#define CASE_(type) CASE_fix(type, alienFixIdentity)
-#define CASE_tcell() CASE_fix(tcell, alienMaybeFixDecodeTCell)
+#define CASE_(type, field) CASE_fix(type, field, alienFixIdentity)
 
-    case TWS_tcolor:
-      /*FALLTHROUGH*/
-      CASE_(byte);
-      CASE_(dat);
-      CASE_(ldat);
-      CASE_(topaque);
-      CASE_(tany);
-      CASE_(trune);
-      CASE_tcell();
-#undef CASE_tcell
+      CASE_(byte, _any);
+      CASE_(dat, _any);
+      CASE_(ldat, _any);
+      CASE_(tcolor, _tcolor);
+      CASE_(topaque, _any);
+      CASE_(tany, _any);
+      CASE_(trune, _any);
+      CASE_fix(tcell, _tcell, alienMaybeFixDecodeTCell);
 #undef CASE_fix
 #undef CASE_
     default:
@@ -557,13 +558,13 @@ static void alienMultiplexB(SockCtx &ctx, uldat id) {
     switch ((byte)retT[0]) {
     case '_':
       switch ((byte)retT[1]) {
-#define CASE_(type)                                                                                \
+#define CASE_(type, field)                                                                         \
   case CAT(TWS_, type):                                                                            \
     /* ensure type size WAS negotiated */                                                          \
     if (CAT(TWS_, type) <= TWS_tcolor || SIZEOF(type)) {                                           \
       /* move to first bytes on MSB machines */                                                    \
-      const type a0 = (type)a[0] _any;                                                             \
-      memcpy(&a[0] _any, &a0, sizeof(type));                                                       \
+      const type a0 = a[0] field;                                                                  \
+      memcpy(&a[0] field, &a0, sizeof(type));                                                      \
       c = SIZEOF(type);                                                                            \
       tmp = sizeof(type);                                                                          \
       break;                                                                                       \
@@ -571,22 +572,21 @@ static void alienMultiplexB(SockCtx &ctx, uldat id) {
     fail = 0;                                                                                      \
     break
 
-      case TWS_tcolor:
-        /*FALLTHROUGH*/
-        CASE_(byte);
-        CASE_(dat);
-        CASE_(ldat);
-        CASE_(topaque);
-        CASE_(tany);
-        CASE_(trune);
-        CASE_(tcell);
+        CASE_(byte, _any);
+        CASE_(dat, _any);
+        CASE_(ldat, _any);
+        CASE_(tcolor, _tcolor);
+        CASE_(topaque, _any);
+        CASE_(tany, _any);
+        CASE_(trune, _any);
+        CASE_(tcell, _tcell);
 #undef CASE_
       default:
         c = self = 0;
         break;
       }
       if (c && fail > 0) {
-        alienReply(ctx, OK_MAGIC, tmp, c, &a[0] _any);
+        alienReply(ctx, OK_MAGIC, tmp, c, &a[0].val);
         return;
       }
       break;
@@ -606,15 +606,18 @@ static void alienMultiplexB(SockCtx &ctx, uldat id) {
   }
   if (retT[0] != 'v') {
     if (fail > 0) {
-      if (self != '2' || a[1] _obj)
+      if (self != '2' || a[1] _obj) {
         fail = FAIL_MAGIC;
-      else
+      } else {
         fail = 1;
+      }
     }
     alienReply(ctx, fail, 0, 0, NULL);
   }
 }
 
+#undef _tcell
+#undef _tcolor
 #undef _obj
 #undef _any
 #undef _vec
@@ -777,7 +780,6 @@ static void alienSendMsg(Tmsgport port, Tmsg msg) {
   char *src;
   tcell H;
   uldat Len = 0, Tot, N;
-  uint16_t h;
   byte Type;
 
   ctx.RequestN = MSG_MAGIC;
@@ -828,9 +830,8 @@ static void alienSendMsg(Tmsgport port, Tmsg msg) {
         /* on the fly conversion from Unicode to CP437 */
         while (N--) {
           Pop(src, tcell, H);
-
-          h = ((uint16_t)TCOLOR(H) << 8) | Tutf_UTF_32_to_CP437(TRUNE(H));
-          t = alienPush(ctx.Slot, &h, sizeof(tcell), t, 2);
+          H.rune = Tutf_UTF_32_to_CP437(TRUNE(H));
+          t = alienPush(ctx.Slot, &H, sizeof(tcell), t, 2);
         }
       } else {
         Tot = TwinMagicData[Type];

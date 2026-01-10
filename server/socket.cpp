@@ -57,6 +57,7 @@
 #include "hw_multi.h"
 #include "log.h"
 #include "md5.h"
+#include "palette.h"
 #include "printk.h" // printk_receive_fd(), RegisterPrintkFd()
 #include "remote.h"
 #include "socket.h"
@@ -501,8 +502,9 @@ inline void TWS_2_proto(udat tws_type, char proto[2]) {
   }
 }
 
+#define _tcell .TWS_field_tcell
+#define _tcolor .TWS_field_tcolor
 #define _any .TWS_field_scalar
-#define _cell .TWS_field_cell
 #define _obj .TWS_field_obj
 #define _vec .TWS_field_vecV
 #define _cvec .TWS_field_vecCV
@@ -606,27 +608,27 @@ inline ldat sockDecodeArg(SockCtx &ctx, uldat id, const char *Format, uldat n, t
   switch ((c = (byte)*Format++)) {
   case '_':
     switch ((c = (byte)*Format)) {
-#define CASE_(type)                                                                                \
+#define CASE_(type, field)                                                                         \
   case CAT(TWS_, type):                                                                            \
     /* ensure type size WAS negotiated */                                                          \
     if (AlienSizeof(type, ctx.Slot) && Left(sizeof(type))) {                                       \
       type an;                                                                                     \
       Pop(ctx.s, type, an);                                                                        \
-      a[n] _any = (tany)an;                                                                        \
+      a[n] field = an;                                                                             \
       a[n] _type = c;                                                                              \
       break;                                                                                       \
     }                                                                                              \
     fail = -fail;                                                                                  \
     break
 
-      CASE_(byte);
-      CASE_(dat);
-      CASE_(ldat);
-      CASE_(tcolor);
-      CASE_(topaque);
-      CASE_(tany);
-      CASE_(trune);
-      CASE_(tcell);
+      CASE_(byte, _any);
+      CASE_(dat, _any);
+      CASE_(ldat, _any);
+      CASE_(tcolor, _tcolor);
+      CASE_(topaque, _any);
+      CASE_(tany, _any);
+      CASE_(trune, _any);
+      CASE_(tcell, _tcell);
 #undef CASE_
     default:
       fail = -fail;
@@ -793,35 +795,34 @@ static void sockMultiplexB(SockCtx &ctx, uldat id) {
     switch (retT[0]) {
     case '_':
       switch (retT[1]) {
-#define CASE_(type)                                                                                \
+#define CASE_(type, field)                                                                         \
   case CAT(TWS_, type):                                                                            \
     /* ensure type size WAS negotiated */                                                          \
     if (CAT(TWS_, type) <= TWS_tcolor || AlienSizeof(type, ctx.Slot)) {                            \
       /* move to first bytes on MSB machines */                                                    \
-      const type a0 = (type)a[0] _any;                                                             \
-      memcpy(&a[0] _any, &a0, sizeof(type));                                                       \
+      const type a0 = a[0] field;                                                                  \
+      memcpy(&a[0] field, &a0, sizeof(type));                                                      \
       c = sizeof(type);                                                                            \
       break;                                                                                       \
     }                                                                                              \
     fail = 0;                                                                                      \
     break
 
-      case TWS_tcolor:
-        /*FALLTHROUGH*/
-        CASE_(byte);
-        CASE_(dat);
-        CASE_(ldat);
-        CASE_(topaque);
-        CASE_(tany);
-        CASE_(trune);
-        CASE_(tcell);
+        CASE_(byte, _any);
+        CASE_(dat, _any);
+        CASE_(ldat, _any);
+        CASE_(tcolor, _tcolor);
+        CASE_(topaque, _any);
+        CASE_(tany, _any);
+        CASE_(trune, _any);
+        CASE_(tcell, _tcell);
 #undef CASE_
       default:
         c = 0;
         break;
       }
       if (c && fail > 0) {
-        sockReply(ctx, OK_MAGIC, c, &a[0] _any);
+        sockReply(ctx, OK_MAGIC, c, &a[0].val);
         return;
       }
       break;
@@ -850,6 +851,8 @@ static void sockMultiplexB(SockCtx &ctx, uldat id) {
   }
 }
 
+#undef _tcell
+#undef _tcolor
 #undef _obj
 #undef _any
 #undef _vec

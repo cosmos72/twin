@@ -104,11 +104,13 @@ void Swidget::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
   case TWS_widget_Width:
   case TWS_widget_Height:
     break;
+#ifdef FIXME_TCELL
   case TWS_widget_USE_Fill: {
     uldat i = tcell((USE_Fill & ~clear_mask) ^ xor_mask);
     SetFill(i);
     break;
   }
+#endif // 0
   case TWS_widget_XLogic:
   case TWS_widget_YLogic:
     break;

@@ -25,12 +25,28 @@
 #include <Tutf/Tutf.h>
 #include <Tutf/Tutf_defs.h>
 
-inline tcolor DoShadowColor(tcolor color, bool Fg, bool Bg) NOTHROW {
-  return (Bg   ? (color & TCOL(0, tWHITE)) > TCOL(0, tBLACK) ? TCOL(0, tBLACK) : TCOL(0, tblack)
-            : Fg ? color & TCOL(0, twhite)
-               : color & TCOL(0, tWHITE)) |
-         (Fg ? (color & TCOL(tWHITE, 0)) > TCOL(tBLACK, 0) ? TCOL(twhite, 0) : TCOL(tBLACK, 0)
-             : color & TCOL(tWHITE, 0));
+inline tcolor DoShadowColor(tcolor color, bool shadow_fg, bool shadow_bg) NOTHROW {
+  const trgb fg = TCOLFG(color);
+  const trgb bg = TCOLBG(color);
+  trgb ret_fg;
+  if (shadow_fg) {
+    ret_fg = fg > tBLACK ? twhite : tBLACK;
+  } else {
+    ret_fg = fg;
+  }
+  trgb ret_bg;
+  if (shadow_bg) {
+    ret_bg = bg > tBLACK ? tBLACK : tblack;
+  } else {
+    ret_bg = shadow_fg ? bg & twhite : bg;
+  }
+  return TCOL(ret_fg, ret_bg);
+}
+
+inline tcell DoShadowCell(tcell cell, bool shadow_fg, bool shadow_bg) NOTHROW {
+  const tcell ret = {TRUNE(cell), //
+                     DoShadowColor(TCOLOR(cell), shadow_fg, shadow_bg)};
+  return ret;
 }
 
 /*
@@ -83,7 +99,6 @@ static void FindFontInfo(Tmenu Menu, dat i, bool select, tcell *PtrAttr) NOTHROW
 
 void DrawDesktop(Tscreen screen, dat X1, dat Y1, dat X2, dat Y2, bool shaded) {
   tcell *p_attr, attr;
-  tcolor col;
   ldat dwidth, dheight, BgWidth, BgHeight; /* (ldat) to avoid multiplication overflows */
   dat ylimit = -1;
 
@@ -114,8 +129,9 @@ void DrawDesktop(Tscreen screen, dat X1, dat Y1, dat X2, dat Y2, bool shaded) {
     /* use tiling... easier than other solutions */
     ldat X, Y, x, max = BgWidth * BgHeight;
     ldat y = ((ldat)Y1 + screen->YLogic - screen->Up) % BgHeight;
-    if (y < 0)
+    if (y < 0) {
       y += BgHeight;
+    }
     y *= BgWidth;
 
     DirtyVideo(X1, Y1, X2, Y2);
@@ -123,42 +139,41 @@ void DrawDesktop(Tscreen screen, dat X1, dat Y1, dat X2, dat Y2, bool shaded) {
     for (; Y1 <= Y2; Y1++, y += BgWidth) {
       Y = Y1 * (ldat)dwidth;
 
-      if (y >= max)
+      if (y >= max) {
         y -= max;
+      }
       x = ((ldat)X1 + screen->XLogic) % BgWidth;
-      if (x < 0)
+      if (x < 0) {
         x += BgWidth;
-
+      }
       if (shaded) {
         for (X = X1; X <= X2; X++, x++) {
-          if (x >= BgWidth)
+          if (x >= BgWidth) {
             x -= BgWidth;
-          attr = p_attr[x + y];
-          col = DoShadowColor(TCOLOR(attr), shaded, shaded);
-
-          Video[X + Y] = TCELL(col, TRUNE(attr));
+          }
+          Video[X + Y] = DoShadowCell(p_attr[x + y], shaded, shaded);
         }
       } else {
         for (X = X1; X <= X2; X++, x++) {
-          if (x >= BgWidth)
+          if (x >= BgWidth) {
             x -= BgWidth;
-
+          }
           Video[X + Y] = p_attr[x + y];
         }
       }
     }
   } else {
     if (screen) {
-      if (S_USE(screen, USEBG))
+      if (S_USE(screen, USEBG)) {
         attr = *screen->USE.B.Bg;
-      else
+      } else {
         attr = screen->USE_Fill;
-    } else
+      }
+    } else {
       attr = TCELL(TCOL(twhite, tblack), ' ');
-
+    }
     if (shaded) {
-      col = DoShadowColor(TCOLOR(attr), shaded, shaded);
-      attr = TCELL(col, TRUNE(attr));
+      attr = DoShadowCell(attr, shaded, shaded);
     }
     FillVideo(X1, Y1, X2, Y2, attr);
   }
@@ -476,24 +491,28 @@ void Swidget::DrawSelf(Sdraw *d) {
 
   if (text) {
     tcolor color = TCOLOR(w->USE_Fill);
-    if (shaded)
+    if (shaded) {
       color = DoShadowColor(color, shaded, shaded);
+    }
     text += dy * pitch;
     for (ldat j = y1; j <= y2; j++) {
       text += dx;
-      for (ldat i = x1, v = 0; i <= x2; i++, v++)
+      for (ldat i = x1, v = 0; i <= x2; i++, v++) {
         Video[i + j * (ldat)dwidth] = TCELL(color, text[v]);
+      }
       text += pitch - dx;
     }
   } else if (runes) {
     tcolor color = TCOLOR(w->USE_Fill);
-    if (shaded)
+    if (shaded) {
       color = DoShadowColor(color, shaded, shaded);
+    }
     runes += dy * pitch;
     for (ldat j = y1; j <= y2; j++) {
       runes += dx;
-      for (ldat i = x1, v = 0; i <= x2; i++, v++)
+      for (ldat i = x1, v = 0; i <= x2; i++, v++) {
         Video[i + j * (ldat)dwidth] = TCELL(color, runes[v]);
+      }
       runes += pitch - dx;
     }
   } else if (cells && !shaded) {
@@ -508,8 +527,7 @@ void Swidget::DrawSelf(Sdraw *d) {
     for (ldat j = y1; j <= y2; j++) {
       cells += dx;
       for (ldat i = x1, v = 0; i <= x2; i++, v++) {
-        tcolor color = DoShadowColor(TCOLOR(cells[v]), shaded, shaded);
-        Video[i + j * (ldat)dwidth] = TCELL(color, 0) | TCELL_RUNEMASK(cells[v]);
+        Video[i + j * (ldat)dwidth] = DoShadowCell(cells[v], shaded, shaded);
       }
       cells += pitch - dx;
     }
@@ -532,9 +550,9 @@ void Sgadget::DrawSelf(Sdraw *d) {
   ldat width, dwidth, offset; /* (ldat) to avoid multiplication overflows */
   dat i, i_min, i_max, j, j_min, j_max;
   bool select, disabled, absent;
-  trune font, *text, **gadgetText;
+  trune rune, *text, **gadgetText;
   tcolor *colText, **gadgetColor;
-  tcolor color = 0;
+  tcolor color = TCOL0;
 
   select = !!(g->Flags & GADGETFL_PRESSED);
   disabled = !!(g->Flags & GADGETFL_DISABLED);
@@ -558,9 +576,9 @@ void Sgadget::DrawSelf(Sdraw *d) {
                                              : (gadgetText[1] ? gadgetText[1] : gadgetText[0]))
                 : (disabled && gadgetText[2] ? gadgetText[2] : gadgetText[0]);
 
-  if (!text)
-    font = ' ';
-
+  if (!text) {
+    rune = ' ';
+  }
   colText = absent ? NULL
             : select
                 ? (disabled && gadgetColor[3] ? gadgetColor[3]
@@ -576,11 +594,13 @@ void Sgadget::DrawSelf(Sdraw *d) {
 
   for (j = j_min; j <= j_max; j++) {
     for (i = i_min; i <= i_max; i++) {
-      if (text)
-        font = text[i + j * width];
-      if (!absent)
+      if (text) {
+        rune = text[i + j * width];
+      }
+      if (!absent) {
         color = DoShadowColor(colText[i + j * width], d->Shaded, d->Shaded);
-      Video[i + j * (ldat)dwidth + offset] = TCELL(color, font);
+      }
+      Video[i + j * (ldat)dwidth + offset] = TCELL(color, rune);
     }
   }
   DirtyVideo(d->X1, d->Y1, d->X2, d->Y2);
@@ -591,7 +611,6 @@ static void DrawSelfBorder(Twindow w, ldat left, ldat up, ldat rgt, ldat dwn, da
 
   ldat i, j, u, v, dwidth = All->DisplayWidth; /* (ldat) to avoid multiplication overflows */
   tcell attr;
-  tcolor color;
 
   if (QueuedDrawArea2FullScreen || (w->Flags & WIDGETFL_NOTVISIBLE)) {
     return;
@@ -601,13 +620,13 @@ static void DrawSelfBorder(Twindow w, ldat left, ldat up, ldat rgt, ldat dwn, da
     j = y1 * dwidth;
     for (i = x1, u = i - left; i <= x2; i++, u++) {
       w->FindBorder(u, 0, border, &attr);
-      color = DoShadowColor(TCOLOR(attr), shaded || !winActive, shaded);
-      Video[i + j] = TCELL(color, 0) | (attr & ~TCELL(TW_MAXWCOL, 0));
+      Video[i + j] = DoShadowCell(attr, shaded || !winActive, shaded);
     }
     DirtyVideo(x1, y1, x2, y1);
     y1++;
-    if (y1 > Y2)
+    if (y1 > Y2) {
       return;
+    }
   }
 
   if ((ldat)Y2 == dwn) {
@@ -615,38 +634,38 @@ static void DrawSelfBorder(Twindow w, ldat left, ldat up, ldat rgt, ldat dwn, da
     j = Y2 * dwidth;
     for (i = x1, u = i - left; i <= x2; i++, u++) {
       w->FindBorder(u, v, border, &attr);
-      color = DoShadowColor(TCOLOR(attr), shaded || !winActive, shaded);
-      Video[i + j] = TCELL(color, 0) | (attr & ~TCELL(TW_MAXWCOL, 0));
+      Video[i + j] = DoShadowCell(attr, shaded || !winActive, shaded);
     }
     DirtyVideo(x1, Y2, x2, Y2);
     Y2--;
-    if (y1 > Y2)
+    if (y1 > Y2) {
       return;
+    }
   }
 
   if ((ldat)x1 == left) {
     for (j = y1, v = j - up; j <= Y2; j++, v++) {
       w->FindBorder(0, v, border, &attr);
-      color = DoShadowColor(TCOLOR(attr), shaded || !winActive, shaded);
-      Video[x1 + j * dwidth] = TCELL(color, 0) | (attr & ~TCELL(TW_MAXWCOL, 0));
+      Video[x1 + j * dwidth] = DoShadowCell(attr, shaded || !winActive, shaded);
     }
     DirtyVideo(x1, y1, x1, Y2);
     x1++;
-    if (x1 > x2)
+    if (x1 > x2) {
       return;
+    }
   }
 
   if ((ldat)x2 == rgt) {
     u = (ldat)x2 - left;
     for (j = y1, v = j - up; j <= Y2; j++, v++) {
       w->FindBorder(u, v, border, &attr);
-      color = DoShadowColor(TCOLOR(attr), shaded || !winActive, shaded);
-      Video[x2 + j * dwidth] = TCELL(color, 0) | (attr & ~TCELL(TW_MAXWCOL, 0));
+      Video[x2 + j * dwidth] = DoShadowCell(attr, shaded || !winActive, shaded);
     }
     DirtyVideo(x2, y1, x2, Y2);
     x2--;
-    if (x1 > x2)
+    if (x1 > x2) {
       return;
+    }
   }
 }
 
@@ -666,7 +685,7 @@ void Swindow::DrawSelf(Sdraw *d) {
   const trune *runes = NULL;
   tcolor *colText = NULL;
   ldat row, posInRow;
-  trune font;
+  trune rune;
   Trow curr_row;
 
   ldat left = d->Left, up = d->Up, rgt = d->Rgt;
@@ -738,8 +757,9 @@ void Swindow::DrawSelf(Sdraw *d) {
             }
           }
           currCont += w->WLogic;
-          if (!row)
+          if (!row) {
             currCont -= (row = w->HLogic) * w->WLogic;
+          }
         }
       } else {
         for (j = y1, u = y1 - up; j <= Y2; j++, u++, row--) {
@@ -749,17 +769,15 @@ void Swindow::DrawSelf(Sdraw *d) {
                      ((u > w->YstSel || (u == w->YstSel && v >= w->XstSel)) &&
                       (u < w->YendSel || (u == w->YendSel && v <= w->XendSel)));
 
-            if (select)
-              color = w->ColSelect;
-            else
-              color = TCOLOR(currCont[v]);
+            color = select ? w->ColSelect : TCOLOR(currCont[v]);
             color = DoShadowColor(color, shaded, shaded);
 
             Video[i + j * (ldat)dwidth] = TCELL(color, TRUNE(currCont[v]));
           }
           currCont += w->WLogic;
-          if (!row)
+          if (!row) {
             currCont -= (row = w->HLogic) * w->WLogic;
+          }
         }
       }
       DirtyVideo(x1, y1, x2, Y2);
@@ -805,12 +823,12 @@ void Swindow::DrawSelf(Sdraw *d) {
         absent = !curr_row || (posInRow >= 0 && (uldat)posInRow >= curr_row->Len);
 
         if (curr_row && IS_MENUITEM(curr_row) && ((Tmenuitem)curr_row)->Window && i == rgt) {
-          font = T_UTF_32_BLACK_RIGHT_POINTING_TRIANGLE;
-        } else if (absent)
-          font = ' ';
-        else
-          font = runes[posInRow];
-
+          rune = T_UTF_32_BLACK_RIGHT_POINTING_TRIANGLE;
+        } else if (absent) {
+          rune = ' ';
+        } else {
+          rune = runes[posInRow];
+        }
         if (w->Flags & WINDOWFL_ROWS_SELCURRENT)
           select = row == w->CurY;
         else {
@@ -831,7 +849,7 @@ void Swindow::DrawSelf(Sdraw *d) {
           color = colText[posInRow];
 
         color = DoShadowColor(color, shaded, shaded);
-        Video[i + j * (ldat)dwidth] = TCELL(color, font);
+        Video[i + j * (ldat)dwidth] = TCELL(color, rune);
       }
       if (curr_row) {
         w->USE.R.RowSplit = curr_row;
@@ -1760,8 +1778,8 @@ void DrawMenuScreen(Tscreen screen, dat Xstart, dat Xend) {
   Tmenu Menu;
   Tmenuitem item;
   dat dwidth, dheight, i, j, x;
-  tcell attr = 0;
-  trune font;
+  tcell attr = TCELL0;
+  trune rune;
   tcolor color;
   byte select, State, MenuInfo;
 
@@ -1799,21 +1817,23 @@ void DrawMenuScreen(Tscreen screen, dat Xstart, dat Xend) {
           (SCREENFL_BACK_SELECT | SCREENFL_BACK_PRESSED)) {
         color = TCOL(TCOLBG(color), TCOLFG(color));
       }
-      font = Screen_Back[2 - (dwidth - i)];
+      rune = Screen_Back[2 - (dwidth - i)];
     } else if (dwidth - i <= (dat)3 + lenTWDisplay) {
       color = State == state_screen ? Menu->ColSelShtCut : Menu->ColShtCut;
-      font = TWDisplay[3 + lenTWDisplay - (dwidth - i)];
-      if (!font)
-        font = ' ';
+      rune = TWDisplay[3 + lenTWDisplay - (dwidth - i)];
+      if (!rune) {
+        rune = ' ';
+      }
     } else if (dwidth - i > 9 && (uldat)(dwidth - i) <= 9 + All->BuiltinRow->Len) {
       color = State == state_screen ? Menu->ColSelect : Menu->ColItem;
-      font = All->BuiltinRow->Text[9 + All->BuiltinRow->Len - (dwidth - i)];
-      if (!font)
-        font = ' ';
+      rune = All->BuiltinRow->Text[9 + All->BuiltinRow->Len - (dwidth - i)];
+      if (!rune) {
+        rune = ' ';
+      }
     } else if (MenuInfo && FindInfo(Menu, i)) {
       select = State == state_screen;
       FindFontInfo(Menu, i, select, &attr);
-      font = TRUNE(attr);
+      rune = TRUNE(attr);
       color = TCOLOR(attr);
     } else {
       if (!MenuInfo) {
@@ -1833,19 +1853,19 @@ void DrawMenuScreen(Tscreen screen, dat Xstart, dat Xend) {
            * steal item color from Menu.
            */
           FindFontMenuItem(Menu, item, i - x, select, &attr);
-          font = TRUNE(attr);
+          rune = TRUNE(attr);
           color = TCOLOR(attr);
         }
       }
       if (MenuInfo || !item) {
         color = State == state_screen ? Menu->ColSelect : Menu->ColItem;
-        font = ' ';
+        rune = ' ';
       }
     }
     if (screen != All->Screens.First) {
       color = Menu->ColDisabled;
     }
-    Video[i + j * (ldat)dwidth] = TCELL(color, font);
+    Video[i + j * (ldat)dwidth] = TCELL(color, rune);
   }
   DirtyVideo(Xstart, j, Xend, j);
 }

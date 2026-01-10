@@ -2326,7 +2326,7 @@ tgadget Tw_O_NextWidget(tw_d TwD, twidget a1) {
  */
 void Tw_SetFillWidget(tw_d TwD, twidget a1, tcell a2) {
   a2 = MaybeConvertTCell(TwD, a2);
-  Tw_ChangeField(TwD, a1, TWS_widget_Fill, ~(tcell)0, a2);
+  Tw_ChangeField(TwD, a1, TWS_widget_Fill, TCELL_BAD, a2);
 }
 
 /**

@@ -643,8 +643,9 @@ static void HandleMsg(tmsg msg) {
       FlushHW();
       break;
     case TW_EV_DPY_SetCursorType:
-      if (EventD->Len == sizeof(uldat))
+      if (EventD->Len == sizeof(uldat)) {
         SetCursorType(deserialize<uldat>(EventD->Data));
+      }
       break;
     case TW_EV_DPY_MoveToXY:
       MoveToXY(EventD->X, EventD->Y);

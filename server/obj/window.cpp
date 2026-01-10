@@ -244,6 +244,7 @@ void Swindow::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
   case TWS_window_YendSel:
     /* FIXME: finish this */
     break;
+#ifdef FIXME_TCELL
   case TWS_window_ColGadgets:
   case TWS_window_ColArrows:
   case TWS_window_ColBars:
@@ -293,6 +294,7 @@ void Swindow::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
     }
     break;
   }
+#endif // FIXME_TCELL
   case TWS_window_Flags:
     mask = WINDOWFL_CURSOR_ON;
     old = Flags & mask;

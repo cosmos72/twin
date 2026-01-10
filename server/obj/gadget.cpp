@@ -72,8 +72,8 @@ Tgadget Sgadget::CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolo
   if (addr) {
     g = new (addr) Sgadget();
     if (!((Twidget)g)
-             ->Init(owner, ++xwidth, ++ywidth, 0, GADGETFL_USETEXT | GADGETFL_BUTTON, 0, 0,
-                    (tcell)0, Tgadget_class_id)) {
+             ->Init(owner, ++xwidth, ++ywidth, 0, GADGETFL_USETEXT | GADGETFL_BUTTON, 0, 0, TCELL0,
+                    Tgadget_class_id)) {
       g->Delete();
       return NULL;
     }
@@ -84,7 +84,8 @@ Tgadget Sgadget::CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolo
       g->USE.T.Text[i] = NULL;
       g->USE.T.Color[i] = NULL;
     }
-    bgcol &= TCOL(0, tWHITE);
+    bgcol.fg &= TRGB_MAX;
+    bgcol.bg &= TRGB_MAX;
     for (i = 0; i < 4; i++) {
       if (!(g->USE.T.Text[i] = (trune *)AllocMem(size * sizeof(trune))) ||
           !(g->USE.T.Color[i] = (tcolor *)AllocMem(size * sizeof(tcolor)))) {

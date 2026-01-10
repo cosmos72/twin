@@ -34,7 +34,7 @@ extern Tgadget GadgetFlag, GadgetSwitch;
 extern trune GadgetResize[2], ScrollBarX[3], ScrollBarY[3], TabX, TabY, StdBorder[2][9],
     Screen_Back[2];
 
-extern tcolor DEFAULT_ColGadgets, DEFAULT_ColArrows, DEFAULT_ColBars, DEFAULT_ColTabs,
+extern const tcolor DEFAULT_ColGadgets, DEFAULT_ColArrows, DEFAULT_ColBars, DEFAULT_ColTabs,
     DEFAULT_ColBorder, DEFAULT_ColDisabled, DEFAULT_ColSelectDisabled;
 
 bool InitData(void);

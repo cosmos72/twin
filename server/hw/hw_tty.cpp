@@ -65,8 +65,7 @@ public:
   Tutf_function tty_UTF_32_to_charset;
   Tutf_array tty_charset_to_UTF_32;
   Tdisplay hw;
-  tcolor col;  /* current color */
-  trgb fg, bg; /* current fg, bg colors */
+  tcolor col; /* current fg, bg colors */
   int tty_fd, tty_number;
   uldat tty_charset;
   dat ttypar[3];
@@ -338,8 +337,7 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
   self->hw = hw;
   self->tty_charset = (uldat)-1;
   self->out = NULL;
-  self->col = ~TCOL0; // i.e. unknown
-  self->fg = self->bg = ~(trgb)0;
+  self->col = TCOLOR_BAD; // i.e. unknown
   /*
    * nowadays almost all terminals support UTF-8
    * => enable it by default, can be disabled with option "utf8=no"

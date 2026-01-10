@@ -17,20 +17,22 @@
       (display "a[0]_obj = (Tobj)"))))
 
 (define (TYPE_CAST type kind)
-  (if (pair? kind)
-    (display "(const ")
-    (display "("))
-  (when (or (eq? 'x kind) (and (pair? kind) (memq (car kind) '(X Y))))
-    (display "T"))
-  (display type)
-  (if (pair? kind)
-    (display " *)")
-    (display ")")))
+  (when (or (pair? kind) (not (memq type '(tcell tcolor))))
+    (if (pair? kind)
+      (display "(const ")
+      (display "("))
+    (when (or (eq? 'x kind) (and (pair? kind) (memq (car kind) '(X Y))))
+      (display "T"))
+    (display type)
+    (if (pair? kind)
+      (display " *)")
+      (display ")"))))
 
 
 (define (ARG_CALL arg i)
-  (let ((kind (cadr arg)))
-    (TYPE_CAST (car arg) kind)
+  (let ((type (car arg))
+        (kind (cadr arg)))
+    (TYPE_CAST type kind)
     (display "a[")
     (display i)
     (cond
@@ -38,6 +40,9 @@
         (display "]_obj"))
       ((pair? kind)
         (display "]_vec"))
+      ((memq type '(tcell tcolor))
+        (display "]_")
+        (display type))
       (else
         (display "]_any")))))
 

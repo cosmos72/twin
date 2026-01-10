@@ -96,7 +96,7 @@ case order_ChangeFieldObj:
 
 case order_CreateWidget:
     if (a.size() >= 7) {
-        a[0]_obj = (Tobj)sockCreateWidget(ctx, (dat)a[1]_any, (dat)a[2]_any, (uldat)a[3]_any, (uldat)a[4]_any, (dat)a[5]_any, (dat)a[6]_any, (tcell)a[7]_any);
+        a[0]_obj = (Tobj)sockCreateWidget(ctx, (dat)a[1]_any, (dat)a[2]_any, (uldat)a[3]_any, (uldat)a[4]_any, (dat)a[5]_any, (dat)a[6]_any, a[7]_tcell);
         return ttrue;
     }
     break;
@@ -201,14 +201,14 @@ case order_CirculateChildrenWidget:
 
 case order_CreateGadget:
     if (a.size() >= 13) {
-        a[0]_obj = (Tobj)sockCreateGadget(ctx, (Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (uldat)a[6]_any, (udat)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (tcolor)a[10]_any, (tcolor)a[11]_any, (dat)a[12]_any, (dat)a[13]_any);
+        a[0]_obj = (Tobj)sockCreateGadget(ctx, (Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (uldat)a[6]_any, (udat)a[7]_any, a[8]_tcolor, a[9]_tcolor, a[10]_tcolor, a[11]_tcolor, (dat)a[12]_any, (dat)a[13]_any);
         return ttrue;
     }
     break;
 
 case order_CreateButtonGadget:
     if (a.size() >= 11) {
-        a[0]_obj = (Tobj)Sgadget::CreateButton((Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (udat)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
+        a[0]_obj = (Tobj)Sgadget::CreateButton((Twidget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (udat)a[6]_any, a[7]_tcolor, a[8]_tcolor, a[9]_tcolor, (dat)a[10]_any, (dat)a[11]_any);
         return ttrue;
     }
     break;
@@ -229,7 +229,7 @@ case order_WriteTRunesGadget:
 
 case order_CreateWindow:
     if (a.size() >= 11) {
-        a[0]_obj = (Tobj)sockCreateWindow(ctx, (dat)a[1]_any, (const char *)a[2]_vec, (const tcolor *)a[3]_vec, (Tmenu)a[4]_obj, (tcolor)a[5]_any, (uldat)a[6]_any, (uldat)a[7]_any, (uldat)a[8]_any, (dat)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
+        a[0]_obj = (Tobj)sockCreateWindow(ctx, (dat)a[1]_any, (const char *)a[2]_vec, (const tcolor *)a[3]_vec, (Tmenu)a[4]_obj, a[5]_tcolor, (uldat)a[6]_any, (uldat)a[7]_any, (uldat)a[8]_any, (dat)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
         return ttrue;
     }
     break;
@@ -285,14 +285,14 @@ case order_SetTitleWindow:
 
 case order_SetColTextWindow:
     if (a.size() >= 2) {
-        ((Twindow)a[1]_obj)->SetColText((tcolor)a[2]_any);
+        ((Twindow)a[1]_obj)->SetColText(a[2]_tcolor);
         return ttrue;
     }
     break;
 
 case order_SetColorsWindow:
     if (a.size() >= 11) {
-        ((Twindow)a[1]_obj)->SetColors((udat)a[2]_any, (tcolor)a[3]_any, (tcolor)a[4]_any, (tcolor)a[5]_any, (tcolor)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (tcolor)a[10]_any, (tcolor)a[11]_any);
+        ((Twindow)a[1]_obj)->SetColors((udat)a[2]_any, a[3]_tcolor, a[4]_tcolor, a[5]_tcolor, a[6]_tcolor, a[7]_tcolor, a[8]_tcolor, a[9]_tcolor, a[10]_tcolor, a[11]_tcolor);
         return ttrue;
     }
     break;
@@ -390,7 +390,7 @@ case order_Create4MenuCommonMenuItem:
 
 case order_CreateMenu:
     if (a.size() >= 7) {
-        a[0]_obj = (Tobj)sockCreateMenu(ctx, (tcolor)a[1]_any, (tcolor)a[2]_any, (tcolor)a[3]_any, (tcolor)a[4]_any, (tcolor)a[5]_any, (tcolor)a[6]_any, (byte)a[7]_any);
+        a[0]_obj = (Tobj)sockCreateMenu(ctx, a[1]_tcolor, a[2]_tcolor, a[3]_tcolor, a[4]_tcolor, a[5]_tcolor, a[6]_tcolor, (byte)a[7]_any);
         return ttrue;
     }
     break;

@@ -261,7 +261,7 @@ static byte MergeFunc(str name, node l) {
   return ttrue;
 }
 
-static byte ImmBackground(str name, tcell color, node shape) {
+static byte ImmBackground(str name, tcolor color, node shape) {
   node n;
 
   /* automagically create screen "1" if needed */
@@ -1293,8 +1293,7 @@ static byte NewCommonMenu(void *const *shm_M, Tmenu *res_CommonMenu, node **res_
   new_MenuBindsMax = 0;
   new_MenuList = (node)(*(shm_M + (&MenuList - Globals)));
 
-  if (!(Menu = Smenu::Create(Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0,
-                             (tcolor)0, (tcolor)0, ttrue)))
+  if (!(Menu = Smenu::Create(Ext(WM, MsgPort), TCOL0, TCOL0, TCOL0, TCOL0, TCOL0, TCOL0, ttrue)))
     return tfalse;
 
   /* ok, now create the CommonMenu. Fill new_MenuBinds[] as we proceed */

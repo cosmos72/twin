@@ -51,10 +51,10 @@ trune StdBorder[2][9] = {{0xC9, 0xCD, 0xBB, 0xBA, 0x20, 0xBA, 0xC8, 0xCD, 0xBC},
                          {0xDA, 0xC4, 0xBF, 0xB3, 0x20, 0xB3, 0xC0, 0xC4, 0xD9}};
 trune Screen_Back[2] = {0x12, 0x12};
 
-tcolor DEFAULT_ColGadgets = TCOL(tYELLOW, tcyan), DEFAULT_ColArrows = TCOL(tGREEN, tBLUE),
-       DEFAULT_ColBars = TCOL(twhite, tBLUE), DEFAULT_ColTabs = TCOL(tWHITE, tBLUE),
-       DEFAULT_ColBorder = TCOL(tWHITE, tBLUE), DEFAULT_ColDisabled = TCOL(tBLACK, tblack),
-       DEFAULT_ColSelectDisabled = TCOL(tblack, tBLACK);
+const tcolor DEFAULT_ColGadgets = TCOL(tYELLOW, tcyan), DEFAULT_ColArrows = TCOL(tGREEN, tBLUE),
+             DEFAULT_ColBars = TCOL(twhite, tBLUE), DEFAULT_ColTabs = TCOL(tWHITE, tBLUE),
+             DEFAULT_ColBorder = TCOL(tWHITE, tBLUE), DEFAULT_ColDisabled = TCOL(tBLACK, tblack),
+             DEFAULT_ColSelectDisabled = TCOL(tblack, tBLACK);
 
 bool InitData(void) {
   trune *vec[] = {GadgetResize, ScrollBarX,   ScrollBarY,   &TabX,
@@ -63,8 +63,9 @@ bool InitData(void) {
   uldat i, j;
 
   for (i = 0; i < N_OF(vec); i++) {
-    for (j = 0; j < sizes[i]; j++)
+    for (j = 0; j < sizes[i]; j++) {
       vec[i][j] = Tutf_CP437_to_UTF_32[(byte)vec[i][j]];
+    }
   }
   return AssignId_all(All);
 }

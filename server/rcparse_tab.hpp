@@ -127,7 +127,7 @@ extern int yydebug;
     SHADOWS = 328,                 /* SHADOWS  */
     BUTTON_PASTE = 329,            /* BUTTON_PASTE  */
     BUTTON_SELECTION = 330,        /* BUTTON_SELECTION  */
-    COLOR = 331,                   /* COLOR  */
+    RGB = 331,                     /* RGB  */
     COL_HIGH = 332,                /* COL_HIGH  */
     KBD_FLAG = 333,                /* KBD_FLAG  */
     NUMBER = 334,                  /* NUMBER  */
@@ -141,11 +141,12 @@ extern int yydebug;
 union YYSTYPE
 {
 
-    ldat	 val;
-    ldat_list	*val_list;
-    str          _string;
-    byte         imm;
-    node	 _node;
+    tcolor    col;
+    ldat      val;
+    ldat_list *val_list;
+    str       _string;
+    byte      imm;
+    node      _node;
 
 
 };

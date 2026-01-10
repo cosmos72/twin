@@ -835,7 +835,7 @@ bool InitBuiltin(void) {
 
       (Builtin_Menu = Smenu::Create(Builtin_MsgPort, TCOL(tblack, twhite), TCOL(tblack, tgreen),
                                     TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), TCOL(tred, twhite),
-                                    TCOL(tred, tgreen), TCOL0)) &&
+                                    TCOL(tred, tgreen), 0)) &&
       Builtin_Menu->SetInfo(ROW_ACTIVE, (uldat)42, " Hit PAUSE or Mouse Right Button for Menu ",
                             ColorFill(color_array, 42, TCOL(tred, twhite))) &&
 
@@ -983,7 +983,8 @@ bool InitBuiltin(void) {
                           TCOL(tBLUE, tWHITE), TCOL(tWHITE, twhite), TCOL(tblack, twhite),
                           TCOL(tblack, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack));
 
-    DisplaySubWin->SetColors(0x30, 0, 0, 0, 0, TCOL(tBLACK, twhite), TCOL(tBLACK, twhite), 0, 0, 0);
+    DisplaySubWin->SetColors(0x30, TCOL0, TCOL0, TCOL0, TCOL0, TCOL(tBLACK, twhite),
+                             TCOL(tBLACK, twhite), TCOL0, TCOL0, TCOL0);
 
     DisplaySubWin->Configure(1 << 0 | 1 << 1, -1, -1, 0, 0, 0, 0);
     DisplaySubWin->Map(DisplayWin);
