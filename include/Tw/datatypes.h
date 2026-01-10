@@ -14,7 +14,7 @@
 #endif
 
 #ifdef TW_HAVE_STRING_H
-#include <string.h> /* for memcpy() */
+#include <string.h> /* for memcmp(), memcpy() */
 #endif
 
 #include <Tw/compiler.h> // for TW_INLINE
@@ -122,14 +122,14 @@ TW_INLINE byte TBLUE(trgb rgb) {
 #ifdef __cplusplus
 extern "C++" {
 TW_INLINE bool operator==(tcolor col1, tcolor col2) {
-  return col1.fg == col2.fg && col1.bg == col2.bg;
+  return memcmp(&col1, &col2, sizeof(tcolor) == 0); /* gcc/clang optimize this */
 }
 TW_INLINE bool operator!=(tcolor col1, tcolor col2) {
   return !(col1 == col2);
 }
 
 TW_INLINE bool operator==(const tcell &cell1, const tcell &cell2) {
-  return cell1.rune == cell2.rune && cell1.color == cell2.color;
+  return (cell1.rune == cell2.rune) & (cell1.col == cell2.col); /* gcc/clang optimize this */
 }
 TW_INLINE bool operator!=(const tcell &cell1, const tcell &cell2) {
   return !(cell1 == cell2);
