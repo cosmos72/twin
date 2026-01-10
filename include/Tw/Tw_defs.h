@@ -39,22 +39,22 @@ enum {
 /* enum for common colors represented as 21-bit RGB */
 enum tcolor_e {
 #ifdef TWIN_PALETTE_SOLARIZED
-  tblack = 0x5 << 16 | 0x9 << 8 | 0x11,
+  tblack = 0x050911,
 #else
   tblack = 0,
 #endif
-  tblue = 0xaa,            /* */
-  tgreen = 0xaa << 8,      /* */
+  tblue = 0x0000aa,        /* */
+  tgreen = 0x00aa00,       /* */
   tcyan = tblue | tgreen,  /* */
-  tred = 0xaa << 16,       /* */
+  tred = 0xaa0000,         /* */
   tmagenta = tblue | tred, /* */
   tyellow = tgreen | tred,
 #ifdef TWIN_PALETTE_SOLARIZED
-  twhite = 0xbb << 16 | 0xbb << 8 | 0xbb,
+  twhite = 0xbbbbbb,
 #else
   twhite = tblue | tgreen | tred,
 #endif
-  thigh = 0x55 << 16 | 0x55 << 8 | 0x55,
+  thigh = 0x555555,
 
   tBLACK = thigh | tblack,
   tBLUE = thigh | tblue,
