@@ -173,7 +173,7 @@ am_libhw_all_a_OBJECTS = libhw_all_a-hw_all.$(OBJEXT) $(am__objects_1) \
 	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
 	$(am__objects_5)
 libhw_all_a_OBJECTS = $(am_libhw_all_a_OBJECTS)
-libhw_display_la_DEPENDENCIES =
+libhw_display_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_libhw_display_la_OBJECTS = hw_display.lo
 libhw_display_la_OBJECTS = $(am_libhw_display_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -477,7 +477,7 @@ AM_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -relea
 libhw_x11_la_LDFLAGS = $(AM_LDFLAGS) $(X11_LDFLAGS)
 libhw_xft_la_LDFLAGS = $(AM_LDFLAGS) $(X11_LDFLAGS)
 libhw_all_a_LIBADD = $(LIBTUTF) $(LIBTSTL)
-libhw_display_la_LIBADD = 
+libhw_display_la_LIBADD = $(LIBTSTL)
 libhw_x11_la_LIBADD = $(LIBTUTF) $(LIBTSTL) $(LIBX11)
 libhw_xft_la_LIBADD = $(LIBTUTF) $(LIBTSTL) $(LIBXFT) $(XFT_LIBS) $(LIBX11)
 libhw_tty_la_LIBADD = $(LIBTUTF) $(LIBTSTL) $(LIBTERMCAP) $(LIBGPM)
