@@ -35,12 +35,12 @@ install-exec-hook:
 	    echo " $$CMD_LDCONFIG" ; \
 	    $$CMD_LDCONFIG ; \
 	  else \
-	    echo "[33;1m==================================================================="; \
-	    echo "=========================== WARNING ==============================="; \
-	    echo "==================================================================="; \
-	    echo "===                                                             ==="; \
-	    echo "===    cannot run required command \"$$CMD_LDCONFIG\" now. reasons:     ==="; \
-	    echo "===                                                             ==="; \
+	    echo "[33;1m========================================================================="; \
+	    echo "================================ WARNING ================================"; \
+	    echo "========================================================================="; \
+	    echo "===                                                                   ==="; \
+	    echo "===   cannot run required command \"$$CMD_LDCONFIG\" now. reasons:      ==="; \
+	    echo "===                                                                   ==="; \
 	    if test "x$$CMD_ERR1" != x ; then \
 	      echo "===   * $$CMD_ERR1"; \
 	    fi; \
@@ -50,13 +50,13 @@ install-exec-hook:
 	    if test "x$$CMD_ERR3" != x ; then \
 	      echo "===   * $$CMD_ERR3"; \
 	    fi; \
-	    echo "===                                                             ==="; \
+	    echo "===                                                                   ==="; \
 	    echo "=== remember to run \"$$CMD_LDCONFIG\" with root privileges (or reboot) ==="; \
-	    echo "===       after you install twin into its final location,       ==="; \
-	    echo "===    otherwise you may receive \"library not found\" errors     ==="; \
-	    echo "===                                                             ==="; \
-	    echo "==================================================================="; \
-	    echo "==================================================================="; \
-	    echo "===================================================================[0m"; \
-          fi; \
+	    echo "===        after you install twin into its final location,            ==="; \
+	    echo "===      otherwise you may receive \"library not found\" errors         ==="; \
+	    echo "===                                                                   ==="; \
+	    echo "========================================================================="; \
+	    echo "========================================================================="; \
+	    echo "=========================================================================[0m"; \
+      fi; \
 	fi
