@@ -108,9 +108,13 @@ TW_INLINE tcolor TCOL(trgb fg, trgb bg) {
  */
 #define TRGB(red, green, blue)                                                                     \
   ((trgb)(((trgb)(byte)(red) << 16) | ((trgb)(byte)(green) << 8) | (trgb)(byte)(blue)))
+#define TRGBE(red, green, blue, effects)                                                           \
+  ((trgb)(((trgb)(byte)(effects) << 24)((trgb)(byte)(red) << 16) | ((trgb)(byte)(green) << 8) |    \
+          (trgb)(byte)(blue)))
 #define TRED(rgb) ((byte)((trgb)(rgb) >> 16))
 #define TGREEN(rgb) ((byte)((trgb)(rgb) >> 8))
 #define TBLUE(rgb) ((byte)(trgb)(rgb))
+#define TEFFECTS(rgb) ((byte)((trgb)(rgb) >> 24))
 
 #ifdef __cplusplus
 extern "C++" {
