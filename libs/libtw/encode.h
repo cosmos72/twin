@@ -28,19 +28,36 @@ TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
 
   for (N = space = 0; (c = *Format++); N++, a++) {
     t = (byte)*Format++;
-    if (t >= TWS_highest)
+    if (t >= TWS_highest) {
       /*
        * let (tobj) fields decade into (uldat),
        * since from client side they are the same .
        */
       t = TWS_uldat;
+    }
 
     if (N)
       switch (c) {
       case '_':
       case 'x':
         space += Tw_MagicData[a->type = t];
-        a->TWS_field_scalar = va_arg(va, tany);
+        switch (t) {
+          /* tcolor and tcell are passed by address in variadic arguments
+           * because they are larger than tany */
+        case TWS_tcolor: {
+          const void *addr = va_arg(va, const void *);
+          memcpy(&a->TWS_field_tcolor, addr, sizeof(tcolor));
+          break;
+        }
+        case TWS_tcell: {
+          const void *addr = va_arg(va, const void *);
+          memcpy(&a->TWS_field_tcell, addr, sizeof(tcell));
+          break;
+        }
+        default:
+          a->TWS_field_scalar = va_arg(va, tany);
+          break;
+        }
         break;
       case 'W':
       case 'Y':
@@ -105,31 +122,33 @@ TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
 /* append (tsfield)a to the serialization buffer being constructed */
 static byte *PushArg(byte *buf, tsfield a) {
   switch (a->type) {
-#define ENC_CASE(type)                                                                             \
+#define ENC_CASE(type, field)                                                                      \
   case TW_CAT(TWS_, type): {                                                                       \
-    type tmp = (type)a->TWS_field_scalar;                                                          \
+    type tmp = (type)a->val.field;                                                                 \
     Push(buf, type, tmp);                                                                          \
   }; break
-    ENC_CASE(byte);
-    ENC_CASE(udat);
+    ENC_CASE(byte, _);
+    ENC_CASE(udat, _);
 #if 0
         /* we never meet this here, as EncodeArgs() above turns (tobj) into (uldat) */
       case TWS_tobj:
         /* FALLTHROUGH */
 #endif
-    ENC_CASE(uldat);
-    ENC_CASE(tcolor);
-    ENC_CASE(topaque);
-    ENC_CASE(tany);
-    ENC_CASE(trune);
-    ENC_CASE(tcell);
+    ENC_CASE(uldat, _);
+    ENC_CASE(tcolor, col);
+    ENC_CASE(topaque, _);
+    ENC_CASE(tany, _);
+    ENC_CASE(trune, _);
+    ENC_CASE(tcell, cell);
 #undef ENC_CASE
   default:
     if (a->type & TWS_vec) {
-      if (a->type & TWS_vecW)
+      if (a->type & TWS_vecW) {
         Push(buf, topaque, a->TWS_field_vecL);
-      if (a->TWS_field_vecL)
+      }
+      if (a->TWS_field_vecL) {
         PushV(buf, a->TWS_field_vecL, a->TWS_field_vecV);
+      }
     }
     break;
   }
@@ -138,25 +157,25 @@ static byte *PushArg(byte *buf, tsfield a) {
 
 static void DecodeReply(byte *buf, tsfield a) {
   switch (a->type) {
-#define DEC_CASE(type)                                                                             \
+#define DEC_CASE(type, field)                                                                      \
   case TW_CAT(TWS_, type): {                                                                       \
     type tmp;                                                                                      \
     Pop(buf, type, tmp);                                                                           \
-    a->TWS_field_scalar = tmp;                                                                     \
+    a->val.field = tmp;                                                                            \
   }; break
-    DEC_CASE(byte);
-    DEC_CASE(udat);
+    DEC_CASE(byte, _);
+    DEC_CASE(udat, _);
 #if 0
         /* we never meet this here, as EncodeArgs() above turns (tobj) into (uldat) */
       case TWS_tobj:
         /* FALLTHROUGH */
 #endif
-    DEC_CASE(uldat);
-    DEC_CASE(tcolor);
-    DEC_CASE(topaque);
-    DEC_CASE(tany);
-    DEC_CASE(trune);
-    DEC_CASE(tcell);
+    DEC_CASE(uldat, _);
+    DEC_CASE(tcolor, col);
+    DEC_CASE(topaque, _);
+    DEC_CASE(tany, _);
+    DEC_CASE(trune, _);
+    DEC_CASE(tcell, cell);
   default:
     break;
   }

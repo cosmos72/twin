@@ -284,7 +284,8 @@ static byte InitDialog(void) {
               TwCreateWindow(strlen(title), title, NULL, Dialog_Menu, TCOL(tblack, twhite),
                              TW_LINECURSOR, TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_CLOSE,
                              TW_WINDOWFL_ROWS_DEFCOL, width, height, 0)) &&
-         (TwSetColorsWindow(Dialog_Win, 1 << 6, 0, 0, 0, 0, 0, 0, TCOL(tWHITE, tblue), 0, 0),
+         (TwSetColorsWindow(Dialog_Win, 1 << 6, TCOL0, TCOL0, TCOL0, TCOL0, TCOL0, TCOL0,
+                            TCOL(tWHITE, tblue), TCOL0, TCOL0),
           ttrue) &&
          (*mode)() && (TwMapWindow(Dialog_Win, TwFirstScreen()), ttrue) && TwFlush();
 }

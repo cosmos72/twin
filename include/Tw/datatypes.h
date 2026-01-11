@@ -99,37 +99,30 @@ TW_INLINE tcolor TCOL(trgb fg, trgb bg) {
   tcolor ret = {fg, bg};
   return ret;
 }
-TW_INLINE trgb TCOLBG(tcolor col) {
-  return col.bg;
-}
-TW_INLINE trgb TCOLFG(tcolor col) {
-  return col.fg;
-}
-TW_INLINE trgb TRGB(byte red, byte green, byte blue) {
-  return (trgb)(red << 16) | ((trgb)green << 8) | (trgb)blue;
-}
+#define TCOLFG(col) ((col).fg)
+#define TCOLBG(col) ((col).bg)
 
-TW_INLINE byte TRED(trgb rgb) {
-  return (byte)(rgb >> 16);
-}
-TW_INLINE byte TGREEN(trgb rgb) {
-  return (byte)(rgb >> 8);
-}
-TW_INLINE byte TBLUE(trgb rgb) {
-  return (byte)rgb;
-}
+/**
+ * these could become TW_INLINE functions,
+ * but they would no longer be usable in constant initialization.
+ */
+#define TRGB(red, green, blue)                                                                     \
+  ((trgb)(((trgb)(byte)(red) << 16) | ((trgb)(byte)(green) << 8) | (trgb)(byte)(blue)))
+#define TRED(rgb) ((byte)((trgb)(rgb) >> 16))
+#define TGREEN(rgb) ((byte)((trgb)(rgb) >> 8))
+#define TBLUE(rgb) ((byte)(trgb)(rgb))
 
 #ifdef __cplusplus
 extern "C++" {
 TW_INLINE bool operator==(tcolor col1, tcolor col2) {
-  return memcmp(&col1, &col2, sizeof(tcolor) == 0); /* gcc/clang optimize this */
+  return memcmp(&col1, &col2, sizeof(tcolor)) == 0; /* gcc/clang optimize this */
 }
 TW_INLINE bool operator!=(tcolor col1, tcolor col2) {
   return !(col1 == col2);
 }
 
 TW_INLINE bool operator==(const tcell &cell1, const tcell &cell2) {
-  return (cell1.rune == cell2.rune) & (cell1.col == cell2.col); /* gcc/clang optimize this */
+  return (cell1.rune == cell2.rune) & (cell1.color == cell2.color); /* gcc/clang optimize this */
 }
 TW_INLINE bool operator!=(const tcell &cell1, const tcell &cell2) {
   return !(cell1 == cell2);

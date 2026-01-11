@@ -68,6 +68,10 @@
       (display ", N(a")
       (display i)
       (display ")"))
+    ((memq (car arg) '(tcell tcolor))
+      (display "N(&a")
+      (display i)
+      (display ")"))
     (else
       (display "n(a")
       (display i)

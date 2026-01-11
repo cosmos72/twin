@@ -91,8 +91,9 @@ static byte InitSysMon(int argc, char **argv) {
                            TW_WINDOW_DRAG | TW_WINDOW_CLOSE, (border ? 0 : TW_WINDOWFL_BORDERLESS),
                            numeric ? 29 : 24, 5, 0)) &&
 
-       (TwSetColorsWindow(SysMon_Win, 0x1FF, (tcolor)0x3F, TCOL0, TCOL0, TCOL0, (tcolor)0x9F,
-                          (tcolor)0x17, (tcolor)0x3F, (tcolor)0x18, (tcolor)0x08),
+       (TwSetColorsWindow(SysMon_Win, 0x1FF, TCOL(tWHITE, tcyan), TCOL0, TCOL0, TCOL0,
+                          TCOL(tWHITE, tBLUE), TCOL(twhite, tblue), TCOL(tWHITE, tcyan),
+                          TCOL(tBLACK, tblue), TCOL(tBLACK, tblack)),
         TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, 16, " System Monitor ", color_array),
         TwWriteCharsetWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME"),
         TwMapWindow(SysMon_Win, TwFirstScreen()), ttrue);
@@ -109,24 +110,25 @@ static byte InitSysMon(int argc, char **argv) {
 #define WIDTH 40
 
 static uldat HBar(tcolor Col, uldat len, uldat scale, uldat frac) {
-  static tcolor half;
+  static trgb half;
   char *s = buf;
 
   if (len) {
-    TwSetColTextWindow(SysMon_Win, Col | half);
+    TwSetColTextWindow(SysMon_Win, TCOL(TCOLFG(Col), TCOLBG(Col) | half));
 
     len *= WIDTH;
     len += frac;
 
-    if (frac * 4 >= scale && len >= scale)
+    if (frac * 4 >= scale && len >= scale) {
       memset(s++, '\xDE', 1), len -= scale;
-    else
+    } else {
       frac = 0;
+    }
     memset(s, '\xDB', len / scale / 2);
 
     TwWriteCharsetWindow(SysMon_Win, len / scale / 2 + !!frac, buf);
 
-    half = TCOL(0, TCOLFG(Col));
+    half = TCOLFG(Col);
     frac = len % (scale * 2);
   }
   return frac;
@@ -134,8 +136,9 @@ static uldat HBar(tcolor Col, uldat len, uldat scale, uldat frac) {
 
 void PrintPercent(tcolor Col, uldat percent) {
 
-  if (percent > 100)
+  if (percent > 100) {
     percent = 100;
+  }
   sprintf(buf, " %3d%%", percent);
 
   TwSetColTextWindow(SysMon_Win, Col);
