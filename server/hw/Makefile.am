@@ -18,7 +18,7 @@ libhw_x11_la_LDFLAGS  = $(AM_LDFLAGS) $(X11_LDFLAGS)
 libhw_xft_la_LDFLAGS  = $(AM_LDFLAGS) $(X11_LDFLAGS)
 
 libhw_all_a_LIBADD      = $(LIBTUTF) $(LIBTSTL)
-libhw_display_la_LIBADD =
+libhw_display_la_LIBADD =            $(LIBTSTL)
 libhw_x11_la_LIBADD     = $(LIBTUTF) $(LIBTSTL) $(LIBX11)
 libhw_xft_la_LIBADD     = $(LIBTUTF) $(LIBTSTL) $(LIBXFT) $(XFT_LIBS) $(LIBX11)
 libhw_tty_la_LIBADD     = $(LIBTUTF) $(LIBTSTL) $(LIBTERMCAP) $(LIBGPM)

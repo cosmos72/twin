@@ -2134,11 +2134,17 @@ static byte Check4MagicTranslation(uldat slot, const byte *magic, byte len) {
       /*check endianity*/
       !memcmp(magic + len1 + 1, TwinMagicData + TWS_highest + 1, sizeof(uldat))) {
 
+    byte *alien_magic = AlienMagic(slot);
+
     /* store client magic numbers */
-    CopyMem(magic, AlienMagic(slot), Min2(len1, TWS_highest));
-    if (len1 < TWS_highest)
+    CopyMem(magic, alien_magic, Min2(len1, TWS_highest));
+
+    if (len1 < TWS_highest) {
       /* version mismatch compatibility: zero out unnegotiated sizes */
-      memset(AlienMagic(slot) + len1, '\0', TWS_highest - len1);
+      memset(alien_magic + len1, '\0', TWS_highest - len1);
+    }
+    /* store client endianity, matches ours */
+    CopyMem(magic + len1 + 1, alien_magic + TWS_highest + 1, sizeof(uldat));
 
     return MagicNative;
   }
@@ -2150,19 +2156,22 @@ static byte Check4MagicTranslation(uldat slot, const byte *magic, byte len) {
       magic[TWS_udat] >= 2 && magic[TWS_uldat] >= 4 && len - len1 == magic[TWS_uldat] + 1 &&
       /* sizeof(tcolor) MUST match, or passing tcolor[] vectors would fail */
       magic[TWS_tcolor] == sizeof(tcolor) && magic[TWS_topaque] >= 4 && magic[TWS_tany] >= 4 &&
-      magic[TWS_trune] >= 1 && magic[TWS_tcell] >= 2) {
+      magic[TWS_trune] >= 4 &&
+      /* sizeof(tcell) MUST match, or passing tcell[] vectors would fail */
+      magic[TWS_tcell] == sizeof(tcell)) {
+
+    byte *alien_magic = AlienMagic(slot);
 
     /* store client magic numbers */
-    CopyMem(magic, AlienMagic(slot), Min2(len1, TWS_highest));
+    CopyMem(magic, alien_magic, Min2(len1, TWS_highest));
     if (len1 < TWS_highest) {
       /* version mismatch compatibility: zero out unnegotiated sizes */
-      memset(AlienMagic(slot) + len1, '\0', TWS_highest - len1);
+      memset(alien_magic + len1, '\0', TWS_highest - len1);
     }
+
     if (warn_count < 6) {
       zero = NULL;
-      if (AlienMagic(slot)[TWS_tcell] < sizeof(tcell)) {
-        zero = "tcell";
-      } else if (AlienMagic(slot)[TWS_trune] < sizeof(trune)) {
+      if (alien_magic[TWS_trune] < sizeof(trune)) {
         zero = "trune";
       }
       if (zero) {
@@ -2177,6 +2186,17 @@ static byte Check4MagicTranslation(uldat slot, const byte *magic, byte len) {
       }
     }
 
+    /* clamp magic numbers larger than ours, and offer back min(client sizes, our sizes).
+     * Reason: we do not know how to narrow wider types, let client narrow them if it can */
+
+    alien_magic[TWS_udat] = Min2(alien_magic[TWS_udat], sizeof(udat));
+    alien_magic[TWS_ldat] = Min2(alien_magic[TWS_ldat], sizeof(ldat));
+    alien_magic[TWS_uldat] = Min2(alien_magic[TWS_uldat], sizeof(uldat));
+    alien_magic[TWS_topaque] = Min2(alien_magic[TWS_topaque], sizeof(topaque));
+    alien_magic[TWS_tany] = Min2(alien_magic[TWS_tany], sizeof(topaque));
+    alien_magic[TWS_trune] = Min2(alien_magic[TWS_trune], sizeof(trune));
+    alien_magic[TWS_tcell] = Min2(alien_magic[TWS_tcell], sizeof(tcell));
+
     /*
      * now check endianity.
      *
@@ -2186,12 +2206,17 @@ static byte Check4MagicTranslation(uldat slot, const byte *magic, byte len) {
      * On big endian machines, (magic+len1+1) is ..."niwT", with
      * (magic[TWS_uldat] - 4) zeroed bytes at start.
      */
-    if (!memcmp(magic + len1 + 1, "Twin", 4))
+    byte *alien_xendian = alien_magic + TWS_highest + 1;
+    if (!memcmp(magic + len1 + 1, "Twin", 4)) {
+      CopyMem("Twin", alien_xendian, 4);
       /* little endian client. and us? */
       return TW_IS_LITTLE_ENDIAN ? MagicAlien : MagicAlienXendian;
-    if (!memcmp(magic + len1 + 1 + (magic[TWS_uldat] - 4), "niwT", 4))
+    }
+    if (!memcmp(magic + len1 + 1 + (magic[TWS_uldat] - 4), "niwT", 4)) {
+      CopyMem("niwT", alien_xendian, 4);
       /* big endian client. and us? */
       return TW_IS_BIG_ENDIAN ? MagicAlien : MagicAlienXendian;
+    }
   }
 
 #endif /* CONF_SOCKET_ALIEN */
@@ -2222,6 +2247,9 @@ static void Wait4Magic(int fd, uldat slot) {
     /* not yet ready to check */
     return;
   } else { /* (got >= max) */
+
+    byte *alien_magic = AlienMagic(slot);
+
     /*
      * check whether the client has our same sizes and endianity
      * or one of the available translations is needed.
@@ -2231,15 +2259,15 @@ static void Wait4Magic(int fd, uldat slot) {
        * no suitable translation available. use our native magic,
        * in case client's library can handle it.
        */
-      CopyMem(TwinMagicData, AlienMagic(slot), TWS_highest);
+      CopyMem(TwinMagicData, alien_magic, sizeof(TwinMagicData));
       AlienXendian(slot) = MagicNative;
       got = SendTwinMagic(slot, TwinMagicData[0], TwinMagicData);
     } else {
       /*
        * we have a translation for client's magic.
-       * answer its same magic.
+       * answer its same magic, clamped to our sizes.
        */
-      got = SendTwinMagic(slot, (byte)max, t);
+      got = SendTwinMagic(slot, (byte)max, alien_magic);
     }
     RemoteReadDeQueue(slot, max);
 

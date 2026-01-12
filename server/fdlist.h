@@ -33,19 +33,22 @@ struct fdlist {               /* the uncompressed one has                       
   byte *RQueue;
   uldat WQlen, WQmax;
   uldat RQstart, RQlen, RQmax;
-  void (*PrivateAfterFlush)(uldat Slot); /* private enable/disable compression routine.
-                                          * it gets called after RemoteFlush() and it must
-                                          * remove itself if needed (e.g. call-once routines)
-                                          */
-  byte (*PrivateFlush)(uldat Slot);      /* private flush ((un)compression) routine */
-  void *PrivateData;                     /* used by (un)compression routines to hold private data */
+  /*
+   * private enable/disable compression routine. it gets called after RemoteFlush()
+   * and it must remove itself if needed (e.g. call-once routines)
+   */
+  void (*PrivateAfterFlush)(uldat Slot);
   /*
    * PrivateFlush and PrivateData are used both on low-level, compressed slot and on
    * uncompressed slot: in the compressed slot they are used to compress outgoing data,
    * while in the uncompressed one they are used to uncompress incoming data.
    */
-  byte AlienMagic[9 /*TWS_highest*/]; /* sizes and endianity used by slot
-                                       * instead of native sizes and endianity */
+  byte (*PrivateFlush)(uldat Slot); /* private flush ((un)compression) routine */
+  void *PrivateData;                /* used by (un)compression routines to hold private data */
+
+  /* sizes used by slot instead of native sizes and endianity */
+  byte AlienMagic[10 + sizeof(uldat)];
+  byte AlienXendian;
   byte extern_couldntwrite;
 };
 
@@ -59,7 +62,7 @@ enum Alien_magics {
 
 #define AlienMagic(slot) (FdList[slot].AlienMagic)
 
-#define AlienXendian(slot) AlienMagic(slot)[TWS_void /*0*/]
+#define AlienXendian(slot) (FdList[slot].AlienXendian)
 #define AlienSizeof(type, slot) AlienMagic(slot)[TWS_##type]
 
 #endif /* TWIN_FDLIST_H */
