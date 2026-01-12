@@ -1475,9 +1475,9 @@ TW_ATTR_FN_CONST const char *Tw_StrError(const tw_d TwD, uldat e) {
   case 0:
     return "success";
   case TW_ESERVER_BAD_ENDIAN:
-    return "server has reversed endianity, impossible to connect";
+    return "server offered reversed endianity, unable to connect";
   case TW_ESERVER_BAD_SIZES:
-    return "server has different data sizes, impossible to connect";
+    return "server offered incompatible data sizes, unable to connect";
   case TW_EBAD_SIZES:
     return "compiled data sizes are incompatible with libtw now in use!";
   case TW_EBAD_STRUCTS:
@@ -1515,7 +1515,7 @@ TW_ATTR_FN_CONST const char *Tw_StrError(const tw_d TwD, uldat e) {
   case TW_ENO_HOST:
     return "unknown host in TWDISPLAY: ";
   case TW_ESERVER_BAD_VERSION:
-    return "server has incompatible protocol version, impossible to connect";
+    return "server has incompatible protocol version, unable to connect";
   case TW_ESERVER_BAD_RETURN:
     return "server function call returned strange data, wrong data sizes? : ";
   case TW_ECALL_BAD:
