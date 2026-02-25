@@ -117,6 +117,14 @@ public:
     return data_ + size_;
   }
 
+  /* remove the first element */
+  void pop_front() NOTHROW {
+    if (size_) {
+      ++data_;
+      --size_;
+    }
+  }
+
   /* remove the last element */
   void pop_back() NOTHROW {
     if (size_) {

@@ -74,3 +74,13 @@ bool Chars::ends_with0(Chars str, Chars substr) NOTHROW {
   const char *s2 = substr.data();
   return (s1 == s2 && n1 == n2) || !std::memcmp(s1 + (n1 - n2), s2, n2);
 }
+
+Chars Chars::trim0(Chars str) NOTHROW {
+  size_t i, j;
+  char ch;
+  for (i = 0; i < str.size() && (ch = str[i]) >= '\0' && ch <= ' '; i++) {
+  }
+  for (j = str.size(); j > i && (ch = str[j - 1]) >= '\0' && ch <= ' '; j--) {
+  }
+  return str.view(i, j);
+}

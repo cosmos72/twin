@@ -214,7 +214,7 @@ twin_LDADD = $(LDADD)
 am__dirstamp = $(am__leading_dot)dirstamp
 am__objects_3 = alloc.$(OBJEXT) builtin.$(OBJEXT) data.$(OBJEXT) \
 	draw.$(OBJEXT) extreg.$(OBJEXT) hw.$(OBJEXT) \
-	hw_multi.$(OBJEXT) log.$(OBJEXT) main.$(OBJEXT) \
+	hw_multi.$(OBJEXT) ini.$(OBJEXT) log.$(OBJEXT) main.$(OBJEXT) \
 	methods.$(OBJEXT) missing.$(OBJEXT) palette.$(OBJEXT) \
 	obj/all.$(OBJEXT) obj/display.$(OBJEXT) obj/gadget.$(OBJEXT) \
 	obj/group.$(OBJEXT) obj/id.$(OBJEXT) obj/menu.$(OBJEXT) \
@@ -273,7 +273,7 @@ am__depfiles_remade = ./$(DEPDIR)/alloc.Po ./$(DEPDIR)/builtin.Po \
 	./$(DEPDIR)/data.Po ./$(DEPDIR)/display.Po \
 	./$(DEPDIR)/dl_dynamic.Po ./$(DEPDIR)/dl_helper.Po \
 	./$(DEPDIR)/draw.Po ./$(DEPDIR)/extreg.Po ./$(DEPDIR)/hw.Po \
-	./$(DEPDIR)/hw_multi.Po \
+	./$(DEPDIR)/hw_multi.Po ./$(DEPDIR)/ini.Po \
 	./$(DEPDIR)/libtwin_static_a-dl_static.Po \
 	./$(DEPDIR)/libtwin_static_a-md5.Po \
 	./$(DEPDIR)/libtwin_static_a-rcparse_lex.Po \
@@ -588,8 +588,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/include $(LTDLINCL) -DPLUGINDIR="\"$(pkglibdir)\""
 twin_CPPFLAGS = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir)\""
 twdisplay_SOURCES = alloc.cpp display.cpp dl_helper.cpp hw.cpp log.cpp missing.cpp palette.cpp
 twin_SOURCES = wrapper.c
-twin_server_common_SOURCES = alloc.cpp builtin.cpp data.cpp draw.cpp extreg.cpp \
-                        hw.cpp hw_multi.cpp log.cpp main.cpp methods.cpp missing.cpp palette.cpp \
+twin_server_common_SOURCES = alloc.cpp builtin.cpp data.cpp draw.cpp extreg.cpp hw.cpp hw_multi.cpp \
+                        ini.cpp log.cpp main.cpp methods.cpp missing.cpp palette.cpp \
                         obj/all.cpp obj/display.cpp obj/gadget.cpp obj/group.cpp \
                         obj/id.cpp obj/menu.cpp obj/menuitem.cpp obj/module.cpp obj/msg.cpp obj/msgport.cpp \
                         obj/mutex.cpp obj/obj.cpp obj/row.cpp obj/screen.cpp obj/widget.cpp obj/window.cpp \
@@ -840,6 +840,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/extreg.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hw.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hw_multi.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ini.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtwin_static_a-dl_static.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtwin_static_a-md5.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtwin_static_a-rcparse_lex.Po@am__quote@ # am--include-marker
@@ -1242,6 +1243,7 @@ distclean: distclean-recursive
 	-rm -f ./$(DEPDIR)/extreg.Po
 	-rm -f ./$(DEPDIR)/hw.Po
 	-rm -f ./$(DEPDIR)/hw_multi.Po
+	-rm -f ./$(DEPDIR)/ini.Po
 	-rm -f ./$(DEPDIR)/libtwin_static_a-dl_static.Po
 	-rm -f ./$(DEPDIR)/libtwin_static_a-md5.Po
 	-rm -f ./$(DEPDIR)/libtwin_static_a-rcparse_lex.Po
@@ -1342,6 +1344,7 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f ./$(DEPDIR)/extreg.Po
 	-rm -f ./$(DEPDIR)/hw.Po
 	-rm -f ./$(DEPDIR)/hw_multi.Po
+	-rm -f ./$(DEPDIR)/ini.Po
 	-rm -f ./$(DEPDIR)/libtwin_static_a-dl_static.Po
 	-rm -f ./$(DEPDIR)/libtwin_static_a-md5.Po
 	-rm -f ./$(DEPDIR)/libtwin_static_a-rcparse_lex.Po

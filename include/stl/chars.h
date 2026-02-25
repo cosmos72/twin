@@ -65,10 +65,16 @@ public:
     return Chars(Base::view(start, end));
   }
 
+  /** skip all initial and final bytes in '\0' ... SPACE */
+  Chars trim() const NOTHROW {
+    return trim0(*this);
+  }
+
 private:
   static size_t find0(Chars str, Chars substr) NOTHROW;
   static bool starts_with0(Chars str, Chars substr) NOTHROW;
   static bool ends_with0(Chars str, Chars substr) NOTHROW;
+  static Chars trim0(Chars str) NOTHROW;
 };
 
 #endif /* TWIN_STL_CHARS_H */

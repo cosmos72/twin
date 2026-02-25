@@ -16,6 +16,9 @@
 #include "obj/id.h"
 #include "data.h"
 #include "util.h"
+#include "ini.h"
+#include "log.h"
+#include "main.h" // HOME
 
 #include <Tw/Twkeys.h>
 #include <Tutf/Tutf.h>
@@ -51,10 +54,193 @@ trune StdBorder[2][9] = {{0xC9, 0xCD, 0xBB, 0xBA, 0x20, 0xBA, 0xC8, 0xCD, 0xBC},
                          {0xDA, 0xC4, 0xBF, 0xB3, 0x20, 0xB3, 0xC0, 0xC4, 0xD9}};
 trune Screen_Back[2] = {0x12, 0x12};
 
-const tcolor DEFAULT_ColGadgets = TCOL(tYELLOW, tcyan), DEFAULT_ColArrows = TCOL(tGREEN, tBLUE),
-             DEFAULT_ColBars = TCOL(twhite, tBLUE), DEFAULT_ColTabs = TCOL(tWHITE, tBLUE),
-             DEFAULT_ColBorder = TCOL(tWHITE, tBLUE), DEFAULT_ColDisabled = TCOL(tBLACK, tblack),
-             DEFAULT_ColSelectDisabled = TCOL(tblack, tBLACK);
+static tcolor DEFAULT_Colors[] = {
+    TCOL(tYELLOW, tcyan), // Gadgets
+    TCOL(tGREEN, tBLUE),  // Arrows
+    TCOL(twhite, tBLUE),  // Bars
+    TCOL(tWHITE, tBLUE),  // Tabs
+    TCOL(tWHITE, tBLUE),  // Border
+    TCOL(tBLACK, tblack), // Disabled
+    TCOL(tblack, tBLACK), // SelectDisabled
+};
+
+tcolor &DEFAULT_ColGadgets = DEFAULT_Colors[0];
+tcolor &DEFAULT_ColArrows = DEFAULT_Colors[1];
+tcolor &DEFAULT_ColBars = DEFAULT_Colors[2];
+tcolor &DEFAULT_ColTabs = DEFAULT_Colors[3];
+tcolor &DEFAULT_ColBorder = DEFAULT_Colors[4];
+tcolor &DEFAULT_ColDisabled = DEFAULT_Colors[5];
+tcolor &DEFAULT_ColSelectDisabled = DEFAULT_Colors[6];
+
+static const Chars color_keys[] = {
+    Chars("Gadgets"), Chars("Arrows"),   Chars("Bars"),           Chars("Tabs"),
+    Chars("Borders"), Chars("Disabled"), Chars("SelectDisabled"),
+};
+
+enum e_color_err {
+  e_color_ok = 0,
+  e_color_badkey = 1,
+  e_color_badvalue = 2,
+};
+
+static bool ParseHex(Chars str, uint32_t &out) {
+  size_t i, n;
+  uint32_t val = 0, digit;
+  for (i = 0, n = str.size(); i < n; i++) {
+    char ch = str[i];
+    if (ch >= '0' && ch <= '9') {
+      digit = ch - '0';
+    } else if (ch >= 'A' && ch <= 'F') {
+      digit = ch - 'A' + 10;
+    } else if (ch >= 'a' && ch <= 'f') {
+      digit = ch - 'a' + 10;
+    } else {
+      return false;
+    }
+    val = (val << 4) | digit;
+  }
+  out = val;
+  return true;
+}
+
+static e_color_err ParseRgbHex4(Chars str, trgb &rgb) {
+  uint32_t n;
+  str.pop_front(); // remove inital '#'
+  if (!ParseHex(str, n)) {
+    return e_color_badvalue;
+  }
+  byte r = 0x11 * ((n >> 16) & 0xF);
+  byte g = 0x11 * ((n >> 8) & 0xF);
+  byte b = 0x11 * ((n >> 0) & 0xF);
+  rgb = TRGB(r, g, b);
+  return e_color_ok;
+}
+
+static e_color_err ParseRgbHex7(Chars str, trgb &rgb) {
+  uint32_t n;
+  str.pop_front(); // remove inital '#'
+  if (!ParseHex(str, n)) {
+    return e_color_badvalue;
+  }
+  byte r = ((n >> 16) & 0xFF);
+  byte g = ((n >> 8) & 0xFF);
+  byte b = ((n >> 0) & 0xFF);
+  rgb = TRGB(r, g, b);
+  return e_color_ok;
+}
+
+static e_color_err ParseRgbHex(Chars str, trgb &rgb) {
+  switch (str.size()) {
+  case 4:
+    return ParseRgbHex4(str, rgb);
+  case 7:
+    return ParseRgbHex7(str, rgb);
+  default:
+    return e_color_badvalue;
+  }
+}
+
+static e_color_err ParseColorHex(Chars str, tcolor &col) {
+  size_t comma = str.find(Chars(","));
+  if (comma == size_t(-1)) {
+    return e_color_badvalue;
+  }
+  Chars fg = str.view(0, comma).trim();
+  Chars bg = str.view(comma + 1, str.size()).trim();
+  if (!fg.starts_with(Chars("#")) || !bg.starts_with(Chars("#"))) {
+    return e_color_badvalue;
+  }
+  e_color_err err = ParseRgbHex(fg, col.fg);
+  if (err == e_color_ok) {
+    err = ParseRgbHex(bg, col.bg);
+  }
+  return err;
+}
+
+static e_color_err SetDefaultColorByName(Chars key, Chars value) {
+  for (unsigned i = 0; i < N_OF(color_keys); i++) {
+    if (key == color_keys[i]) {
+      return ParseColorHex(value, DEFAULT_Colors[i]);
+    }
+  }
+  return e_color_badkey;
+}
+
+static void LogColorError(Ini &ini, Chars path, e_color_err err) {
+  switch (err) {
+  case e_color_ok:
+  default:
+    break;
+  case e_color_badkey:
+    log(ERROR) << "unknown key [WindowColors]:" << ini.key() << " in file " << path << ":"
+               << ini.linenum() << "\n";
+    break;
+  case e_color_badvalue:
+    log(ERROR) << "invalid color " << ini.value() << " for key [WindowColors]:" << ini.key()
+               << " in file " << path << ":" << ini.linenum() << "\n";
+    break;
+  }
+}
+
+static bool LoadTheme(Ini &ini, Chars path) {
+  enum {
+    e_section_unknown = 0,
+    e_section_window_colors = 1,
+  } section;
+
+  for (;;) {
+    const IniToken token = ini.next();
+    switch (token) {
+    case INI_SECTION:
+      // log(INFO) << "theme [" << ini.section() << "]\n";
+      if (ini.section() == Chars("WindowColors")) {
+        section = e_section_window_colors;
+      } else {
+        section = e_section_unknown;
+      }
+      break;
+    case INI_KEY_VALUE:
+      // log(INFO) << "theme " << ini.key() << " " << ini.value() << "\n";
+      if (section == e_section_window_colors) {
+        e_color_err err = SetDefaultColorByName(ini.key(), ini.value());
+        LogColorError(ini, path, err);
+      }
+      break;
+    case INI_ERROR:
+      log(ERROR) << "error loading theme at " << path << ":" << ini.linenum() << "\n";
+      break;
+    case INI_EOF:
+      return true;
+    }
+  }
+}
+
+static bool InitTheme(void) {
+  // requires HOME, set by InitGlobalVariables()
+  const Chars prefix[2] = {
+      Chars::from_c(getenv("XDG_CONFIG_HOME")),
+      HOME,
+  };
+  const Chars infix[2] = {
+      "",
+      "/.config",
+  };
+  String path;
+  for (unsigned i = 0; i < 2; i++) {
+    if (prefix[i].empty()) {
+      continue;
+    }
+    if (!path.format(prefix[i], infix[i], "/twin/theme.ini")) {
+      return false; /* out of memory */
+    }
+    Ini ini(path);
+    if (!ini.is_open()) {
+      continue;
+    }
+    return LoadTheme(ini, path);
+  }
+  return true; // no theme.ini found
+}
 
 bool InitData(void) {
   trune *vec[] = {GadgetResize, ScrollBarX,   ScrollBarY,   &TabX,
@@ -67,5 +253,5 @@ bool InitData(void) {
       vec[i][j] = Tutf_CP437_to_UTF_32[(byte)vec[i][j]];
     }
   }
-  return AssignId_all(All);
+  return AssignId_all(All) && InitTheme();
 }
