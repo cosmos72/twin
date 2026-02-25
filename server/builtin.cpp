@@ -962,9 +962,8 @@ bool InitBuiltin(void) {
                         TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
                         TCOL(tBLACK, tblack));
 
-    ClockWin->SetColors(0x1FF, TCOL(tYELLOW, tcyan), TCOL0, TCOL0, TCOL0, TCOL(tWHITE, tBLUE),
-                        TCOL(tYELLOW, tblue), TCOL(tYELLOW, tcyan), TCOL(tBLACK, tblue),
-                        TCOL(tBLACK, tblack));
+    ClockWin->SetColors(0x60, TCOL0, TCOL0, TCOL0, TCOL0, TCOL0, TCOL(tYELLOW, tblue),
+                        TCOL(tYELLOW, tcyan), TCOL0, TCOL0);
 
     OptionWin->SetColors(0x1FF, TCOL(tGREEN, twhite), TCOL0, TCOL0, TCOL0, TCOL(tWHITE, twhite),
                          TCOL(tBLACK, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
@@ -974,9 +973,8 @@ bool InitBuiltin(void) {
                          TCOL(tWHITE, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
                          TCOL(tBLACK, tblack));
 
-    WinList->SetColors(0x1FF, TCOL(tYELLOW, tcyan), TCOL(tGREEN, tBLUE), TCOL(twhite, tBLUE),
-                       TCOL(tWHITE, tBLUE), TCOL(tWHITE, tBLUE), TCOL(twhite, tblue),
-                       TCOL(tBLUE, twhite), TCOL(tBLACK, tblue), TCOL(tBLACK, tblack));
+    WinList->SetColors(0x60, TCOL0, TCOL0, TCOL0, TCOL0, TCOL0, TCOL(twhite, tblue),
+                       TCOL(tBLUE, twhite), TCOL0, TCOL0);
     WinList->Configure(1 << 2 | 1 << 3, 0, 0, 15, 2, 0, 0);
 
     DisplayWin->SetColors(0x1FF, TCOL(tGREEN, twhite), TCOL(tWHITE, twhite), TCOL(tBLUE, twhite),

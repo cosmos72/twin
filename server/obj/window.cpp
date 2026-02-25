@@ -56,9 +56,8 @@ Twindow Swindow::Create4Menu(Tmenu menu) {
                                             WINDOWFL_ROWS_SELCURRENT,
                                         MIN_XWIN, MIN_YWIN, 0))) {
 
-    window->SetColors(0x1FF, TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(tWHITE, twhite),
-                      TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
-                      TCOL(tBLACK, tblack));
+    window->SetColors(0x1FF, TCOL0, TCOL0, TCOL0, TCOL0, TCOL(tWHITE, twhite), TCOL(tblack, twhite),
+                      TCOL(tblack, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack));
     window->Configure(0x3F, 0, 1, MIN_XWIN, MIN_YWIN, TW_MAXDAT, TW_MAXDAT);
   }
   return window;
