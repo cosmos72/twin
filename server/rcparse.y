@@ -68,11 +68,12 @@
  */
 
 %union {
-    ldat	 val;
-    ldat_list	*val_list;
-    str          _string;
-    byte         imm;
-    node	 _node;
+    tcolor    col;
+    ldat      val;
+    ldat_list *val_list;
+    str       _string;
+    byte      imm;
+    node      _node;
 }
 
 /*
@@ -116,7 +117,7 @@
 %token ALTFONT CURSOR_ALWAYS BLINK MENU_HIDE MENU_INFO MENU_RELAX SCREEN_SCROLL TERMINALS_UTF8 SHADOWS
 %token BUTTON_PASTE BUTTON_SELECTION
 
-%token <val> COLOR
+%token <val> RGB
 %token COL_HIGH
 
 %token <val> KBD_FLAG
@@ -128,12 +129,13 @@
 
 
 /* complicated things: */
-%type <val>         color high
+%type <col>         color
+%type <val>         high
 %type <_string>     string
-%type <val>	    interactive_mode move_or_resize
+%type <val>            interactive_mode move_or_resize
 %type <val>         flag opt_flag flag_active opt_flag_toggle flag_lr
-%type <val>	    flag_kbd opt_flag_kbd
-%type <imm>	    nl opt_nl immediate_line
+%type <val>            flag_kbd opt_flag_kbd
+%type <imm>            nl opt_nl immediate_line
 %type <_node>       func line
 %type <_node>       global_flag funcbody menubody textbody
 %type <_node>       string_list line_list global_list
@@ -149,185 +151,186 @@
  * Grammar rules
  */
 
-rcfile		: line_list	{ CallList = $1; }
+rcfile        : line_list    { CallList = $1; }
                 ;
 
-line_list	:           line { $$ = AddtoNodeList(NULL, $1); }
+line_list    :           line { $$ = AddtoNodeList(NULL, $1); }
                 | line_list line { $$ = AddtoNodeList( $1 , $2); }
                 ;
 
-line		: immediate_line '\n' { $$ = NULL; }
-		| func           '\n' { $$ = $1; }
-		| READ string    '\n' { set_yy_file(FindConfigFile($2, NULL)); $$ = NULL; }
-		| '\n'                { $$ = NULL; }
+line        : immediate_line '\n' { $$ = NULL; }
+        | func           '\n' { $$ = $1; }
+        | READ string    '\n' { set_yy_file(FindConfigFile($2, NULL)); $$ = NULL; }
+        | '\n'                { $$ = NULL; }
                 ;
 
-nl		:    '\n' {}
-		| nl '\n' {}
-		;
+nl        :    '\n' {}
+        | nl '\n' {}
+        ;
 
-opt_nl		: /* nothing */ {}
-		| nl            {}
-		;
+opt_nl        : /* nothing */ {}
+        | nl            {}
+        ;
 
-immediate_line	: ADDSCREEN  string               { $$ = ImmAddScreen($2); }
-		| ADDTOMENU  string               { $$ = MergeMenu($2, NULL); }
-		| ADDTOMENU  string menubody_list { $$ = MergeMenu($2,  $3 ); }
-		| ADDTOFUNC  string               { $$ = MergeFunc($2, NULL); }
-		| ADDTOFUNC  string funcbody_list { $$ = MergeFunc($2,  $3 ); }
-		| BACKGROUND string color               { $$ = ImmBackground($2, $3, NULL); }
-		| BACKGROUND string color textbody_list { $$ = ImmBackground($2, $3,  $4 ); }
-		| BORDER     string flag_active               { $$ = ImmBorder($2, $3, NULL); }
-		| BORDER     string flag_active textbody_list { $$ = ImmBorder($2, $3,  $4 ); }
-		| BUTTON     NUMBER string flag_lr                 { $$ = ImmButton($2, $3, $4, '+', 0); }
-		| BUTTON     NUMBER string flag_lr opt_flag NUMBER { $$ = ImmButton($2, $3, $4, $5, $6); }
-		| DELETEFUNC	string { $$ = ImmDeleteFunc($2); }
-		| DELETEMENU    string { $$ = ImmDeleteMenu($2); }
-		| DELETEBUTTON  NUMBER { $$ = ImmDeleteButton($2); }
-		| DELETESCREEN  string { $$ = ImmDeleteScreen($2); }
-		| GLOBALFLAGS   global_list { $$ = ImmGlobalFlags($2); }
-		| KEY   opt_flag_kbd string func { $$ = BindKey  ($2, $3, $4); }
-		| MOUSE string       string func { $$ = BindMouse($2, $3, $4); }
-		;
+immediate_line    : ADDSCREEN  string               { $$ = ImmAddScreen($2); }
+        | ADDTOMENU  string               { $$ = MergeMenu($2, NULL); }
+        | ADDTOMENU  string menubody_list { $$ = MergeMenu($2,  $3 ); }
+        | ADDTOFUNC  string               { $$ = MergeFunc($2, NULL); }
+        | ADDTOFUNC  string funcbody_list { $$ = MergeFunc($2,  $3 ); }
+        | BACKGROUND string color               { $$ = ImmBackground($2, $3, NULL); }
+        | BACKGROUND string color textbody_list { $$ = ImmBackground($2, $3,  $4 ); }
+        | BORDER     string flag_active               { $$ = ImmBorder($2, $3, NULL); }
+        | BORDER     string flag_active textbody_list { $$ = ImmBorder($2, $3,  $4 ); }
+        | BUTTON     NUMBER string flag_lr                 { $$ = ImmButton($2, $3, $4, '+', 0); }
+        | BUTTON     NUMBER string flag_lr opt_flag NUMBER { $$ = ImmButton($2, $3, $4, $5, $6); }
+        | DELETEFUNC    string { $$ = ImmDeleteFunc($2); }
+        | DELETEMENU    string { $$ = ImmDeleteMenu($2); }
+        | DELETEBUTTON  NUMBER { $$ = ImmDeleteButton($2); }
+        | DELETESCREEN  string { $$ = ImmDeleteScreen($2); }
+        | GLOBALFLAGS   global_list { $$ = ImmGlobalFlags($2); }
+        | KEY   opt_flag_kbd string func { $$ = BindKey  ($2, $3, $4); }
+        | MOUSE string       string func { $$ = BindMouse($2, $3, $4); }
+        ;
 
-funcbody_list	: '(' opt_nl _funcbody_list ')' { $$ = $3; }
-		;
+funcbody_list    : '(' opt_nl _funcbody_list ')' { $$ = $3; }
+        ;
 
-_funcbody_list	:                funcbody { $$ = AddtoNodeList(NULL, $1); }
-		| _funcbody_list funcbody { $$ = AddtoNodeList( $1 , $2); }
-		;
+_funcbody_list    :                funcbody { $$ = AddtoNodeList(NULL, $1); }
+        | _funcbody_list funcbody { $$ = AddtoNodeList( $1 , $2); }
+        ;
 
-funcbody	: func nl { $$ = $1; }
-		;
+funcbody    : func nl { $$ = $1; }
+        ;
 
-menubody_list	: '(' opt_nl _menubody_list ')' { $$ = $3; }
-		;
+menubody_list    : '(' opt_nl _menubody_list ')' { $$ = $3; }
+        ;
 
-_menubody_list	:                menubody { $$ = AddtoNodeList(NULL, $1); }
-		| _menubody_list menubody { $$ = AddtoNodeList( $1 , $2); }
-		;
+_menubody_list    :                menubody { $$ = AddtoNodeList(NULL, $1); }
+        | _menubody_list menubody { $$ = AddtoNodeList( $1 , $2); }
+        ;
 
-menubody	: string func nl { $$ = MakeNodeBody($1, $2, NULL); }
-		;
+menubody    : string func nl { $$ = MakeNodeBody($1, $2, NULL); }
+        ;
 
-textbody_list	: '(' opt_nl _textbody_list ')' { $$ = $3; }
-		;
+textbody_list    : '(' opt_nl _textbody_list ')' { $$ = $3; }
+        ;
 
-_textbody_list	:                textbody { $$ = AddtoNodeList(NULL, $1); }
-		| _textbody_list textbody { $$ = AddtoNodeList( $1 , $2); }
-		;
+_textbody_list    :                textbody { $$ = AddtoNodeList(NULL, $1); }
+        | _textbody_list textbody { $$ = AddtoNodeList( $1 , $2); }
+        ;
 
-textbody	: string nl   { $$ = MakeNode($1); }
-		;
+textbody : string nl   { $$ = MakeNode($1); }
+        ;
 
-color		: NUMBER		      { $$ = (tcolor) $1; }
-		| high COLOR		      { $$ = TCOL($1|$2, tblack); }
-		| high COLOR FL_ON high COLOR { $$ = TCOL($1|$2, $4|$5); }
-		|            FL_ON high COLOR { $$ = TCOL(twhite, $2|$3); }
-		;
+color   : NUMBER                  { $$ = TCOL($1,     tblack); }
+        | high RGB                { $$ = TCOL($1|$2,  tblack); }
+        | high RGB FL_ON high RGB { $$ = TCOL($1|$2,  $4|$5); }
+        |          FL_ON high RGB { $$ = TCOL(twhite, $2|$3); }
+        ;
 
-high		: /* nothing */ { $$ = (tcolor)0; }
-		| COL_HIGH	{ $$ = thigh; }
-		;
+high    : /* nothing */ { $$ = TRGB0; }
+        | COL_HIGH      { $$ = thigh; }
+        ;
 
-global_list	:             global_flag { $$ = AddtoNodeList(NULL, $1); }
-		| global_list global_flag { $$ = AddtoNodeList( $1 , $2); }
-		;
+global_list :         global_flag { $$ = AddtoNodeList(NULL, $1); }
+        | global_list global_flag { $$ = AddtoNodeList( $1 , $2); }
+        ;
 
-global_flag	:      GLOBAL_FLAG { $$ = MakeFlagNode($1,  0); }
-		| flag GLOBAL_FLAG { $$ = MakeFlagNode($2, $1); }
-		|      SHADOWS NUMBER NUMBER { $$ = MakeShadowsNode($2, $3); }
-		| flag SHADOWS     { $$ = MakeFlagNode(SHADOWS, $1); }
-		| BUTTON_PASTE NUMBER     { $$ = MakeFlagNode(BUTTON_PASTE, $2); }
-		| BUTTON_SELECTION NUMBER { $$ = MakeFlagNode(BUTTON_SELECTION, $2); }
-		;
+global_flag    :      GLOBAL_FLAG { $$ = MakeFlagNode($1,  0); }
+        | flag GLOBAL_FLAG { $$ = MakeFlagNode($2, $1); }
+        |      SHADOWS NUMBER NUMBER { $$ = MakeShadowsNode($2, $3); }
+        | flag SHADOWS     { $$ = MakeFlagNode(SHADOWS, $1); }
+        | BUTTON_PASTE NUMBER     { $$ = MakeFlagNode(BUTTON_PASTE, $2); }
+        | BUTTON_SELECTION NUMBER { $$ = MakeFlagNode(BUTTON_SELECTION, $2); }
+        ;
 
-func		: string		{ $$ = MakeUserFunc($1); }
-		| EASY_FUNC		{ $$ = MakeBuiltinFunc($1); }
-		| EXEC    string_list	{ $$ = MakeExec($2); }
-		| EXECTTY string_list	{ $$ = MakeExecTty($2); }
-		| FLAG_FUNC opt_flag_toggle { $$ = MakeFlagNode($1, $2); }
-		| INTERACTIVE interactive_mode
-					{ $$ = MakeFlagNode(INTERACTIVE, $2); }
-		| MODULE string	opt_flag_toggle { $$ = MakeModuleNode($2, $3); }
-		| MENU			{ $$ = MakeBuiltinFunc(MENU); }
-		| move_or_resize opt_flag NUMBER opt_flag NUMBER
-					{ $$ = MakeMoveResizeScroll($1, $2, $3, $4, $5); }
-		| NEXT			{ $$ = MakeWindowNumber('+', 1); }
-		| RESTART string	{ $$ = MakeRestartWM($2); }
-		| PREV			{ $$ = MakeWindowNumber('-', 1); }
-		| SCROLL opt_flag NUMBER opt_flag NUMBER { $$ = MakeMoveResizeScroll(SCROLL, $2, $3, $4, $5); }
-		| SENDTOSCREEN string	{ $$ = MakeSendToScreen($2); }
-		| SLEEP NUMBER		{ $$ = MakeSleep($2); }
-		| STDERR string_list	{ $$ = MakeStderr($2); }
-		| SYNTHETICKEY opt_flag_kbd string  { $$ = MakeSyntheticKey($2, $3); }
-		| WAIT string		{ $$ = MakeWait($2); }
-		| WINDOW opt_flag NUMBER	{ $$ = MakeWindowNumber($2, $3); }
-		| WINDOW STRING			{ $$ = MakeWindow($2); }
-		;
+func        : string        { $$ = MakeUserFunc($1); }
+        | EASY_FUNC        { $$ = MakeBuiltinFunc($1); }
+        | EXEC    string_list    { $$ = MakeExec($2); }
+        | EXECTTY string_list    { $$ = MakeExecTty($2); }
+        | FLAG_FUNC opt_flag_toggle { $$ = MakeFlagNode($1, $2); }
+        | INTERACTIVE interactive_mode
+                    { $$ = MakeFlagNode(INTERACTIVE, $2); }
+        | MODULE string    opt_flag_toggle { $$ = MakeModuleNode($2, $3); }
+        | MENU            { $$ = MakeBuiltinFunc(MENU); }
+        | move_or_resize opt_flag NUMBER opt_flag NUMBER
+                    { $$ = MakeMoveResizeScroll($1, $2, $3, $4, $5); }
+        | NEXT            { $$ = MakeWindowNumber('+', 1); }
+        | RESTART string    { $$ = MakeRestartWM($2); }
+        | PREV            { $$ = MakeWindowNumber('-', 1); }
+        | SCROLL opt_flag NUMBER opt_flag NUMBER { $$ = MakeMoveResizeScroll(SCROLL, $2, $3, $4, $5); }
+        | SENDTOSCREEN string    { $$ = MakeSendToScreen($2); }
+        | SLEEP NUMBER        { $$ = MakeSleep($2); }
+        | STDERR string_list    { $$ = MakeStderr($2); }
+        | SYNTHETICKEY opt_flag_kbd string  { $$ = MakeSyntheticKey($2, $3); }
+        | WAIT string        { $$ = MakeWait($2); }
+        | WINDOW opt_flag NUMBER    { $$ = MakeWindowNumber($2, $3); }
+        | WINDOW STRING            { $$ = MakeWindow($2); }
+        ;
 
-string_list	:         string { $$ = AddtoStringList((node)0, $1); }
-		| string_list string { $$ = AddtoStringList( $1,  $2); }
-		;
+string_list    :         string { $$ = AddtoStringList((node)0, $1); }
+        | string_list string { $$ = AddtoStringList( $1,  $2); }
+        ;
 
-string		: STRING
-		| NUMBER { $$ = toString($1); }
-		;
+string        : STRING
+        | NUMBER { $$ = toString($1); }
+        ;
 
 interactive_mode: SCROLL { $$ = SCROLL; }
-		| MENU   { $$ = MENU; }
-		| MOVE   { $$ = MOVE; }
-		| RESIZE { $$ = RESIZE; }
-		| SCREEN { $$ = SCREEN; }
-		;
+        | MENU   { $$ = MENU; }
+        | MOVE   { $$ = MOVE; }
+        | RESIZE { $$ = RESIZE; }
+        | SCREEN { $$ = SCREEN; }
+        ;
 
-move_or_resize	: MOVE		{ $$ = MOVE; }
-		| MOVESCREEN	{ $$ = MOVESCREEN; }
-		| RESIZE	{ $$ = RESIZE; }
-		| RESIZESCREEN	{ $$ = RESIZESCREEN; }
-		;
+move_or_resize    : MOVE        { $$ = MOVE; }
+        | MOVESCREEN    { $$ = MOVESCREEN; }
+        | RESIZE    { $$ = RESIZE; }
+        | RESIZESCREEN    { $$ = RESIZESCREEN; }
+        ;
 
-opt_flag	: /* nothing */ { $$ = 0; }
-		| flag
-		;
+opt_flag    : /* nothing */ { $$ = 0; }
+        | flag
+        ;
 
-flag		: '+'		{ $$ = '+'; }
-		| '-'		{ $$ = '-'; }
-		;
+flag        : '+'        { $$ = '+'; }
+        | '-'        { $$ = '-'; }
+        ;
 
-opt_flag_kbd	: /* nothing */ { $$ = 0; }
-		| flag_kbd
-		;
+opt_flag_kbd    : /* nothing */ { $$ = 0; }
+        | flag_kbd
+        ;
 
-flag_kbd	: KBD_FLAG
-		| KBD_FLAG flag { $$ = $1 | $2; }
-		;
+flag_kbd    : KBD_FLAG
+        | KBD_FLAG flag { $$ = $1 | $2; }
+        ;
 
-opt_flag_toggle	: /* nothing */ { $$ = FL_ON; }
-		| FL_ON		{ $$ = FL_ON; }
-		| FL_OFF	{ $$ = FL_OFF; }
-		| FL_TOGGLE	{ $$ = FL_TOGGLE; }
-		;
+opt_flag_toggle    : /* nothing */ { $$ = FL_ON; }
+        | FL_ON        { $$ = FL_ON; }
+        | FL_OFF    { $$ = FL_OFF; }
+        | FL_TOGGLE    { $$ = FL_TOGGLE; }
+        ;
 
-flag_active	: FL_ACTIVE	{ $$ = FL_ACTIVE; }
-		| FL_INACTIVE	{ $$ = FL_INACTIVE; }
-		;
+flag_active    : FL_ACTIVE    { $$ = FL_ACTIVE; }
+        | FL_INACTIVE    { $$ = FL_INACTIVE; }
+        ;
 
-flag_lr		: FL_LEFT	{ $$ = FL_LEFT; }
-		| FL_RIGHT	{ $$ = FL_RIGHT; }
-		;
+flag_lr        : FL_LEFT    { $$ = FL_LEFT; }
+        | FL_RIGHT    { $$ = FL_RIGHT; }
+        ;
 
 %%
 
 #ifdef DEBUG_YACC
 static void yyprint(FILE *file, int type, void *value) {
-    if (type == NUMBER)
-	fprintf (file, " %d", ((YYSTYPE *)value)->val);
-    else if (type == STRING)
-	fprintf (file, " \"%s\"", ((YYSTYPE *)value)->_string);
-    else if (type == GLOBAL_FLAG || type == FLAG_FUNC ||
-	type == EASY_FUNC || type == COLOR)
-	fprintf (file, " %s", TokenName(((YYSTYPE *)value)->val));
+    if (type == NUMBER) {
+      fprintf (file, " %d", ((YYSTYPE *)value)->val);
+    } else if (type == STRING) {
+      fprintf (file, " \"%s\"", ((YYSTYPE *)value)->_string);
+    } else if (type == GLOBAL_FLAG || type == FLAG_FUNC ||
+               type == EASY_FUNC) {
+      fprintf (file, " %s", TokenName(((YYSTYPE *)value)->val));
+    }
 }
 #endif
 

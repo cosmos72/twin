@@ -168,9 +168,7 @@ AC_TYPE_INT32_T
 AC_TYPE_UINT8_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
-AC_TYPE_UINT64_T
 
-AC_CHECK_TYPE(unsigned long long)
 AC_CHECK_TYPE(gid_t,int)
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
@@ -195,7 +193,6 @@ AC_CHECK_SIZEOF([int])
 AC_CHECK_SIZEOF([long])
 AC_CHECK_SIZEOF([size_t])
 AC_CHECK_SIZEOF([void *])
-AC_CHECK_SIZEOF([unsigned long long])
 
 
 # Checks for functions and libraries.

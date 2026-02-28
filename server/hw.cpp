@@ -247,11 +247,11 @@ void MoveToXY(dat x, dat y) NOTHROW {
 }
 
 void SetCursorType(uldat type) NOTHROW {
-  if ((type & 0xF) == 0)
+  if ((type & 0xF) == 0) {
     type |= LINECURSOR;
-  else if ((type & 0xF) > SOLIDCURSOR)
+  } else if ((type & 0xF) > SOLIDCURSOR) {
     type = (type & ~(uldat)0xF) | SOLIDCURSOR;
-
+  }
   CursorType = type;
 }
 

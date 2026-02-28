@@ -565,8 +565,9 @@ static byte RCSteps(run *r) {
         }
         break;
       case RESIZESCREEN:
-        if (screen && screen != All->Screens.First)
+        if (screen && screen != All->Screens.First) {
           screen->Focus();
+        }
         ResizeFirstScreen(applyflagx(n));
         break;
       case SCROLL:
@@ -596,8 +597,9 @@ static byte RCSteps(run *r) {
         log(INFO) << "\n";
         break;
       case SYNTHETICKEY:
-        if (w)
+        if (w) {
           SyntheticKey(w, n->x.f.a, n->x.f.flag, strlen(n->name), n->name);
+        }
         break;
       case WAIT:
         /* remember the window name we are waiting for */
@@ -605,9 +607,9 @@ static byte RCSteps(run *r) {
         state = Swait;
         break;
       case WINDOW:
-        if (n->name)
+        if (n->name) {
           w = RCFindWindowName(n->name);
-        else {
+        } else {
           ldat i = applyflagx(n);
           flag = n->x.f.plus_minus;
 
@@ -667,19 +669,22 @@ static byte RCSteps(run *r) {
         }
         r->W = w ? w->Id : NOID;
         screen = ScreenOf(w);
-        if (n->body) /* enter function */
+        if (n->body) { /* enter function */
           state = Sbody;
+        }
         break;
       case BEEP:
         BeepHW();
         break;
       case CENTER:
-        if (w && IS_WINDOW(w))
+        if (w && IS_WINDOW(w)) {
           CenterWindow((Twindow)w);
+        }
         break;
       case CLOSE:
-        if (w)
+        if (w) {
           AskCloseWidget(w);
+        }
         break;
       case COPY:
         All->Clipboard->dup(All->Selection);
@@ -1085,8 +1090,7 @@ static byte USEDefaultCommonMenu(void) {
   Twindow w;
   Trow Row;
 
-  if (!(Menu = Smenu::Create(Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0,
-                             (tcolor)0, (tcolor)0, ttrue)))
+  if (!(Menu = Smenu::Create(Ext(WM, MsgPort), TCOL0, TCOL0, TCOL0, TCOL0, TCOL0, TCOL0, ttrue)))
     return tfalse;
 
   if ((w = Swindow::Create4Menu(Menu)) &&

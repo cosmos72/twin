@@ -787,9 +787,7 @@ static byte InitMessagesWin(void) {
       WINDOW_DRAG | WINDOW_RESIZE | WINDOW_X_BAR | WINDOW_Y_BAR | WINDOW_CLOSE, WINDOWFL_CURSOR_ON,
       60, 20, 200);
   if (MessagesWin) {
-    MessagesWin->SetColors(0x1F1, TCOL(tGREEN, twhite), TCOL0, TCOL0, TCOL0, TCOL(tWHITE, twhite),
-                           TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
-                           TCOL(tBLACK, tblack));
+    MessagesWin->SetColorTheme(MenuTheme);
   }
   return !!MessagesWin;
 }
@@ -835,7 +833,7 @@ bool InitBuiltin(void) {
 
       (Builtin_Menu = Smenu::Create(Builtin_MsgPort, TCOL(tblack, twhite), TCOL(tblack, tgreen),
                                     TCOL(tBLACK, twhite), TCOL(tBLACK, tblack), TCOL(tred, twhite),
-                                    TCOL(tred, tgreen), TCOL0)) &&
+                                    TCOL(tred, tgreen), 0)) &&
       Builtin_Menu->SetInfo(ROW_ACTIVE, (uldat)42, " Hit PAUSE or Mouse Right Button for Menu ",
                             ColorFill(color_array, 42, TCOL(tred, twhite))) &&
 
@@ -958,32 +956,23 @@ bool InitBuiltin(void) {
                       TCOL(tBLACK, tblue), TCOL(tBLACK, tblue), 10, 1)
 
   ) {
-    AboutWin->SetColors(0x1FF, TCOL(tGREEN, twhite), TCOL0, TCOL0, TCOL0, TCOL(tWHITE, twhite),
-                        TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
-                        TCOL(tBLACK, tblack));
+    AboutWin->SetColorTheme(MenuTheme);
 
-    ClockWin->SetColors(0x1FF, TCOL(tYELLOW, tcyan), TCOL0, TCOL0, TCOL0, TCOL(tWHITE, tBLUE),
-                        TCOL(tYELLOW, tblue), TCOL(tYELLOW, tcyan), TCOL(tBLACK, tblue),
-                        TCOL(tBLACK, tblack));
+    ClockWin->SetColors(0x60, TCOL0, TCOL0, TCOL0, TCOL0, TCOL0, TCOL(tYELLOW, tblue),
+                        TCOL(tYELLOW, tcyan), TCOL0, TCOL0);
 
-    OptionWin->SetColors(0x1FF, TCOL(tGREEN, twhite), TCOL0, TCOL0, TCOL0, TCOL(tWHITE, twhite),
-                         TCOL(tBLACK, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
-                         TCOL(tBLACK, tblack));
+    OptionWin->SetColorTheme(MenuTheme);
 
-    ButtonWin->SetColors(0x1FF, TCOL(tGREEN, twhite), TCOL0, TCOL0, TCOL0, TCOL(tWHITE, twhite),
-                         TCOL(tWHITE, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
-                         TCOL(tBLACK, tblack));
+    ButtonWin->SetColorTheme(MenuTheme);
 
-    WinList->SetColors(0x1FF, TCOL(tYELLOW, tcyan), TCOL(tGREEN, tBLUE), TCOL(twhite, tBLUE),
-                       TCOL(tWHITE, tBLUE), TCOL(tWHITE, tBLUE), TCOL(twhite, tblue),
-                       TCOL(tBLUE, twhite), TCOL(tBLACK, tblue), TCOL(tBLACK, tblack));
+    WinList->SetColors(0x60, TCOL0, TCOL0, TCOL0, TCOL0, TCOL0, TCOL(twhite, tblue),
+                       TCOL(tBLUE, twhite), TCOL0, TCOL0);
     WinList->Configure(1 << 2 | 1 << 3, 0, 0, 15, 2, 0, 0);
 
-    DisplayWin->SetColors(0x1FF, TCOL(tGREEN, twhite), TCOL(tWHITE, twhite), TCOL(tBLUE, twhite),
-                          TCOL(tBLUE, tWHITE), TCOL(tWHITE, twhite), TCOL(tblack, twhite),
-                          TCOL(tblack, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack));
+    DisplayWin->SetColorTheme(MenuTheme);
 
-    DisplaySubWin->SetColors(0x30, 0, 0, 0, 0, TCOL(tBLACK, twhite), TCOL(tBLACK, twhite), 0, 0, 0);
+    DisplaySubWin->SetColors(0x30, TCOL0, TCOL0, TCOL0, TCOL0, TCOL(tBLACK, twhite),
+                             TCOL(tBLACK, twhite), TCOL0, TCOL0, TCOL0);
 
     DisplaySubWin->Configure(1 << 0 | 1 << 1, -1, -1, 0, 0, 0, 0);
     DisplaySubWin->Map(DisplayWin);

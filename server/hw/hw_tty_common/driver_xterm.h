@@ -219,11 +219,15 @@ TW_ATTR_HIDDEN void tty_driver::xtermDrawTCell(Tdisplay hw, dat x, dat y, tcell 
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.
  * so we have linux, termcap and xterm versions, not GPM ones... */
 TW_ATTR_HIDDEN void tty_driver::xtermShowMouse(Tdisplay hw) {
-  uldat pos =
-      (hw->Last_x = hw->MouseState.x) + (hw->Last_y = hw->MouseState.y) * (ldat)DisplayWidth;
-  tcell h = Video[pos], c = TCELL_COLMASK(~h) ^ TCELL(TCOL(thigh, thigh), 0);
+  dat x = hw->Last_x = hw->MouseState.x;
+  dat y = hw->Last_y = hw->MouseState.y;
+  uldat pos = x + y * (uldat)DisplayWidth;
+  tcell cell = Video[pos];
+  tcolor &col = cell.color;
+  col.fg = (~col.fg ^ thigh) & TRGB_MAX;
+  col.bg = (~col.bg ^ thigh) & TRGB_MAX;
 
-  xtermDrawTCell(hw, hw->MouseState.x, hw->MouseState.y, c | TCELL_RUNEMASK(h));
+  xtermDrawTCell(hw, hw->MouseState.x, hw->MouseState.y, cell);
 
   /* force updating the cursor */
   hw->XY[0] = hw->XY[1] = -1;
@@ -231,9 +235,11 @@ TW_ATTR_HIDDEN void tty_driver::xtermShowMouse(Tdisplay hw) {
 }
 
 TW_ATTR_HIDDEN void tty_driver::xtermHideMouse(Tdisplay hw) {
-  uldat pos = hw->Last_x + hw->Last_y * (ldat)DisplayWidth;
+  dat x = hw->Last_x;
+  dat y = hw->Last_y;
+  uldat pos = x + y * (uldat)DisplayWidth;
 
-  xtermDrawTCell(hw, hw->Last_x, hw->Last_y, Video[pos]);
+  xtermDrawTCell(hw, x, y, Video[pos]);
 
   /* force updating the cursor */
   hw->XY[0] = hw->XY[1] = -1;
@@ -309,16 +315,18 @@ TW_ATTR_HIDDEN void tty_driver::xtermFlushVideo(Tdisplay hw) {
     if (hw->FlagsHW & FlagChangedMouseFlagHW) {
       /* dirty the old mouse position, so that it will be overwritten */
 
+      dat x = hw->Last_x;
+      dat y = hw->Last_y;
       /*
        * with multi-display this is a hack, but since OldVideo gets restored
        * below *BEFORE* returning from xtermFlushVideo(), that's ok.
        */
-      DirtyVideo(hw->Last_x, hw->Last_y, hw->Last_x, hw->Last_y);
+      DirtyVideo(x, y, x, y);
       if (ValidOldVideo) {
+        uldat pos = x + y * (uldat)DisplayWidth;
         flippedOldVideo = true;
-        savedOldVideo = OldVideo[hw->Last_x + hw->Last_y * (ldat)DisplayWidth];
-        OldVideo[hw->Last_x + hw->Last_y * (ldat)DisplayWidth] =
-            ~Video[hw->Last_x + hw->Last_y * (ldat)DisplayWidth];
+        savedOldVideo = OldVideo[pos];
+        OldVideo[pos].color = TCOLOR_BAD;
       }
     }
 
@@ -328,14 +336,16 @@ TW_ATTR_HIDDEN void tty_driver::xtermFlushVideo(Tdisplay hw) {
      * instead of calling ShowMouse(),
      * we flip the new mouse position in Video[] and dirty it if necessary.
      */
-    if ((hw->FlagsHW & FlagChangedMouseFlagHW) || (flippedVideo = Plain_isDirtyVideo(i, j))) {
+    if ((hw->FlagsHW & FlagChangedMouseFlagHW) || (flippedVideo = plainIsDirtyVideo(i, j))) {
       VideoFlip(i, j);
-      if (!flippedVideo)
+      if (!flippedVideo) {
         DirtyVideo(i, j, i, j);
+      }
       hw->FlagsHW &= ~FlagChangedMouseFlagHW;
       flippedVideo = true;
-    } else
+    } else {
       flippedVideo = false;
+    }
   }
   genericDrawStart(hw);
 

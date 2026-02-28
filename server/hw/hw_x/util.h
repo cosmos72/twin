@@ -74,20 +74,22 @@ TW_ATTR_HIDDEN void XDRIVER::ShowCursor(uldat type, dat x, dat y) {
 
   if (type & 0x10) {
     /* soft cursor */
-    tcolor col = (color | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
-    if ((type & 0x20) && (color & TCOL(0, twhite)) == (col & TCOL(0, twhite))) {
-      col ^= TCOL(0, twhite);
+    trgb newfg = color.fg;
+    trgb newbg = (~color.bg ^ thigh) & TRGB_MAX;
+    if (newbg == color.bg) {
+      newbg ^= twhite;
     }
-    if ((type & 0x40) && ((TCOLFG(col) & twhite) == (TCOLBG(col) & twhite))) {
-      col ^= TCOL(twhite, 0);
+    if (newbg == color.fg) {
+      newbg ^= thigh;
     }
+    tcolor newcol = TCOL(newfg, newbg);
     const trune r = this->xUTF_32_to_charset(TRUNE(cell));
 #if HW_X_DRIVER == HW_X11
     const XChar2b buf = RuneToXChar2b(r);
-    XDRAW(col, 1, &buf, 1);
+    XDRAW(newcol, 1, &buf, 1);
 #else
     const Utf8 buf(r);
-    XDRAW(col, 1, buf.data(), buf.size());
+    XDRAW(newcol, 1, buf.data(), buf.size());
 #endif
   } else if (type & 0xF) {
     /* VGA hw-like cursor */

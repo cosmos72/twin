@@ -14,7 +14,7 @@
 #endif
 
 #ifdef TW_HAVE_STRING_H
-#include <string.h> /* for memcpy() */
+#include <string.h> /* for memcmp(), memcpy() */
 #endif
 
 #include <Tw/compiler.h> // for TW_INLINE
@@ -42,6 +42,10 @@ typedef enum { tfalse, ttrue } tbool;
 
 /* trgb, tcolor, trune, tcell, tany */
 
+typedef size_t tany;
+
+/* colors and UTF-32 runes */
+
 #if defined(UINT32_MAX) || defined(uint32_t)
 typedef uint32_t trgb;
 typedef uint32_t trune;
@@ -50,67 +54,85 @@ typedef uldat trgb;
 typedef uldat trune;
 #endif
 
-#if defined(UINT64_MAX) || defined(uint64_t)
+typedef struct {
+  trgb fg;
+  trgb bg;
+} tcolor;
 
-typedef uint64_t tcolor; /* pair: trgb fg; trgb bg */
-typedef uint64_t tcell;
-#if defined(TW_SIZEOF_SIZE_T) && TW_SIZEOF_SIZE_T < 8
-typedef uint64_t tany;
-#else
-typedef size_t tany;
-#endif
+typedef struct {
+  trune rune;
+  tcolor color;
+} tcell;
 
-#elif defined(TW_SIZEOF_UNSIGNED_LONG_LONG) && TW_SIZEOF_UNSIGNED_LONG_LONG >= 8
+#define TRGB0 ((trgb)0)
+#define TRUNE0 ((trune)0)
 
-typedef unsigned long long tcolor; /* pair: trgb fg; trgb bg */
-typedef unsigned long long tcell;
-#if defined(TW_SIZEOF_SIZE_T) && TW_SIZEOF_SIZE_T < TW_SIZEOF_UNSIGNED_LONG_LONG
-typedef unsigned long long tany;
-#else
-typedef size_t tany;
-#endif
+static const tcolor TCOL0 = {TRGB0, TRGB0};
+static const tcell TCELL0 = {TRUNE0, TCOL0};
 
-#else
-#error "no 64-bit unsigned integer type found"
-#endif
+#define TRGB_MAX ((trgb)0xffffff)
+#define TRUNE_MAX ((trune)0x10ffff)
 
-/* miscellaneous types and constants */
+/* intentionally invalid trune: is > TRUNE_MAX */
+#define TRUNE_BAD ((trune)~0)
+
+/* intentionally invalid trgb: is > TRGB_MAX */
+#define TRGB_BAD ((trgb)~0)
+
+/* intentionally invalid tcolor: fg and bg are > TRGB_MAX */
+static const tcolor TCOLOR_BAD = {TRGB_BAD, TRGB_BAD};
+
+/* intentionally invalid tcell: rune is > TRUNE_MAX, fg and bg are > TRGB_MAX */
+static const tcell TCELL_BAD = {TRUNE_BAD, TCOLOR_BAD};
 
 /* tcell <-> tcolor+trune conversion */
-#define TCELL(col, rune) ((tcell)(col) << 22 | (tcell)(rune))
-#define TCOLOR(cell) ((tcolor)((cell) >> 22))
-#define TRUNE(cell) ((trune)((cell) & 0x3FFFFF))
+TW_INLINE tcell TCELL(tcolor col, trune rune) {
+  tcell ret = {rune, col};
+  return ret;
+}
 
-/* foreground / background colors handling */
-/*
- * NOTE: draw.c:DoShadowColor() assumes that
- * TCOL(fg1, bg1) | TCOL(fg2, bg2) == TCOL(fg1|fg2, bg1|bg2)
- * and
- * TCOL(fg1, bg1) & TCOL(fg2, bg2) == TCOL(fg1&fg2, bg1&bg2)
+#define TCOLOR(cell) ((cell).color)
+#define TRUNE(cell) ((cell).rune)
+
+/* tcolor <-> foreground+background conversion */
+TW_INLINE tcolor TCOL(trgb fg, trgb bg) {
+  tcolor ret = {fg, bg};
+  return ret;
+}
+#define TCOLFG(col) ((col).fg)
+#define TCOLBG(col) ((col).bg)
+
+/**
+ * these could become TW_INLINE functions,
+ * but they would no longer be usable in constant initialization.
  */
-#define TCOL0 ((tcolor)0)
-#define TCOL(fg, bg) ((tcolor)(fg) | (tcolor)(bg) << 21)
-#define TCOLBG(col) ((trgb)((col) >> 21) & 0x1fffff)
-#define TCOLFG(col) ((trgb)(col) & 0x1fffff)
-
 #define TRGB(red, green, blue)                                                                     \
-  ((trgb)((red) & 0xFE) << 13 | (trgb)((green) & 0xFE) << 6 | (trgb)((blue) & 0xFE) >> 1)
+  ((trgb)(((trgb)(byte)(red) << 16) | ((trgb)(byte)(green) << 8) | (trgb)(byte)(blue)))
+#define TRGBE(red, green, blue, effects)                                                           \
+  ((trgb)(((trgb)(byte)(effects) << 24)((trgb)(byte)(red) << 16) | ((trgb)(byte)(green) << 8) |    \
+          (trgb)(byte)(blue)))
+#define TRED(rgb) ((byte)((trgb)(rgb) >> 16))
+#define TGREEN(rgb) ((byte)((trgb)(rgb) >> 8))
+#define TBLUE(rgb) ((byte)(trgb)(rgb))
+#define TEFFECTS(rgb) ((byte)((trgb)(rgb) >> 24))
 
-TW_INLINE byte TRED(trgb rgb) {
-  const byte red = (rgb >> 13) & 0xFE;
-  return red | (red != 0);
+#ifdef __cplusplus
+extern "C++" {
+TW_INLINE bool operator==(tcolor col1, tcolor col2) {
+  return memcmp(&col1, &col2, sizeof(tcolor)) == 0; /* gcc/clang optimize this */
 }
-TW_INLINE byte TGREEN(trgb rgb) {
-  const byte green = (rgb >> 6) & 0xFE;
-  return green | (green != 0);
-}
-TW_INLINE byte TBLUE(trgb rgb) {
-  const byte blue = (rgb << 1) & 0xFE;
-  return blue | (blue != 0);
+TW_INLINE bool operator!=(tcolor col1, tcolor col2) {
+  return !(col1 == col2);
 }
 
-#define TCELL_COLMASK(cell) ((cell) & 0xFFFFFFFFFFC00000ull)
-#define TCELL_RUNEMASK(cell) ((cell) & 0x3FFFFF)
+TW_INLINE bool operator==(const tcell &cell1, const tcell &cell2) {
+  return (cell1.rune == cell2.rune) & (cell1.color == cell2.color); /* gcc/clang optimize this */
+}
+TW_INLINE bool operator!=(const tcell &cell1, const tcell &cell2) {
+  return !(cell1 == cell2);
+}
+} /* extern "C++" */
+#endif
 
 #define TW_NOID ((uldat)0)
 #define TW_BADID ((uldat) - 1)

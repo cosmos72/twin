@@ -87,12 +87,11 @@ inline sbyte IsTabPosition(Twindow w, udat pos, sbyte isX) {
 
 tpos WMFindBorderWindow(Twindow w, dat u, dat v, byte border, tcell *ptr_cell) {
   const trune *borderRunes;
-  size_t namelen;
-  trune rune = 0;
-  ldat k;
-  tcell extra_u;
   tcolor color;
-  dat rev_u, rev_v;
+  trune rune = TRUNE0;
+  size_t namelen;
+  ldat k;
+  dat rev_u, extra_u, rev_v;
   dat XWidth, YWidth;
   tpos found = POS_SIDE_UP;
   sbyte Back_Fwd, i;
@@ -133,7 +132,7 @@ tpos WMFindBorderWindow(Twindow w, dat u, dat v, byte border, tcell *ptr_cell) {
   }
 
   uldat attr = w->Attr;
-  byte horiz = extra_u = u ? rev_u ? 1 : 2 : 0;
+  byte horiz = (extra_u = u) ? rev_u ? 1 : 2 : 0;
   byte vert = v ? rev_v ? 1 : 2 : 0;
 
   const bool canClose = (attr & WINDOW_CLOSE) != 0;
@@ -328,14 +327,15 @@ tpos WMFindBorderWindow(Twindow w, dat u, dat v, byte border, tcell *ptr_cell) {
     }
   }
   if (flScroll && found >= POS_X_BAR_BACK && found <= POS_Y_ARROW_FWD) {
-    color ^= TCOL(thigh, thigh);
+    color.fg ^= thigh;
+    color.bg ^= thigh;
   } else if (found < BUTTON_MAX && (w->State & WINDOW_GADGET_PRESSED) &&
              (w->State & (BUTTON_FIRST_SELECT << found))) {
 
     color = TCOL(TCOLBG(color), TCOLFG(color));
   } else if (found >= POS_TITLE && found <= POS_SIDE_DOWN && !flFocus && !flNested && !isMenuWin) {
     // remove high background color from non-focused window
-    color &= ~TCOL(0, thigh);
+    color.bg &= ~thigh;
   }
 
   *ptr_cell = TCELL(color, rune);

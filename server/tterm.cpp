@@ -56,9 +56,8 @@ static Twindow newTermWindow(const char *title) {
       /*width*/ 80, /*height*/ 25, /*scrollbacklines*/ 1000);
 
   if (Window) {
-    Window->SetColors(0x1FF, TCOL(tYELLOW, tcyan), TCOL(tGREEN, tBLUE), TCOL(twhite, tBLUE),
-                      TCOL(tWHITE, tBLUE), TCOL(tWHITE, tBLUE), TCOL(twhite, tblack),
-                      TCOL(tBLACK, tWHITE), TCOL(tBLACK, tblack), TCOL(tblack, tBLACK));
+    Window->SetColors(0x60, TCOL0, TCOL0, TCOL0, TCOL0, TCOL0, TCOL(twhite, tblack),
+                      TCOL(tBLACK, tWHITE), TCOL0, TCOL0);
 
     Window->Configure((1 << 2) | (1 << 3), 0, 0, 7, 3, 0, 0);
   }

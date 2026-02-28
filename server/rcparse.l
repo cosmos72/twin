@@ -148,14 +148,14 @@ Alt          { yylval.val = KBD_ALT_FL;   return KBD_FLAG; }
 Ctrl         { yylval.val = KBD_CTRL_FL;  return KBD_FLAG; }
 Shift        { yylval.val = KBD_SHIFT_FL; return KBD_FLAG; }
 
-Black        { yylval.val = tblack;    return COLOR; }
-Blue         { yylval.val = tblue;     return COLOR; }
-Green        { yylval.val = tgreen;    return COLOR; }
-Cyan         { yylval.val = tcyan;     return COLOR; }
-Red          { yylval.val = tred;      return COLOR; }
-Magenta      { yylval.val = tmagenta;  return COLOR; }
-Yellow       { yylval.val = tyellow;   return COLOR; }
-White        { yylval.val = twhite;    return COLOR; }
+Black        { yylval.val = tblack;    return RGB; }
+Blue         { yylval.val = tblue;     return RGB; }
+Green        { yylval.val = tgreen;    return RGB; }
+Cyan         { yylval.val = tcyan;     return RGB; }
+Red          { yylval.val = tred;      return RGB; }
+Magenta      { yylval.val = tmagenta;  return RGB; }
+Yellow       { yylval.val = tyellow;   return RGB; }
+White        { yylval.val = twhite;    return RGB; }
 Bold|High    return COL_HIGH;
 
 \n        { LINE_NO++; return '\n'; }

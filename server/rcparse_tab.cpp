@@ -226,7 +226,7 @@ enum yysymbol_kind_t
   YYSYMBOL_SHADOWS = 78,                   /* SHADOWS  */
   YYSYMBOL_BUTTON_PASTE = 79,              /* BUTTON_PASTE  */
   YYSYMBOL_BUTTON_SELECTION = 80,          /* BUTTON_SELECTION  */
-  YYSYMBOL_COLOR = 81,                     /* COLOR  */
+  YYSYMBOL_RGB = 81,                       /* RGB  */
   YYSYMBOL_COL_HIGH = 82,                  /* COL_HIGH  */
   YYSYMBOL_KBD_FLAG = 83,                  /* KBD_FLAG  */
   YYSYMBOL_NUMBER = 84,                    /* NUMBER  */
@@ -656,17 +656,17 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   152,   152,   155,   156,   159,   160,   161,   162,   165,
-     166,   169,   170,   173,   174,   175,   176,   177,   178,   179,
-     180,   181,   182,   183,   184,   185,   186,   187,   188,   189,
-     190,   193,   196,   197,   200,   203,   206,   207,   210,   213,
-     216,   217,   220,   223,   224,   225,   226,   229,   230,   233,
-     234,   237,   238,   239,   240,   241,   242,   245,   246,   247,
-     248,   249,   250,   252,   253,   254,   256,   257,   258,   259,
-     260,   261,   262,   263,   264,   265,   266,   269,   270,   273,
-     274,   277,   278,   279,   280,   281,   284,   285,   286,   287,
-     290,   291,   294,   295,   298,   299,   302,   303,   306,   307,
-     308,   309,   312,   313,   316,   317
+       0,   154,   154,   157,   158,   161,   162,   163,   164,   167,
+     168,   171,   172,   175,   176,   177,   178,   179,   180,   181,
+     182,   183,   184,   185,   186,   187,   188,   189,   190,   191,
+     192,   195,   198,   199,   202,   205,   208,   209,   212,   215,
+     218,   219,   222,   225,   226,   227,   228,   231,   232,   235,
+     236,   239,   240,   241,   242,   243,   244,   247,   248,   249,
+     250,   251,   252,   254,   255,   256,   258,   259,   260,   261,
+     262,   263,   264,   265,   266,   267,   268,   271,   272,   275,
+     276,   279,   280,   281,   282,   283,   286,   287,   288,   289,
+     292,   293,   296,   297,   300,   301,   304,   305,   308,   309,
+     310,   311,   314,   315,   318,   319
 };
 #endif
 
@@ -695,7 +695,7 @@ static const char *const yytname[] =
   "FL_OFF", "FL_TOGGLE", "FL_ACTIVE", "FL_INACTIVE", "FL_LEFT", "FL_RIGHT",
   "GLOBAL_FLAG", "ALTFONT", "CURSOR_ALWAYS", "BLINK", "MENU_HIDE",
   "MENU_INFO", "MENU_RELAX", "SCREEN_SCROLL", "TERMINALS_UTF8", "SHADOWS",
-  "BUTTON_PASTE", "BUTTON_SELECTION", "COLOR", "COL_HIGH", "KBD_FLAG",
+  "BUTTON_PASTE", "BUTTON_SELECTION", "RGB", "COL_HIGH", "KBD_FLAG",
   "NUMBER", "STRING", "$accept", "rcfile", "line_list", "line", "nl",
   "opt_nl", "immediate_line", "funcbody_list", "_funcbody_list",
   "funcbody", "menubody_list", "_menubody_list", "menubody",
@@ -1375,11 +1375,11 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* rcfile: line_list  */
-                                { CallList = (yyvsp[0]._node); }
+                             { CallList = (yyvsp[0]._node); }
     break;
 
   case 3: /* line_list: line  */
-                                 { (yyval._node) = AddtoNodeList(NULL, (yyvsp[0]._node)); }
+                              { (yyval._node) = AddtoNodeList(NULL, (yyvsp[0]._node)); }
     break;
 
   case 4: /* line_list: line_list line  */
@@ -1387,303 +1387,303 @@ yyreduce:
     break;
 
   case 5: /* line: immediate_line '\n'  */
-                                      { (yyval._node) = NULL; }
+                                  { (yyval._node) = NULL; }
     break;
 
   case 6: /* line: func '\n'  */
-                                      { (yyval._node) = (yyvsp[-1]._node); }
+                              { (yyval._node) = (yyvsp[-1]._node); }
     break;
 
   case 7: /* line: READ string '\n'  */
-                                      { set_yy_file(FindConfigFile((yyvsp[-1]._string), NULL)); (yyval._node) = NULL; }
+                              { set_yy_file(FindConfigFile((yyvsp[-1]._string), NULL)); (yyval._node) = NULL; }
     break;
 
   case 8: /* line: '\n'  */
-                                      { (yyval._node) = NULL; }
+                              { (yyval._node) = NULL; }
     break;
 
   case 9: /* nl: '\n'  */
-                          {}
+                    {}
     break;
 
   case 10: /* nl: nl '\n'  */
-                          {}
+                  {}
     break;
 
   case 11: /* opt_nl: %empty  */
-                                {}
+                              {}
     break;
 
   case 12: /* opt_nl: nl  */
-                                {}
+                        {}
     break;
 
   case 13: /* immediate_line: ADDSCREEN string  */
-                                                  { (yyval.imm) = ImmAddScreen((yyvsp[0]._string)); }
+                                                    { (yyval.imm) = ImmAddScreen((yyvsp[0]._string)); }
     break;
 
   case 14: /* immediate_line: ADDTOMENU string  */
-                                                  { (yyval.imm) = MergeMenu((yyvsp[0]._string), NULL); }
+                                          { (yyval.imm) = MergeMenu((yyvsp[0]._string), NULL); }
     break;
 
   case 15: /* immediate_line: ADDTOMENU string menubody_list  */
-                                                  { (yyval.imm) = MergeMenu((yyvsp[-1]._string),  (yyvsp[0]._node) ); }
+                                          { (yyval.imm) = MergeMenu((yyvsp[-1]._string),  (yyvsp[0]._node) ); }
     break;
 
   case 16: /* immediate_line: ADDTOFUNC string  */
-                                                  { (yyval.imm) = MergeFunc((yyvsp[0]._string), NULL); }
+                                          { (yyval.imm) = MergeFunc((yyvsp[0]._string), NULL); }
     break;
 
   case 17: /* immediate_line: ADDTOFUNC string funcbody_list  */
-                                                  { (yyval.imm) = MergeFunc((yyvsp[-1]._string),  (yyvsp[0]._node) ); }
+                                          { (yyval.imm) = MergeFunc((yyvsp[-1]._string),  (yyvsp[0]._node) ); }
     break;
 
   case 18: /* immediate_line: BACKGROUND string color  */
-                                                        { (yyval.imm) = ImmBackground((yyvsp[-1]._string), (yyvsp[0].val), NULL); }
+                                                { (yyval.imm) = ImmBackground((yyvsp[-1]._string), (yyvsp[0].col), NULL); }
     break;
 
   case 19: /* immediate_line: BACKGROUND string color textbody_list  */
-                                                        { (yyval.imm) = ImmBackground((yyvsp[-2]._string), (yyvsp[-1].val),  (yyvsp[0]._node) ); }
+                                                { (yyval.imm) = ImmBackground((yyvsp[-2]._string), (yyvsp[-1].col),  (yyvsp[0]._node) ); }
     break;
 
   case 20: /* immediate_line: BORDER string flag_active  */
-                                                              { (yyval.imm) = ImmBorder((yyvsp[-1]._string), (yyvsp[0].val), NULL); }
+                                                      { (yyval.imm) = ImmBorder((yyvsp[-1]._string), (yyvsp[0].val), NULL); }
     break;
 
   case 21: /* immediate_line: BORDER string flag_active textbody_list  */
-                                                              { (yyval.imm) = ImmBorder((yyvsp[-2]._string), (yyvsp[-1].val),  (yyvsp[0]._node) ); }
+                                                      { (yyval.imm) = ImmBorder((yyvsp[-2]._string), (yyvsp[-1].val),  (yyvsp[0]._node) ); }
     break;
 
   case 22: /* immediate_line: BUTTON NUMBER string flag_lr  */
-                                                                   { (yyval.imm) = ImmButton((yyvsp[-2].val), (yyvsp[-1]._string), (yyvsp[0].val), '+', 0); }
+                                                           { (yyval.imm) = ImmButton((yyvsp[-2].val), (yyvsp[-1]._string), (yyvsp[0].val), '+', 0); }
     break;
 
   case 23: /* immediate_line: BUTTON NUMBER string flag_lr opt_flag NUMBER  */
-                                                                   { (yyval.imm) = ImmButton((yyvsp[-4].val), (yyvsp[-3]._string), (yyvsp[-2].val), (yyvsp[-1].val), (yyvsp[0].val)); }
+                                                           { (yyval.imm) = ImmButton((yyvsp[-4].val), (yyvsp[-3]._string), (yyvsp[-2].val), (yyvsp[-1].val), (yyvsp[0].val)); }
     break;
 
   case 24: /* immediate_line: DELETEFUNC string  */
-                                       { (yyval.imm) = ImmDeleteFunc((yyvsp[0]._string)); }
+                               { (yyval.imm) = ImmDeleteFunc((yyvsp[0]._string)); }
     break;
 
   case 25: /* immediate_line: DELETEMENU string  */
-                                       { (yyval.imm) = ImmDeleteMenu((yyvsp[0]._string)); }
+                               { (yyval.imm) = ImmDeleteMenu((yyvsp[0]._string)); }
     break;
 
   case 26: /* immediate_line: DELETEBUTTON NUMBER  */
-                                       { (yyval.imm) = ImmDeleteButton((yyvsp[0].val)); }
+                               { (yyval.imm) = ImmDeleteButton((yyvsp[0].val)); }
     break;
 
   case 27: /* immediate_line: DELETESCREEN string  */
-                                       { (yyval.imm) = ImmDeleteScreen((yyvsp[0]._string)); }
+                               { (yyval.imm) = ImmDeleteScreen((yyvsp[0]._string)); }
     break;
 
   case 28: /* immediate_line: GLOBALFLAGS global_list  */
-                                            { (yyval.imm) = ImmGlobalFlags((yyvsp[0]._node)); }
+                                    { (yyval.imm) = ImmGlobalFlags((yyvsp[0]._node)); }
     break;
 
   case 29: /* immediate_line: KEY opt_flag_kbd string func  */
-                                                 { (yyval.imm) = BindKey  ((yyvsp[-2].val), (yyvsp[-1]._string), (yyvsp[0]._node)); }
+                                         { (yyval.imm) = BindKey  ((yyvsp[-2].val), (yyvsp[-1]._string), (yyvsp[0]._node)); }
     break;
 
   case 30: /* immediate_line: MOUSE string string func  */
-                                                 { (yyval.imm) = BindMouse((yyvsp[-2]._string), (yyvsp[-1]._string), (yyvsp[0]._node)); }
+                                         { (yyval.imm) = BindMouse((yyvsp[-2]._string), (yyvsp[-1]._string), (yyvsp[0]._node)); }
     break;
 
   case 31: /* funcbody_list: '(' opt_nl _funcbody_list ')'  */
-                                                { (yyval._node) = (yyvsp[-1]._node); }
+                                                 { (yyval._node) = (yyvsp[-1]._node); }
     break;
 
   case 32: /* _funcbody_list: funcbody  */
-                                          { (yyval._node) = AddtoNodeList(NULL, (yyvsp[0]._node)); }
+                                            { (yyval._node) = AddtoNodeList(NULL, (yyvsp[0]._node)); }
     break;
 
   case 33: /* _funcbody_list: _funcbody_list funcbody  */
-                                          { (yyval._node) = AddtoNodeList( (yyvsp[-1]._node) , (yyvsp[0]._node)); }
+                                  { (yyval._node) = AddtoNodeList( (yyvsp[-1]._node) , (yyvsp[0]._node)); }
     break;
 
   case 34: /* funcbody: func nl  */
-                          { (yyval._node) = (yyvsp[-1]._node); }
+                      { (yyval._node) = (yyvsp[-1]._node); }
     break;
 
   case 35: /* menubody_list: '(' opt_nl _menubody_list ')'  */
-                                                { (yyval._node) = (yyvsp[-1]._node); }
+                                                 { (yyval._node) = (yyvsp[-1]._node); }
     break;
 
   case 36: /* _menubody_list: menubody  */
-                                          { (yyval._node) = AddtoNodeList(NULL, (yyvsp[0]._node)); }
+                                            { (yyval._node) = AddtoNodeList(NULL, (yyvsp[0]._node)); }
     break;
 
   case 37: /* _menubody_list: _menubody_list menubody  */
-                                          { (yyval._node) = AddtoNodeList( (yyvsp[-1]._node) , (yyvsp[0]._node)); }
+                                  { (yyval._node) = AddtoNodeList( (yyvsp[-1]._node) , (yyvsp[0]._node)); }
     break;
 
   case 38: /* menubody: string func nl  */
-                                 { (yyval._node) = MakeNodeBody((yyvsp[-2]._string), (yyvsp[-1]._node), NULL); }
+                             { (yyval._node) = MakeNodeBody((yyvsp[-2]._string), (yyvsp[-1]._node), NULL); }
     break;
 
   case 39: /* textbody_list: '(' opt_nl _textbody_list ')'  */
-                                                { (yyval._node) = (yyvsp[-1]._node); }
+                                                 { (yyval._node) = (yyvsp[-1]._node); }
     break;
 
   case 40: /* _textbody_list: textbody  */
-                                          { (yyval._node) = AddtoNodeList(NULL, (yyvsp[0]._node)); }
+                                            { (yyval._node) = AddtoNodeList(NULL, (yyvsp[0]._node)); }
     break;
 
   case 41: /* _textbody_list: _textbody_list textbody  */
-                                          { (yyval._node) = AddtoNodeList( (yyvsp[-1]._node) , (yyvsp[0]._node)); }
+                                  { (yyval._node) = AddtoNodeList( (yyvsp[-1]._node) , (yyvsp[0]._node)); }
     break;
 
   case 42: /* textbody: string nl  */
-                              { (yyval._node) = MakeNode((yyvsp[-1]._string)); }
+                       { (yyval._node) = MakeNode((yyvsp[-1]._string)); }
     break;
 
   case 43: /* color: NUMBER  */
-                                              { (yyval.val) = (tcolor) (yyvsp[0].val); }
+                                  { (yyval.col) = TCOL((yyvsp[0].val),     tblack); }
     break;
 
-  case 44: /* color: high COLOR  */
-                                              { (yyval.val) = TCOL((yyvsp[-1].val)|(yyvsp[0].val), tblack); }
+  case 44: /* color: high RGB  */
+                                  { (yyval.col) = TCOL((yyvsp[-1].val)|(yyvsp[0].val),  tblack); }
     break;
 
-  case 45: /* color: high COLOR FL_ON high COLOR  */
-                                              { (yyval.val) = TCOL((yyvsp[-4].val)|(yyvsp[-3].val), (yyvsp[-1].val)|(yyvsp[0].val)); }
+  case 45: /* color: high RGB FL_ON high RGB  */
+                                  { (yyval.col) = TCOL((yyvsp[-4].val)|(yyvsp[-3].val),  (yyvsp[-1].val)|(yyvsp[0].val)); }
     break;
 
-  case 46: /* color: FL_ON high COLOR  */
-                                              { (yyval.val) = TCOL(twhite, (yyvsp[-1].val)|(yyvsp[0].val)); }
+  case 46: /* color: FL_ON high RGB  */
+                                  { (yyval.col) = TCOL(twhite, (yyvsp[-1].val)|(yyvsp[0].val)); }
     break;
 
   case 47: /* high: %empty  */
-                                { (yyval.val) = (tcolor)0; }
+                        { (yyval.val) = TRGB0; }
     break;
 
   case 48: /* high: COL_HIGH  */
-                                { (yyval.val) = thigh; }
+                        { (yyval.val) = thigh; }
     break;
 
   case 49: /* global_list: global_flag  */
-                                          { (yyval._node) = AddtoNodeList(NULL, (yyvsp[0]._node)); }
+                                  { (yyval._node) = AddtoNodeList(NULL, (yyvsp[0]._node)); }
     break;
 
   case 50: /* global_list: global_list global_flag  */
-                                          { (yyval._node) = AddtoNodeList( (yyvsp[-1]._node) , (yyvsp[0]._node)); }
+                                  { (yyval._node) = AddtoNodeList( (yyvsp[-1]._node) , (yyvsp[0]._node)); }
     break;
 
   case 51: /* global_flag: GLOBAL_FLAG  */
-                                   { (yyval._node) = MakeFlagNode((yyvsp[0].val),  0); }
+                                  { (yyval._node) = MakeFlagNode((yyvsp[0].val),  0); }
     break;
 
   case 52: /* global_flag: flag GLOBAL_FLAG  */
-                                   { (yyval._node) = MakeFlagNode((yyvsp[0].val), (yyvsp[-1].val)); }
+                           { (yyval._node) = MakeFlagNode((yyvsp[0].val), (yyvsp[-1].val)); }
     break;
 
   case 53: /* global_flag: SHADOWS NUMBER NUMBER  */
-                                             { (yyval._node) = MakeShadowsNode((yyvsp[-1].val), (yyvsp[0].val)); }
+                                     { (yyval._node) = MakeShadowsNode((yyvsp[-1].val), (yyvsp[0].val)); }
     break;
 
   case 54: /* global_flag: flag SHADOWS  */
-                                   { (yyval._node) = MakeFlagNode(SHADOWS, (yyvsp[-1].val)); }
+                           { (yyval._node) = MakeFlagNode(SHADOWS, (yyvsp[-1].val)); }
     break;
 
   case 55: /* global_flag: BUTTON_PASTE NUMBER  */
-                                          { (yyval._node) = MakeFlagNode(BUTTON_PASTE, (yyvsp[0].val)); }
+                                  { (yyval._node) = MakeFlagNode(BUTTON_PASTE, (yyvsp[0].val)); }
     break;
 
   case 56: /* global_flag: BUTTON_SELECTION NUMBER  */
-                                          { (yyval._node) = MakeFlagNode(BUTTON_SELECTION, (yyvsp[0].val)); }
+                                  { (yyval._node) = MakeFlagNode(BUTTON_SELECTION, (yyvsp[0].val)); }
     break;
 
   case 57: /* func: string  */
-                                        { (yyval._node) = MakeUserFunc((yyvsp[0]._string)); }
+                            { (yyval._node) = MakeUserFunc((yyvsp[0]._string)); }
     break;
 
   case 58: /* func: EASY_FUNC  */
-                                        { (yyval._node) = MakeBuiltinFunc((yyvsp[0].val)); }
+                           { (yyval._node) = MakeBuiltinFunc((yyvsp[0].val)); }
     break;
 
   case 59: /* func: EXEC string_list  */
-                                        { (yyval._node) = MakeExec((yyvsp[0]._node)); }
+                                 { (yyval._node) = MakeExec((yyvsp[0]._node)); }
     break;
 
   case 60: /* func: EXECTTY string_list  */
-                                        { (yyval._node) = MakeExecTty((yyvsp[0]._node)); }
+                                 { (yyval._node) = MakeExecTty((yyvsp[0]._node)); }
     break;
 
   case 61: /* func: FLAG_FUNC opt_flag_toggle  */
-                                            { (yyval._node) = MakeFlagNode((yyvsp[-1].val), (yyvsp[0].val)); }
+                                    { (yyval._node) = MakeFlagNode((yyvsp[-1].val), (yyvsp[0].val)); }
     break;
 
   case 62: /* func: INTERACTIVE interactive_mode  */
-                                        { (yyval._node) = MakeFlagNode(INTERACTIVE, (yyvsp[0].val)); }
+                    { (yyval._node) = MakeFlagNode(INTERACTIVE, (yyvsp[0].val)); }
     break;
 
   case 63: /* func: MODULE string opt_flag_toggle  */
-                                                { (yyval._node) = MakeModuleNode((yyvsp[-1]._string), (yyvsp[0].val)); }
+                                           { (yyval._node) = MakeModuleNode((yyvsp[-1]._string), (yyvsp[0].val)); }
     break;
 
   case 64: /* func: MENU  */
-                                        { (yyval._node) = MakeBuiltinFunc(MENU); }
+                          { (yyval._node) = MakeBuiltinFunc(MENU); }
     break;
 
   case 65: /* func: move_or_resize opt_flag NUMBER opt_flag NUMBER  */
-                                        { (yyval._node) = MakeMoveResizeScroll((yyvsp[-4].val), (yyvsp[-3].val), (yyvsp[-2].val), (yyvsp[-1].val), (yyvsp[0].val)); }
+                    { (yyval._node) = MakeMoveResizeScroll((yyvsp[-4].val), (yyvsp[-3].val), (yyvsp[-2].val), (yyvsp[-1].val), (yyvsp[0].val)); }
     break;
 
   case 66: /* func: NEXT  */
-                                        { (yyval._node) = MakeWindowNumber('+', 1); }
+                          { (yyval._node) = MakeWindowNumber('+', 1); }
     break;
 
   case 67: /* func: RESTART string  */
-                                        { (yyval._node) = MakeRestartWM((yyvsp[0]._string)); }
+                            { (yyval._node) = MakeRestartWM((yyvsp[0]._string)); }
     break;
 
   case 68: /* func: PREV  */
-                                        { (yyval._node) = MakeWindowNumber('-', 1); }
+                          { (yyval._node) = MakeWindowNumber('-', 1); }
     break;
 
   case 69: /* func: SCROLL opt_flag NUMBER opt_flag NUMBER  */
-                                                         { (yyval._node) = MakeMoveResizeScroll(SCROLL, (yyvsp[-3].val), (yyvsp[-2].val), (yyvsp[-1].val), (yyvsp[0].val)); }
+                                                 { (yyval._node) = MakeMoveResizeScroll(SCROLL, (yyvsp[-3].val), (yyvsp[-2].val), (yyvsp[-1].val), (yyvsp[0].val)); }
     break;
 
   case 70: /* func: SENDTOSCREEN string  */
-                                        { (yyval._node) = MakeSendToScreen((yyvsp[0]._string)); }
+                                 { (yyval._node) = MakeSendToScreen((yyvsp[0]._string)); }
     break;
 
   case 71: /* func: SLEEP NUMBER  */
-                                        { (yyval._node) = MakeSleep((yyvsp[0].val)); }
+                              { (yyval._node) = MakeSleep((yyvsp[0].val)); }
     break;
 
   case 72: /* func: STDERR string_list  */
-                                        { (yyval._node) = MakeStderr((yyvsp[0]._node)); }
+                                { (yyval._node) = MakeStderr((yyvsp[0]._node)); }
     break;
 
   case 73: /* func: SYNTHETICKEY opt_flag_kbd string  */
-                                                    { (yyval._node) = MakeSyntheticKey((yyvsp[-1].val), (yyvsp[0]._string)); }
+                                            { (yyval._node) = MakeSyntheticKey((yyvsp[-1].val), (yyvsp[0]._string)); }
     break;
 
   case 74: /* func: WAIT string  */
-                                        { (yyval._node) = MakeWait((yyvsp[0]._string)); }
+                             { (yyval._node) = MakeWait((yyvsp[0]._string)); }
     break;
 
   case 75: /* func: WINDOW opt_flag NUMBER  */
-                                                { (yyval._node) = MakeWindowNumber((yyvsp[-1].val), (yyvsp[0].val)); }
+                                    { (yyval._node) = MakeWindowNumber((yyvsp[-1].val), (yyvsp[0].val)); }
     break;
 
   case 76: /* func: WINDOW STRING  */
-                                                { (yyval._node) = MakeWindow((yyvsp[0]._string)); }
+                                   { (yyval._node) = MakeWindow((yyvsp[0]._string)); }
     break;
 
   case 77: /* string_list: string  */
-                                 { (yyval._node) = AddtoStringList((node)0, (yyvsp[0]._string)); }
+                                { (yyval._node) = AddtoStringList((node)0, (yyvsp[0]._string)); }
     break;
 
   case 78: /* string_list: string_list string  */
-                                     { (yyval._node) = AddtoStringList( (yyvsp[-1]._node),  (yyvsp[0]._string)); }
+                             { (yyval._node) = AddtoStringList( (yyvsp[-1]._node),  (yyvsp[0]._string)); }
     break;
 
   case 80: /* string: NUMBER  */
-                         { (yyval._string) = toString((yyvsp[0].val)); }
+                 { (yyval._string) = toString((yyvsp[0].val)); }
     break;
 
   case 81: /* interactive_mode: SCROLL  */
@@ -1691,19 +1691,19 @@ yyreduce:
     break;
 
   case 82: /* interactive_mode: MENU  */
-                         { (yyval.val) = MENU; }
+                 { (yyval.val) = MENU; }
     break;
 
   case 83: /* interactive_mode: MOVE  */
-                         { (yyval.val) = MOVE; }
+                 { (yyval.val) = MOVE; }
     break;
 
   case 84: /* interactive_mode: RESIZE  */
-                         { (yyval.val) = RESIZE; }
+                 { (yyval.val) = RESIZE; }
     break;
 
   case 85: /* interactive_mode: SCREEN  */
-                         { (yyval.val) = SCREEN; }
+                 { (yyval.val) = SCREEN; }
     break;
 
   case 86: /* move_or_resize: MOVE  */
@@ -1711,27 +1711,27 @@ yyreduce:
     break;
 
   case 87: /* move_or_resize: MOVESCREEN  */
-                                { (yyval.val) = MOVESCREEN; }
+                        { (yyval.val) = MOVESCREEN; }
     break;
 
   case 88: /* move_or_resize: RESIZE  */
-                                { (yyval.val) = RESIZE; }
+                    { (yyval.val) = RESIZE; }
     break;
 
   case 89: /* move_or_resize: RESIZESCREEN  */
-                                { (yyval.val) = RESIZESCREEN; }
+                          { (yyval.val) = RESIZESCREEN; }
     break;
 
   case 90: /* opt_flag: %empty  */
-                                { (yyval.val) = 0; }
+                            { (yyval.val) = 0; }
     break;
 
   case 92: /* flag: '+'  */
-                                { (yyval.val) = '+'; }
+                         { (yyval.val) = '+'; }
     break;
 
   case 93: /* flag: '-'  */
-                                { (yyval.val) = '-'; }
+                     { (yyval.val) = '-'; }
     break;
 
   case 94: /* opt_flag_kbd: %empty  */
@@ -1739,39 +1739,39 @@ yyreduce:
     break;
 
   case 97: /* flag_kbd: KBD_FLAG flag  */
-                                { (yyval.val) = (yyvsp[-1].val) | (yyvsp[0].val); }
+                        { (yyval.val) = (yyvsp[-1].val) | (yyvsp[0].val); }
     break;
 
   case 98: /* opt_flag_toggle: %empty  */
-                                { (yyval.val) = FL_ON; }
+                                   { (yyval.val) = FL_ON; }
     break;
 
   case 99: /* opt_flag_toggle: FL_ON  */
-                                { (yyval.val) = FL_ON; }
+                       { (yyval.val) = FL_ON; }
     break;
 
   case 100: /* opt_flag_toggle: FL_OFF  */
-                                { (yyval.val) = FL_OFF; }
+                    { (yyval.val) = FL_OFF; }
     break;
 
   case 101: /* opt_flag_toggle: FL_TOGGLE  */
-                                { (yyval.val) = FL_TOGGLE; }
+                       { (yyval.val) = FL_TOGGLE; }
     break;
 
   case 102: /* flag_active: FL_ACTIVE  */
-                                { (yyval.val) = FL_ACTIVE; }
+                              { (yyval.val) = FL_ACTIVE; }
     break;
 
   case 103: /* flag_active: FL_INACTIVE  */
-                                { (yyval.val) = FL_INACTIVE; }
+                         { (yyval.val) = FL_INACTIVE; }
     break;
 
   case 104: /* flag_lr: FL_LEFT  */
-                                { (yyval.val) = FL_LEFT; }
+                            { (yyval.val) = FL_LEFT; }
     break;
 
   case 105: /* flag_lr: FL_RIGHT  */
-                                { (yyval.val) = FL_RIGHT; }
+                      { (yyval.val) = FL_RIGHT; }
     break;
 
 
@@ -1971,13 +1971,14 @@ yyreturnlab:
 
 #ifdef DEBUG_YACC
 static void yyprint(FILE *file, int type, void *value) {
-    if (type == NUMBER)
-	fprintf (file, " %d", ((YYSTYPE *)value)->val);
-    else if (type == STRING)
-	fprintf (file, " \"%s\"", ((YYSTYPE *)value)->_string);
-    else if (type == GLOBAL_FLAG || type == FLAG_FUNC ||
-	type == EASY_FUNC || type == COLOR)
-	fprintf (file, " %s", TokenName(((YYSTYPE *)value)->val));
+    if (type == NUMBER) {
+      fprintf (file, " %d", ((YYSTYPE *)value)->val);
+    } else if (type == STRING) {
+      fprintf (file, " \"%s\"", ((YYSTYPE *)value)->_string);
+    } else if (type == GLOBAL_FLAG || type == FLAG_FUNC ||
+               type == EASY_FUNC) {
+      fprintf (file, " %s", TokenName(((YYSTYPE *)value)->val));
+    }
 }
 #endif
 

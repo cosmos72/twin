@@ -551,10 +551,8 @@ TW_ATTR_HIDDEN bool tw_driver::InitHW(Tdisplay hw) {
       if (!self->win) {
         break;
       }
-      Tw_SetColorsWindow(self->dpy, self->win, 0x1FF, TCOL(tYELLOW, tcyan), TCOL(tGREEN, tBLUE),
-                         TCOL(twhite, tBLUE), TCOL(tWHITE, tBLUE), TCOL(tWHITE, tBLUE),
-                         TCOL(twhite, tblack), TCOL(twhite, tBLACK), TCOL(tBLACK, tblack),
-                         TCOL(tblack, tBLACK));
+      Tw_SetColorsWindow(self->dpy, self->win, 0x60, TCOL0, TCOL0, TCOL0, TCOL0, TCOL0,
+                         TCOL(twhite, tblack), TCOL(twhite, tBLACK), TCOL0, TCOL0);
       Tw_MapWidget(self->dpy, self->win, tw_screen);
 
       /*

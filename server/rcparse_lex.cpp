@@ -1524,42 +1524,42 @@ YY_RULE_SETUP
 case 73:
 YY_RULE_SETUP
 #line 151 "rcparse.l"
-{ yylval.val = tblack;    return COLOR; }
+{ yylval.val = tblack;    return RGB; }
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
 #line 152 "rcparse.l"
-{ yylval.val = tblue;     return COLOR; }
+{ yylval.val = tblue;     return RGB; }
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
 #line 153 "rcparse.l"
-{ yylval.val = tgreen;    return COLOR; }
+{ yylval.val = tgreen;    return RGB; }
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
 #line 154 "rcparse.l"
-{ yylval.val = tcyan;     return COLOR; }
+{ yylval.val = tcyan;     return RGB; }
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
 #line 155 "rcparse.l"
-{ yylval.val = tred;      return COLOR; }
+{ yylval.val = tred;      return RGB; }
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
 #line 156 "rcparse.l"
-{ yylval.val = tmagenta;  return COLOR; }
+{ yylval.val = tmagenta;  return RGB; }
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
 #line 157 "rcparse.l"
-{ yylval.val = tyellow;   return COLOR; }
+{ yylval.val = tyellow;   return RGB; }
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
 #line 158 "rcparse.l"
-{ yylval.val = twhite;    return COLOR; }
+{ yylval.val = twhite;    return RGB; }
 	YY_BREAK
 case 81:
 YY_RULE_SETUP

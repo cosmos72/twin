@@ -80,7 +80,7 @@ void mainloop(twindow *Win) {
 
   for (;;) {
     for (y = 256; y; y--) {
-      x = lrand48();
+      x = TCELL(TCOL(lrand48() & TRGB_MAX, lrand48() & TRGB_MAX), lrand48() & 0xFFFFF);
       TwWriteTCellWindow(*Win, lrand48() >> 26, lrand48() >> 27, sizeof(long) / sizeof(tcell), &x);
     }
 

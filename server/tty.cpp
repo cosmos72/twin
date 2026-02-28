@@ -156,16 +156,16 @@ static void flush_tty(tty_data *tty) {
 /* Note: inverting the screen twice should revert to the original state */
 
 static void invert_screen(tty_data *tty) {
-  tcell a, *p = tty->Start;
-  ldat count;
-
   dirty_tty(tty, 0, 0, tty->SizeX - 1, tty->SizeY - 1);
-  count = tty->SizeX * tty->SizeY;
 
-  while (count--) {
-    a = *p;
-    *p++ = (a & ~TCELL(TW_MAXWCOL, 0)) | TCELL(TCOL(TCOLBG(TCOLOR(a)), TCOLFG(TCOLOR(a))), 0);
-    if (p == tty->Split) {
+  tcell *p = tty->Start;
+  ldat count = (ldat)tty->SizeX * tty->SizeY;
+
+  while (count-- > 0) {
+    const tcolor col = TCOLOR(*p);
+    p->color.fg = col.bg;
+    p->color.bg = col.fg;
+    if (++p == tty->Split) {
       p = tty->Win->USE.C.Contents;
     }
   }
@@ -181,7 +181,7 @@ static void insert_char(tty_data *tty, ldat nr) {
     p[nr] = *p;
   }
   tcell cell = TCELL(tty->Win->ColText, ' ');
-  while (nr--) {
+  while (nr-- > 0) {
     *q++ = cell;
   }
   tty->Flags &= ~TTY_NEEDWRAP;
@@ -193,12 +193,12 @@ static inline void delete_char(tty_data *tty, ldat nr) {
 
   dirty_tty(tty, tty->X, tty->Y, tty->SizeX - 1, tty->Y);
 
-  while (i--) {
+  while (i-- > 0) {
     *p = p[nr];
     p++;
   }
   tcell cell = TCELL(tty->Win->ColText, ' ');
-  while (nr--) {
+  while (nr-- > 0) {
     *p++ = cell;
   }
   tty->Flags &= ~TTY_NEEDWRAP;
@@ -1072,10 +1072,11 @@ static void csi_L(tty_data *tty, ldat nr) {
 }
 
 static void csi_P(tty_data *tty, ldat nr) {
+  if (nr <= 0) {
+    nr = 1;
+  }
   if (nr > (ldat)tty->SizeX - tty->X) {
     nr = (ldat)tty->SizeX - tty->X;
-  } else if (nr <= 0) {
-    nr = 1;
   }
   delete_char(tty, nr);
 }

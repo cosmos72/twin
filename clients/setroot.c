@@ -42,6 +42,14 @@ TW_INLINE tcolor DefColor(void) {
 
 static tcolor ColText, Color;
 
+/* the 8-color ANSI palette */
+static const trgb Palette8[8] = {
+#define M 170
+    TRGB(0, 0, 0), TRGB(M, 0, 0), TRGB(0, M, 0), TRGB(M, M, 0),
+    TRGB(0, 0, M), TRGB(M, 0, M), TRGB(0, M, M), TRGB(M, M, M),
+#undef M
+};
+
 int main(int argc, char *argv[]) {
   tcell *image;
   uldat X, Y, padX = 0, padY = 0, err;
@@ -130,7 +138,7 @@ udat Effects;
 
 TW_INLINE void update_eff(void) {
   udat effects = Effects;
-  tcolor fg = TCOLFG(ColText), bg = TCOLBG(ColText);
+  trgb fg = TCOLFG(ColText), bg = TCOLBG(ColText);
 
   if (effects & EFF_UNDERLINE) {
     fg = TCOLFG(Underline());
@@ -138,23 +146,27 @@ TW_INLINE void update_eff(void) {
     fg = TCOLFG(HalfInten());
   }
   if (effects & EFF_REVERSE) {
-    tcolor tmp = TCOL(bg & ~thigh, fg & ~thigh) | TCOL(fg & thigh, bg & thigh);
-    fg = TCOLFG(tmp);
-    bg = TCOLBG(tmp);
+    trgb rev_fg = (bg & ~thigh) | (fg & thigh);
+    trgb rev_bg = (fg & ~thigh) | (bg & thigh);
+    fg = rev_fg;
+    bg = rev_bg;
   }
-  if (effects & EFF_INTENSITY)
+  if (effects & EFF_INTENSITY) {
     fg ^= thigh;
-  if (effects & EFF_BLINK)
+  }
+  if (effects & EFF_BLINK) {
     bg ^= thigh;
+  }
   Color = TCOL(fg, bg);
 }
 
 TW_INLINE void csi_m(void) {
   udat i;
   udat effects = Effects;
-  tcolor fg = TCOLFG(ColText), bg = TCOLBG(ColText);
+  trgb fg = TCOLFG(ColText);
+  trgb bg = TCOLBG(ColText);
 
-  for (i = 0; i <= nPar; i++)
+  for (i = 0; i <= nPar; i++) {
     switch (Par[i]) {
     case 0:
       /* all attributes off */
@@ -214,17 +226,18 @@ TW_INLINE void csi_m(void) {
     default: {
       const uldat par = Par[i];
       if (par >= 30 && par <= 37) {
-        fg = par - 30;
+        fg = Palette8[par - 30];
       } else if (par >= 40 && par <= 47) {
-        bg = par - 40;
+        bg = Palette8[par - 40];
       } else if (par >= 90 && par <= 97) {
-        fg = thigh | (par - 90);
+        fg = thigh | Palette8[par - 90];
       } else if (par >= 100 && par <= 107) {
-        bg = thigh | (par - 100);
+        bg = thigh | Palette8[par - 100];
       }
       break;
     }
     }
+  }
   Effects = effects;
   ColText = TCOL(fg, bg);
 
@@ -232,8 +245,9 @@ TW_INLINE void csi_m(void) {
 }
 
 TW_INLINE void Fill(tcell *t, tcell h, uldat count) {
-  while (count--)
+  while (count--) {
     *t++ = h;
+  }
 }
 
 TW_INLINE void Xgrow(void) {
@@ -269,9 +283,9 @@ TW_INLINE void Ygrow(void) {
     return;
   }
 
-  if (!(image = TwReAllocMem(image, n * sizeof(tcell))))
+  if (!(image = TwReAllocMem(image, n * sizeof(tcell)))) {
     panic();
-
+  }
   Fill(image + max, TCELL(Color, ' '), n - max);
 
   max = n;
@@ -279,15 +293,18 @@ TW_INLINE void Ygrow(void) {
 }
 
 void addc(byte c) {
-  if (X >= Xmax)
+  if (X >= Xmax) {
     Xgrow();
-  if (Y >= Ymax)
+  }
+  if (Y >= Ymax) {
     Ygrow();
-  if (Xreal <= X)
+  }
+  if (Xreal <= X) {
     Xreal = X + 1;
-  if (Yreal <= Y)
+  }
+  if (Yreal <= Y) {
     Yreal = Y + 1;
-
+  }
   image[X + Y * Xmax] = TCELL(Color, c);
   X++;
 }
@@ -295,10 +312,12 @@ void addc(byte c) {
 void finalize(void) {
   uldat i;
 
-  if (!image || !Xreal || !Yreal)
+  if (!image || !Xreal || !Yreal) {
     return;
-  for (i = 1; i < Yreal; i++)
+  }
+  for (i = 1; i < Yreal; i++) {
     TwMoveMem(image + i * Xmax, image + i * Xreal, Xreal * sizeof(tcell));
+  }
 }
 
 #define goto_xy(x, y) (X = (x), Y = (y))
@@ -306,9 +325,9 @@ void finalize(void) {
 tcell *load_ascii_art(FILE *aaFILE, uldat *x, uldat *y, uldat padX, uldat padY) {
   int c;
 
-  if (!(image = TwAllocMem(max * sizeof(tcell))))
+  if (!(image = TwAllocMem(max * sizeof(tcell)))) {
     panic();
-
+  }
   while ((c = fgetc(aaFILE)) != EOF) {
     switch (State) {
     case ESnormal:
@@ -373,8 +392,9 @@ tcell *load_ascii_art(FILE *aaFILE, uldat *x, uldat *y, uldat padX, uldat padY) 
         Par[nPar] *= 10;
         Par[nPar] += c - '0';
         break;
-      } else
+      } else {
         State = ESgotpars;
+      }
       /* FALLTHROUGH */
 
     case ESgotpars:
@@ -384,63 +404,73 @@ tcell *load_ascii_art(FILE *aaFILE, uldat *x, uldat *y, uldat padX, uldat padY) 
         break;
       case 'H':
       case 'f':
-        if (Par[0])
+        if (Par[0]) {
           Par[0]--;
-        if (!nPar)
-          Par[1] = nPar;
-        else if (Par[1])
+        }
+        if (!nPar) {
+          Par[1] = 0;
+        } else if (Par[1]) {
           Par[1]--;
+        }
         goto_xy(Par[1], Par[0]);
         break;
 
       case 'G':
       case '`':
-        if (Par[0])
+        if (Par[0]) {
           Par[0]--;
+        }
         goto_xy(Par[0], Y);
         break;
 
       case 'A':
-        if (!Par[0])
+        if (!Par[0]) {
           Par[0]++;
+        }
         goto_xy(X, Y - Par[0]);
         break;
 
       case 'B':
       case 'e':
-        if (!Par[0])
+        if (!Par[0]) {
           Par[0]++;
+        }
         goto_xy(X, Y + Par[0]);
         break;
 
       case 'C':
       case 'a':
-        if (!Par[0])
+        if (!Par[0]) {
           Par[0]++;
+        }
         goto_xy(X + Par[0], Y);
         break;
 
       case 'D':
-        if (!Par[0])
+        if (!Par[0]) {
           Par[0]++;
+        }
         goto_xy(X - Par[0], Y);
         break;
 
       case 'E':
-        if (!Par[0])
+        if (!Par[0]) {
           Par[0]++;
+        }
         goto_xy(0, Y + Par[0]);
         break;
 
       case 'F':
-        if (!Par[0])
+        if (!Par[0]) {
           Par[0]++;
+        }
         goto_xy(0, Y - Par[0]);
         break;
 
       case 'd':
-        if (Par[0])
+        if (Par[0]) {
           Par[0]--;
+        }
         goto_xy(X, Par[0]);
         break;
 

@@ -3,6 +3,8 @@
 #define TW_STATTYPES_H
 
 typedef union s_tsval {
+  tcell cell;
+  tcolor col;
   tany _;
 #ifdef Tobj
   Tobj o;

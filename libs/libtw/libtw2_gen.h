@@ -73,7 +73,7 @@ void Tw_ChangeField(tw_d TwD, tobj a1, udat a2, tany a3, tany a4) {
 }
 
 twidget Tw_CreateWidget(tw_d TwD, dat a1, dat a2, uldat a3, uldat a4, dat a5, dat a6, tcell a7) {
-  return (twidget )_Tw_EncodeCall(0, order_CreateWidget, TwD, n(a1), n(a2), n(a3), n(a4), n(a5), n(a6), n(a7));
+  return (twidget )_Tw_EncodeCall(0, order_CreateWidget, TwD, n(a1), n(a2), n(a3), n(a4), n(a5), n(a6), N(&a7));
 }
 
 /** delete given widget and all its children */
@@ -134,11 +134,11 @@ void Tw_CirculateChildrenWidget(tw_d TwD, twidget a1, byte a2) {
 }
 
 tgadget Tw_CreateGadget(tw_d TwD, twidget a1, dat a2, dat a3, const char *a4, uldat a5, uldat a6, udat a7, tcolor a8, tcolor a9, tcolor a10, tcolor a11, dat a12, dat a13) {
-  return (tgadget )_Tw_EncodeCall(0, order_CreateGadget, TwD, n(a1), n(a2), n(a3), n((a2 * a3) * sizeof(char )), N(a4), n(a5), n(a6), n(a7), n(a8), n(a9), n(a10), n(a11), n(a12), n(a13));
+  return (tgadget )_Tw_EncodeCall(0, order_CreateGadget, TwD, n(a1), n(a2), n(a3), n((a2 * a3) * sizeof(char )), N(a4), n(a5), n(a6), n(a7), N(&a8), N(&a9), N(&a10), N(&a11), n(a12), n(a13));
 }
 
 tgadget Tw_CreateButtonGadget(tw_d TwD, twidget a1, dat a2, dat a3, const char *a4, uldat a5, udat a6, tcolor a7, tcolor a8, tcolor a9, dat a10, dat a11) {
-  return (tgadget )_Tw_EncodeCall(0, order_CreateButtonGadget, TwD, n(a1), n(a2), n(a3), n((a2 * a3) * sizeof(char )), N(a4), n(a5), n(a6), n(a7), n(a8), n(a9), n(a10), n(a11));
+  return (tgadget )_Tw_EncodeCall(0, order_CreateButtonGadget, TwD, n(a1), n(a2), n(a3), n((a2 * a3) * sizeof(char )), N(a4), n(a5), n(a6), N(&a7), N(&a8), N(&a9), n(a10), n(a11));
 }
 
 void Tw_WriteTextsGadget(tw_d TwD, tgadget a1, byte a2, dat a3, dat a4, const char *a5, dat a6, dat a7) {
@@ -150,7 +150,7 @@ void Tw_WriteTRunesGadget(tw_d TwD, tgadget a1, byte a2, dat a3, dat a4, const t
 }
 
 twindow Tw_CreateWindow(tw_d TwD, dat a1, const char *a2, const tcolor *a3, tmenu a4, tcolor a5, uldat a6, uldat a7, uldat a8, dat a9, dat a10, dat a11) {
-  return (twindow )_Tw_EncodeCall(0, order_CreateWindow, TwD, n(a1), n((a1) * sizeof(char )), N(a2), n((a1) * sizeof(tcolor )), N(a3), n(a4), n(a5), n(a6), n(a7), n(a8), n(a9), n(a10), n(a11));
+  return (twindow )_Tw_EncodeCall(0, order_CreateWindow, TwD, n(a1), n((a1) * sizeof(char )), N(a2), n((a1) * sizeof(tcolor )), N(a3), n(a4), N(&a5), n(a6), n(a7), n(a8), n(a9), n(a10), n(a11));
 }
 
 twindow Tw_Create4MenuWindow(tw_d TwD, tmenu a1) {
@@ -182,11 +182,11 @@ void Tw_SetTitleWindow(tw_d TwD, twindow a1, dat a2, const char *a3) {
 }
 
 void Tw_SetColTextWindow(tw_d TwD, twindow a1, tcolor a2) {
-  _Tw_EncodeCall(ENCODE_FL_VOID, order_SetColTextWindow, TwD, n(a1), n(a2));
+  _Tw_EncodeCall(ENCODE_FL_VOID, order_SetColTextWindow, TwD, n(a1), N(&a2));
 }
 
 void Tw_SetColorsWindow(tw_d TwD, twindow a1, udat a2, tcolor a3, tcolor a4, tcolor a5, tcolor a6, tcolor a7, tcolor a8, tcolor a9, tcolor a10, tcolor a11) {
-  _Tw_EncodeCall(ENCODE_FL_VOID, order_SetColorsWindow, TwD, n(a1), n(a2), n(a3), n(a4), n(a5), n(a6), n(a7), n(a8), n(a9), n(a10), n(a11));
+  _Tw_EncodeCall(ENCODE_FL_VOID, order_SetColorsWindow, TwD, n(a1), n(a2), N(&a3), N(&a4), N(&a5), N(&a6), N(&a7), N(&a8), N(&a9), N(&a10), N(&a11));
 }
 
 void Tw_ConfigureWindow(tw_d TwD, twindow a1, byte a2, dat a3, dat a4, dat a5, dat a6, dat a7, dat a8) {
@@ -242,7 +242,7 @@ uldat Tw_Create4MenuCommonMenuItem(tw_d TwD, tmenu a1) {
 }
 
 tmenu Tw_CreateMenu(tw_d TwD, tcolor a1, tcolor a2, tcolor a3, tcolor a4, tcolor a5, tcolor a6, byte a7) {
-  return (tmenu )_Tw_EncodeCall(0, order_CreateMenu, TwD, n(a1), n(a2), n(a3), n(a4), n(a5), n(a6), n(a7));
+  return (tmenu )_Tw_EncodeCall(0, order_CreateMenu, TwD, N(&a1), N(&a2), N(&a3), N(&a4), N(&a5), N(&a6), n(a7));
 }
 
 void Tw_SetInfoMenu(tw_d TwD, tmenu a1, byte a2, ldat a3, const char *a4, const tcolor *a5) {

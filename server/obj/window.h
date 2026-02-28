@@ -48,6 +48,8 @@ enum tpos /*: byte*/ {
   POS_ROOT = 30,
 };
 
+class ColorTheme;
+
 class Sremotedata {
 public:
   int Fd;
@@ -143,6 +145,7 @@ public:
   void SetColors(udat bitmap, tcolor colgadgets, tcolor colarrows, tcolor colbars, tcolor coltabs,
                  tcolor colborder, tcolor coltext, tcolor colselect, tcolor coldisabled,
                  tcolor colselectdisabled);
+  void SetColorTheme(const ColorTheme &theme);
   void Configure(byte bitmap, dat left, dat up, dat minxwidth, dat minywidth, dat maxxwidth,
                  dat maxywidth);
   tpos FindBorder(dat u, dat v, byte border, tcell *ptrattr) {

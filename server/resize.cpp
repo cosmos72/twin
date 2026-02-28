@@ -84,8 +84,10 @@ void FlushCursor(void) {
                )) {
 
         MoveToXY((dat)d.X1, (dat)d.Y1);
-        if ((type = window->CursorType) == NOCURSOR && All->SetUp->Flags & setup_cursor_always)
+        type = window->CursorType;
+        if (type == NOCURSOR && All->SetUp->Flags & setup_cursor_always) {
           type = LINECURSOR;
+        }
       }
     }
     SetCursorType(type);
@@ -419,7 +421,7 @@ bool RowWriteTRuneWindow(Twindow w, uldat len, const trune *runes) {
         if (x >= 0) {
           ColorFill(row->ColText + x, row_len, w->ColText);
         } else if ((uldat)-x < row_len) {
-          ColorFill(row->ColText, row_len + x, w->ColText - x);
+          ColorFill(row->ColText, row_len + x, w->ColText);
         }
         if (x >= 0 && (uldat)x > row->Len) {
           ColorFill(row->ColText + row->Len, x - row->Len, w->ColText);
@@ -439,13 +441,14 @@ bool RowWriteTRuneWindow(Twindow w, uldat len, const trune *runes) {
       w->CurX = x = (ldat)0;
       w->CurY = ++y;
       runes++, len--;
-    } else
+    } else {
       w->CurX = x += row_len;
+    }
   }
 
-  if (w == FindCursorWindow())
+  if (w == FindCursorWindow()) {
     UpdateCursor();
-
+  }
   return true;
 }
 

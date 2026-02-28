@@ -14,7 +14,7 @@
 
 #include "algo.h"    // Max2()
 #include "alloc.h"   // AllocMem0(), CloneStrL()
-#include "data.h"    // DEFAULT_Col*
+#include "data.h"    // DefaultTheme
 #include "draw.h"    // ContainsCursor(), DrawAreaWidget(), DrawAreaWindow()
 #include "methods.h" // IncMouseMotionN(), DecMouseMotionN()
 #include "resize.h"  // UpdateCursor(), RollUpWindow()
@@ -56,9 +56,7 @@ Twindow Swindow::Create4Menu(Tmenu menu) {
                                             WINDOWFL_ROWS_SELCURRENT,
                                         MIN_XWIN, MIN_YWIN, 0))) {
 
-    window->SetColors(0x1FF, TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(tWHITE, twhite),
-                      TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
-                      TCOL(tBLACK, tblack));
+    window->SetColorTheme(MenuTheme);
     window->Configure(0x3F, 0, 1, MIN_XWIN, MIN_YWIN, TW_MAXDAT, TW_MAXDAT);
   }
   return window;
@@ -87,6 +85,8 @@ Twindow Swindow::Init(Tmsgport owner, dat titlelen, const char *title, const tco
     return NULL;
   }
 
+  const ColorTheme &theme = DefaultTheme;
+
   Menu = m;
   // MenuItem = NULL;
   //  BorderPattern[0] = BorderPattern[1] = NULL;
@@ -95,15 +95,15 @@ Twindow Swindow::Init(Tmsgport owner, dat titlelen, const char *title, const tco
   RemoteData.FdSlot = NOSLOT;
   // CurX = CurY = 0;
   // XstSel = YstSel = XendSel = YendSel = 0;
-  ColGadgets = DEFAULT_ColGadgets;
-  ColArrows = DEFAULT_ColArrows;
-  ColBars = DEFAULT_ColBars;
-  ColTabs = DEFAULT_ColTabs;
-  ColBorder = DEFAULT_ColBorder;
-  ColText = coltext;
-  ColSelect = TCOL(TCOLBG(coltext), TCOLFG(coltext));
-  ColDisabled = DEFAULT_ColDisabled;
-  ColSelectDisabled = DEFAULT_ColSelectDisabled;
+  ColGadgets = theme.Gadgets();
+  ColArrows = theme.Arrows();
+  ColBars = theme.Bars();
+  ColTabs = theme.Tabs();
+  ColBorder = theme.Borders();
+  ColText = coltext == TCOLOR_BAD ? theme.Text() : coltext;
+  ColSelect = coltext == TCOLOR_BAD ? theme.Selected() : TCOL(TCOLBG(coltext), TCOLFG(coltext));
+  ColDisabled = theme.Disabled();
+  ColSelectDisabled = theme.SelectDisabled();
   /* sanity: */
   if (Flags & WINDOWFL_BORDERLESS)
     Attr &= ~WINDOW_ROLLED_UP;
@@ -244,6 +244,7 @@ void Swindow::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
   case TWS_window_YendSel:
     /* FIXME: finish this */
     break;
+#ifdef FIXME_TCELL
   case TWS_window_ColGadgets:
   case TWS_window_ColArrows:
   case TWS_window_ColBars:
@@ -293,6 +294,7 @@ void Swindow::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
     }
     break;
   }
+#endif // FIXME_TCELL
   case TWS_window_Flags:
     mask = WINDOWFL_CURSOR_ON;
     old = Flags & mask;
@@ -425,29 +427,57 @@ void Swindow::SetColText(tcolor color) {
 void Swindow::SetColors(udat bitmap, tcolor colgadgets, tcolor colarrows, tcolor colbars,
                         tcolor coltabs, tcolor colborder, tcolor coltext, tcolor colselect,
                         tcolor coldisabled, tcolor colselectdisabled) {
-  if (bitmap & 1)
+  if (bitmap & 1) {
     ColGadgets = colgadgets;
-  if (bitmap & 2)
+  }
+  if (bitmap & 2) {
     ColArrows = colarrows;
-  if (bitmap & 4)
+  }
+  if (bitmap & 4) {
     ColBars = colbars;
-  if (bitmap & 8)
+  }
+  if (bitmap & 8) {
     ColTabs = coltabs;
-  if (bitmap & 0x10)
+  }
+  if (bitmap & 0x10) {
     ColBorder = colborder;
+  }
   if (bitmap & 0x20) {
     ColText = coltext;
-    if (W_USE(this, USECONTENTS))
+    if (W_USE(this, USECONTENTS)) {
       USE.C.TtyData->Color = coltext;
+    }
   }
-  if (bitmap & 0x40)
+  if (bitmap & 0x40) {
     ColSelect = colselect;
-  if (bitmap & 0x80)
+  }
+  if (bitmap & 0x80) {
     ColDisabled = coldisabled;
-  if (bitmap & 0x100)
+  }
+  if (bitmap & 0x100) {
     ColSelectDisabled = colselectdisabled;
-  if (Parent)
+  }
+  if (Parent) {
     DrawBorderWindow(this, BORDER_ANY);
+  }
+}
+
+void Swindow::SetColorTheme(const ColorTheme &theme) {
+  ColGadgets = theme.Gadgets();
+  ColArrows = theme.Arrows();
+  ColBars = theme.Bars();
+  ColTabs = theme.Tabs();
+  ColBorder = theme.Borders();
+  ColText = theme.Text();
+  if (W_USE(this, USECONTENTS)) {
+    USE.C.TtyData->Color = theme.Text();
+  }
+  ColSelect = theme.Selected();
+  ColDisabled = theme.Disabled();
+  ColSelectDisabled = theme.SelectDisabled();
+  if (Parent) {
+    DrawBorderWindow(this, BORDER_ANY);
+  }
 }
 
 void Swindow::Configure(byte bitmap, dat left, dat up, //

@@ -195,7 +195,7 @@ static bool Init(void) {
    * You may have twin SEGFAULT at startup or (worse) introduce subtle bugs!
    */
 
-  return InitData() && InitGlobalVariables() && InitSignals() && InitTWDisplay() &&
+  return InitGlobalVariables() && InitData() && InitSignals() && InitTWDisplay() &&
          (All->AtQuit = QuitTWDisplay) && InitTransUser() && InitTtysave() && InitScroller() &&
          InitBuiltin() && InitHW() &&
          /*

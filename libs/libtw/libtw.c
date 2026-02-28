@@ -221,12 +221,6 @@ typedef struct s_tw_d {
 #define LOCK th_r_mutex_lock(mutex)
 #define UNLK th_r_mutex_unlock(mutex)
 
-enum {
-  ServFlagTRune2 = 1,   /* server trune is two bytes, i.e. limited to 64k Unicode characters */
-  ServFlagTCell47x = 2, /* server tcell has <= 4.7.x encoding {unicode64k_lo, color,
-                            unicode64k_hi, extra}. implies ServFlagTRune2 */
-};
-
 static s_tw_errno rCommonErrno;
 #define CommonErrno (rCommonErrno.E)
 
@@ -931,10 +925,6 @@ static void ExtractServProtocol(tw_d TwD, byte *servdata, uldat len) {
     }
     if (++i >= 3)
       break;
-  }
-  if (ServProtocol[0] < 4 || (ServProtocol[0] == 4 && ServProtocol[1] <= 7)) {
-    /* server protocol is <= 4.7.x : has two-byte trune and old tcell enconding */
-    ServFlags |= ServFlagTRune2 | ServFlagTCell47x;
   }
 }
 
@@ -2169,8 +2159,9 @@ static tany _Tw_EncodeCall(byte flags, uldat o, tw_d TwD, ...) {
 
   flags ^= (ENCODE_FL_NOLOCK | ENCODE_FL_VOID);
 
-  if (flags & ENCODE_FL_LOCK)
+  if (flags & ENCODE_FL_LOCK) {
     LOCK;
+  }
   if (Fd != TW_NOFD && (myId = id_Tw[o]) != TW_NOID &&
       (myId != TW_BADID || (myId = FindFunctionId(TwD, o)) != TW_NOID)) {
 
@@ -2181,9 +2172,9 @@ static tany _Tw_EncodeCall(byte flags, uldat o, tw_d TwD, ...) {
     if (N != (udat)-1) {
       if (InitRS(TwD) && WQLeft(space)) {
         /* skip over a[0], that will hold return value */
-        for (b = a + 1; N; b++, N--)
+        for (b = a + 1; N; b++, N--) {
           s = PushArg(s, b);
-
+        }
         Send(TwD, (myId = NextSerial(TwD)), id_Tw[o]);
         if (flags & ENCODE_FL_RETURN) {
           if ((MyReply = (void *)Wait4Reply(TwD, myId)) && (INIT_MyReply, MyCode == OK_MAGIC)) {
@@ -2208,8 +2199,9 @@ static tany _Tw_EncodeCall(byte flags, uldat o, tw_d TwD, ...) {
     }
   } else if (Fd != TW_NOFD)
     FailedCall(TwD, TW_ESERVER_NO_FUNCTION, o);
-  if (flags & ENCODE_FL_LOCK)
+  if (flags & ENCODE_FL_LOCK) {
     UNLK;
+  }
   return a->TWS_field_scalar;
 }
 
@@ -2258,39 +2250,6 @@ static uldat FindFunctionId(tw_d TwD, uldat order) {
   return Fd != TW_NOFD ? myId : TW_NOID;
 }
 
-/* convert tcell to protocol <= 4.7.x i.e. {unicode64k_lo, color, unicode64k_hi, extra} */
-static tcell ConvertTCellTo47x(tcell cell) {
-  trune f = TRUNE(cell);
-  tcolor col = TCOLOR(cell);
-  if (f > 0xFFFF) /* maximum supported by protocol <= 4.7.x is 64k */
-    f = 0xFFFD;   /* use replacement char instead */
-  return (f & 0xFF) | ((tcell)col << 8) | (((tcell)f & 0xFF00) << 8);
-}
-
-TW_INLINE tcell MaybeConvertTCell(tw_d TwD, tcell cell) {
-  if (ServFlags & ServFlagTCell47x)
-    cell = ConvertTCellTo47x(cell);
-  return cell;
-}
-
-#define PushVMaybeConvertTCell(TwD, dst, len, vec)                                                 \
-  ((dst) = VecMaybeConvertTCell(TwD, dst, len, vec))
-
-static byte *VecMaybeConvertTCell(tw_d TwD, byte *dst, uldat len, const tcell *cell) {
-  if (ServFlags & ServFlagTCell47x) {
-    uldat i;
-    tcell h;
-    len /= sizeof(tcell);
-    for (i = 0; i < len; i++) {
-      h = ConvertTCellTo47x(cell[i]);
-      Push(dst, tcell, h);
-    }
-  } else {
-    PushV(dst, len, cell);
-  }
-  return dst;
-}
-
 /**
  * sends all buffered data to connection and waits for server to process it
  */
@@ -2325,8 +2284,13 @@ tgadget Tw_O_NextWidget(tw_d TwD, twidget a1) {
  * change the fill patter of given widget
  */
 void Tw_SetFillWidget(tw_d TwD, twidget a1, tcell a2) {
-  a2 = MaybeConvertTCell(TwD, a2);
-  Tw_ChangeField(TwD, a1, TWS_widget_Fill, ~(tcell)0, a2);
+#ifdef FIXME_TCELL
+  Tw_ChangeField(TwD, a1, TWS_widget_Fill, TCELL_BAD, a2);
+#else
+  (void)TwD;
+  (void)a1;
+  (void)a2;
+#endif
 }
 
 /**
@@ -2367,7 +2331,7 @@ void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pi
         }
         Push(s, uldat, len8);
         while (len8) {
-          PushVMaybeConvertTCell(TwD, s, (uldat)a2 * sizeof(tcell), a8);
+          PushV(s, (uldat)a2 * sizeof(tcell), a8);
           a8 += pitch;
           len8 -= (uldat)a2 * sizeof(tcell);
         }
@@ -2713,25 +2677,25 @@ static tslist StatScalar(tslist f, byte *data, byte *end) {
     Pop(data, udat, Type); /* label */
     Pop(data, udat, Type);
     switch (Type) {
-#define Popcase(type)                                                                              \
+#define Popcase(type, field)                                                                       \
   case TWS_CAT(TWS_, type):                                                                        \
     if (data + sizeof(type) <= end) {                                                              \
       /* avoid padding problems */                                                                 \
       type tmp;                                                                                    \
       Pop(data, type, tmp);                                                                        \
-      f->TSF[0].TWS_field_scalar = tmp;                                                            \
+      f->TSF[0].val.field = tmp;                                                                   \
     }                                                                                              \
     break
 
-      Popcase(byte);
-      Popcase(dat);
-      Popcase(ldat);
-      Popcase(tcolor);
-      Popcase(topaque);
-      Popcase(tany);
-      Popcase(trune);
-      Popcase(tcell);
-      Popcase(tobj);
+      Popcase(byte, _);
+      Popcase(dat, _);
+      Popcase(ldat, _);
+      Popcase(tcolor, col);
+      Popcase(topaque, _);
+      Popcase(tany, _);
+      Popcase(trune, _);
+      Popcase(tcell, cell);
+      Popcase(tobj, _);
 #undef Popcase
     default:
       return (tslist)0;
@@ -2758,26 +2722,27 @@ static tslist StatTSL(tw_d TwD, udat flags, byte *data, byte *end) {
       Pop(data, udat, TSF[i].label);
       Pop(data, udat, TSF[i].type);
       switch (TSF[i].type) {
-#define Popcase(type)                                                                              \
+#define Popcase(type, field)                                                                       \
   case TWS_CAT(TWS_, type):                                                                        \
     if (data + sizeof(type) <= end) {                                                              \
       /* avoid padding problems */                                                                 \
       type tmp;                                                                                    \
       Pop(data, type, tmp);                                                                        \
-      TSF[i].TWS_field_scalar = tmp;                                                               \
-    } else                                                                                         \
+      TSF[i].val.field = tmp;                                                                      \
+    } else {                                                                                       \
       ok = tfalse;                                                                                 \
+    }                                                                                              \
     break
 
-        Popcase(byte);
-        Popcase(dat);
-        Popcase(ldat);
-        Popcase(tcolor);
-        Popcase(topaque);
-        Popcase(tany);
-        Popcase(trune);
-        Popcase(tcell);
-        Popcase(tobj);
+        Popcase(byte, _);
+        Popcase(dat, _);
+        Popcase(ldat, _);
+        Popcase(tcolor, col);
+        Popcase(topaque, _);
+        Popcase(tany, _);
+        Popcase(trune, _);
+        Popcase(tcell, cell);
+        Popcase(tobj, _);
 #undef Popcase
       default:
         if (TSF[i].type >= TWS_vec && (TSF[i].type & ~TWS_vec) <= TWS_last &&
@@ -2787,18 +2752,23 @@ static tslist StatTSL(tw_d TwD, udat flags, byte *data, byte *end) {
           if (TSF[i].TWS_field_vecL) {
             if (data + TSF[i].TWS_field_vecL <= end) {
               if (flags & TWS_CLONE_MEM) {
-                if ((TSF[i].TWS_field_vecV = Tw_AllocMem(TSF[i].TWS_field_vecL)))
+                if ((TSF[i].TWS_field_vecV = Tw_AllocMem(TSF[i].TWS_field_vecL))) {
                   PopV(data, TSF[i].TWS_field_vecL, TSF[i].TWS_field_vecV);
-                else
+                } else {
                   ok = tfalse;
-              } else
+                }
+              } else {
                 PopAddr(data, byte, TSF[i].TWS_field_vecL, TSF[i].TWS_field_vecV);
-            } else
+              }
+            } else {
               ok = tfalse;
-          } else
+            }
+          } else {
             TSF[i].TWS_field_vecV = NULL;
-        } else
+          }
+        } else {
           ok = tfalse;
+        }
         break;
       }
     }
@@ -2841,8 +2811,9 @@ static tslist StatA(tw_d TwD, tobj Id, udat flags, uldat hN, const udat *h, tsli
                      order_StatObj);
           a0 = (tslist)TW_NOID;
         }
-        if (MyReply)
+        if (MyReply) {
           KillReply(TwD, (byte *)MyReply, MyLen);
+        }
         UNLK;
         return a0;
       }
@@ -2850,8 +2821,9 @@ static tslist StatA(tw_d TwD, tobj Id, udat flags, uldat hN, const udat *h, tsli
     /* still here? must be out of memory! */
     Errno = TW_ESYS_NO_MEM;
     Fail(TwD);
-  } else if (Fd != TW_NOFD)
+  } else if (Fd != TW_NOFD) {
     FailedCall(TwD, TW_ESERVER_NO_FUNCTION, order_StatObj);
+  }
   UNLK;
   return (tslist)TW_NOID;
 }

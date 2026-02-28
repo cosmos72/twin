@@ -36,25 +36,25 @@ enum {
 /* maximum number of arguments of a libtw function */
 #define TW_MAX_ARGS_N 20
 
-/* enum for common colors represented as 21-bit RGB */
+/* enum for common colors represented as 24-bit RGB */
 enum tcolor_e {
 #ifdef TWIN_PALETTE_SOLARIZED
-  tblack = 0x2 << 14 | 0x4 << 7 | 0x8,
+  tblack = 0x050911,
 #else
   tblack = 0,
 #endif
-  tblue = 0x55,            /* */
-  tgreen = 0x55 << 7,      /* */
+  tblue = 0x0000aa,        /* */
+  tgreen = 0x00aa00,       /* */
   tcyan = tblue | tgreen,  /* */
-  tred = 0x55 << 14,       /* */
+  tred = 0xaa0000,         /* */
   tmagenta = tblue | tred, /* */
   tyellow = tgreen | tred,
 #ifdef TWIN_PALETTE_SOLARIZED
-  twhite = 0x5d << 14 | 0x5d << 7 | 0x5d,
+  twhite = 0xbbbbbb,
 #else
   twhite = tblue | tgreen | tred,
 #endif
-  thigh = 0x2a << 14 | 0x2a << 7 | 0x2a,
+  thigh = 0x555555,
 
   tBLACK = thigh | tblack,
   tBLUE = thigh | tblue,

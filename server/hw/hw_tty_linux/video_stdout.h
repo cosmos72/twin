@@ -95,9 +95,9 @@ TW_ATTR_HIDDEN void tty_driver::linuxDrawStart(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
 
   fputs(self->tty_use_utf8 ? "\033[3l\033%G\033[m" : "\033%@\033[3h\033[m", self->out);
-  self->col = TCOL(twhite, tblack);
-  self->fg = 7; // TrueColorToPalette16(twhite);
-  self->bg = 0; // TrueColorToPalette16(tblack);
+
+  self->col.fg = 7; // TrueColorToPalette16(twhite);
+  self->col.bg = 0; // TrueColorToPalette16(tblack);
 }
 
 #define linuxDrawFinish(hw) ((void)0)
@@ -106,16 +106,15 @@ TW_ATTR_HIDDEN void tty_driver::linuxSetColor(Tdisplay hw, tcolor col) {
   tty_driver *self = ttydriver(hw);
   byte fg = TrueColorToPalette16(TCOLFG(col));
   byte bg = TrueColorToPalette16(TCOLBG(col));
-  byte fg_ = self->fg;
-  byte bg_ = self->bg;
-
-  self->col = col;
-  self->fg = fg;
-  self->bg = bg;
+  byte fg_ = self->col.fg;
+  byte bg_ = self->col.bg;
 
   if (fg == fg_ && bg == bg_) {
     return;
   }
+  self->col.fg = fg;
+  self->col.bg = bg;
+
   char colbuf[] = "\033[2x;2x;3x;4xm";
   char *colp = colbuf + 2;
   const byte fg_high = fg & 8;
@@ -242,12 +241,15 @@ TW_ATTR_HIDDEN void tty_driver::linuxDrawTCell(Tdisplay hw, dat x, dat y, tcell 
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.
  * so we have linux, termcap and xterm versions, not GPM ones... */
 TW_ATTR_HIDDEN void tty_driver::linuxShowMouse(Tdisplay hw) {
-  uldat pos =
-      (hw->Last_x = hw->MouseState.x) + (hw->Last_y = hw->MouseState.y) * (ldat)DisplayWidth;
-  tcell h = Video[pos];
-  tcolor c = ~TCOLOR(h) ^ TCOL(thigh, thigh);
+  dat x = hw->Last_x = hw->MouseState.x;
+  dat y = hw->Last_y = hw->MouseState.y;
+  uldat pos = x + y * (uldat)DisplayWidth;
+  tcell cell = Video[pos];
+  tcolor &col = cell.color;
+  col.fg = (~col.fg ^ thigh) & TRGB_MAX;
+  col.bg = (~col.bg ^ thigh) & TRGB_MAX;
 
-  linuxDrawTCell(hw, hw->MouseState.x, hw->MouseState.y, TCELL(c, TRUNE(h)));
+  linuxDrawTCell(hw, hw->MouseState.x, hw->MouseState.y, cell);
 
   /* store current cursor state for correct updating */
   hw->XY[1] = hw->MouseState.y;
@@ -260,15 +262,16 @@ TW_ATTR_HIDDEN void tty_driver::linuxShowMouse(Tdisplay hw) {
 }
 
 TW_ATTR_HIDDEN void tty_driver::linuxHideMouse(Tdisplay hw) {
-  uldat pos = hw->Last_x + hw->Last_y * (ldat)DisplayWidth;
+  dat x = hw->Last_x;
+  dat y = hw->Last_y;
+  uldat pos = x + y * (uldat)DisplayWidth;
 
-  linuxDrawTCell(hw, hw->Last_x, hw->Last_y, Video[pos]);
+  linuxDrawTCell(hw, x, y, Video[pos]);
 
   /* store current cursor state for correct updating */
-  hw->XY[1] = hw->Last_y;
-  hw->XY[0] = hw->Last_x + 1;
+  hw->XY[1] = y;
   /* linux terminals have VT100 wrapglitch */
-  if (hw->XY[0] == hw->X) {
+  if ((hw->XY[0] = x + 1) == hw->X) {
     hw->XY[0]--;
   }
   hw->setFlush();
@@ -313,16 +316,18 @@ TW_ATTR_HIDDEN void tty_driver::linuxFlushVideo(Tdisplay hw) {
     if (hw->FlagsHW & FlagChangedMouseFlagHW) {
       /* dirty the old mouse position, so that it will be overwritten */
 
+      dat x = hw->Last_x;
+      dat y = hw->Last_y;
       /*
        * with multi-display this is a hack, but since OldVideo gets restored
        * below *BEFORE* returning from linuxFlushVideo(), that's ok.
        */
-      DirtyVideo(hw->Last_x, hw->Last_y, hw->Last_x, hw->Last_y);
+      DirtyVideo(x, y, x, y);
       if (ValidOldVideo) {
+        uldat pos = x + y * (uldat)DisplayWidth;
         flippedOldVideo = true;
-        savedOldVideo = OldVideo[hw->Last_x + hw->Last_y * (ldat)DisplayWidth];
-        OldVideo[hw->Last_x + hw->Last_y * (ldat)DisplayWidth] =
-            ~Video[hw->Last_x + hw->Last_y * (ldat)DisplayWidth];
+        savedOldVideo = OldVideo[pos];
+        OldVideo[pos].color = TCOLOR_BAD;
       }
     }
 
@@ -332,7 +337,7 @@ TW_ATTR_HIDDEN void tty_driver::linuxFlushVideo(Tdisplay hw) {
      * instead of calling ShowMouse(),
      * we flip the new mouse position in Video[] and dirty it if necessary.
      */
-    if ((hw->FlagsHW & FlagChangedMouseFlagHW) || (flippedVideo = Plain_isDirtyVideo(i, j))) {
+    if ((hw->FlagsHW & FlagChangedMouseFlagHW) || (flippedVideo = plainIsDirtyVideo(i, j))) {
       VideoFlip(i, j);
       if (!flippedVideo)
         DirtyVideo(i, j, i, j);

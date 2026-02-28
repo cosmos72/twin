@@ -61,9 +61,7 @@ TW_ATTR_HIDDEN bool tty_driver::genericCanDragArea(Tdisplay hw, dat Left, dat Up
 
 static inline void genericDrawStart(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
-  self->col = ~TCOL0; // i.e. unknown
-  self->fg = ~(trgb)0;
-  self->bg = ~(trgb)0;
+  self->col = TCOLOR_BAD; // i.e. unknown
 }
 
 #define genericDrawFinish(hw) ((void)0)
@@ -75,7 +73,10 @@ TW_ATTR_HIDDEN udat tty_driver::genericLookupKey(Tdisplay hw, udat *ShiftFlags, 
     byte l;
     const char *s;
   };
-#define IS(k, l, s) {CAT(TW_, k), l, s}
+#define IS(k, l, s)                                                                                \
+  {                                                                                                \
+    CAT(TW_, k), l, s                                                                              \
+  }
   static const xterm_keys keys[] = {
       IS(F1, 3, "\033OP"),      IS(F2, 3, "\033OQ"),      IS(F3, 3, "\033OR"),
       IS(F4, 3, "\033OS"),      IS(F5, 5, "\033[15~"),    IS(F6, 5, "\033[17~"),
@@ -219,17 +220,14 @@ TW_ATTR_HIDDEN void tty_driver::genericSetColor8(Tdisplay hw, tcolor col) {
   tty_driver *self = ttydriver(hw);
   byte fg = TrueColorToPalette16(TCOLFG(col));
   byte bg = TrueColorToPalette8(TCOLBG(col));
-  // (byte)~(trgb)0 & 7 may accidentally match fg or bg
-  // => check for ~TCOL0
-  byte fg_ = self->col == ~TCOL0 ? ~fg : self->fg;
-  byte bg_ = self->col == ~TCOL0 ? ~bg : self->bg;
-
-  self->col = col;
-  self->fg = fg;
-  self->bg = bg;
+  byte fg_ = self->col == TCOLOR_BAD ? ~fg : self->col.fg;
+  byte bg_ = self->col == TCOLOR_BAD ? ~bg : self->col.bg;
   if (fg == fg_ && bg == bg_) {
     return;
   }
+  self->col.fg = fg;
+  self->col.bg = bg;
+
   char colbuf[80];
   char *colp = colbuf;
   byte fg_high = fg & 8;
@@ -278,17 +276,14 @@ TW_ATTR_HIDDEN void tty_driver::genericSetColor256(Tdisplay hw, tcolor col) {
   tty_driver *self = ttydriver(hw);
   byte fg = TrueColorToPalette256(TCOLFG(col));
   byte bg = TrueColorToPalette256(TCOLBG(col));
-  // (byte)~(trgb)0 may accidentally match fg or bg
-  // => check for ~TCOL0
-  byte fg_ = self->col == ~TCOL0 ? ~fg : self->fg;
-  byte bg_ = self->col == ~TCOL0 ? ~bg : self->bg;
+  byte fg_ = self->col == TCOLOR_BAD ? ~fg : self->col.fg;
+  byte bg_ = self->col == TCOLOR_BAD ? ~bg : self->col.bg;
 
-  self->col = col;
-  self->fg = fg;
-  self->bg = bg;
   if (fg == fg_ && bg == bg_) {
     return;
   }
+  self->col.fg = fg;
+  self->col.bg = bg;
   char colbuf[] = "\033[38;5;xxx;48;5;xxxm";
   char *colp = colbuf + 2;
   if (fg != fg_) {
@@ -313,17 +308,17 @@ TW_ATTR_HIDDEN void tty_driver::genericSetColor16m(Tdisplay hw, tcolor col) {
   tty_driver *self = ttydriver(hw);
   trgb fg = TCOLFG(col);
   trgb bg = TCOLBG(col);
-  // ~(trgb)0 is intentionally an invalid color
+  // TRGB_BAD is intentionally an invalid color
   // it cannot match fg or bg
-  trgb fg_ = self->fg;
-  trgb bg_ = self->bg;
+  trgb fg_ = self->col.fg;
+  trgb bg_ = self->col.bg;
 
-  self->col = col;
-  self->fg = fg;
-  self->bg = bg;
   if (fg == fg_ && bg == bg_) {
     return;
   }
+  self->col.fg = fg;
+  self->col.bg = bg;
+
   char colbuf[] = "\033[38;2;xxx;xxx;xxx;48;2;xxx;xxx;xxxm";
   char *colp = colbuf + 2;
   if (fg != fg_) {
