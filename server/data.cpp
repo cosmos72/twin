@@ -77,7 +77,7 @@ ColorTheme DefaultTheme(TCOL(tYELLOW, tcyan),  // Gadgets
                         TCOL(tGREEN, tBLUE),   // Arrows
                         TCOL(twhite, tBLUE),   // Bars
                         TCOL(tWHITE, tBLUE),   // Tabs
-                        TCOL(tWHITE, tBLUE),   // Border
+                        TCOL(tWHITE, tBLUE),   // Borders
                         TCOL(twhite, tblue),   // Text
                         TCOL(tBLUE, twhite),   // Selected
                         TCOL(tBLACK, tblack),  // Disabled
@@ -87,7 +87,7 @@ ColorTheme MenuTheme(TCOL(tGREEN, twhite),  // Gadgets
                      TCOL(tWHITE, twhite),  // Arrows
                      TCOL(tBLUE, twhite),   // Bars
                      TCOL(tBLUE, tWHITE),   // Tabs
-                     TCOL(tWHITE, twhite),  // Border
+                     TCOL(tWHITE, twhite),  // Borders
                      TCOL(tblack, twhite),  // Text
                      TCOL(tblack, tgreen),  // Selected
                      TCOL(tBLACK, twhite),  // Disabled

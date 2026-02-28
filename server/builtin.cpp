@@ -970,7 +970,7 @@ bool InitBuiltin(void) {
     WinList->Configure(1 << 2 | 1 << 3, 0, 0, 15, 2, 0, 0);
 
     DisplayWin->SetColorTheme(MenuTheme);
-
+    DisplaySubWin->SetColorTheme(MenuTheme);
     DisplaySubWin->SetColors(0x30, TCOL0, TCOL0, TCOL0, TCOL0, TCOL(tBLACK, twhite),
                              TCOL(tBLACK, twhite), TCOL0, TCOL0, TCOL0);
 
