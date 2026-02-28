@@ -34,8 +34,79 @@ extern Tgadget GadgetFlag, GadgetSwitch;
 extern trune GadgetResize[2], ScrollBarX[3], ScrollBarY[3], TabX, TabY, StdBorder[2][9],
     Screen_Back[2];
 
-extern tcolor &DEFAULT_ColGadgets, &DEFAULT_ColArrows, &DEFAULT_ColBars, &DEFAULT_ColTabs,
-    &DEFAULT_ColBorder, &DEFAULT_ColDisabled, &DEFAULT_ColSelectDisabled;
+// user-customizable window colors theme
+class ColorTheme {
+public:
+  ColorTheme();
+  ColorTheme(tcolor gadgets, tcolor arrows, tcolor bars, tcolor tabs, tcolor borders, tcolor text,
+             tcolor selected, tcolor disabled, tcolor selectdisabled);
+
+  tcolor Gadgets() const {
+    return vec[0];
+  }
+  tcolor &Gadgets() {
+    return vec[0];
+  }
+  tcolor Arrows() const {
+    return vec[1];
+  }
+  tcolor &Arrows() {
+    return vec[1];
+  }
+  tcolor Bars() const {
+    return vec[2];
+  }
+  tcolor &Bars() {
+    return vec[2];
+  }
+  tcolor Tabs() const {
+    return vec[3];
+  }
+  tcolor &Tabs() {
+    return vec[3];
+  }
+  tcolor Borders() const {
+    return vec[4];
+  }
+  tcolor &Borders() {
+    return vec[4];
+  }
+  tcolor Text() const {
+    return vec[5];
+  }
+  tcolor &Text() {
+    return vec[5];
+  }
+  tcolor Selected() const {
+    return vec[6];
+  }
+  tcolor &Selected() {
+    return vec[6];
+  }
+  tcolor Disabled() const {
+    return vec[7];
+  }
+  tcolor &Disabled() {
+    return vec[7];
+  }
+  tcolor SelectDisabled() const {
+    return vec[8];
+  }
+  tcolor &SelectDisabled() {
+    return vec[8];
+  }
+  tcolor operator[](unsigned index) const {
+    return vec[index < N_OF(vec) ? index : 5];
+  }
+  tcolor &operator[](unsigned index) {
+    return vec[index < N_OF(vec) ? index : 5];
+  }
+
+private:
+  tcolor vec[9];
+};
+
+extern ColorTheme DefaultTheme, MenuTheme;
 
 bool InitData(void);
 

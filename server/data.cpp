@@ -54,33 +54,61 @@ trune StdBorder[2][9] = {{0xC9, 0xCD, 0xBB, 0xBA, 0x20, 0xBA, 0xC8, 0xCD, 0xBC},
                          {0xDA, 0xC4, 0xBF, 0xB3, 0x20, 0xB3, 0xC0, 0xC4, 0xD9}};
 trune Screen_Back[2] = {0x12, 0x12};
 
-static tcolor DEFAULT_Colors[] = {
-    TCOL(tYELLOW, tcyan), // Gadgets
-    TCOL(tGREEN, tBLUE),  // Arrows
-    TCOL(twhite, tBLUE),  // Bars
-    TCOL(tWHITE, tBLUE),  // Tabs
-    TCOL(tWHITE, tBLUE),  // Border
-    TCOL(tBLACK, tblack), // Disabled
-    TCOL(tblack, tBLACK), // SelectDisabled
-};
+ColorTheme::ColorTheme() {
+  for (unsigned i = 0; i < N_OF(vec); i++) {
+    vec[i] = TCOL0;
+  }
+}
 
-tcolor &DEFAULT_ColGadgets = DEFAULT_Colors[0];
-tcolor &DEFAULT_ColArrows = DEFAULT_Colors[1];
-tcolor &DEFAULT_ColBars = DEFAULT_Colors[2];
-tcolor &DEFAULT_ColTabs = DEFAULT_Colors[3];
-tcolor &DEFAULT_ColBorder = DEFAULT_Colors[4];
-tcolor &DEFAULT_ColDisabled = DEFAULT_Colors[5];
-tcolor &DEFAULT_ColSelectDisabled = DEFAULT_Colors[6];
+ColorTheme::ColorTheme(tcolor gadgets, tcolor arrows, tcolor bars, tcolor tabs, tcolor borders,
+                       tcolor text, tcolor selected, tcolor disabled, tcolor selectdisabled) {
+  Gadgets() = gadgets;
+  Arrows() = arrows;
+  Bars() = bars;
+  Tabs() = tabs;
+  Borders() = borders;
+  Text() = text;
+  Selected() = selected;
+  Disabled() = disabled;
+  SelectDisabled() = selectdisabled;
+}
+
+ColorTheme DefaultTheme(TCOL(tYELLOW, tcyan),  // Gadgets
+                        TCOL(tGREEN, tBLUE),   // Arrows
+                        TCOL(twhite, tBLUE),   // Bars
+                        TCOL(tWHITE, tBLUE),   // Tabs
+                        TCOL(tWHITE, tBLUE),   // Border
+                        TCOL(twhite, tblue),   // Text
+                        TCOL(tBLUE, twhite),   // Selected
+                        TCOL(tBLACK, tblack),  // Disabled
+                        TCOL(tblack, tBLACK)); // SelectDisabled
+
+ColorTheme MenuTheme(TCOL(tGREEN, twhite),  // Gadgets
+                     TCOL(tWHITE, twhite),  // Arrows
+                     TCOL(tBLUE, twhite),   // Bars
+                     TCOL(tBLUE, tWHITE),   // Tabs
+                     TCOL(tWHITE, twhite),  // Border
+                     TCOL(tblack, twhite),  // Text
+                     TCOL(tblack, tgreen),  // Selected
+                     TCOL(tBLACK, twhite),  // Disabled
+                     TCOL(tBLACK, tblack)); // SelectDisabled
 
 static const Chars color_keys[] = {
-    Chars("Gadgets"), Chars("Arrows"),   Chars("Bars"),           Chars("Tabs"),
-    Chars("Borders"), Chars("Disabled"), Chars("SelectDisabled"),
+    Chars("Gadgets"),  Chars("Arrows"),   Chars("Bars"),
+    Chars("Tabs"),     Chars("Borders"),  Chars("Text"),
+    Chars("Selected"), Chars("Disabled"), Chars("SelectDisabled"),
 };
 
 enum e_color_err {
   e_color_ok = 0,
   e_color_badkey = 1,
   e_color_badvalue = 2,
+};
+
+enum e_ini_section {
+  e_section_unknown = 0,
+  e_section_window_colors = 1,
+  e_section_menuwindow_colors = 2,
 };
 
 static bool ParseHex(Chars str, uint32_t &out) {
@@ -157,37 +185,45 @@ static e_color_err ParseColorHex(Chars str, tcolor &col) {
   return err;
 }
 
-static e_color_err SetDefaultColorByName(Chars key, Chars value) {
+static e_color_err SetThemeColorByName(ColorTheme &theme, Chars key, Chars value) {
   for (unsigned i = 0; i < N_OF(color_keys); i++) {
     if (key == color_keys[i]) {
-      return ParseColorHex(value, DEFAULT_Colors[i]);
+      return ParseColorHex(value, theme[i]);
     }
   }
   return e_color_badkey;
 }
 
-static void LogColorError(Ini &ini, Chars path, e_color_err err) {
+static Chars SectionName(e_ini_section section) {
+  switch (section) {
+  case e_section_unknown:
+  default:
+    return Chars("???");
+  case e_section_window_colors:
+    return Chars("WindowColors");
+  case e_section_menuwindow_colors:
+    return Chars("MenuWindowColors");
+  }
+}
+
+static void LogColorError(Chars path, Ini &ini, e_ini_section section, e_color_err err) {
   switch (err) {
   case e_color_ok:
   default:
     break;
   case e_color_badkey:
-    log(ERROR) << "unknown key [WindowColors]:" << ini.key() << " in file " << path << ":"
-               << ini.linenum() << "\n";
+    log(ERROR) << "unknown key [" << SectionName(section) << "]:" << ini.key() << " in file "
+               << path << ":" << ini.linenum() << "\n";
     break;
   case e_color_badvalue:
-    log(ERROR) << "invalid color " << ini.value() << " for key [WindowColors]:" << ini.key()
-               << " in file " << path << ":" << ini.linenum() << "\n";
+    log(ERROR) << "invalid color " << ini.value() << " for key [" << SectionName(section)
+               << "]:" << ini.key() << " in file " << path << ":" << ini.linenum() << "\n";
     break;
   }
 }
 
 static bool LoadTheme(Ini &ini, Chars path) {
-  enum {
-    e_section_unknown = 0,
-    e_section_window_colors = 1,
-  } section;
-
+  e_ini_section section = e_section_unknown;
   for (;;) {
     const IniToken token = ini.next();
     switch (token) {
@@ -195,15 +231,18 @@ static bool LoadTheme(Ini &ini, Chars path) {
       // log(INFO) << "theme [" << ini.section() << "]\n";
       if (ini.section() == Chars("WindowColors")) {
         section = e_section_window_colors;
+      } else if (ini.section() == Chars("MenuWindowColors")) {
+        section = e_section_menuwindow_colors;
       } else {
         section = e_section_unknown;
       }
       break;
     case INI_KEY_VALUE:
       // log(INFO) << "theme " << ini.key() << " " << ini.value() << "\n";
-      if (section == e_section_window_colors) {
-        e_color_err err = SetDefaultColorByName(ini.key(), ini.value());
-        LogColorError(ini, path, err);
+      if (section != e_section_unknown) {
+        ColorTheme &theme = section == e_section_menuwindow_colors ? MenuTheme : DefaultTheme;
+        e_color_err err = SetThemeColorByName(theme, ini.key(), ini.value());
+        LogColorError(path, ini, section, err);
       }
       break;
     case INI_ERROR:

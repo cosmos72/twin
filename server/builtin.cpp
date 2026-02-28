@@ -787,9 +787,7 @@ static byte InitMessagesWin(void) {
       WINDOW_DRAG | WINDOW_RESIZE | WINDOW_X_BAR | WINDOW_Y_BAR | WINDOW_CLOSE, WINDOWFL_CURSOR_ON,
       60, 20, 200);
   if (MessagesWin) {
-    MessagesWin->SetColors(0x1F1, TCOL(tGREEN, twhite), TCOL0, TCOL0, TCOL0, TCOL(tWHITE, twhite),
-                           TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
-                           TCOL(tBLACK, tblack));
+    MessagesWin->SetColorTheme(MenuTheme);
   }
   return !!MessagesWin;
 }
@@ -958,28 +956,20 @@ bool InitBuiltin(void) {
                       TCOL(tBLACK, tblue), TCOL(tBLACK, tblue), 10, 1)
 
   ) {
-    AboutWin->SetColors(0x1FF, TCOL(tGREEN, twhite), TCOL0, TCOL0, TCOL0, TCOL(tWHITE, twhite),
-                        TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
-                        TCOL(tBLACK, tblack));
+    AboutWin->SetColorTheme(MenuTheme);
 
     ClockWin->SetColors(0x60, TCOL0, TCOL0, TCOL0, TCOL0, TCOL0, TCOL(tYELLOW, tblue),
                         TCOL(tYELLOW, tcyan), TCOL0, TCOL0);
 
-    OptionWin->SetColors(0x1FF, TCOL(tGREEN, twhite), TCOL0, TCOL0, TCOL0, TCOL(tWHITE, twhite),
-                         TCOL(tBLACK, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
-                         TCOL(tBLACK, tblack));
+    OptionWin->SetColorTheme(MenuTheme);
 
-    ButtonWin->SetColors(0x1FF, TCOL(tGREEN, twhite), TCOL0, TCOL0, TCOL0, TCOL(tWHITE, twhite),
-                         TCOL(tWHITE, twhite), TCOL(tblack, tgreen), TCOL(tBLACK, twhite),
-                         TCOL(tBLACK, tblack));
+    ButtonWin->SetColorTheme(MenuTheme);
 
     WinList->SetColors(0x60, TCOL0, TCOL0, TCOL0, TCOL0, TCOL0, TCOL(twhite, tblue),
                        TCOL(tBLUE, twhite), TCOL0, TCOL0);
     WinList->Configure(1 << 2 | 1 << 3, 0, 0, 15, 2, 0, 0);
 
-    DisplayWin->SetColors(0x1FF, TCOL(tGREEN, twhite), TCOL(tWHITE, twhite), TCOL(tBLUE, twhite),
-                          TCOL(tBLUE, tWHITE), TCOL(tWHITE, twhite), TCOL(tblack, twhite),
-                          TCOL(tblack, tgreen), TCOL(tBLACK, twhite), TCOL(tBLACK, tblack));
+    DisplayWin->SetColorTheme(MenuTheme);
 
     DisplaySubWin->SetColors(0x30, TCOL0, TCOL0, TCOL0, TCOL0, TCOL(tBLACK, twhite),
                              TCOL(tBLACK, twhite), TCOL0, TCOL0, TCOL0);
