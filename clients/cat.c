@@ -45,10 +45,8 @@ static byte InitCat(void) {
                                   TW_WINDOW_Y_BAR | TW_WINDOW_CLOSE,
                               TW_WINDOWFL_USEROWS | TW_WINDOWFL_ROWS_DEFCOL, 80, 25, 0))) &&
          (Window = TwWin4Menu(Cat_Menu)) && TwItem4Menu(Cat_Menu, Window, ttrue, 6, " File ") &&
-         (TwSetColorsWindow(Cat_Win, 0x1FF, TCOL(tGREEN, twhite), TCOL(tcyan, tblue),
-                            TCOL(tBLUE, tblack), TCOL(tWHITE, tBLUE), TCOL(tWHITE, tBLUE),
-                            TCOL(tWHITE, tBLACK), TCOL(tBLACK, twhite), TCOL(tblack, tBLACK),
-                            TCOL(tblack, twhite)),
+         (TwSetColorsWindow(Cat_Win, 0x60, TCOL0, TCOL0, TCOL0, TCOL0, TCOL0, TCOL(tWHITE, tBLACK),
+                            TCOL(tBLACK, twhite), TCOL0, TCOL0),
           TwConfigureWindow(Cat_Win, 0xF << 2, 0, 0, 7, 3, TW_MAXDAT, TW_MAXDAT),
           TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X ")) &&
          TwItem4MenuCommon(Cat_Menu) && (TwMapWindow(Cat_Win, TwFirstScreen()), TwFlush());

@@ -38,10 +38,8 @@ static byte InitEvent(void) {
               TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_MOUSE | TW_WINDOW_WANT_CHANGES | TW_WINDOW_DRAG |
                   TW_WINDOW_RESIZE | TW_WINDOW_CLOSE,
               TW_WINDOWFL_USEEXPOSE, 18, 8, 0)) &&
-         (TwSetColorsWindow(Event_Win, 0x1FF, TCOL(tYELLOW, tcyan), TCOL(tGREEN, tBLUE),
-                            TCOL(twhite, tBLUE), TCOL(tWHITE, tBLUE), TCOL(tWHITE, tBLUE),
-                            TCOL(twhite, tblack), TCOL(twhite, tBLACK), TCOL(tBLACK, tblack),
-                            TCOL(tblack, tBLACK)),
+         (TwSetColorsWindow(Event_Win, 0x60, TCOL0, TCOL0, TCOL0, TCOL0, TCOL0,
+                            TCOL(twhite, tblack), TCOL(twhite, tBLACK), TCOL0, TCOL0),
           TwConfigureWindow(Event_Win, 0xF << 2, 0, 0, 10, 5, 30, 15),
           TwMapWindow(Event_Win, TwFirstScreen()), ttrue) &&
 

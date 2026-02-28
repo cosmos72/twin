@@ -38,10 +38,8 @@ static byte InitClip(void) {
          (Window = TwWin4Menu(Clip_Menu)) &&
          TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X ") &&
          TwItem4Menu(Clip_Menu, Window, ttrue, 6, " File ") &&
-         (TwSetColorsWindow(Clip_Win, 0x1FF, TCOL(tGREEN, twhite), TCOL(tcyan, tblue),
-                            TCOL(tBLUE, tblack), TCOL(tWHITE, tBLUE), TCOL(tWHITE, tBLUE),
-                            TCOL(tWHITE, tBLACK), TCOL(tBLACK, twhite), TCOL(tblack, tBLACK),
-                            TCOL(tblack, twhite)),
+         (TwSetColorsWindow(Clip_Win, 0x60, TCOL0, TCOL0, TCOL0, TCOL0, TCOL0, TCOL(tWHITE, tBLACK),
+                            TCOL(tBLACK, twhite), TCOL0, TCOL0),
           TwConfigureWindow(Clip_Win, 0xF << 2, 0, 0, 7, 3, TW_MAXDAT, TW_MAXDAT),
           (Window = TwWin4Menu(Clip_Menu))) &&
          TwItem4Menu(Clip_Menu, Window, tfalse, 6, " Clip ") &&
