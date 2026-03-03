@@ -50,11 +50,11 @@ Twindow Swindow::Create(Tmsgport owner, dat titlelen, const char *title, const t
 
 Twindow Swindow::Create4Menu(Tmenu menu) {
   Twindow window = (Twindow)0;
-  if (menu && (window = Swindow::Create(menu->MsgPort, 0, NULL, (tcolor *)0, menu,
-                                        TCOL(tblack, twhite), NOCURSOR, WINDOW_AUTO_KEYS,
-                                        WINDOWFL_MENU | WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL |
-                                            WINDOWFL_ROWS_SELCURRENT,
-                                        MIN_XWIN, MIN_YWIN, 0))) {
+  if (menu &&
+      (window = Swindow::Create(
+           menu->MsgPort, 0, NULL, (tcolor *)0, menu, MenuTheme.Text(), NOCURSOR, WINDOW_AUTO_KEYS,
+           WINDOWFL_MENU | WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL | WINDOWFL_ROWS_SELCURRENT,
+           MIN_XWIN, MIN_YWIN, 0))) {
 
     window->SetColorTheme(MenuTheme);
     window->Configure(0x3F, 0, 1, MIN_XWIN, MIN_YWIN, TW_MAXDAT, TW_MAXDAT);
@@ -74,8 +74,9 @@ Twindow Swindow::Init(Tmsgport owner, dat titlelen, const char *title, const tco
     if ((dat)(ywidth + hasborder) > 0)
       ywidth += hasborder;
   }
-  if (!Swidget::Init(owner, xwidth, ywidth, attr, flags, 0, TW_MAXDAT, TCELL(coltext, ' '),
-                     Twindow_class_id)) {
+  const tcell fill = TCELL(coltext != TCOLOR_BAD ? coltext : DefaultTheme.Text(), ' ');
+
+  if (!Swidget::Init(owner, xwidth, ywidth, attr, flags, 0, TW_MAXDAT, fill, Twindow_class_id)) {
     return NULL;
   }
   if (title && !(Name.assign(title, titlelen))) {

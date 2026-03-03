@@ -782,10 +782,10 @@ void FullUpdateWinList(Twidget listWin) {
 
 #ifdef CONF_PRINTK
 static byte InitMessagesWin(void) {
-  MessagesWin = Swindow::Create(
-      Builtin_MsgPort, 8, "Messages", NULL, Builtin_Menu, TCOL(tblack, twhite), LINECURSOR,
-      WINDOW_DRAG | WINDOW_RESIZE | WINDOW_X_BAR | WINDOW_Y_BAR | WINDOW_CLOSE, WINDOWFL_CURSOR_ON,
-      60, 20, 200);
+  MessagesWin =
+      Swindow::Create(Builtin_MsgPort, 8, "Messages", NULL, Builtin_Menu, TCOLOR_BAD, LINECURSOR,
+                      WINDOW_DRAG | WINDOW_RESIZE | WINDOW_X_BAR | WINDOW_Y_BAR | WINDOW_CLOSE,
+                      WINDOWFL_CURSOR_ON, 60, 20, 200);
   if (MessagesWin) {
     MessagesWin->SetColorTheme(MenuTheme);
   }
@@ -868,12 +868,13 @@ bool InitBuiltin(void) {
 
       (AboutWin = Swindow::Create(Builtin_MsgPort, 5, "About",
                                   ColorFill(color_array, 5, TCOL(tWHITE, twhite)), Builtin_Menu,
-                                  TCOL(tblack, twhite), NOCURSOR,
+                                  TCOLOR_BAD, NOCURSOR,
                                   WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE,
                                   WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 36, 13, 0)) &&
 
       (ClockWin = Swindow::Create(Builtin_MsgPort, 5, "Clock", NULL, Builtin_Menu,
-                                  TCOL(tyellow, tblue), NOCURSOR, WINDOW_DRAG | WINDOW_CLOSE,
+                                  TCOL(tyellow, DefaultTheme.Text().bg), NOCURSOR,
+                                  WINDOW_DRAG | WINDOW_CLOSE,
                                   WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 10, 2, 0)) &&
 
       (OptionWin = Swindow::Create(
@@ -897,13 +898,13 @@ bool InitBuiltin(void) {
            WINDOW_AUTO_KEYS, WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 10, TW_MAXDAT, 0)) &&
 
       (WinList = Swindow::Create(
-           Builtin_MsgPort, 11, "Window List", NULL, Builtin_Menu, TCOL(twhite, tblue), NOCURSOR,
+           Builtin_MsgPort, 11, "Window List", NULL, Builtin_Menu, TCOLOR_BAD, NOCURSOR,
            WINDOW_WANT_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE /*|WINDOW_RESIZE*/ |
                WINDOW_X_BAR | WINDOW_Y_BAR,
            WINDOWFL_USEROWS | WINDOWFL_ROWS_SELCURRENT | WINDOWFL_ROWS_DEFCOL, 14, 2, 0)) &&
 
       (ExecuteWin = Swindow::Create(
-           Builtin_MsgPort, 10, "Execute...", NULL, Builtin_Menu, TCOL(twhite, tblue), LINECURSOR,
+           Builtin_MsgPort, 10, "Execute...", NULL, Builtin_Menu, TCOLOR_BAD, LINECURSOR,
            WINDOW_WANT_KEYS | WINDOW_CLOSE | WINDOW_DRAG | WINDOW_X_BAR,
            WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL | WINDOWFL_CURSOR_ON, 38, 2, 0)) &&
 
