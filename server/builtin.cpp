@@ -873,8 +873,8 @@ bool InitBuiltin(void) {
                                   WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 36, 13, 0)) &&
 
       (ClockWin = Swindow::Create(Builtin_MsgPort, 5, "Clock", NULL, Builtin_Menu,
-                                  TCOL(tyellow, DefaultTheme.Text().bg), NOCURSOR,
-                                  WINDOW_DRAG | WINDOW_CLOSE,
+                                  TCOL(DefaultTheme.Text().fg ^ tblue, DefaultTheme.Text().bg),
+                                  NOCURSOR, WINDOW_DRAG | WINDOW_CLOSE,
                                   WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 10, 2, 0)) &&
 
       (OptionWin = Swindow::Create(
