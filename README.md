@@ -83,20 +83,20 @@ see sections 3 and 4 of the file [docs/Tutorial](docs/Tutorial)
 
 For the impatient, it basically reduces to
 ```
-  ./configure
+ $ ./configure
   make
 ```
 then run as root
 ```
-  make install
+ # make install
 ```
 on Linux, also remember to run as root:
 ```
-  ldconfig
+ # ldconfig
 ```
 on FreeBSD instead, remember to run as root:
 ```
-  ldconfig -R
+ # ldconfig -R
 ```
 
 To compile twin you need the following programs installed
