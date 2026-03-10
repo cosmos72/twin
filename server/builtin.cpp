@@ -872,10 +872,10 @@ bool InitBuiltin(void) {
                                   WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE,
                                   WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 36, 13, 0)) &&
 
-      (ClockWin = Swindow::Create(Builtin_MsgPort, 5, "Clock", NULL, Builtin_Menu,
-                                  TCOL(DefaultTheme.Text().fg ^ tblue, DefaultTheme.Text().bg),
-                                  NOCURSOR, WINDOW_DRAG | WINDOW_CLOSE,
-                                  WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 10, 2, 0)) &&
+      (ClockWin = Swindow::Create(
+           Builtin_MsgPort, 5, "Clock", NULL, Builtin_Menu,
+           TCOL(DefaultTheme.Text().fg ^ (tblue | thigh), DefaultTheme.Text().bg), NOCURSOR,
+           WINDOW_DRAG | WINDOW_CLOSE, WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 10, 2, 0)) &&
 
       (OptionWin = Swindow::Create(
            Builtin_MsgPort, 7, "Options", NULL, Builtin_Menu, TCOL(tBLACK, tblack), NOCURSOR,
