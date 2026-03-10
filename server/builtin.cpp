@@ -958,16 +958,9 @@ bool InitBuiltin(void) {
 
   ) {
     AboutWin->SetColorTheme(MenuTheme);
-
-    ClockWin->SetColors(0x60, TCOL0, TCOL0, TCOL0, TCOL0, TCOL0, TCOL(tYELLOW, tblue),
-                        TCOL(tYELLOW, tcyan), TCOL0, TCOL0);
-
     OptionWin->SetColorTheme(MenuTheme);
-
     ButtonWin->SetColorTheme(MenuTheme);
 
-    WinList->SetColors(0x60, TCOL0, TCOL0, TCOL0, TCOL0, TCOL0, TCOL(twhite, tblue),
-                       TCOL(tBLUE, twhite), TCOL0, TCOL0);
     WinList->Configure(1 << 2 | 1 << 3, 0, 0, 15, 2, 0, 0);
 
     DisplayWin->SetColorTheme(MenuTheme);
