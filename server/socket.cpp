@@ -1950,27 +1950,35 @@ static uldat GetRandomData(void) {
 }
 
 static bool CreateAuth(char *path) {
-  int fd, got = -1;
   uldat len = 0;
-
-  if ((fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0600)) >= 0 && chmod(path, 0600) == 0) {
-
-    len = GetRandomData();
-
-    if (len == AuthLen)
-      for (len = 0; len < AuthLen; len += got) {
-        got = write(fd, AuthData + len, AuthLen - len);
-        if (got < 0) {
-          if (errno == EINTR || errno == EWOULDBLOCK) {
-            got = 0;
-          } else {
-            break;
-          }
-        }
-      }
-    close(fd);
+  int got = -1;
+#ifdef O_EXCL
+  int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0600);
+#else
+  int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+#endif
+  if (fd < 0 || fchmod(fd, 0600) <= 0) {
+    goto cleanup;
   }
 
+  len = GetRandomData();
+
+  if (len == AuthLen) {
+    for (len = 0; len < AuthLen; len += got) {
+      got = write(fd, AuthData + len, AuthLen - len);
+      if (got < 0) {
+        if (errno == EINTR || errno == EWOULDBLOCK) {
+          got = 0;
+        } else {
+          break;
+        }
+      }
+    }
+  }
+cleanup:
+  if (fd >= 0) {
+    close(fd);
+  }
   return len == AuthLen ? true : Error(SYSERROR);
 }
 
@@ -1986,9 +1994,9 @@ static bool SocketInitAuth(void) {
   CopyMem(HOME.data(), AuthData, len);
   CopyMem("/.TwinAuth", AuthData + len, 11);
 
-  if ((fd = open(AuthData, O_RDONLY)) < 0)
+  if ((fd = open(AuthData, O_RDONLY)) < 0) {
     return CreateAuth(AuthData);
-
+  }
   for (len = 0; len < AuthLen; len += got) {
     got = read(fd, AuthData + len, AuthLen - len);
     if (got < 0) {
