@@ -1957,7 +1957,7 @@ static bool CreateAuth(char *path) {
 #else
   int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 #endif
-  if (fd < 0 || fchmod(fd, 0600) <= 0) {
+  if (fd < 0 || fchmod(fd, 0600) < 0) {
     goto cleanup;
   }
 
