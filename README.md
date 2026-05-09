@@ -123,6 +123,14 @@ On Linux, it is STRONGLY recommended to also install the following package befor
 
   * gpm-dev      - may be named gpm-devel, libgpm-dev ...
 
+If you use Nix, this repository also provides a flake:
+```
+  nix build
+  nix develop
+  nix build .#twin-nox
+```
+The default build enables the X11/Xft backends, while `.#no-x11` disables them.
+
 For a discussion about MANUALLY configuring twin (almost never necessary),
 see the file [docs/Configure](docs/Configure).
 -- WARNING: if you manually enable options that were disabled by `./configure',
