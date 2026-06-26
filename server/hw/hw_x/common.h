@@ -385,6 +385,7 @@ TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
         this->xMULTIPLE = XInternAtom(this->xdisplay, "MULTIPLE", False);
         this->xTARGETS = XInternAtom(this->xdisplay, "TARGETS", False);
         this->xTEXT = XInternAtom(this->xdisplay, "TEXT", False);
+        this->xTEXT_PLAIN_UTF8 = XInternAtom(this->xdisplay, "text/plain;charset=utf-8", False);
         this->xUTF8_STRING = XInternAtom(this->xdisplay, "UTF8_STRING", False);
         this->xWM_DELETE_WINDOW = XInternAtom(this->xdisplay, "WM_DELETE_WINDOW", False);
         this->xWM_PROTOCOLS = XInternAtom(this->xdisplay, "WM_PROTOCOLS", False);

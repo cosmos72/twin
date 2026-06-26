@@ -8,8 +8,10 @@
 #endif
 
 #undef TW_FEATURE_X11_Xutf8LookupString
+#undef TW_FEATURE_X11_Xutf8TextListToTextProperty
 #if defined(X_HAVE_UTF8_STRING)
 #define TW_FEATURE_X11_Xutf8LookupString
+#define TW_FEATURE_X11_Xutf8TextListToTextProperty
 #endif
 
 #if HW_X_DRIVER == HW_X11
