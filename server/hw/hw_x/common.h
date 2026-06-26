@@ -382,6 +382,7 @@ TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
          * has been chosen, rather than just killing us
          */
         this->xCOMPOUND_TEXT = XInternAtom(this->xdisplay, "COMPOUND_TEXT", False);
+        this->xMULTIPLE = XInternAtom(this->xdisplay, "MULTIPLE", False);
         this->xTARGETS = XInternAtom(this->xdisplay, "TARGETS", False);
         this->xTEXT = XInternAtom(this->xdisplay, "TEXT", False);
         this->xUTF8_STRING = XInternAtom(this->xdisplay, "UTF8_STRING", False);

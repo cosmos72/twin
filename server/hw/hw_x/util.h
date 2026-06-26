@@ -243,21 +243,16 @@ TW_ATTR_HIDDEN void XDRIVER::SelectionNotify_X11(Tdisplay hw, uldat reqprivate, 
   ev.xselection.time = req.time;
 
   if (target == self->xTARGETS) {
-    /*
-     * On some systems, the Atom typedef is 64 bits wide.
-     * We need a type that is exactly 32 bits wide,
-     * because a format of 64 is not allowed by the X11 protocol.
-     */
-    typedef CARD32 Atom32;
-    Atom32 target_list[5];
+    Atom target_list[6];
 
-    target_list[0] = (Atom32)self->xTARGETS;
-    target_list[1] = (Atom32)XA_STRING;
-    target_list[2] = (Atom32)self->xUTF8_STRING;
-    target_list[3] = (Atom32)self->xTEXT;
-    target_list[4] = (Atom32)self->xCOMPOUND_TEXT;
-    XChangeProperty(self->xdisplay, req.requestor, req.property, self->xTARGETS, 32,
-                    PropModeReplace, (const byte *)target_list, sizeof(target_list));
+    target_list[0] = self->xTARGETS;
+    target_list[1] = self->xMULTIPLE;
+    target_list[2] = XA_STRING;
+    target_list[3] = self->xUTF8_STRING;
+    target_list[4] = self->xTEXT;
+    target_list[5] = self->xCOMPOUND_TEXT;
+    XChangeProperty(self->xdisplay, req.requestor, req.property, XA_ATOM, 32, PropModeReplace,
+                    (const byte *)target_list, 6);
 
   } else if (target == self->xUTF8_STRING) {
 

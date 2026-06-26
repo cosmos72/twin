@@ -202,7 +202,7 @@ private:
   uldat XReqCount;
   XSelectionRequestEvent xReq[NEST];
   unsigned long xpalette[tpalette_n];
-  Atom xCOMPOUND_TEXT, xTARGETS, xTEXT, xUTF8_STRING, xWM_DELETE_WINDOW, xWM_PROTOCOLS;
+  Atom xCOMPOUND_TEXT, xMULTIPLE, xTARGETS, xTEXT, xUTF8_STRING, xWM_DELETE_WINDOW, xWM_PROTOCOLS;
 };
 
 #define xdriver(hw) ((XDRIVER *)(hw)->Private)
