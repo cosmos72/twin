@@ -377,19 +377,20 @@ TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
         if (!(this->xUTF_32_to_charset = UTF_32_to_charset_function(charset))) {
           this->xUTF_32_to_charset = &XDRIVER::UTF_32_identity;
         }
-        /*
-         * ask ICCCM-compliant window manager to tell us when close window
-         * has been chosen, rather than just killing us
-         */
         this->xCOMPOUND_TEXT = XInternAtom(this->xdisplay, "COMPOUND_TEXT", False);
         this->xMULTIPLE = XInternAtom(this->xdisplay, "MULTIPLE", False);
         this->xTARGETS = XInternAtom(this->xdisplay, "TARGETS", False);
         this->xTEXT = XInternAtom(this->xdisplay, "TEXT", False);
         this->xTEXT_PLAIN_UTF8 = XInternAtom(this->xdisplay, "text/plain;charset=utf-8", False);
         this->xUTF8_STRING = XInternAtom(this->xdisplay, "UTF8_STRING", False);
+        this->xVT_SELECTION = XInternAtom(this->xdisplay, "VT_SELECTION", False);
         this->xWM_DELETE_WINDOW = XInternAtom(this->xdisplay, "WM_DELETE_WINDOW", False);
         this->xWM_PROTOCOLS = XInternAtom(this->xdisplay, "WM_PROTOCOLS", False);
 
+        /*
+         * ask ICCCM-compliant window manager to tell us when close window
+         * has been requested, rather than just killing us
+         */
         XChangeProperty(this->xdisplay, this->xwindow, this->xWM_PROTOCOLS, XA_ATOM, 32,
                         PropModeReplace, (unsigned char *)&this->xWM_DELETE_WINDOW, 1);
 
@@ -416,8 +417,9 @@ TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
         hw->mouse_slot = NOSLOT;
         hw->keyboard_slot = RegisterRemote(i = XConnectionNumber(this->xdisplay), (Tobj)hw,
                                            (void (*)(int, Tobj))&XDRIVER::KeyboardEvent);
-        if (hw->keyboard_slot == NOSLOT)
+        if (hw->keyboard_slot == NOSLOT) {
           break;
+        }
         fcntl(i, F_SETFD, FD_CLOEXEC);
 
         hw->fnFlushVideo = &XDRIVER::FlushVideo;
@@ -448,9 +450,9 @@ TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
         if (drag) {
           hw->fnCanDragArea = &XDRIVER::CanDragArea;
           hw->fnDragArea = &XDRIVER::DragArea;
-        } else
+        } else {
           hw->fnCanDragArea = NULL;
-
+        }
         hw->fnBeep = &XDRIVER::Beep;
         hw->fnConfigure = &XDRIVER::Configure;
         hw->fnSetPalette = (void (*)(Tdisplay, udat, udat, udat, udat))NoOp;
@@ -461,9 +463,9 @@ TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
 
         hw->FlagsHW |= FlagNeedOldVideoHW;
         hw->FlagsHW |= FlagExpensiveFlushVideoHW;
-        if (noinput)
+        if (noinput) {
           hw->FlagsHW |= FlagNoInputHW;
-
+        }
         hw->NeedHW = 0;
         hw->CanResize = true;
 

@@ -388,9 +388,8 @@ TW_ATTR_HIDDEN void XDRIVER::SelectionRequest_X11(Tdisplay hw, Tobj requestor, u
     if (XGetSelectionOwner(self->xdisplay, XA_PRIMARY) == None) {
       self->SelectionNotify_up(DefaultRootWindow(self->xdisplay), XA_CUT_BUFFER0);
     } else {
-      Atom prop = XInternAtom(self->xdisplay, "VT_SELECTION", False);
       /* Request conversion to UTF-8. Not all owners will be able to fulfill that request. */
-      XConvertSelection(self->xdisplay, XA_PRIMARY, self->xUTF8_STRING, prop, self->xwindow,
+      XConvertSelection(self->xdisplay, XA_PRIMARY, self->xUTF8_STRING, self->xVT_SELECTION, self->xwindow,
                         CurrentTime);
 
       hw->setFlush();
