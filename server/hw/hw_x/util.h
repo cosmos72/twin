@@ -260,7 +260,6 @@ TW_ATTR_HIDDEN void XDRIVER::SelectionNotify_X11(Tdisplay hw, uldat reqprivate, 
     /* notify X11 selection as UTF-8 */
     XChangeProperty(self->xdisplay, req.requestor, req.property, target, 8, PropModeReplace,
                     (const byte *)data.data(), data.size());
-
   } else {
     XICCEncodingStyle style;
     if (target == XA_STRING) {
@@ -278,16 +277,17 @@ TW_ATTR_HIDDEN void XDRIVER::SelectionNotify_X11(Tdisplay hw, uldat reqprivate, 
     XTextProperty ct = {};
     bool freect = false;
     if (XwcTextListToTextProperty(self->xdisplay, &waddr, 1, style, &ct) >= 0) {
-      /** FIXME: only works for ASCII characters */
+      /** limited support for non-ASCII characters */
       freect = true;
     } else {
       ct.value = (byte *)const_cast<char *>(data.data());
       ct.nitems = data.size();
       ct.encoding = target;
+      ct.format = 8;
     }
 
-    XChangeProperty(self->xdisplay, req.requestor, req.property, ct.encoding, 8, PropModeReplace,
-                    ct.value, (int)ct.nitems);
+    XChangeProperty(self->xdisplay, req.requestor, req.property, ct.encoding, ct.format,
+                    PropModeReplace, ct.value, (int)ct.nitems);
     if (freect) {
       XFree(ct.value);
     }
@@ -389,8 +389,8 @@ TW_ATTR_HIDDEN void XDRIVER::SelectionRequest_X11(Tdisplay hw, Tobj requestor, u
       self->SelectionNotify_up(DefaultRootWindow(self->xdisplay), XA_CUT_BUFFER0);
     } else {
       /* Request conversion to UTF-8. Not all owners will be able to fulfill that request. */
-      XConvertSelection(self->xdisplay, XA_PRIMARY, self->xUTF8_STRING, self->xVT_SELECTION, self->xwindow,
-                        CurrentTime);
+      XConvertSelection(self->xdisplay, XA_PRIMARY, self->xUTF8_STRING, self->xVT_SELECTION,
+                        self->xwindow, CurrentTime);
 
       hw->setFlush();
       /* we will get an X11 SelectionNotify event */
