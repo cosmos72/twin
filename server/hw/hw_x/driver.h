@@ -70,6 +70,23 @@ public:
   static bool InitHW(Tdisplay hw);
   static void QuitHW(Tdisplay hw);
 
+  class key_to_tw {
+  public:
+    Twkey tkey;
+    char seq[6];
+
+    // reuse termination byte seq[5] as length to save space
+    byte len() const {
+      return seq[5];
+    }
+  };
+
+  class key_to_tw_entry {
+  public:
+    uldat xkey; // actually KeySym
+    key_to_tw tmapping;
+  };
+
 private:
   bool InitHW();
   void QuitHW();
@@ -104,7 +121,11 @@ private:
 
   static void InitKeys();
   static bool IsNumericKeypad(Twkey key);
-  Twkey LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq);
+  Twkey LookupKey(XEvent *ev, udat *shift_flags, udat *len, char *seq);
+  void LookupKeyCursor(const key_to_tw *tkey_entry, udat shift_flags, udat *len, char *seq);
+  void LookupKeyKeynum(const key_to_tw *tkey_entry, udat shift_flags, udat *len, char *seq);
+  void LookupKeyKeypad(const key_to_tw *tkey_entry, udat shift_flags, udat *len, char *seq);
+  static byte LookupShift(udat shift_flags);
   void HandleEvent(XEvent *event);
   static void KeyboardEvent(int fd, Tdisplay hw);
 
@@ -140,24 +161,6 @@ private:
   static inline ldat diff(ldat x, ldat y) {
     return x >= y ? x - y : y - x;
   }
-
-public:
-  class key_to_tw {
-  public:
-    Twkey tkey;
-    char seq[6];
-
-    // reuse termination byte seq[5] as length to save space
-    byte len() const {
-      return seq[5];
-    }
-  };
-
-  class key_to_tw_entry {
-  public:
-    uldat xkey; // actually KeySym
-    key_to_tw tmapping;
-  };
 
 public:
   Tdisplay hw;
@@ -202,8 +205,8 @@ private:
   uldat XReqCount;
   XSelectionRequestEvent xReq[NEST];
   unsigned long xpalette[tpalette_n];
-  Atom xCOMPOUND_TEXT, xMULTIPLE, xTARGETS, xTEXT, xTEXT_PLAIN_UTF8, xUTF8_STRING,
-     xVT_SELECTION, xWM_DELETE_WINDOW, xWM_PROTOCOLS;
+  Atom xCOMPOUND_TEXT, xMULTIPLE, xTARGETS, xTEXT, xTEXT_PLAIN_UTF8, xUTF8_STRING, xVT_SELECTION,
+      xWM_DELETE_WINDOW, xWM_PROTOCOLS;
 };
 
 #define xdriver(hw) ((XDRIVER *)(hw)->Private)

@@ -170,17 +170,17 @@ TW_ATTR_HIDDEN bool XDRIVER::IsNumericKeypad(Twkey key) {
 
 /* convert an X11 KeySym into a libtw key code and ASCII sequence */
 
-TW_ATTR_HIDDEN Twkey XDRIVER::LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
+TW_ATTR_HIDDEN Twkey XDRIVER::LookupKey(XEvent *ev, udat *shift_flags, udat *len, char *seq) {
   XKeyEvent *kev = &ev->xkey;
   KeySym sym = XK_VoidSymbol;
 
   uldat maxlen = *len;
 
-  *ShiftFlags = ((kev->state & ShiftMask) ? KBD_SHIFT_FL : 0) |
-                ((kev->state & LockMask) ? KBD_CAPS_LOCK : 0) |
-                ((kev->state & ControlMask) ? KBD_CTRL_FL : 0) |
-                ((kev->state & (Mod1Mask | Mod3Mask)) ? KBD_ALT_FL : 0) | /* Alt|AltGr */
-                ((kev->state & Mod2Mask) ? KBD_NUM_LOCK : 0);             /* Num_Lock */
+  *shift_flags = ((kev->state & ShiftMask) ? KBD_SHIFT_FL : 0) |
+                 ((kev->state & LockMask) ? KBD_CAPS_LOCK : 0) |
+                 ((kev->state & ControlMask) ? KBD_CTRL_FL : 0) |
+                 ((kev->state & (Mod1Mask | Mod3Mask)) ? KBD_ALT_FL : 0) | /* Alt|AltGr */
+                 ((kev->state & Mod2Mask) ? KBD_NUM_LOCK : 0);             /* Num_Lock */
 
 #ifdef TW_FEATURE_X11_XIM_XIC
   if (this->xic) {
@@ -235,41 +235,22 @@ TW_ATTR_HIDDEN Twkey XDRIVER::LookupKey(XEvent *ev, udat *ShiftFlags, udat *len,
   }
   Twkey tkey = tkey_entry ? tkey_entry->tkey : TW_Null;
 
-  if (tkey != TW_Null && *len == 1 && (*ShiftFlags & ~KBD_CAPS_LOCK) == KBD_NUM_LOCK &&
+  if (tkey != TW_Null && *len == 1 && (*shift_flags & ~KBD_CAPS_LOCK) == KBD_NUM_LOCK &&
       this->xnumkeypad && IsNumericKeypad(tkey)) {
     /* xnumkeypad = ttrue and only NumLock led is set (ignoring CapsLock):
      * honor X11 numeric keypad mapping to numbers 0..9 and to / * - + . ENTER */
 
   } else if (tkey_entry != NULL && tkey_entry->len() &&
-             (*len == 0 || (*ShiftFlags & ~(KBD_CAPS_LOCK | KBD_NUM_LOCK)) == 0)) {
-    /* XLookupString() returned empty string, or no ShiftFlags (ignoring CapsLock/NumLock):
+             (*len == 0 || (*shift_flags & ~(KBD_CAPS_LOCK | KBD_NUM_LOCK)) == 0)) {
+    /* XLookupString() returned empty string, or no shift_flags (ignoring CapsLock/NumLock):
      * use the sequence stated in hw_keys.h */
 
-    if (xaltcursorkeys && tkey >= TW_Left && tkey <= TW_Down) {
-      seq[0] = '\033';
-      seq[1] = 'O';
-      seq[2] = "DACB"[tkey - TW_Left];
-      *len = 3;
-    } else if (xaltcursorkeys && tkey >= TW_KP_Begin && tkey <= TW_KP_Insert) {
-      // these are actually vt220 and linux console sequences, but we want them to be unique,
-      // while xterm reuses some sequences: KP_Next = Next and KP_Prior = Prior
-      seq[0] = '\033';
-      seq[1] = 'O';
-      seq[2] = "uwtxvrysqp"[tkey - TW_KP_Begin];
-      *len = 3;
-    } else if (xaltcursorkeys && tkey >= TW_KP_0 && tkey <= TW_KP_9) {
-      // match KP_0 ... KP_9 to KP_Home ... KP_Insert
-      seq[0] = '\033';
-      seq[1] = 'O';
-      seq[2] = 'p' + (tkey - TW_KP_0);
-      *len = 3;
-    } else if (xaltcursorkeys && (tkey == TW_KP_Delete || tkey == TW_KP_Decimal)) {
-      // this is actually a vt220 and linux console sequence,
-      // because xterm reuses some sequence: KP_Delete = KP_Decimal = Delete
-      seq[0] = '\033';
-      seq[1] = 'O';
-      seq[2] = 'n';
-      *len = 3;
+    if (tkey >= TW_Left && tkey <= TW_Down) {
+      LookupKeyCursor(tkey_entry, *shift_flags, len, seq);
+    } else if (tkey >= TW_KP_0 && tkey <= TW_KP_9) {
+      LookupKeyKeynum(tkey_entry, *shift_flags, len, seq);
+    } else if ((tkey >= TW_KP_Begin && tkey <= TW_KP_Delete) || tkey == TW_KP_Decimal) {
+      LookupKeyKeypad(tkey_entry, *shift_flags, len, seq);
     } else if (tkey_entry->len() < maxlen) {
       CopyMem(tkey_entry->seq, seq, *len = tkey_entry->len());
     }
@@ -278,18 +259,101 @@ TW_ATTR_HIDDEN Twkey XDRIVER::LookupKey(XEvent *ev, udat *ShiftFlags, udat *len,
   return tkey == TW_Null && *len != 0 ? TW_Other : tkey;
 }
 
+TW_ATTR_HIDDEN byte XDRIVER::LookupShift(udat shift_flags) {
+  return (shift_flags & KBD_SHIFT_FL ? 1 : 0) | (shift_flags & KBD_ALT_FL ? 2 : 0) |
+         (shift_flags & KBD_CTRL_FL ? 4 : 0);
+}
+
+TW_ATTR_HIDDEN void XDRIVER::LookupKeyCursor(const key_to_tw *tkey_entry, udat shift_flags,
+                                             udat *len, char *seq) {
+  byte shift = LookupShift(shift_flags);
+  udat i = 0;
+  seq[i++] = '\033';
+  if (shift == 0) {
+    seq[i++] = xaltcursorkeys ? 'O' : '[';
+  } else {
+    seq[i++] = '[';
+    seq[i++] = '1';
+    seq[i++] = ';';
+    seq[i++] = '1' + shift;
+  }
+  seq[i++] = "DACB"[tkey_entry->tkey - TW_Left];
+  *len = i;
+}
+
+TW_ATTR_HIDDEN void XDRIVER::LookupKeyKeynum(const key_to_tw *tkey_entry, udat shift_flags,
+                                             udat *len, char *seq) {
+  byte shift = LookupShift(shift_flags);
+  byte key0 = tkey_entry->tkey - TW_KP_0;
+  udat i = 0;
+  // match KP_0 ... KP_9 to KP_Home ... KP_Insert
+  if (shift != 0) {
+    seq[i++] = '\033';
+    seq[i++] = '[';
+    seq[i++] = "2116111115"[key0];
+    seq[i++] = ';';
+    seq[i++] = '1' + shift;
+    seq[i++] = "~FB~DECHA~"[key0];
+  } else if (xaltcursorkeys) {
+    seq[i++] = '\033';
+    seq[i++] = 'O';
+    seq[i++] = 'p' + key0;
+  } else {
+    seq[i++] = '0' + key0;
+  }
+  *len = i;
+}
+
+TW_ATTR_HIDDEN void XDRIVER::LookupKeyKeypad(const key_to_tw *tkey_entry, udat shift_flags,
+                                             udat *len, char *seq) {
+  byte shift = LookupShift(shift_flags);
+  byte key0;
+  udat i = 0;
+  if (tkey_entry->tkey == TW_KP_Decimal) {
+    key0 = TW_KP_Delete - TW_KP_Begin;
+  } else {
+    key0 = tkey_entry->tkey - TW_KP_Begin;
+  }
+  seq[i++] = '\033';
+  if (shift != 0) {
+    // same as xterm shifted sequences
+    seq[i++] = '[';
+    seq[i++] = "11111156123"[key0];
+    seq[i++] = ';';
+    seq[i++] = '1' + shift;
+    seq[i++] = "EHDACB~~F~~"[key0];
+
+  } else if (xaltcursorkeys) {
+    // these are actually vt220 and linux console sequences, but we want them to be unique,
+    // while xterm reuses some sequences:
+    //   KP_Next = Next, KP_Prior = Prior, KP_Delete = KP_Decimal = Delete
+    seq[i++] = 'O';
+    seq[i++] = "uwtxvrysqpn"[key0];
+
+  } else {
+    // same as xterm sequences
+    byte b = "EHDACB56F23"[key0];
+    seq[i++] = '[';
+    seq[i++] = b;
+    if (b >= '0' && b <= '9') {
+      seq[i++] = '~';
+    }
+  }
+  *len = i;
+}
+
 TW_ATTR_HIDDEN void XDRIVER::HandleEvent(XEvent *event) {
   char seq[TW_SMALLBUFF];
   dat x, y, dx, dy;
-  udat len = sizeof(seq), ShiftFlags;
+  udat len = sizeof(seq), shift_flags;
   Twkey TW_key;
 
   if (event->xany.window == this->xwindow)
     switch (event->type) {
     case KeyPress:
-      TW_key = LookupKey(event, &ShiftFlags, &len, seq);
+      TW_key = LookupKey(event, &shift_flags, &len, seq);
       if (TW_key != TW_Null) {
-        KeyboardEventCommon(hw, TW_key, ShiftFlags, len, seq);
+        KeyboardEventCommon(hw, TW_key, shift_flags, len, seq);
       }
       break;
     case KeyRelease:
