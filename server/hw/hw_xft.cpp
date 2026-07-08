@@ -170,6 +170,12 @@ TW_ATTR_HIDDEN ldat XDRIVER::CalcFontScore(udat fontwidth, udat fontheight, int 
   return score;
 }
 
+static FcPattern *XSYM(CreateFcPattern)(udat fontheight, FcChar8 *file) {
+  return FcPatternBuild(NULL,                                                   /**/
+                        XFT_PIXEL_SIZE, FcTypeInteger, int(fontheight * 5 / 6), /**/
+                        XFT_FILE, FcTypeString, file, NULL);
+}
+
 /* return name of selected font in allocated (char *) */
 TW_ATTR_HIDDEN char *XDRIVER::AutodetectFont(const char *family, udat fontwidth, udat fontheight) {
   char *fontname = NULL;
@@ -220,25 +226,25 @@ TW_ATTR_HIDDEN char *XDRIVER::AutodetectFont(const char *family, udat fontwidth,
         continue;
       }
 
-      t_pattern = FcPatternCreate();
-      FcPatternAddInteger(t_pattern, XFT_PIXEL_SIZE, fontheight * 5 / 6);
-      FcPatternAddString(t_pattern, XFT_FILE, file);
-
-      fontp = XftFontOpenPattern(this->xdisplay, t_pattern);
-      if (fontp) {
+      if (!(t_pattern = XSYM(CreateFcPattern)(fontheight, file))) {
+        log(INFO) << " [-]";
+      } else if (!(fontp = XftFontOpenPattern(this->xdisplay, t_pattern))) {
+        log(INFO) << " [-]";
+        FcPatternDestroy(t_pattern);
+      } else {
+        /* XftFontOpenPattern() takes ownership of the FcPattern argument: */
+        /* cannot touch created t_pattern anymore */
         ldat score = CalcFontScore(fontwidth, fontheight, weight, fontp, (const char *)file);
         log(INFO) << " [" << score << "]";
-        if (best_pattern == NULL || score > best_score) {
-          best_score = score;
+        if ((!best_pattern || score > best_score) &&
+            (t_pattern = XSYM(CreateFcPattern)(fontheight, file))) {
           if (best_pattern) {
             FcPatternDestroy(best_pattern);
           }
-          best_pattern = FcPatternDuplicate(t_pattern);
+          best_pattern = t_pattern;
+          best_score = score;
         }
-        /* XftFontClose() also destroys the XftPattern passed to XftFontOpenPattern() */
         XftFontClose(this->xdisplay, fontp);
-      } else {
-        log(INFO) << " [-]";
       }
     }
     FcFontSetDestroy(fontset);
