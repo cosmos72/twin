@@ -230,6 +230,9 @@ TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
       } else if (!strncmp(arg, "drag", 4)) {
         arg += 4;
         drag = true;
+      } else if (!strncmp(arg, "altkeypad", 9)) {
+        arg += 9;
+        this->xaltkeypad = true;
       } else if (!strncmp(arg, "noinput", 7)) {
         arg += 7;
         noinput = true;
@@ -240,6 +243,7 @@ TW_ATTR_HIDDEN bool XDRIVER::InitHW() {
         log(INFO)
             << "   --hw=X11 and --hw=xft options:\n"
                "      @DPY             connect to DPY instead of $DISPLAY (must be first option)\n"
+               "      ,altkeypad       keypad sends unique key sequences\n"
                "      ,charset=NAME    use specified charset encoding\n"
                "      ,drag            use XCopyArea() for scroll/drag when possible\n"
                "      ,font=FONT_NAME  use specified font name or pattern\n"

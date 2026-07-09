@@ -179,7 +179,7 @@ private:
   dat xhw_view, xhw_startx, xhw_starty, xhw_endx, xhw_endy;
   byte xnumkeypad; /* ttrue if numeric keypad emits numeric digits */
   byte xtruecolor;
-  bool xaltcursorkeys;
+  bool xaltkeypad, xaltcursorkeys;
 
 #if HW_X_DRIVER == HW_X11
   XFontStruct *xsfont;

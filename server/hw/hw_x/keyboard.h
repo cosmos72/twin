@@ -306,33 +306,31 @@ TW_ATTR_HIDDEN void XDRIVER::LookupKeyKeynum(const key_to_tw *tkey_entry, udat s
 
 TW_ATTR_HIDDEN void XDRIVER::LookupKeyKeypad(const key_to_tw *tkey_entry, udat shift_flags,
                                              udat *len, char *seq) {
-  byte shift = LookupShift(shift_flags);
-  byte key0;
+  Twkey key = tkey_entry->tkey;
+  byte key0 = key == TW_KP_Decimal ? 11 : key - TW_KP_Begin;
   udat i = 0;
-  if (tkey_entry->tkey == TW_KP_Decimal) {
-    key0 = TW_KP_Delete - TW_KP_Begin;
-  } else {
-    key0 = tkey_entry->tkey - TW_KP_Begin;
-  }
+  byte shift = LookupShift(shift_flags);
   seq[i++] = '\033';
-  if (shift != 0) {
-    // same as xterm shifted sequences
-    seq[i++] = '[';
-    seq[i++] = "11111156123"[key0];
-    seq[i++] = ';';
-    seq[i++] = '1' + shift;
-    seq[i++] = "EHDACB~~F~~"[key0];
-
-  } else if (xaltcursorkeys) {
-    // these are actually vt220 and linux console sequences, but we want them to be unique,
-    // while xterm reuses some sequences:
+  if (xaltkeypad or (shift == 0 and xaltcursorkeys)) {
+    // these are adapted from vt220 and linux console sequences, but we want them to be unique,
+    // while xterm reuses the same sequences as cursor keys and also
     //   KP_Next = Next, KP_Prior = Prior, KP_Delete = KP_Decimal = Delete
     seq[i++] = 'O';
-    seq[i++] = "uwtxvrysqpn"[key0];
-
+    if (shift != 0) {
+      seq[i++] = ';';
+      seq[i++] = '1' + shift;
+    }
+    seq[i++] = "uwtxvrysqpnz"[key0];
+  } else if (shift != 0) {
+    // same as xterm shifted sequences
+    seq[i++] = '[';
+    seq[i++] = "111111561233"[key0];
+    seq[i++] = ';';
+    seq[i++] = '1' + shift;
+    seq[i++] = "EHDACB~~F~~~"[key0];
   } else {
     // same as xterm sequences
-    byte b = "EHDACB56F23"[key0];
+    byte b = "EHDACB56F233"[key0];
     seq[i++] = '[';
     seq[i++] = b;
     if (b >= '0' && b <= '9') {
