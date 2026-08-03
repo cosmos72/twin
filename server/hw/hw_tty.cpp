@@ -58,6 +58,14 @@ enum tty_colormode {
   tty_color16m = 3,
 };
 
+enum tty_mousetype {
+  tty_mouse_autodetect = 0,
+  tty_mouse_none = 1,
+  tty_mouse_gpm = 2,
+  tty_mouse_twterm = 3,
+  tty_mouse_xterm = 4,
+};
+
 class tty_driver {
 public:
   String tty_name, tty_term;
@@ -109,7 +117,7 @@ public:
   static void genericSetCursorType(Tdisplay hw, uldat type);
 
   static void gpmConfigureMouse(Tdisplay hw, udat resource, byte todefault, udat value);
-  static bool gpmInitMouse(Tdisplay hw);
+  static bool gpmInitMouse(Tdisplay hw, tty_mousetype mouse_type);
   static void gpmMouseEvent(int fd, Tdisplay hw);
   static int gpmOpen(Tdisplay hw);
   static void gpmQuitMouse(Tdisplay hw);
@@ -154,7 +162,7 @@ public:
   static void lrawkbdReactSignalOut(int sig);
 
   static bool nullInitMouse(Tdisplay hw);
-  static bool nullInitMouseConfirm(Tdisplay hw);
+  static bool nullInitMouseConfirm(Tdisplay hw, tty_mousetype mouse_type);
 
   static void stdinCheckResize(Tdisplay hw, dat *x, dat *y);
   static void stdinDetectSize(Tdisplay hw, dat *x, dat *y);
@@ -194,7 +202,7 @@ public:
   static void xtermUpdateMouseAndCursor(Tdisplay hw);
 
   static void xtermConfigureMouse(Tdisplay hw, udat resource, byte todefault, udat value);
-  static bool xtermInitMouse(Tdisplay hw, byte force);
+  static bool xtermInitMouse(Tdisplay hw, tty_mousetype mouse_type);
   static void xtermMouseEvent(int fd, Tdisplay hw);
   static void xtermQuitMouse(Tdisplay hw);
 };
@@ -226,22 +234,27 @@ TW_ATTR_HIDDEN bool tty_driver::nullInitMouse(Tdisplay hw) {
   return true;
 }
 
-TW_ATTR_HIDDEN bool tty_driver::nullInitMouseConfirm(Tdisplay hw) {
+TW_ATTR_HIDDEN bool tty_driver::nullInitMouseConfirm(Tdisplay hw, tty_mousetype mouse_type) {
   tty_driver *self = ttydriver(hw);
-  byte c = '\0';
+  byte c;
 
-  fflush(self->out);
-  log(ERROR) << "\n"
-                "      \033[1m  ALL  MOUSE  DRIVERS  FAILED.\033[0m\n"
-                "\n"
-                "      If you really want to run `twin' without mouse\n"
-                "      hit RETURN within 10 seconds to continue,\n"
-                "      otherwise hit CTRL-C (or wait 10 seconds) to cancel.\n";
-  flushk();
+  if (mouse_type == tty_mouse_none) {
+    c = '\n';
+  } else {
+    fflush(self->out);
+    log(ERROR) << "\n"
+                  "      \033[1m  ALL  MOUSE  DRIVERS  FAILED.\033[0m\n"
+                  "\n"
+                  "      If you really want to run `twin' without mouse\n"
+                  "      hit RETURN within 10 seconds to continue,\n"
+                  "      otherwise hit CTRL-C (or wait 10 seconds) to cancel.\n";
+    flushk();
 
-  SetAlarm(10);
-  read(self->tty_fd, &c, 1);
-  SetAlarm(0);
+    SetAlarm(10);
+    c = '\0';
+    read(self->tty_fd, &c, 1);
+    SetAlarm(0);
+  }
 
   if (c == '\n' || c == '\r') {
     return nullInitMouse(hw);
@@ -324,10 +337,11 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
   String charset;
   Chars arg = hw->Name;
   tty_driver *self;
+  tty_mousetype mouse_type = tty_mouse_autodetect;
   enum /*: byte*/ { NEVER = 0, MAYBE = 1, ALWAYS = 2 };
   byte autotry_video = MAYBE, try_stdout = MAYBE, try_termcap = MAYBE, try_xterm = MAYBE;
   byte autotry_kbd = MAYBE, try_lrawkbd = MAYBE;
-  bool force_mouse = false, need_persistent_slot = false;
+  bool need_persistent_slot = false;
   bool try_ctty = false, is_ctty = false, term_override = false;
 
   if (!(hw->Private = self = (tty_driver *)AllocMem0(sizeof(tty_driver)))) {
@@ -419,19 +433,23 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
         }
       } else if (arg0.starts_with(Chars(",mouse="))) {
         arg0 = arg0.view(7, comma);
-        if (arg0 == Chars("xterm")) {
-          force_mouse = ttrue;
+        if (arg0 == Chars("gpm")) {
+          mouse_type = tty_mouse_gpm;
+        } else if (arg0 == Chars("no")) {
+          mouse_type = tty_mouse_none;
         } else if (arg0 == Chars("twterm")) {
-          force_mouse = ttrue + ttrue;
+          mouse_type = tty_mouse_twterm;
+        } else if (arg0 == Chars("xterm")) {
+          mouse_type = tty_mouse_xterm;
         } else {
           log(ERROR) << "      tty.InitHW(): unsupported 'mouse=" << arg0
-                     << "', expecting one of: xterm twterm\n";
+                     << "', expecting one of: gpm no twterm xterm\n";
           return false;
         }
       } else if (arg0 == Chars(",noinput")) {
         hw->FlagsHW |= FlagNoInputHW;
       } else if (arg0 == Chars(",notermid")) {
-	hw->FlagsHW |= FlagNoTermId;
+        hw->FlagsHW |= FlagNoTermId;
       } else if (arg0 == Chars(",slow")) {
         hw->FlagsHW |= FlagExpensiveFlushVideoHW;
       } else if (arg0.starts_with(Chars(",utf8"))) {
@@ -585,12 +603,12 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
 
     if (
 #ifdef CONF_HW_TTY_LINUX
-        gpmInitMouse(hw) ||
+        gpmInitMouse(hw, mouse_type) ||
 #else
         (log(WARNING) << "      tty.InitHW(): gpm mouse support not compiled, skipping it.\n",
          false) ||
 #endif
-        xtermInitMouse(hw, force_mouse) || nullInitMouseConfirm(hw)) {
+        xtermInitMouse(hw, mouse_type) || nullInitMouseConfirm(hw, mouse_type)) {
 
       if (
 #if defined(CONF_HW_TTY_LINUX) && defined(CONF_HW_TTY_LRAWKBD)

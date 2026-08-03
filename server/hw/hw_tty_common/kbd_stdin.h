@@ -8,8 +8,9 @@
 TW_ATTR_HIDDEN bool tty_driver::stdinTestTty(Tdisplay hw) {
   struct termios ttyb;
   tty_driver *self = ttydriver(hw);
-  byte buf[16], *s = buf + 3, c;
+  byte *s;
   int i, alarmReceived;
+  byte buf[101], c;
   bool ok = false;
 
   ttyb = ttysave;
@@ -35,7 +36,7 @@ TW_ATTR_HIDDEN bool tty_driver::stdinTestTty(Tdisplay hw) {
     /* ensure we CAN read from the tty */
     SetAlarm(5);
     do {
-      i = read(self->tty_fd, buf, 15);
+      i = read(self->tty_fd, buf, sizeof(buf) - 1);
     } while ((alarmReceived = AlarmReceived) == 0 && i < 0 &&
              (errno == EWOULDBLOCK || errno == EINTR));
     SetAlarm(0);
@@ -46,7 +47,7 @@ TW_ATTR_HIDDEN bool tty_driver::stdinTestTty(Tdisplay hw) {
       if (alarmReceived) {
         Errstr = Chars("read() from tty timed out");
       } else if (i == 0) {
-	Errstr = Chars("read() from tty returned END-OF-FILE");
+        Errstr = Chars("read() from tty returned END-OF-FILE");
       }
     }
   }
@@ -58,16 +59,15 @@ TW_ATTR_HIDDEN bool tty_driver::stdinTestTty(Tdisplay hw) {
   buf[i] = '\0';
   self->ttypar[0] = self->ttypar[1] = self->ttypar[2] = i = 0;
 
-  while (i < 3 && (c = *s)) {
+  for (s = buf + 3 /*skip ESC [ ? */; i < 3 && (c = *s); s++) {
     if (c >= '0' && c <= '9') {
       self->ttypar[i] *= 10;
       self->ttypar[i] += c - '0';
-    } else if (*s == ';') {
+    } else if (c == ';') {
       i++;
     } else {
       break;
     }
-    s++;
   }
   return ok;
 }

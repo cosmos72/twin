@@ -8,18 +8,21 @@
  */
 
 /* return false if failed */
-TW_ATTR_HIDDEN bool tty_driver::xtermInitMouse(Tdisplay hw, byte force) {
+TW_ATTR_HIDDEN bool tty_driver::xtermInitMouse(Tdisplay hw, tty_mousetype mouse_type) {
   tty_driver *self = ttydriver(hw);
   Chars term = self->tty_term; // guaranteed to be '\0' terminated
 
-  if (force == ttrue) {
+  if (mouse_type == tty_mouse_xterm) {
     log(WARNING) << "      xtermInitMouse(): xterm-style mouse FORCED.\n"
                     "      Assuming terminal has xterm compatible mouse reporting.\n";
     term = Chars("xterm");
-  } else if (force == ttrue + ttrue) {
+  } else if (mouse_type == tty_mouse_twterm) {
     log(WARNING) << "      xtermInitMouse(): twterm-style mouse FORCED.\n"
                     "      Assuming terminal has twterm compatible mouse reporting.\n";
     term = Chars("twterm");
+  } else if (mouse_type != tty_mouse_autodetect) {
+    log(WARNING) << "      xtermInitMouse() skipped: different mouse type set from command line.\n";
+    return false;
   }
 
   if (term.empty()) {

@@ -53,11 +53,16 @@ TW_ATTR_HIDDEN int tty_driver::gpmOpen(Tdisplay hw) {
 }
 
 /* return tfalse if failed */
-TW_ATTR_HIDDEN bool tty_driver::gpmInitMouse(Tdisplay hw) {
+TW_ATTR_HIDDEN bool tty_driver::gpmInitMouse(Tdisplay hw, tty_mousetype mouse_type) {
+  if (mouse_type != tty_mouse_autodetect && mouse_type != tty_mouse_gpm) {
+    log(WARNING) << "      gpmInitMouse() skipped: different mouse type set from command line.\n";
+    return false;
+  }
   if (gpm_used) {
     log(ERROR) << "      gpmInitMouse() failed: already connected to `gpm'.\n";
     return false;
   }
+
   if (gpmOpen(hw) < 0) {
     return false;
   }
