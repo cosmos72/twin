@@ -430,6 +430,8 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
         }
       } else if (arg0 == Chars(",noinput")) {
         hw->FlagsHW |= FlagNoInputHW;
+      } else if (arg0 == Chars(",notermid")) {
+	hw->FlagsHW |= FlagNoTermId;
       } else if (arg0 == Chars(",slow")) {
         hw->FlagsHW |= FlagExpensiveFlushVideoHW;
       } else if (arg0.starts_with(Chars(",utf8"))) {
@@ -444,6 +446,7 @@ TW_ATTR_HIDDEN bool tty_driver::InitHW(Tdisplay hw) {
                "      ,help                 show this help\n"
                "      ,mouse=[xterm|twterm] assume specified mouse reporting protocol\n"
                "      ,noinput              open a view-only display on tty - ignore input\n"
+               "      ,notermid             don't ask for terminal ID\n"
                "      ,raw[=no]             use Linux raw keyboard\n"
                "      ,slow                 assume terminal is slow\n"
                "      ,stdout[=no]          use hard-coded escape sequences\n"

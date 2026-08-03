@@ -10,7 +10,7 @@ TW_ATTR_HIDDEN bool tty_driver::stdinTestTty(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
   byte buf[16], *s = buf + 3, c;
   int i, alarmReceived;
-  bool ok = true;
+  bool ok = false;
 
   ttyb = ttysave;
   /* NL=='\n'==^J; CR=='\r'==^M */
@@ -25,10 +25,12 @@ TW_ATTR_HIDDEN bool tty_driver::stdinTestTty(Tdisplay hw) {
   ttyb.c_cc[VINTR] = 0;
   tty_setioctl(self->tty_fd, &ttyb);
 
-  /* request ID */
-  if (write(self->tty_fd, "\033[c", 3) != 3) {
+  if (hw->FlagsHW & FlagNoTermId) {
+    /* do not request ID */
+    ok = true;
+  } else if (write(self->tty_fd, "\033[c", 3) != 3) {
+    /* request ID */
     Errstr = Chars("write() to tty failed");
-    ok = false;
   } else {
     /* ensure we CAN read from the tty */
     SetAlarm(5);
@@ -37,13 +39,15 @@ TW_ATTR_HIDDEN bool tty_driver::stdinTestTty(Tdisplay hw) {
     } while ((alarmReceived = AlarmReceived) == 0 && i < 0 &&
              (errno == EWOULDBLOCK || errno == EINTR));
     SetAlarm(0);
-    if (i <= 0) {
+    if (i > 0) {
+      ok = true;
+    } else {
       Error(SYSERROR);
-      if (alarmReceived)
+      if (alarmReceived) {
         Errstr = Chars("read() from tty timed out");
-      else if (i == 0)
-        Errstr = Chars("read() from tty returned END-OF-FILE");
-      ok = tfalse;
+      } else if (i == 0) {
+	Errstr = Chars("read() from tty returned END-OF-FILE");
+      }
     }
   }
   if (!ok) {
@@ -58,10 +62,11 @@ TW_ATTR_HIDDEN bool tty_driver::stdinTestTty(Tdisplay hw) {
     if (c >= '0' && c <= '9') {
       self->ttypar[i] *= 10;
       self->ttypar[i] += c - '0';
-    } else if (*s == ';')
+    } else if (*s == ';') {
       i++;
-    else
+    } else {
       break;
+    }
     s++;
   }
   return ok;
@@ -72,9 +77,9 @@ TW_ATTR_HIDDEN bool tty_driver::stdinInitKeyboard(Tdisplay hw) {
   tty_driver *self = ttydriver(hw);
 
   if (self->fnLookupKey == NULL && self->tty_term != Chars("linux") &&
-      self->tty_term != Chars("twterm"))
+      self->tty_term != Chars("twterm")) {
     return false;
-
+  }
   hw->keyboard_slot =
       RegisterRemote(self->tty_fd, (Tobj)hw, (void (*)(int, Tobj))&tty_driver::stdinKeyboardEvent);
   if (hw->keyboard_slot == NOSLOT) {

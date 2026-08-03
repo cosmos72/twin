@@ -25,6 +25,7 @@ enum FlagHW {
   FlagNeedOldVideoHW = 0x04,
   FlagExpensiveFlushVideoHW = 0x08,
   FlagNoInputHW = 0x10,
+  FlagNoTermId = 0x20,
 };
 
 /* Sdisplay::NeedHW and global NeedHW */
