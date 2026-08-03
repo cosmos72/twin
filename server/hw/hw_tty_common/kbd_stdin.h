@@ -8,8 +8,7 @@
 TW_ATTR_HIDDEN bool tty_driver::stdinTestTty(Tdisplay hw) {
   struct termios ttyb;
   tty_driver *self = ttydriver(hw);
-  byte *s;
-  int i, alarmReceived;
+  int i = 0, alarmReceived;
   byte buf[101], c;
   bool ok = false;
 
@@ -55,18 +54,19 @@ TW_ATTR_HIDDEN bool tty_driver::stdinTestTty(Tdisplay hw) {
     tty_setioctl(self->tty_fd, &ttysave);
     return ok;
   }
-
-  buf[i] = '\0';
-  self->ttypar[0] = self->ttypar[1] = self->ttypar[2] = i = 0;
-
-  for (s = buf + 3 /*skip ESC [ ? */; i < 3 && (c = *s); s++) {
-    if (c >= '0' && c <= '9') {
-      self->ttypar[i] *= 10;
-      self->ttypar[i] += c - '0';
-    } else if (c == ';') {
-      i++;
-    } else {
-      break;
+  self->ttypar[0] = self->ttypar[1] = self->ttypar[2] = 0;
+  if (i > 3) {
+    const byte* s = buf + 3; /* skip ESC [ ? */
+    buf[i] = 0;
+    for (i = 0; i < 3 && (c = *s); s++) {
+      if (c >= '0' && c <= '9') {
+        self->ttypar[i] *= 10;
+        self->ttypar[i] += c - '0';
+      } else if (c == ';') {
+        i++;
+      } else {
+        break;
+      }
     }
   }
   return ok;
