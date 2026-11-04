@@ -384,9 +384,9 @@ static void Login(void) {
   byte ok = tfalse;
 
   if ((p = getpwnam(user.txt))) {
+    char *c, *pw_passwd = NULL;
 #ifdef TW_HAVE_GETSPNAM
     struct spwd *s = getspnam(user.txt);
-    char *c, *pw_passwd = NULL;
 
     if (s)
       pw_passwd = s->sp_pwdp;
