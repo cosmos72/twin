@@ -190,13 +190,16 @@ struct event_selectionnotify {
   uldat Magic;
   uldat MimeLen;
   uldat DataLen;
-  char MimeAndData[1]; /* MimeLen + DataLen bytes actually */
+  char MimeAndData[12]; /* MimeLen + DataLen + 12 bytes actually */
 
   CharSpan MIME() {
     return CharSpan(MimeAndData, MimeLen);
   }
   CharSpan Data() {
-    return CharSpan(MimeAndData + MimeLen, DataLen);
+    return CharSpan(MimeAndData + MimeLen + 6, DataLen);
+  }
+  CharSpan BracketedData() {
+    return CharSpan(MimeAndData + MimeLen, DataLen + 12);
   }
 };
 

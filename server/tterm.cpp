@@ -97,54 +97,55 @@ Twindow OpenTerm(const char *arg0, const char *const *argv) {
 
 static void TwinTermH(Tmsgport msgport) {
   Tmsg msg;
-  event_any *Event;
-  udat Code /*, Repeat*/;
-  Twindow Win;
+  event_any *event;
+  udat code /*, Repeat*/;
+  Twindow win;
 
   (void)msgport;
 
   while ((msg = Term_MsgPort->Msgs.First)) {
     msg->Remove();
 
-    Event = &msg->Event;
-    Win = (Twindow)Event->EventSelection.W;
-    if (Win && !IS_WINDOW(Win))
-      Win = NULL;
+    event = &msg->Event;
+    win = (Twindow)event->EventSelection.W;
+    if (win && !IS_WINDOW(win))
+      win = NULL;
 
     if (msg->Type == msg_widget_key) {
-      Code = Event->EventKeyboard.Code;
+      code = event->EventKeyboard.Code;
       /* send keypresses */
-      if (Win)
-        (void)RemoteWindowWriteQueue(Win, Event->EventKeyboard.SeqLen,
-                                     Event->EventKeyboard.AsciiSeq);
+      if (win)
+        (void)RemoteWindowWriteQueue(win, event->EventKeyboard.SeqLen,
+                                     event->EventKeyboard.AsciiSeq);
     } else if (msg->Type == msg_selection) {
 
-      TwinSelectionRequest((Tobj)Term_MsgPort, Win->Id, TwinSelectionGetOwner());
+      TwinSelectionRequest((Tobj)Term_MsgPort, win->Id, TwinSelectionGetOwner());
 
     } else if (msg->Type == msg_selection_notify) {
 
-      if ((Win = (Twindow)Id2Obj(Twindow_class_byte, Event->EventSelectionNotify.ReqPrivate))) {
-        Chars data = Event->EventSelectionNotify.Data();
-        (void)RemoteWindowWriteQueue(Win, data.size(), data.data());
+      if ((win = (Twindow)Id2Obj(Twindow_class_byte, event->EventSelectionNotify.ReqPrivate))) {
+        Chars data = win->BracketedPaste() ? event->EventSelectionNotify.BracketedData()
+                                           : event->EventSelectionNotify.Data();
+        (void)RemoteWindowWriteQueue(win, data.size(), data.data());
       }
     } else if (msg->Type == msg_widget_mouse) {
-      if (Win) {
+      if (win) {
         char buf[24];
-        byte len = CreateMouseEvent(&Event->EventMouse, sizeof(buf), buf);
+        byte len = CreateMouseEvent(&event->EventMouse, sizeof(buf), buf);
 
         /* send mouse movements using xterm mouse protocol */
         if (len) {
-          (void)RemoteWindowWriteQueue(Win, len, buf);
+          (void)RemoteWindowWriteQueue(win, len, buf);
         }
       }
     } else if (msg->Type == msg_widget_gadget) {
-      if (Win && Event->EventGadget.Code == 0 /* Close Code */) {
-        Win->Delete();
+      if (win && event->EventGadget.Code == 0 /* Close code */) {
+        win->Delete();
       }
     } else if (msg->Type == msg_menu_row) {
-      if (Event->EventMenu.Menu == Term_Menu) {
-        Code = Event->EventMenu.Code;
-        switch (Code) {
+      if (event->EventMenu.Menu == Term_Menu) {
+        code = event->EventMenu.Code;
+        switch (code) {
         case COD_SPAWN:
           OpenTerm(NULL, NULL);
           break;
@@ -154,8 +155,8 @@ static void TwinTermH(Tmsgport msgport) {
       }
     } else if (msg->Type == msg_user_control) {
       /* this duplicates the same functionality of builtin.c */
-      if (Event->EventControl.Code == MSG_CONTROL_OPEN) {
-        char **cmd = TokenizeStringVec(Event->EventControl.Len, Event->EventControl.Data);
+      if (event->EventControl.Code == MSG_CONTROL_OPEN) {
+        char **cmd = TokenizeStringVec(event->EventControl.Len, event->EventControl.Data);
         if (cmd) {
           OpenTerm(cmd[0], (const char *const *)cmd);
           FreeStringVec(cmd);

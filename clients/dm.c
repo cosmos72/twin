@@ -380,12 +380,13 @@ static void kill_attach(void) {
 
 static void Login(void) {
   struct passwd *p;
-  char *pw_passwd = NULL, *c;
+
   byte ok = tfalse;
 
   if ((p = getpwnam(user.txt))) {
 #ifdef TW_HAVE_GETSPNAM
     struct spwd *s = getspnam(user.txt);
+    char *c, *pw_passwd = NULL;
 
     if (s)
       pw_passwd = s->sp_pwdp;

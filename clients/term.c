@@ -414,7 +414,12 @@ static void TwinTermH(void) {
       Slot = Slot_Window(Win);
       Fd = Fd_Slot(Slot);
 
-      /* react as for keypresses */
+      /*
+       * react as for keypresses.
+       *
+       * If bracketed paste is enabled, wrap pasted data in \033[200~ ... \033[201~
+       * letting receiver know it *is* pasted data.
+       */
       write(Fd, Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len);
 
     } else if (msg->Type == TW_MSG_WIDGET_MOUSE) {

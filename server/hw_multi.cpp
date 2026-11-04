@@ -687,9 +687,11 @@ void TwinSelectionNotify(Tobj requestor, uldat reqprivate, e_id magic, Chars mim
       if (mime) {
         CopyMem(mime.data(), ev.MIME().data(), mime.size());
       }
+      CopyMem("\033[200~", ev.BracketedData().data(), 6);
       if (data) {
         CopyMem(data.data(), ev.Data().data(), data.size());
       }
+      CopyMem("\033[201~", ev.BracketedData().end() - 6, 6);
       SendMsg((Tmsgport)requestor, newMsg);
     }
   } else if (requestor->Id >> class_byte_shift == Tdisplay_class_byte) {

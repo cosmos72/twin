@@ -56,7 +56,7 @@ static byte dirtyN;
 
 static void write_rune(tty_data *tty, trune c);
 
-static inline void change_flags(tty_data *tty, uldat bits, byte on_off) {
+static inline void change_flags(tty_data *tty, uldat bits, bool on_off) {
   if (on_off) {
     tty->Flags |= bits;
   } else {
@@ -902,7 +902,7 @@ static inline void respond_ID(tty_data *tty) {
 }
 
 /** execute ESC [ nnn h  and  ESC [ nnn l */
-static void set_mode(tty_data *tty, byte on_off) {
+static void set_mode(tty_data *tty, bool on_off) {
   const uldat npar = tty->nPar;
   uldat i;
 
@@ -923,7 +923,7 @@ static void set_mode(tty_data *tty, byte on_off) {
 }
 
 /** execute ESC [ ? nnn h  and  ESC [ ? nnn l */
-static void set_mode_ques(tty_data *tty, byte on_off) {
+static void set_mode_ques(tty_data *tty, bool on_off) {
   uldat i;
 
   for (i = 0; i <= tty->nPar; i++) {
@@ -997,6 +997,9 @@ static void set_mode_ques(tty_data *tty, byte on_off) {
       break;
     case 1006: /* xterm mouse reporting, toggles decimal mode */
       change_flags(tty, TTY_REPORTMOUSE_DECIMAL, on_off);
+      break;
+    case 2004: /* xterm bracketed paste */
+      tty->Win->BracketedPaste(on_off);
       break;
     default:
       break;
@@ -1303,7 +1306,7 @@ static void csi(tty_data *tty, byte c) {
     goto_axy(tty, tty->Par[1], tty->Par[0]);
     break;
   case 'h':
-    set_mode(tty, 1);
+    set_mode(tty, true);
     break;
 
   case 'I': {
@@ -1323,7 +1326,7 @@ static void csi(tty_data *tty, byte c) {
     csi_L(tty, tty->Par[0]);
     break;
   case 'l':
-    set_mode(tty, 0);
+    set_mode(tty, false);
     break;
   case 'M':
     csi_M(tty, tty->Par[0]);
@@ -1396,7 +1399,7 @@ static void ques(tty_data *tty, byte c) {
     tty->Flags |= TTY_UPDATECURSOR;
     break;
   case 'h':
-    set_mode_ques(tty, 1);
+    set_mode_ques(tty, true);
     break;
   case 'J':
     /* ESC [ ? nnn J is selective erase display */
@@ -1407,7 +1410,7 @@ static void ques(tty_data *tty, byte c) {
     csi_K(tty, tty->Par[0]);
     break;
   case 'l':
-    set_mode_ques(tty, 0);
+    set_mode_ques(tty, false);
     break;
   case 'n':
     report(tty);
