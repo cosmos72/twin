@@ -1571,7 +1571,7 @@ void DrawBorderWindow(Twindow w, byte Flags) {
 
   if ((Flags & BORDER_UP) && sh_up >= ylimit)
     DrawArea2(first_screen, first_w, (Twidget)w, left, up, rgt, up, tfalse);
-  if (!(w->Flags & WINDOW_ROLLED_UP)) {
+  if (!(w->Attr & WINDOW_ROLLED_UP)) {
     if ((Flags & BORDER_LEFT) && sh_left >= 0)
       DrawArea2(first_screen, first_w, (Twidget)w, left, up, left, dwn, tfalse);
     if ((Flags & BORDER_RIGHT) && sh_right < (ldat)dwidth)

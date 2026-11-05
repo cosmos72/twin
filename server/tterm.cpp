@@ -95,6 +95,26 @@ Twindow OpenTerm(const char *arg0, const char *const *argv) {
   return NULL;
 }
 
+static Chars getSelectionNotifyData(event_selectionnotify &event, bool bracketedPaste) {
+  CharSpan data = event.Data();
+  if (!bracketedPaste) {
+    return data;
+  }
+  /* strip any "end of bracketed data" sequence from data being pasted */
+  const Chars key("\033[201~");
+  const size_t end = data.size();
+  size_t start = 0;
+  for (;;) {
+    const size_t offset = Chars(data).view(start, end).find(key);
+    if (offset == size_t(-1)) {
+      break;
+    }
+    data[start + offset] = ' ';
+    start += offset + key.size();
+  }
+  return event.BracketedData();
+}
+
 static void TwinTermH(Tmsgport msgport) {
   Tmsg msg;
   event_any *event;
@@ -124,8 +144,7 @@ static void TwinTermH(Tmsgport msgport) {
     } else if (msg->Type == msg_selection_notify) {
 
       if ((win = (Twindow)Id2Obj(Twindow_class_byte, event->EventSelectionNotify.ReqPrivate))) {
-        Chars data = win->BracketedPaste() ? event->EventSelectionNotify.BracketedData()
-                                           : event->EventSelectionNotify.Data();
+        Chars data = getSelectionNotifyData(event->EventSelectionNotify, win->BracketedPaste());
         (void)RemoteWindowWriteQueue(win, data.size(), data.data());
       }
     } else if (msg->Type == msg_widget_mouse) {
