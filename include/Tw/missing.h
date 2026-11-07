@@ -38,10 +38,14 @@ TW(CONST) char *Tw_missing_strstr(TW(CONST) char *haystack, TW(CONST) char *need
 #define strstr Tw_missing_strstr
 #endif
 
-#if defined(TW_HAVE_WAIT3)
-#define Tw_wait3 wait3
-#elif defined(TW_HAVE_WAIT4)
+/*
+ * Termux has wait3() but does not declare it in <sys/wait.h>
+ * => prefer wait4() if both are available
+ */
+#if defined(TW_HAVE_WAIT4)
 #define Tw_wait3(status, options, rusage) wait4(-1, status, options, rusage)
+#elif defined(TW_HAVE_WAIT3)
+#define Tw_wait3 wait3
 #else
 #define Tw_wait3(status, options, rusage) ((pid_t) - 1)
 #endif
